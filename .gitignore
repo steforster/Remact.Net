@@ -1,0 +1,12 @@
+*~
+[Bb]in/
+[Oo]bj/
+
+*.suo
+*.user
+*.userprefs
+*.pidb
+
+_ReSharper.*
+
+

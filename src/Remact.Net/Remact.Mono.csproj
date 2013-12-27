@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{9DC114F4-F328-4770-B1EA-2BD4D0FA5A5A}</ProjectGuid>
+    <ProductVersion>9.0.30729</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <OutputType>Library</OutputType>
+    <NoStandardLibraries>false</NoStandardLibraries>
+    <AssemblyName>SF.AsyncWcfLib</AssemblyName>
+    <FileAlignment>512</FileAlignment>
+    <RootNamespace>SourceForge.AsyncWcfLib</RootNamespace>
+    <ReleaseVersion>3.0</ReleaseVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\AsyncWcfLib.mono</OutputPath>
+    <DefineConstants>DEBUG;TRACE;MONO;BEFORE_NET45</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>..\AsyncWcfLib.vs2008\SF.AsyncWcfLib.xml</DocumentationFile>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\AsyncWcfLib.mono</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Runtime.Serialization">
+      <RequiredTargetFramework>3.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.ServiceModel">
+      <RequiredTargetFramework>3.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="Mono.Posix" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="WcfDefault.cs" />
+    <Compile Include="WcfExtensionMethods.cs" />
+    <Compile Include="Basic\IWcfBasicContract.cs" />
+    <Compile Include="Basic\IWcfBasicPartner.cs" />
+    <Compile Include="Basic\WcfBasicClientAsync.cs" />
+    <Compile Include="Basic\WcfBasicClientGenerated.cs" />
+    <Compile Include="Basic\WcfBasicMessages.cs" />
+    <Compile Include="Basic\WcfBasicService.cs" />
+    <Compile Include="Basic\WcfBasicServiceUser.cs" />
+    <Compile Include="Basic\WcfRouterClient.cs" />
+    <Compile Include="Basic\WcfServiceAssistant.cs" />
+    <Compile Include="Util\WcfApplication.cs" />
+    <Compile Include="Util\WcfTrc.cs" />
+    <Compile Include="Util\WcfTrcPluginDefault.cs" />
+    <Compile Include="Util\WcfTrcPluginFile.cs" />
+    <Compile Include="WcfMessages.cs" />
+    <Compile Include="WcfReqIdent.cs" />
+    <Compile Include="ActorInput.cs" />
+    <Compile Include="ActorOutput.cs" />
+    <Compile Include="ActorPort.cs" />
+    <Compile Include="IActor.cs" />
+    <Compile Include="Properties\AssemblyInfoCommon.cs" />
+    <Compile Include="IWcfDefault.cs" />
+    <Compile Include="Properties\AssemblyInfo.Mono.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ProjectExtensions>
+    <VisualStudio AllowExistingFolder="true" />
+  </ProjectExtensions>
+  <PropertyGroup>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
+  <ItemGroup>
+    <Folder Include="Util\" />
+    <Folder Include="Basic\" />
+  </ItemGroup>
+</Project>
