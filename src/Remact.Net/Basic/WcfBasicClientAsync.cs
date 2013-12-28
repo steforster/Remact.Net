@@ -1,5 +1,5 @@
 
-// Copyright (c) 2012  AsyncWcfLib.sourceforge.net
+// Copyright (c) 2014, github.com/steforster/Remact.Net
 
 // Event-based Asynchronous Pattern:
 // ms-help://MS.VSCC.v90/MS.MSDNQTR.v90.en/dv_fxadvance/html/792aa8da-918b-458e-b154-9836b97735f3.htm

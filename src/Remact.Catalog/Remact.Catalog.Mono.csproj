@@ -11,7 +11,6 @@
     <RootNamespace>SourceForge.AsyncWcfLib</RootNamespace>
     <AssemblyName>SF.AsyncWcfLib.Router</AssemblyName>
     <FileAlignment>512</FileAlignment>
-    <ReleaseVersion>3.0</ReleaseVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -88,7 +87,7 @@
     <Compile Include="Router.cs" />
     <Compile Include="RouterService.cs" />
     <Compile Include="Properties\AssemblyInfo.mono.cs" />
-    <Compile Include="..\WcfLib\Properties\AssemblyInfoCommon.cs">
+    <Compile Include="..\Remact.Net\Properties\AssemblyInfoCommon.cs">
       <Link>Properties\AssemblyInfoCommon.cs</Link>
     </Compile>
   </ItemGroup>

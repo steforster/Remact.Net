@@ -1,5 +1,5 @@
 
-// Copyright (c) 2012  AsyncWcfLib.sourceforge.net
+// Copyright (c) 2014, github.com/steforster/Remact.Net
 
 using System;
 using System.ServiceModel; // EndpointAddress

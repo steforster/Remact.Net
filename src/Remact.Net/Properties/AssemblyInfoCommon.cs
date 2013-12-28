@@ -1,19 +1,19 @@
 
-// Copyright (c) 2012  AsyncWcfLib.sourceforge.net
+// Copyright (c) 2014, github.com/steforster/Remact.Net
 
 using System.Reflection;
 using System.Runtime.InteropServices;
 
-// General Information about assemblies of AsyncWcfLib:
-[assembly: AssemblyDescription   ( "Communication library for .NET and Mono" )]
+// General Information about assemblies of Remact.Net:
+[assembly: AssemblyDescription   ( "Remote Actors for .NET, Mono and JavaScript" )]
 [assembly: AssemblyConfiguration ( "" )]
 [assembly: AssemblyCompany       ( "" )]
-[assembly: AssemblyProduct       ( "AsyncWcfLib" )]
-[assembly: AssemblyCopyright     ( "© 2013 http://AsyncWcfLib.sourceforge.net" )]
+[assembly: AssemblyProduct       ( "Remact.Net" )]
+[assembly: AssemblyCopyright     ( "© 2014 https://github.com/steforster/Remact.Net" )]
 [assembly: AssemblyTrademark     ( "Open source MIT license" )]
 [assembly: AssemblyCulture       ( "" )]
-[assembly: AssemblyVersion       ( "3.1.4.0" )]
-//[assembly: AssemblyFileVersion ( "3.1.4.0" )]
+[assembly: AssemblyVersion       ( "0.1.0.0" )]
+//[assembly: AssemblyFileVersion ( "0.1.0.0" )]
 
 // Setting ComVisible to false makes the types in this assembly not visible
 // to COM components.  If you need to access a type in this assembly from 
