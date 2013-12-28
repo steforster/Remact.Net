@@ -6,7 +6,7 @@ using System.ServiceModel; // EndpointAddress
 using System.Collections.Generic;
 using System.Threading;    // Timer
 
-namespace SourceForge.AsyncWcfLib.Basic
+namespace Remact.Net.Internal
 {
   
   

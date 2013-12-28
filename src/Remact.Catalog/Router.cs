@@ -9,10 +9,11 @@ using System.Runtime.Serialization;
 using System.ServiceModel;
 using System.ServiceModel.Description; // ServiceHost
 using System.Windows.Forms;
-using SourceForge.AsyncWcfLib.Basic;
 using System.Net;
+using Remact.Net;
+using Remact.Net.Internal;
 
-namespace SourceForge.AsyncWcfLib
+namespace Remact.Catalog
 {
   /// <summary>
   /// The SvcRegister contains some data for each service.

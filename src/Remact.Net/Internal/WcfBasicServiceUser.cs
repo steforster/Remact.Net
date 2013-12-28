@@ -5,7 +5,7 @@ using System;
 using System.ServiceModel;         // OperationContext
 using System.Net;                  // Dns
 
-namespace SourceForge.AsyncWcfLib.Basic
+namespace Remact.Net.Internal
 {
   /// <summary>
   /// <para>Class used on WCF service side.</para>

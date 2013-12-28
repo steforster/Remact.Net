@@ -4,9 +4,9 @@
 using System;
 using System.Runtime.Serialization;// DataContract
 using System.Collections.Generic;  // List
-using SourceForge.AsyncWcfLib;
+using Remact.Net;
 
-namespace SourceForge.AsyncWcfLib.Basic
+namespace Remact.Net.Internal
 {
   //----------------------------------------------------------------------------------------------
   #region == class WcfPartnerListMessage ==

@@ -6,8 +6,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 using System.IO;
+using Remact.Net;
 
-namespace SourceForge.AsyncWcfLib
+namespace Remact.Catalog
 {
   static class Program
   {

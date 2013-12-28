@@ -7,9 +7,9 @@ using System.ServiceModel.Channels;// Binding
 using System.Reflection;           // Assembly
 using System.Net;                  // Dns
 using System.IO;                   // Files
-using SourceForge.AsyncWcfLib.Basic;
+using Remact.Net.Internal;
 
-namespace SourceForge.AsyncWcfLib
+namespace Remact.Net
 {
   /// <summary>
   /// Common definitions for all interacting actors.

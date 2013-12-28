@@ -6,12 +6,12 @@ using System.Collections.Generic;
 using System.Runtime.Serialization;// DataContract
 using System.Net;                  // Dns
 using System.Threading;            // SynchronizationContext
-using SourceForge.AsyncWcfLib.Basic;
+using Remact.Net.Internal;
 #if !BEFORE_NET45
     using System.Threading.Tasks;
 #endif
 
-namespace SourceForge.AsyncWcfLib
+namespace Remact.Net
 {
   //----------------------------------------------------------------------------------------------
   #region == class ActorInput ==

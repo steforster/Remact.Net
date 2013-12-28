@@ -10,7 +10,7 @@ using Mono.Unix;            // UnixSignal in "Mono.Posix.dll"
 using Mono.Unix.Native;     // Signum
 
 
-namespace SourceForge.AsyncWcfLib
+namespace Remact.Net
 {
   /// <summary>
   /// Static members to handle application start and shutdown in a compatible way.

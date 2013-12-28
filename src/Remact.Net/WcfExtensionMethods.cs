@@ -7,7 +7,7 @@ using System.Collections.Generic;
     using System.Threading.Tasks;
 #endif
 
-namespace SourceForge.AsyncWcfLib
+namespace Remact.Net
 {
   //----------------------------------------------------------------------------------------------
   #region Delegate types for message handling

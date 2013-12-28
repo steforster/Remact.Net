@@ -6,7 +6,7 @@ using System.Diagnostics;   // Trace Listener, Trace...
 using System.Reflection;    // Assembly, Attributes
 
 
-namespace SourceForge.AsyncWcfLib
+namespace Remact.Net
 {
 public partial class WcfTrc
 {

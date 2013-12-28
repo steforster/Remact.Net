@@ -13,7 +13,7 @@ using System.Threading;   // SynchronizationContext
 #endif
 
 
-namespace SourceForge.AsyncWcfLib.Basic
+namespace Remact.Net.Internal
 {
   /// <summary>
   /// <para>Adds the following features to a WCF service:</para>

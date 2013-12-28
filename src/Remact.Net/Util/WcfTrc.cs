@@ -3,7 +3,7 @@
 
 using System;
 
-namespace SourceForge.AsyncWcfLib
+namespace Remact.Net
 {
 	/// <summary>
   /// <para>Use these static methods to write debugging trace or logs.</para> 

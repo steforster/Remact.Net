@@ -6,7 +6,7 @@ using System.Threading;
 using System.ServiceModel;         // OperationContext
 using System.Collections.Generic;
 
-namespace SourceForge.AsyncWcfLib.Basic
+namespace Remact.Net.Internal
 {
   /// <summary>
   /// <para>Class used on WCF service side, base of WcfServiceAssistant.</para>

@@ -10,7 +10,7 @@ using System.Net;            // Dns
 using System.Threading;
 using System.ComponentModel; // AsyncOperation
 
-namespace SourceForge.AsyncWcfLib.Basic
+namespace Remact.Net.Internal
 {
   /// <summary>
   /// <para>Base class of WcfClientAsync to connect to a WCF service.</para>

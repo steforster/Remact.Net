@@ -10,8 +10,9 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.Net;                  // Dns
+using Remact.Net;
 
-namespace SourceForge.AsyncWcfLib
+namespace Remact.Catalog
 {
   /// <summary>
   /// Represents ...

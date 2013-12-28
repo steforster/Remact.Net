@@ -9,7 +9,7 @@ using System.Runtime.Serialization;
 #endif
 
 // ContractNamespace, see: http://msdn.microsoft.com/en-us/library/ms751505(VS.85).aspx
-namespace SourceForge.AsyncWcfLib.Basic
+namespace Remact.Net.Internal
 {
   /*-----------------------------------------------------
    * IWcfBasicService

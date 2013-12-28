@@ -1,4 +1,4 @@
-namespace SourceForge.AsyncWcfLib
+namespace Remact.Catalog
 {
   partial class FrmRouter
   {

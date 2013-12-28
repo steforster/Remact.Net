@@ -7,9 +7,10 @@ using System.Linq;
 using System.Text;
 using System.ServiceModel; 
 using System.Threading;
-using SourceForge.AsyncWcfLib.Basic;
+using Remact.Net;
+using Remact.Net.Internal;
 
-namespace SourceForge.AsyncWcfLib
+namespace Remact.Catalog
 {
   /// <summary>
   /// This is the RouterService Entrypoint.

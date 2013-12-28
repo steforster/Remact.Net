@@ -3,9 +3,9 @@
 
 using System;
 using System.Net;                  // Dns
-using SourceForge.AsyncWcfLib;
+using Remact.Net;
 
-namespace SourceForge.AsyncWcfLib.Basic
+namespace Remact.Net.Internal
 {
   //----------------------------------------------------------------------------------------------
   #region == interface IWcfBasicPartner ==

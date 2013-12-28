@@ -6,11 +6,11 @@ using System.Runtime.Serialization;// DataContract
 using System.Collections.Generic;  // List
 using System.Reflection;           // Assembly
 using System.Text;                 // StringBuilder
-using SourceForge.AsyncWcfLib.Basic;
+using Remact.Net.Internal;
 using System.Threading;
 using System.Net;                  // IPAddress
 
-namespace SourceForge.AsyncWcfLib
+namespace Remact.Net
 {
   //----------------------------------------------------------------------------------------------
   #region == class IWcfMessage ==

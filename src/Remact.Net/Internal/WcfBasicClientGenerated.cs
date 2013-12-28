@@ -13,7 +13,7 @@ using System.Threading;
     using System.Threading.Tasks;
 #endif
 
-namespace SourceForge.AsyncWcfLib.Basic
+namespace Remact.Net.Internal
 {
     //=========================================================================================
     /// <summary>

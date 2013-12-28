@@ -4,9 +4,9 @@
 using System;
 using System.Runtime.Serialization;// DataContract
 using System.Threading;            // SynchronizationContext
-using SourceForge.AsyncWcfLib.Basic;
+using Remact.Net.Internal;
 
-namespace SourceForge.AsyncWcfLib
+namespace Remact.Net
 {
   //----------------------------------------------------------------------------------------------
   #region == class WcfReqIdent ==

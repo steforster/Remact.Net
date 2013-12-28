@@ -9,7 +9,7 @@ using System.Windows.Forms; // MessageBox
 using System.Threading;     // Sleep
 
 
-namespace SourceForge.AsyncWcfLib
+namespace Remact.Net
 {
 public partial class WcfTrc
 {
