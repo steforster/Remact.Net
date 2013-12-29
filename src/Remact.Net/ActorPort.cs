@@ -164,7 +164,7 @@ namespace Remact.Net
     /// <para>(internal) Copy data from a WcfPartnerMessage, but keep SenderContext.</para>
     /// </summary>
     /// <param name="p">Copy data from partner p</param>
-    internal void UseDataFrom (WcfPartnerMessage p)
+    internal void UseDataFrom (ActorMessage p)
     {
       // copy ActorPort members from a remote Actor:
       AppName     = p.AppName;
@@ -580,11 +580,11 @@ namespace Remact.Net
         {
             m_CurrentReq   = id;
             id.Input = this;
-            var connectMsg = id.Message as WcfPartnerMessage;
+            var connectMsg = id.Message as ActorMessage;
             if (connectMsg != null)
             {
-                if (connectMsg.Usage != WcfPartnerMessage.Use.ClientConnectRequest
-                 && connectMsg.Usage != WcfPartnerMessage.Use.ClientDisconnectRequest)
+                if (connectMsg.Usage != ActorMessage.Use.ClientConnectRequest
+                 && connectMsg.Usage != ActorMessage.Use.ClientDisconnectRequest)
                 {
                     connectMsg = null;
                 }
@@ -641,7 +641,7 @@ namespace Remact.Net
     /// <param name="id">WcfReqIdent containing Message and Sender.</param>
     /// <param name="msg">The message.</param>
     /// <returns>True when handled.</returns>
-    protected virtual bool OnConnectDisconnect(WcfReqIdent id, WcfPartnerMessage msg)
+    protected virtual bool OnConnectDisconnect(WcfReqIdent id, ActorMessage msg)
     {
          return false;
     }

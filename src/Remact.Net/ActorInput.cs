@@ -353,13 +353,13 @@ namespace Remact.Net
     /// <param name="id">WcfReqIdent containing Message and Sender.</param>
     /// <param name="msg">The message.</param>
     /// <returns>True when handled.</returns>
-    protected override bool OnConnectDisconnect (WcfReqIdent id, WcfPartnerMessage msg)
+    protected override bool OnConnectDisconnect (WcfReqIdent id, ActorMessage msg)
     {
-      if      (msg.Usage == WcfPartnerMessage.Use.ClientConnectRequest)
+      if      (msg.Usage == ActorMessage.Use.ClientConnectRequest)
       {
         if (OnInputConnected != null) OnInputConnected (id); // optional event
       }
-      else if (msg.Usage == WcfPartnerMessage.Use.ClientDisconnectRequest)
+      else if (msg.Usage == ActorMessage.Use.ClientDisconnectRequest)
       {
         if (OnInputDisconnected != null) OnInputDisconnected (id); // optional event
       }
@@ -465,15 +465,15 @@ namespace Remact.Net
     /// <param name="id">WcfReqIdent containing Message and Sender.</param>
     /// <param name="msg">The message.</param>
     /// <returns>True when handled.</returns>
-    protected override bool OnConnectDisconnect (WcfReqIdent id, WcfPartnerMessage msg)
+    protected override bool OnConnectDisconnect (WcfReqIdent id, ActorMessage msg)
     {
       TSC senderCtx = GetSenderContext(id);
 
-      if      (msg.Usage == WcfPartnerMessage.Use.ClientConnectRequest)
+      if      (msg.Usage == ActorMessage.Use.ClientConnectRequest)
       {
         if (OnInputConnected != null) OnInputConnected (id, senderCtx); // optional event
       }
-      else if (msg.Usage == WcfPartnerMessage.Use.ClientDisconnectRequest)
+      else if (msg.Usage == ActorMessage.Use.ClientDisconnectRequest)
       {
         if (OnInputDisconnected != null) OnInputDisconnected (id, senderCtx); // optional event
       }

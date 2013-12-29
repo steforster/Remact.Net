@@ -411,7 +411,7 @@ namespace Remact.Net.Internal
     /// </summary>
     internal protected virtual void SendDisconnectMessage()
     {
-        SendOut (new WcfPartnerMessage (ClientIdent, WcfPartnerMessage.Use.ClientDisconnectRequest));
+        SendOut (new ActorMessage (ClientIdent, ActorMessage.Use.ClientDisconnectRequest));
         Thread.Sleep(30);
     }
 
@@ -503,7 +503,7 @@ namespace Remact.Net.Internal
           else
           {
               string serviceAddr = GetSetServiceAddress();
-              id.Message = new WcfPartnerMessage (ClientIdent, WcfPartnerMessage.Use.ClientConnectRequest);
+              id.Message = new ActorMessage (ClientIdent, ActorMessage.Use.ClientConnectRequest);
   
               if (ClientIdent.TraceConnect) {
                   if( m_boTemporaryRouterConn ) WcfTrc.Info( id.CltSndId, string.Concat( "Temporary connecting .....: '", serviceAddr, "'" ), ClientIdent.Logger );
@@ -699,25 +699,25 @@ namespace Remact.Net.Internal
       }
       if( m != null ) m.IsSent = true;
 
-      WcfPartnerMessage rsp = result.Message as WcfPartnerMessage;
+      ActorMessage rsp = result.Message as ActorMessage;
       
       if (rsp != null)
       {
-        if (rsp.Usage == WcfPartnerMessage.Use.ServiceConnectResponse)
+        if (rsp.Usage == ActorMessage.Use.ServiceConnectResponse)
         { // First message received from Service
           rsp.Uri = ServiceIdent.Uri; // keep the Uri used to request the message (maybe IP address instead of hostname used)
           ServiceIdent.UseDataFrom (rsp);
           ClientIdent.OutputClientId = result.ClientId; // defined by server
           OnConnectMessage (result);
         }
-        else if (rsp.Usage == WcfPartnerMessage.Use.ServiceDisconnectResponse)
+        else if (rsp.Usage == ActorMessage.Use.ServiceDisconnectResponse)
         {
             WcfTrc.Info( result.CltRcvId, rsp.ToString(), ClientIdent.Logger );//"Disconnected svc",0));
             return null;
         }
-        else if (rsp.Usage == WcfPartnerMessage.Use.ServiceAddressResponse
-              || rsp.Usage == WcfPartnerMessage.Use.ServiceEnableResponse
-              || rsp.Usage == WcfPartnerMessage.Use.ServiceDisableResponse)
+        else if (rsp.Usage == ActorMessage.Use.ServiceAddressResponse
+              || rsp.Usage == ActorMessage.Use.ServiceEnableResponse
+              || rsp.Usage == ActorMessage.Use.ServiceDisableResponse)
         {
           // service address management
         }
@@ -756,18 +756,18 @@ namespace Remact.Net.Internal
     // Response callback from WcfRouterService
     private void OnWcfResponseFromRouterService(WcfReqIdent rsp)
     {
-        WcfPartnerMessage svcRsp = rsp.Message as WcfPartnerMessage;
-        if (svcRsp != null && svcRsp.Usage == WcfPartnerMessage.Use.ServiceConnectResponse)
+        ActorMessage svcRsp = rsp.Message as ActorMessage;
+        if (svcRsp != null && svcRsp.Usage == ActorMessage.Use.ServiceConnectResponse)
         {
             if( ClientIdent.TraceSend ) WcfTrc.Info( rsp.CltRcvId, "Temporary connected router: '" + svcRsp.Name + "' on '" + svcRsp.HostName + "'", ClientIdent.Logger );
             ActorPort lookup = new ActorPort();
             lookup.HostName = m_RouterHostToLookup;
             lookup.Name = m_ServiceNameToLookup;
             lookup.IsServiceName = true;
-            WcfPartnerMessage req = new WcfPartnerMessage(lookup, WcfPartnerMessage.Use.ServiceAddressRequest);
+            ActorMessage req = new ActorMessage(lookup, ActorMessage.Use.ServiceAddressRequest);
             SendOut(req); // lookup the service URI (especially the TCP port)
         }
-        else if (svcRsp != null && svcRsp.Usage == WcfPartnerMessage.Use.ServiceAddressResponse)
+        else if (svcRsp != null && svcRsp.Usage == ActorMessage.Use.ServiceAddressResponse)
         {
             ServiceIdent.UseDataFrom( svcRsp );
             if( ClientIdent.TraceSend )

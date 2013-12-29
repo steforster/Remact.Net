@@ -60,7 +60,7 @@ namespace Remact.Net.Internal
       ClientIdent = clientIdent;
     }// CTOR
 
-    internal void UseDataFrom (WcfPartnerMessage remoteClient)
+    internal void UseDataFrom (ActorMessage remoteClient)
     {
       ClientIdent.UseDataFrom (remoteClient);
       UriBuilder uri = new UriBuilder (ClientIdent.Uri);

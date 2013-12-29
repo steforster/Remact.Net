@@ -135,7 +135,7 @@ namespace Remact.Net.Internal
     #region Client connect / disconnect
 
     // Internally called to create an ActorOutput as client stub.
-    internal virtual WcfBasicServiceUser AddNewSvcUser (WcfPartnerMessage receivedClientMsg, int index)
+    internal virtual WcfBasicServiceUser AddNewSvcUser (ActorMessage receivedClientMsg, int index)
     {
       if (index < 0) // add a new element
       {
@@ -166,7 +166,7 @@ namespace Remact.Net.Internal
     /// <param name="req">the WcfReqIdent to be used for responses.</param>
     /// <param name="svcUser">Output the user object containing a "ClientIdent.UserContext" object for free application use</param>
     /// <returns>Service info as response</returns>
-    private IWcfMessage ConnectPartner (WcfPartnerMessage client, WcfReqIdent req, out WcfBasicServiceUser svcUser)
+    private IWcfMessage ConnectPartner (ActorMessage client, WcfReqIdent req, out WcfBasicServiceUser svcUser)
     {
       svcUser = null;
       if (req.ClientId != 0)
@@ -251,7 +251,7 @@ namespace Remact.Net.Internal
       svcUser.OpenNotificationChannel();
       
       // reply ServiceIdent
-      WcfPartnerMessage response = new WcfPartnerMessage (ServiceIdent, WcfPartnerMessage.Use.ServiceConnectResponse);
+      ActorMessage response = new ActorMessage (ServiceIdent, ActorMessage.Use.ServiceConnectResponse);
       req.Sender   = svcUser.ClientIdent;
       req.ClientId = svcUser.ClientId;
       req.SendId   = 1;                   // connected
@@ -271,7 +271,7 @@ namespace Remact.Net.Internal
     /// <param name="req">the WcfReqIdent to be used for responses.</param>
     /// <param name="svcUser">Output the user object containing a "ClientIdent.UserContext" object for free application use</param>
     /// <returns>Service info as response</returns>
-    private IWcfMessage DisconnectPartner (WcfPartnerMessage client, WcfReqIdent req, out WcfBasicServiceUser svcUser)
+    private IWcfMessage DisconnectPartner (ActorMessage client, WcfReqIdent req, out WcfBasicServiceUser svcUser)
     {
       int i = req.ClientId - m_FirstClientId;
       if (i >= 0 && i < ServiceIdent.InputClientList.Count)
@@ -305,7 +305,7 @@ namespace Remact.Net.Internal
         LastAction = "Disconnect unknown client";
       }
 
-      WcfPartnerMessage response = new WcfPartnerMessage (ServiceIdent, WcfPartnerMessage.Use.ServiceDisconnectResponse);
+      ActorMessage response = new ActorMessage (ServiceIdent, ActorMessage.Use.ServiceDisconnectResponse);
       return response;
     }// Disconnect
 
@@ -383,7 +383,7 @@ namespace Remact.Net.Internal
       req.DestinationLambda = null;// make sure to call the DefaultHandler
       svcUser = null;
       IWcfMessage response = null;
-      WcfPartnerMessage cltReq = req.Message as WcfPartnerMessage;
+      ActorMessage cltReq = req.Message as ActorMessage;
       if (cltReq != null)
       {
         if (ServiceIdent.Uri == null)
@@ -395,8 +395,8 @@ namespace Remact.Net.Internal
 
         switch (cltReq.Usage)
         {
-        case WcfPartnerMessage.Use.ClientConnectRequest:    response = ConnectPartner    (cltReq, req, out svcUser); break;
-        case WcfPartnerMessage.Use.ClientDisconnectRequest: response = DisconnectPartner (cltReq, req, out svcUser); break;
+        case ActorMessage.Use.ClientConnectRequest:    response = ConnectPartner    (cltReq, req, out svcUser); break;
+        case ActorMessage.Use.ClientDisconnectRequest: response = DisconnectPartner (cltReq, req, out svcUser); break;
         default: break;// continue below
         }
       }

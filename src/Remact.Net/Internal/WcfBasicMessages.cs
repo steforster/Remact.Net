@@ -23,14 +23,14 @@ namespace Remact.Net.Internal
     /// List of services in a plant.
     /// </summary>
     [DataMember]
-    public List<WcfPartnerMessage> Item;
+    public List<ActorMessage> Item;
 
     /// <summary>
     /// Create a WcfPartnerListMessage.
     /// </summary>
     public WcfPartnerListMessage ()
     {
-      Item = new List<WcfPartnerMessage> (20);
+      Item = new List<ActorMessage> (20);
     }
 
     #if MONO

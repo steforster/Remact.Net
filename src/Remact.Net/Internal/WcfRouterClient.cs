@@ -114,8 +114,8 @@ namespace Remact.Net.Internal
           {
             lock (ms_Lock)
             {
-              WcfPartnerMessage req = new WcfPartnerMessage (m_ServiceList[m_nCurrentSvc].ServiceIdent,
-                                                             WcfPartnerMessage.Use.ServiceEnableRequest);
+              ActorMessage req = new ActorMessage (m_ServiceList[m_nCurrentSvc].ServiceIdent,
+                                                             ActorMessage.Use.ServiceEnableRequest);
               WcfBasicService svc = m_ServiceList[m_nCurrentSvc];
               if (!svc.IsServiceRegistered)
               {
@@ -164,7 +164,7 @@ namespace Remact.Net.Internal
           }
         }
       }
-      else if (rsp.Message is WcfPartnerMessage && m_ServiceList != null)
+      else if (rsp.Message is ActorMessage && m_ServiceList != null)
       {
           m_Timer.Change (20, 1000); // 20ms warten und nächsten Request senden, bis alle erledigt sind
       }
@@ -300,8 +300,8 @@ namespace Remact.Net.Internal
         if (n < 0) return; // already removed
         if (m_RouterClient != null && m_RouterClient.IsConnected)
         {
-          WcfPartnerMessage req = new WcfPartnerMessage (m_ServiceList[n].ServiceIdent, 
-                                                         WcfPartnerMessage.Use.ServiceDisableRequest);
+          ActorMessage req = new ActorMessage (m_ServiceList[n].ServiceIdent, 
+                                                         ActorMessage.Use.ServiceDisableRequest);
           WcfReqIdent id = m_RouterClient.SendOut (req);
           WcfTrc.Info( id.CltSndId, "Disable  " + req.ToString(), WcfApplication.Logger );
           m_ServiceList[n].IsServiceRegistered = false;

@@ -29,15 +29,15 @@ namespace Remact.Catalog
 
     public void OnRequest (WcfReqIdent id)
     {
-        WcfPartnerMessage service = id.Message as WcfPartnerMessage;
+        ActorMessage service = id.Message as ActorMessage;
         bool ok = false;
         if (service != null && service.IsServiceName)
         {
             switch (service.Usage)
             {
-                case WcfPartnerMessage.Use.ServiceEnableRequest:  ok = RegisterService(service, id); break;
-                case WcfPartnerMessage.Use.ServiceDisableRequest: ok = RegisterService(service, id); break;
-                case WcfPartnerMessage.Use.ServiceAddressRequest: ok = GetAddress(service, id); break;
+                case ActorMessage.Use.ServiceEnableRequest:  ok = RegisterService(service, id); break;
+                case ActorMessage.Use.ServiceDisableRequest: ok = RegisterService(service, id); break;
+                case ActorMessage.Use.ServiceAddressRequest: ok = GetAddress(service, id); break;
                 default: break;// continue below
             }
         }
@@ -63,23 +63,23 @@ namespace Remact.Catalog
 
     // A single service entry is beeing enabled, disabled or updated
     // return the service info as response
-    private bool RegisterService (WcfPartnerMessage req, WcfReqIdent id)
+    private bool RegisterService (ActorMessage req, WcfReqIdent id)
     {
-      WcfPartnerMessage response = req;
+      ActorMessage response = req;
       if (Program.Router.RegisterService (req, id.SvcRcvId))
       {
         // req is used in the SvcRegister now. We have to create a copy
-        response = new WcfPartnerMessage(req);
+        response = new ActorMessage(req);
       }
 
       // reply the registered service
-      if (req.Usage == WcfPartnerMessage.Use.ServiceEnableRequest)
+      if (req.Usage == ActorMessage.Use.ServiceEnableRequest)
       {
-        response.Usage = WcfPartnerMessage.Use.ServiceEnableResponse;
+        response.Usage = ActorMessage.Use.ServiceEnableResponse;
       }
       else 
       {
-        response.Usage = WcfPartnerMessage.Use.ServiceDisableResponse;
+        response.Usage = ActorMessage.Use.ServiceDisableResponse;
       }
 
       id.SendResponse (response);
@@ -92,7 +92,7 @@ namespace Remact.Catalog
     private bool RegisterList (WcfPartnerListMessage list, WcfReqIdent id)
     {
         WcfTrc.Info( id.SvcRcvId, "PeerRtr sends list containing " + list.Item.Count + " services." );
-        foreach( WcfPartnerMessage s in list.Item )
+        foreach( ActorMessage s in list.Item )
         {
             Program.Router.RegisterService (s, id.SvcRcvId);
         }
@@ -102,16 +102,16 @@ namespace Remact.Catalog
     
 
     // GetAddress: Search URI (with TCP port number) of a registered service
-    private bool GetAddress (WcfPartnerMessage search, WcfReqIdent id)
+    private bool GetAddress (ActorMessage search, WcfReqIdent id)
     {
       bool found = false;
-      foreach (WcfPartnerMessage s in Program.Router.SvcRegister.Item)
+      foreach (ActorMessage s in Program.Router.SvcRegister.Item)
       {
         if (s.Name == search.Name
          && s.IsServiceName == search.IsServiceName)
         {
-          search = new WcfPartnerMessage (s); // create a copy in order not to change the SvcRegister
-          search.Usage = WcfPartnerMessage.Use.ServiceAddressResponse;
+          search = new ActorMessage (s); // create a copy in order not to change the SvcRegister
+          search.Usage = ActorMessage.Use.ServiceAddressResponse;
           found = true;
           break;
         }

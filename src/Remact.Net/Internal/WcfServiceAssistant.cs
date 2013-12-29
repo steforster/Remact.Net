@@ -508,7 +508,7 @@ namespace Remact.Net.Internal
                 // multithreaded access, several requests may run in parallel. They are scheduled for execution on the right synchronization context.
                 if( response != null )
                 {
-                    var connectMsg = response as WcfPartnerMessage;
+                    var connectMsg = response as ActorMessage;
                     if (connectMsg != null) // no error and connected
                     {
                         id.Sender.LastSentId--; // correct for reqCopy
@@ -516,7 +516,7 @@ namespace Remact.Net.Internal
                         reqCopy.Response = reqCopy; // do not send a WcfIdleMessage
                         reqCopy.Input = id.Input;
                         var task = DoRequestAsync( reqCopy ); // call event OnInputConnected or OnInputDisconnected on the correct thread.
-                        if (connectMsg.Usage != WcfPartnerMessage.Use.ServiceDisconnectResponse)
+                        if (connectMsg.Usage != ActorMessage.Use.ServiceDisconnectResponse)
                         {
                             var dummy = task.Result; // blocking wait!
                         }

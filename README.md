@@ -1,17 +1,16 @@
 Remote Actors for .NET
 ======================
 
-**Remact.Net** is a class library written in C-Sharp.
+**Remact.Net** facilitates the development of [actors](http://en.wikipedia.org/wiki/Actor_model) in .NET languages.
+It is a class library written in C-Sharp.
 It runs in Microsoft .NET and Linux-Mono environements.
-
-It facilitates the development of [actors](http://en.wikipedia.org/wiki/Actor_model) in .NET languages.
 
 
 ### Related work
 
 Some programmming languages have built in support for remote actors:
 
-* [Scala: RemoteActors](http://www.scala-lang.org/)
+* [Scala](http://www.scala-lang.org/).RemoteActors
 * [Erlang](http://www.erlang.org/)
 
 For other languages there are librarys to help programming remote actors:
@@ -26,25 +25,26 @@ For other languages there are librarys to help programming remote actors:
 Remact is work in progress. The following goals are intended to reach:
 
 [ ] Small and clean API like AsyncWcfLib
-[ ] Local actors (process internal message passing between threads)
-[ ] Remote actors (message passing between hosts)
+[ ] Local actors (message passing between threads)
+[ ] Remote actors (message passing between hosts or processes)
 [ ] Unlike AsyncWcfLib, Remact will be based on open web standards (WebSockets).
     The motivation is better support for bidirectional communication and higher performance
     on Linux/Mono based environments.
-[ ] WebSockets and Json are used to link actors written in Java or JavaScript (browser based actors).
+[ ] WebSockets and Json are used to link actors written in Java or JavaScript (browser based actors)
 
 
 Third party components and standards
 ------------------------------------
 Remact.Net is built on open standards and uses open components, namely
 
-* [WebSocket, the IETF standard RFC6455](http://tools.ietf.org/html/rfc6455)
-* [Alchemy-Websockets, a class library from Olivine-Labs](https://github.com/Olivine-Labs/Alchemy-Websockets)
-* [WAMP, the WebSocket Application Messaging Protocol](http://wamp.ws/)
-* [Json class library from Newtonsoft](https://github.com/JamesNK/Newtonsoft.Json)
-* [Log4Net, logging component from Apache](http://logging.apache.org/log4net/)
-* [NUnit, unit testing infrastructure](http://www.nunit.org/)
-* [Nito.Async.ActionThread is used for testing console applications](http://nitoasync.codeplex.com/)
+* [WebSocket](http://tools.ietf.org/html/rfc6455), the IETF standard RFC6455
+* [Alchemy-Websockets](https://github.com/Olivine-Labs/Alchemy-Websockets), a class library from Olivine-Labs
+* [WAMP](http://wamp.ws/), the WebSocket Application Messaging Protocol
+* [Json class library from Newtonsoft](https://github.com/JamesNK/Newtonsoft.Json) 
+* [Log4Net](http://logging.apache.org/log4net/), logging component from Apache
+* [NUnit](http://www.nunit.org/), unit testing infrastructure
+* [Nito.Async.ActionThread](http://nitoasync.codeplex.com/) is used for testing console applications
+* [WampSharp](https://github.com/darkl/WampSharp) is not used as a component, but I have lended many ideas from this WAMP implementation
 
 
 License

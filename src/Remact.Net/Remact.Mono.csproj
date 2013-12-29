@@ -54,6 +54,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Contracts\ActorMessage.cs" />
+    <Compile Include="Contracts\IRemactService.cs" />
+    <Compile Include="Contracts\IRemactCatalog.cs" />
+    <Compile Include="Contracts\ErrorMessage.cs" />
+    <Compile Include="Contracts\IWampRpcV1.cs" />
+    <Compile Include="Request.cs" />
     <Compile Include="WcfDefault.cs" />
     <Compile Include="WcfExtensionMethods.cs" />
     <Compile Include="Internal\IWcfBasicContract.cs" />
@@ -69,8 +75,6 @@
     <Compile Include="Util\WcfTrc.cs" />
     <Compile Include="Util\WcfTrcPluginDefault.cs" />
     <Compile Include="Util\WcfTrcPluginFile.cs" />
-    <Compile Include="WcfMessages.cs" />
-    <Compile Include="WcfReqIdent.cs" />
     <Compile Include="ActorInput.cs" />
     <Compile Include="ActorOutput.cs" />
     <Compile Include="ActorPort.cs" />

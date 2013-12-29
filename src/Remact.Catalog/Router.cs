@@ -92,14 +92,14 @@ namespace Remact.Catalog
         int connectedPeerRouters = UpdatePeerRouters( seconds );
         int servicesFromPeerRouters = 0;
 
-        foreach (WcfPartnerMessage s in SvcRegister.Item)
+        foreach (ActorMessage s in SvcRegister.Item)
         {
-            if (s.Usage == WcfPartnerMessage.Use.ServiceEnableRequest)
+            if (s.Usage == ActorMessage.Use.ServiceEnableRequest)
             {
                 s.TimeoutSeconds -= seconds;
                 if (s.TimeoutSeconds < 0)
                 {
-                    s.Usage = WcfPartnerMessage.Use.ServiceDisableRequest;
+                    s.Usage = ActorMessage.Use.ServiceDisableRequest;
                     SvcRegisterChanged = true;
                     WcfTrc.Warning("   "+s.Name+"  ", "Timeout  "+s.ToString ());
                 }
@@ -137,7 +137,7 @@ namespace Remact.Catalog
             sb.Append(" configured remote routers.");
             sb.AppendLine();
         
-            foreach (WcfPartnerMessage s in SvcRegister.Item)
+            foreach (ActorMessage s in SvcRegister.Item)
             {
                 int versionCount = 2;
                 if (s.AppVersion.Revision != 0)
@@ -149,7 +149,7 @@ namespace Remact.Catalog
                     versionCount = 3;
                 }
                 sb.AppendLine();
-                if (s.Usage == WcfPartnerMessage.Use.ServiceEnableRequest) sb.Append ("++");
+                if (s.Usage == ActorMessage.Use.ServiceEnableRequest) sb.Append ("++");
                                                                       else sb.Append ("--");
                 sb.Append (s.Uri);
                 sb.Append (" in ");
@@ -200,16 +200,16 @@ namespace Remact.Catalog
 
 
     // Register remote service. returns true, when svc is referenced by SvcRegister.
-    public bool RegisterService (WcfPartnerMessage svc, string mark)
+    public bool RegisterService (ActorMessage svc, string mark)
     {
       svc.RouterHopCount++;                                 // ==1: Direct info from service on local host
       if (svc.RouterHopCount > 1) svc.TimeoutSeconds = 120; // > 1: Indirect info from another router
       
-      if (svc.Usage != WcfPartnerMessage.Use.ServiceEnableRequest
-       && svc.Usage != WcfPartnerMessage.Use.ServiceDisableRequest)
+      if (svc.Usage != ActorMessage.Use.ServiceEnableRequest
+       && svc.Usage != ActorMessage.Use.ServiceDisableRequest)
       {
         WcfTrc.Error (mark, "Got wrong status: "+svc.ToString ());
-        svc.Usage = WcfPartnerMessage.Use.ServiceDisableRequest;
+        svc.Usage = ActorMessage.Use.ServiceDisableRequest;
       }
 
       bool changed = false;
@@ -223,19 +223,19 @@ namespace Remact.Catalog
       }
       else
       {
-        WcfPartnerMessage registered = SvcRegister.Item[found];
+        ActorMessage registered = SvcRegister.Item[found];
         
         if (registered.Uri != svc.Uri)
         {
           // a changed or a second service tries to register
-          if (registered.Usage == WcfPartnerMessage.Use.ServiceDisableRequest
-                  && svc.Usage == WcfPartnerMessage.Use.ServiceEnableRequest)
+          if (registered.Usage == ActorMessage.Use.ServiceDisableRequest
+                  && svc.Usage == ActorMessage.Use.ServiceEnableRequest)
           {
               WcfTrc.Info( mark, "Start new   " + svc.Uri.ToString() );
               changed = true;
           }
-          else if (registered.Usage == WcfPartnerMessage.Use.ServiceEnableRequest
-                       && svc.Usage == WcfPartnerMessage.Use.ServiceEnableRequest) 
+          else if (registered.Usage == ActorMessage.Use.ServiceEnableRequest
+                       && svc.Usage == ActorMessage.Use.ServiceEnableRequest) 
           {
             if (registered.ApplicationRunTime < svc.ApplicationRunTime)
             {
@@ -254,20 +254,20 @@ namespace Remact.Catalog
           {
               // circular reference: do not use this old information
           }
-          else if( registered.Usage == WcfPartnerMessage.Use.ServiceDisableRequest
-                       && svc.Usage == WcfPartnerMessage.Use.ServiceEnableRequest)
+          else if( registered.Usage == ActorMessage.Use.ServiceDisableRequest
+                       && svc.Usage == ActorMessage.Use.ServiceEnableRequest)
           {
               WcfTrc.Info( mark, "Restart   " + svc.Uri.ToString() );
               changed = true;
           }
-          else if (registered.Usage == WcfPartnerMessage.Use.ServiceEnableRequest
-                       && svc.Usage == WcfPartnerMessage.Use.ServiceDisableRequest)
+          else if (registered.Usage == ActorMessage.Use.ServiceEnableRequest
+                       && svc.Usage == ActorMessage.Use.ServiceDisableRequest)
           {
               WcfTrc.Info( mark, "Stopped   " + svc.Uri.ToString() );
               changed = true;
           }
-          else if (registered.Usage == WcfPartnerMessage.Use.ServiceEnableRequest
-                       && svc.Usage == WcfPartnerMessage.Use.ServiceEnableRequest)
+          else if (registered.Usage == ActorMessage.Use.ServiceEnableRequest
+                       && svc.Usage == ActorMessage.Use.ServiceEnableRequest)
           {
               WcfTrc.Info( mark, "Alive     " + svc.Uri.ToString() );
               SvcRegister.Item[found].TimeoutSeconds = svc.TimeoutSeconds;// Restart timeout
@@ -337,7 +337,7 @@ namespace Remact.Catalog
     private void OnResponseFromPeerRouter(WcfReqIdent id, SvcDat svcDat)
     {
       if (
-       id.On<WcfPartnerMessage>(partner=>
+       id.On<ActorMessage>(partner=>
       {
         WcfTrc.Info      (id.CltRcvId, "PeerRtr   "+partner.ToString ());
       })
@@ -353,7 +353,7 @@ namespace Remact.Catalog
       .On<WcfPartnerListMessage>(list=>
       {
           WcfTrc.Info( id.CltRcvId, "PeerRtr responds with list containing " + list.Item.Count + " services." );
-          foreach( WcfPartnerMessage s in list.Item )
+          foreach( ActorMessage s in list.Item )
         {
           RegisterService (s, id.CltRcvId);
         }
