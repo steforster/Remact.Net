@@ -40,9 +40,16 @@ Currently, [the main conceptual ideas](http://sourceforge.net/p/asyncwcflib/wiki
 The folder **src/Remact.Net/Contracts** contains remotly callable methods and their corresponding request- and response messages.
 These definitions and their XML comments form the basic interface definition of actors.
 
-Application actors will add more contracts in an other assembly. 
+Application actors will add more contracts in other assemblies. 
 These definitions must be present on both sides of the communication channel.
 For actors not written in a .NET programming language (e.g. Java Script), the interface definition must be translated. 
+
+Receiving of WAMP messages is done in five steps:
+* Deserialization to a [Newtonsoft.Json.Linq.JObject](http://weblog.west-wind.com/posts/2012/Aug/30/Using-JSONNET-for-dynamic-JSON-parsing)
+* Dispatching to the addressed actor 
+* Switching to the thread bound to the actor
+* Optional converting to a strongly typed object or to a [dynamic object](http://msdn.microsoft.com/en-us/library/dd264736%28v=vs.110%29.aspx)
+* Optional dispatching to a method having the matching parameter type
 
 
 Third party components and standards
