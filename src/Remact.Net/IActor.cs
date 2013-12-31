@@ -8,6 +8,7 @@ using System.ServiceModel;         // ServiceHost
 using System.Net;                  // Dns
 using System.Threading;            // SynchronizationContext
 using Remact.Net.Internal;
+using Remact.Net.Internal.Wamp;
 #if !BEFORE_NET45
     using System.Threading.Tasks;
 #endif
@@ -15,12 +16,12 @@ using Remact.Net.Internal;
 namespace Remact.Net
 {
   //----------------------------------------------------------------------------------------------
-  #region == enum WcfState ==
+  #region == enum PortState ==
 
   /// <summary>
   /// Communication state for WcfPartners
   /// </summary>
-  public enum WcfState
+  public enum PortState
   {
     /// <summary>
     /// No link to output or input defined.
@@ -50,13 +51,13 @@ namespace Remact.Net
 
   #endregion
   //----------------------------------------------------------------------------------------------
-  #region == interface IActorPortId ==
+  #region == interface IActorPort ==
 
   /// <summary>
   /// The public interface of ActorPort for inputs and outputs.
   /// Actors may have several outgoing connection to other actors. An incoming connection may receive messages from several actors.
   /// </summary>
-  public interface IActorPortId
+  public interface IActorPort
   {
     /// <summary>
     /// Identification in Trace and name of endpoint address in App.config file.
@@ -80,7 +81,7 @@ namespace Remact.Net
     string  AppName          {get;}
     
     /// <summary>
-    /// Unique instance number of the application (unique in a plant or on a host, depending on WcfDefault.IsAppIdUniqueInPlant).
+    /// Unique instance number of the application (unique in a plant or on a host, depending on RemactDefaults.IsAppIdUniqueInPlant).
     /// </summary>
     int     AppInstance      {get;}
     
@@ -162,12 +163,12 @@ namespace Remact.Net
 
   #endregion
   //----------------------------------------------------------------------------------------------
-  #region == interface IWcfServiceConfiguration ==
+  #region == interface IActorInputConfiguration ==
 
   /// <summary>
-  /// The configuration interface is implemented by WcfDefault. It may be provided by the library user.
+  /// The configuration interface is implemented by RemactDefaults. It may be provided by the library user.
   /// </summary>
-  public interface IWcfServiceConfiguration
+  public interface IActorInputConfiguration
   {
       /// <summary>
       /// Sets the service configuration, when no endpoint in app.config is found.
@@ -180,20 +181,20 @@ namespace Remact.Net
 
   #endregion
   //----------------------------------------------------------------------------------------------
-  #region == interface IWcfClientConfiguration ==
+  #region == interface IActorOutputConfiguration ==
 
   /// <summary>
-  /// The configuration interface is implemented by WcfDefault. It may be provided by the library user.
+  /// The configuration interface is implemented by RemactDefaults. It may be provided by the library user.
   /// </summary>
-  public interface IWcfClientConfiguration
+  public interface IActorOutputConfiguration
   {
       /// <summary>
       /// Sets the default client configuration, when connecting without app.config. Must match to ServiceConfiguration of the connected service.
       /// </summary>
-      /// <param name="clientBase">The ClientBase object to modify the endpoint and security credentials.</param>
+      /// <param name="clientBase">The ClientBase object to modify the endpoint and security credentials. TODO public interface!</param>
       /// <param name="uri">The endpoint URI to connect.</param>
       /// <param name="forRouter">true if used for WcfRouter service.</param>
-      void DoClientConfiguration( ClientBase<IWcfBasicContractSync> clientBase, ref Uri uri, bool forRouter );
+      void DoClientConfiguration( object clientBase, ref Uri uri, bool forRouter );
   }
 
   #endregion
@@ -202,9 +203,9 @@ namespace Remact.Net
 
   /// <summary>
   /// The public input interface of an actor. It may be called from any thread.
-  /// The members of IActorPortId represent the actor receiving the incoming messages.
+  /// The members of IActorPort represent the actor receiving the incoming messages.
   /// </summary>
-  public interface IActorInput: IActorPortId
+  public interface IActorInput: IActorPort
   {
     /// <summary>
     /// Add a WCF service und publish Uri to WcfRouter.
@@ -212,40 +213,40 @@ namespace Remact.Net
     /// <param name="serviceName">The unique name of the service or null, when this partners name is equal to the servicename. </param>
     /// <param name="tcpPort">The TCP port for the service or 0, when automatic port allocation will be used.</param>
     /// <param name="publishToRouter">True(=default): The servicename will be published to the WcfRouter on localhost.</param>
-    /// <param name="serviceConfig">Plugin your own service configuration instead of WcfDefault.DoServiceConfiguration.</param>
+    /// <param name="serviceConfig">Plugin your own service configuration instead of RemactDefaults.DoServiceConfiguration.</param>
     void LinkInputToNetwork( string serviceName = null, int tcpPort = 0, bool publishToRouter = true, 
-                             IWcfServiceConfiguration serviceConfig = null );
+                             IActorInputConfiguration serviceConfig = null );
 
     /// <summary>
     /// Threadsafe enqueue message at the receiving partner. No response is expected.
     /// </summary>
-    /// <param name="msg">The IWcfMessage to enqueue.</param>
-    void PostInput (IWcfMessage msg);
+    /// <param name="msg">The message to enqueue.</param>
+    void PostInput(object msg);
 
     /// <summary>
     /// Threadsafe enqueue message at the receiving partner.
     /// </summary>
     /// <param name="sender">The source partner sending the message <see cref="ActorPort"/>. Its default message handler will receive the response.</param>
-    /// <param name="msg">The IWcfMessage to enqueue.</param>
-    void PostInputFrom (ActorOutput sender, IWcfMessage msg);
+    /// <param name="msg">The message to enqueue.</param>
+    void PostInputFrom(ActorOutput sender, object msg);
 
     /// <summary>
     /// Threadsafe enqueue message at the receiving partner.
     /// </summary>
     /// <param name="sender">The source partner sending the message <see cref="ActorPort"/></param>
-    /// <param name="msg">The IWcfMessage to enqueue.</param>
+    /// <param name="msg">The message to enqueue.</param>
     /// <param name="responseHandler">The lambda expression executed at the source partner, when a response arrives.</param>
-    void PostInputFrom(ActorOutput sender, IWcfMessage msg, AsyncResponseHandler responseHandler);
+    void PostInputFrom(ActorOutput sender, object msg, AsyncResponseHandler responseHandler);
 
     /// <summary>
     /// <para>Gets or sets the state of the incoming service connection from the network.</para>
     /// <para>May be called from any thread.</para>
-    /// <para>Setting InputStateFromNetwork to WcfState.Ok or WcfState.Connecting reconnects a previously disconnected link.</para>
+    /// <para>Setting InputStateFromNetwork to PortState.Ok or PortState.Connecting reconnects a previously disconnected link.</para>
     /// <para>These states may be set only after an initial call to TryConnect from the active services internal thread.</para>
     /// <para>Setting other states will disconnect the WCF service from network.</para>
     /// </summary>
-    /// <returns>A <see cref="WcfState"/></returns>
-    WcfState InputStateFromNetwork {get; set;}
+    /// <returns>A <see cref="PortState"/></returns>
+    PortState InputStateFromNetwork {get; set;}
   };
 
   #endregion
@@ -254,9 +255,9 @@ namespace Remact.Net
 
   /// <summary>
   /// The public output interface of an actor may be called from any thread.
-  /// The members of IActorPortId represent the actor sending the outgoing messages.
+  /// The members of IActorPort represent the actor sending the outgoing messages.
   /// </summary>
-  public interface IActorOutput: IActorPortId
+  public interface IActorOutput: IActorPort
   {
     /// <summary>
     /// Link to application-internal partner.
@@ -269,23 +270,23 @@ namespace Remact.Net
     /// WcfRouter may have synchronized its service register with peer routers on other hosts.
     /// </summary>
     /// <param name="serviceName">The unique service name to connect to.</param>
-    /// <param name="clientConfig">Plugin your own client configuration instead of WcfDefault.DoClientConfiguration.</param>
-    void LinkOutputToRemoteService( string serviceName, IWcfClientConfiguration clientConfig = null );
+    /// <param name="clientConfig">Plugin your own client configuration instead of RemactDefaults.DoClientConfiguration.</param>
+    void LinkOutputToRemoteService( string serviceName, IActorOutputConfiguration clientConfig = null );
 
     /// <summary>
     /// Add a WcfClientAsync and lookup the service Uri at WcfRouter.
     /// </summary>
     /// <param name="routerHost">The hostname, where the WcfRouter runs.</param>
     /// <param name="serviceName">The unique service name to connect to.</param>
-    /// <param name="clientConfig">Plugin your own client configuration instead of WcfDefault.DoClientConfiguration.</param>
-    void LinkOutputToRemoteService( string routerHost, string serviceName, IWcfClientConfiguration clientConfig = null );
+    /// <param name="clientConfig">Plugin your own client configuration instead of RemactDefaults.DoClientConfiguration.</param>
+    void LinkOutputToRemoteService( string routerHost, string serviceName, IActorOutputConfiguration clientConfig = null );
 
     /// <summary>
     /// Add a WcfBasicClientAsync. No lookup at WcfRouter is needed as we know the TCP portnumber.
     /// </summary>
     /// <param name="serviceUri">The uri of the remote service.</param>
-    /// <param name="clientConfig">Plugin your own client configuration instead of WcfDefault.DoClientConfiguration.</param>
-    void LinkOutputToRemoteService( Uri serviceUri, IWcfClientConfiguration clientConfig = null );
+    /// <param name="clientConfig">Plugin your own client configuration instead of RemactDefaults.DoClientConfiguration.</param>
+    void LinkOutputToRemoteService( Uri serviceUri, IActorOutputConfiguration clientConfig = null );
 
     /// <summary>
     /// The send id given to the last message sent from this sender.
@@ -308,9 +309,9 @@ namespace Remact.Net
 
     /// <summary>
     /// OutputSidePartner is the identification of the partner that is linked to our output.
-    /// It returns null, as long as we are not linked (OutputState==WcfState.Unlinked).
+    /// It returns null, as long as we are not linked (OutputState==PortState.Unlinked).
     /// </summary>
-    IActorPortId OutputSidePartner { get; }
+    IActorPort OutputSidePartner { get; }
 
     /// <summary>
     /// The OutputClientId is used on the connected service to identify this client.
@@ -322,12 +323,12 @@ namespace Remact.Net
     /// <summary>
     /// <para>Gets or sets the state of the outgoing connection.</para>
     /// <para>May be called from any thread.</para>
-    /// <para>Setting OutputState to WcfState.Ok or WcfState.Connecting reconnects a previously disconnected link.</para>
+    /// <para>Setting OutputState to PortState.Ok or PortState.Connecting reconnects a previously disconnected link.</para>
     /// <para>These states may be set only after an initial call to TryConnect from the active services internal thread.</para>
     /// <para>Setting other states will disconnect the WCF client from network.</para>
     /// </summary>
-    /// <returns>A <see cref="WcfState"/></returns>
-    WcfState OutputState {get; set;}
+    /// <returns>A <see cref="PortState"/></returns>
+    PortState OutputState {get; set;}
 
     /// <summary>
     /// Trace switch: Traces connect/disconnect messages (not to the router), default = true.

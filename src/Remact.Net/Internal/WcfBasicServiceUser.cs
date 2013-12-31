@@ -4,6 +4,8 @@
 using System;
 using System.ServiceModel;         // OperationContext
 using System.Net;                  // Dns
+using Remact.Net.Contracts;
+using Newtonsoft.Json.Linq;
 
 namespace Remact.Net.Internal
 {
@@ -13,7 +15,7 @@ namespace Remact.Net.Internal
   /// <para>Has the possibility to store and forward notifications that are not expected by the client.</para>
   /// <para>This could also be handled by the more cumbersome 'DualHttpBinding'.</para>
   /// </summary>
-  internal class WcfBasicServiceUser: IWcfBasicPartner
+  internal class WcfBasicServiceUser: IWcfBasicPartner, IWampRpcV1Server
   {
     //----------------------------------------------------------------------------------------------
     #region Properties
@@ -30,20 +32,17 @@ namespace Remact.Net.Internal
     /// </summary>
     public   int                       ClientId    {get; private set;}
 
-    internal uint                      LastReceivedSendId = 0;
+    internal uint                      LastReceivedSendId;
 
     /// <summary>
     /// Set to 0 when a message has been received or sent. Incremented by milliseconds in TestNotificationChannel().
     /// </summary>
-    internal int                       ChannelTestTimer   = 0;
+    internal int                       ChannelTestTimer;
     internal object                    ClientAccessLock   = new Object();
-    
-    private OperationContext           m_OperationContext = null;
-    private IWcfDualCallbackContract   m_NotifyCallback   = null; // wsDualHttbBinding
-    private WcfNotifyResponse          m_NotifyList       = null; // non dual-Bindings
-    private bool                       m_boOutstandingNotification = false;
-    private bool                       m_boDisconnectReq  = false;
-    private bool                       m_boTimeout        = false;
+
+    private Wamp.WampClientProxy       m_wampProxy;
+    private bool                       m_boDisconnectReq;
+    private bool                       m_boTimeout;
 
     #endregion
     //----------------------------------------------------------------------------------------------
@@ -56,16 +55,17 @@ namespace Remact.Net.Internal
     /// <param name="clientId">client id used for this client on this service.</param>
     internal WcfBasicServiceUser (ActorOutput clientIdent, int clientId)
     {
-      ClientId    = clientId;
-      ClientIdent = clientIdent;
+        ClientId    = clientId;
+        ClientIdent = clientIdent;
     }// CTOR
 
     internal void UseDataFrom (ActorMessage remoteClient)
     {
-      ClientIdent.UseDataFrom (remoteClient);
-      UriBuilder uri = new UriBuilder (ClientIdent.Uri);
-      uri.Scheme = ClientIdent.OutputSidePartner.Uri.Scheme; // the service's Uri scheme (e.g. http)
-      ClientIdent.Uri = uri.Uri; 
+        ClientIdent.UseDataFrom (remoteClient);
+        UriBuilder uri = new UriBuilder (ClientIdent.Uri);
+        uri.Scheme = ClientIdent.OutputSidePartner.Uri.Scheme; // the service's Uri scheme (e.g. http)
+        ClientIdent.Uri = uri.Uri;
+        //TODO m_wampProxy =
     }
     
     /// <summary>
@@ -73,39 +73,17 @@ namespace Remact.Net.Internal
     /// </summary>
     public void Disconnect ()
     {
-      SetConnected( false, null );
-      if (m_OperationContext == null) return;
-      AbortNotificationChannel ();
+        SetConnected( false, null );
+        // communication continues with last message
     }
-
-    /// <summary>
-    /// Internally called on client connect or reconnect
-    /// </summary>
-    internal void OpenNotificationChannel()
-    {
-      try
-      {
-        m_NotifyList     = null;
-        m_NotifyCallback = OperationContext.Current.GetCallbackChannel<IWcfDualCallbackContract>();
-      }
-      catch (Exception)
-      {
-        m_NotifyCallback = null;
-        m_NotifyList = new WcfNotifyResponse();
-      }
-      m_OperationContext = OperationContext.Current;
-      m_boOutstandingNotification = false;
-      m_boTimeout                 = false;
-    }// OpenNotificationChannel
-
 
     /// <summary>
     /// Is the client connected ?
     /// </summary>
-    public bool IsConnected 
+    public bool IsConnected
     {
       get {
-        return !m_boDisconnectReq && !m_boTimeout;
+          return !m_boDisconnectReq && !m_boTimeout && m_wampProxy != null;
       }
     }
 
@@ -126,18 +104,11 @@ namespace Remact.Net.Internal
         }
     }
 
-
-    /// <summary>
-    /// Is the client connected and is no error on the notification channel ?
-    /// </summary>
-    public bool IsNotificationChannelOk {get{return m_OperationContext != null && m_OperationContext.Channel != null 
-                                         && m_OperationContext.Channel.State != CommunicationState.Closed
-                                         && m_OperationContext.Channel.State != CommunicationState.Faulted
-                                         && IsConnected;}}
     /// <summary>
     /// Was there an error that disconnected the client ?
     /// </summary>
-    public bool IsFaulted               {get{return m_boTimeout;}}
+    public bool IsFaulted {get{return m_boTimeout;}}
+
 
     /// <summary>
     /// Trace internal state of the client connection to this service
@@ -145,17 +116,13 @@ namespace Remact.Net.Internal
     /// <param name="mark">6 char, eg. 'Connec', 'Discon', 'Abortd'</param>
     public void TraceState(string mark)
     {
-      if (m_OperationContext != null)
-      {
-        WcfTrc.Info ("WcfSvc", "["+mark.PadRight (6)+"] "+ ClientMark
-                      +", SessionId="+m_OperationContext.SessionId
-                      +", Channel="+m_OperationContext.Channel.State
-                      +", InstanceContext=" +m_OperationContext.InstanceContext.State
-                      +", IncomingChannels="+m_OperationContext.InstanceContext.IncomingChannels.Count
-                      +", OutgoingChannels="+m_OperationContext.InstanceContext.OutgoingChannels.Count
-                      , ClientIdent.Logger );
-      }
-    }// TraceState
+        if (m_wampProxy != null)
+        {
+            RaTrc.Info ("WcfSvc", "["+mark.PadRight (6)+"] "+ ClientMark
+                            + ", ClientAddress=" + m_wampProxy.ClientAddress.ToString()
+                            , ClientIdent.Logger );
+        }
+    }
 
     /// <summary>
     /// Used for tracing messages from/to this client.
@@ -168,43 +135,36 @@ namespace Remact.Net.Internal
     /// <returns>True, when connection state has changed.</returns>
     internal bool TestChannel (int i_nMillisecondsPassed)
     {
-      if (m_NotifyCallback != null)
-      { // Notification channel has been opened
-        try
+        if (m_wampProxy != null)
         {
-          if (!IsNotificationChannelOk)
-          {
-            if (IsConnected) TraceState("Discon");
-                        else AbortNotificationChannel();
-            m_NotifyCallback   = null;
-            m_OperationContext = null;
-          }
-          else if (!m_boOutstandingNotification 
-                 && ClientIdent.TimeoutSeconds > 0 
+            try
+            {
+                if (ClientIdent.TimeoutSeconds > 0 
                  && ChannelTestTimer > ((ClientIdent.TimeoutSeconds+i_nMillisecondsPassed)*400)) // 2 messages per TimeoutSeconds-period
-          {
-            SendNotification (new WcfIdleMessage());
-          }
+                {
+                    SendNotification (new ReadyMessage());
+                }
+            }
+            catch (Exception ex)
+            {
+                RaTrc.Exception( "Cannot test '" + ClientMark + "' from service", ex, ClientIdent.Logger );
+                m_boTimeout = true;
+                return true; // changed
+            }
         }
-        catch (Exception ex)
-        {
-            WcfTrc.Exception( "Cannot test '" + ClientMark + "' from service", ex, ClientIdent.Logger );
-          m_boTimeout = true;
-          return true; // changed
-        }
-      }
 
-      if (IsConnected)
-      {
-        if (ClientIdent.TimeoutSeconds > 0 && ChannelTestTimer > ClientIdent.TimeoutSeconds*1000)
+        if (IsConnected)
         {
-          m_boTimeout = true; // Client has not sent a request for longer than the specified timeout
-          SetConnected( false, null );
-          return true; // changed
+            if (ClientIdent.TimeoutSeconds > 0 && ChannelTestTimer > ClientIdent.TimeoutSeconds*1000)
+            {
+                m_boTimeout = true; // Client has not sent a request for longer than the specified timeout
+                SetConnected( false, null );
+                return true; // changed
+            }
+
+            ChannelTestTimer += i_nMillisecondsPassed; // increment at end, to give a chance to recover after longer debugging breakpoints
         }
-        ChannelTestTimer += i_nMillisecondsPassed; // increment at end, to give a chance to recover after longer debugging breakpoints
-      }
-      return false;
+        return false;
     }// TestChannel
 
 
@@ -213,80 +173,59 @@ namespace Remact.Net.Internal
     /// </summary>
     internal void AbortNotificationChannel ()
     {
-      if (m_OperationContext == null) return;
+        if (m_wampProxy == null) return;
 
-      try
-      {
-        SetConnected( false, null );
-        IContextChannel channel = m_OperationContext.Channel;
-        
-        if (channel.State != CommunicationState.Closed
-         && channel.State != CommunicationState.Faulted)
+        try
         {
-          //TraceState("Abortd");
-          m_OperationContext = null; // mark channel as closed, Abort may take a while ???
-          channel.Abort(); // Abort all pending notifications, ???? maybe reduce "deadlock" time when several clients are shutdown without disconnect
+            SetConnected( false, null );
+            //TraceState("Abortd");
+            m_wampProxy.Dispose();
+            m_wampProxy = null;
         }
-      }
-      catch (Exception ex)
-      {
-          WcfTrc.Exception( "Cannot abort '" + ClientMark + "' from service", ex, ClientIdent.Logger );
-      }
-      m_OperationContext = null;
-      m_NotifyCallback   = null;
-      m_boOutstandingNotification = false;
-    }// AbortNotificationChannel
+        catch (Exception ex)
+        {
+            m_wampProxy = null;
+            RaTrc.Exception( "Cannot abort '" + ClientMark + "' from service", ex, ClientIdent.Logger );
+        }
+    }
 
 
     /// <summary>
     /// <para>Call SendNotification(...) to enqueue a notification message.</para>
-    /// <para>All queued messages are added to the next response by NotificationsAndResponse().</para>
     /// </summary>
     /// <param name="notification">a message not requested by the client</param>
-    public void SendNotification (IWcfMessage notification)
+    public void SendNotification(object notification)
     {
-      ChannelTestTimer = 0;
-      try
-      {
-        if (m_NotifyList == null && !IsNotificationChannelOk)
+        ChannelTestTimer = 0;
+        try
         {
-            WcfTrc.Error( "WcfSvc", "Closed notification channel to " + ClientMark, ClientIdent.Logger );
+            if (m_wampProxy == null)
+            {
+                RaTrc.Error( "WcfSvc", "Closed notification channel to " + ClientMark, ClientIdent.Logger );
+            }
+            else
+            {
+                m_wampProxy.Event(ClientIdent.Name, new JObject(notification));
+            }
         }
-        else
+        catch (Exception ex)
         {
-          m_boOutstandingNotification = true;
-          if (m_NotifyList != null)
-          { // Multimessage is sent with next response
-            m_NotifyList.Notifications.Add (notification);
-            ++ClientIdent.LastSentId;
-          }
-          else
-          { // Send over wsDualHttpBinding
-            // RequestId = 0 = Notification
-            WcfReqIdent id = new WcfReqIdent (ClientIdent, ClientId, 0, notification, null);
-            m_NotifyCallback.BeginOnWcfNotificationFromService (notification, ref id, OnAsyncNotificationCallback, notification);
-          }
+            RaTrc.Exception( "Cannot notify '" + ClientMark + "' from service", ex, ClientIdent.Logger );
+            m_boTimeout = true;
         }
-      }
-      catch (Exception ex)
-      {
-          WcfTrc.Exception( "Cannot notify '" + ClientMark + "' from service", ex, ClientIdent.Logger );
-          m_boTimeout = true;
-      }
     }// SendNotification
-
 
     /// <summary>
     /// Returns the number of notification responses, that have not been sent yet.
     /// </summary>
     public int OutstandingResponsesCount
     { get {
-            if (m_NotifyList != null) return m_NotifyList.Notifications.Count;
+            //if (m_NotifyList != null) return m_NotifyList.Notifications.Count;
             return 0;
     }}
 
-
-    internal void StartNewRequest( WcfReqIdent id )
+/*
+    internal void StartNewRequest( Request id )
     {
       if( m_NotifyList.Notifications.Count > 0 )
       {
@@ -301,11 +240,11 @@ namespace Remact.Net.Internal
     /// <para>It must be called to return the response by the service.</para>
     /// </summary>
     /// <returns>The responses plus notifications.</returns>
-    public IWcfMessage GetNotificationsAndResponse (ref WcfReqIdent id)
+    public object GetNotificationsAndResponse(ref Request id)
     {
       if( id.Response == null )
       {
-          id.SendResponse( new WcfIdleMessage() ); // no other information to return
+          id.SendResponse( new ReadyMessage() ); // no other information to return
       }
 
       id = id.Response; // return the new id also
@@ -321,60 +260,11 @@ namespace Remact.Net.Internal
       }
       return id.Message;
     }
-
-
-    // End of a wsDualHttpBinding notify/response process
-    private void OnAsyncNotificationCallback(IAsyncResult ar)
-    {
-      m_boOutstandingNotification = false;
-
-      if (m_NotifyCallback == null || m_boTimeout) return;
-      
-      try
-      {
-        IWcfMessage notification = ar.AsyncState as IWcfMessage;
-        if (ar.IsCompleted)
-        {
-          WcfReqIdent id = null;
-          m_NotifyCallback.EndOnWcfNotificationFromService (ref id, ar);
-          WcfTrc.Info (/*notification.SvcSndId*/"WcfSvc", notification.ToString(), ClientIdent.Logger);
-        }
-        else
-        {
-            WcfTrc.Error(/*notification.SvcSndId*/"WcfSvc", "notification not completed", ClientIdent.Logger );
-          m_boTimeout = true;
-        }
-      }
-      catch (Exception ex)
-      {
-          WcfTrc.Exception( "lost notification to " + ClientMark, ex, ClientIdent.Logger );
-        m_boTimeout = true;
-      }
-    }// OnAsyncNotificationCallback
-
+*/
 
     #endregion
     //----------------------------------------------------------------------------------------------
     #region IWcfPartner implementation
-
-    /*/ <summary>
-    /// Get the state of the outgoing connection. May be called on any thread.
-    /// </summary>
-    /// <returns>A <see cref="WcfState"/></returns>
-    public WcfState GetConnectionState ()
-    {
-      if (m_NotifyList == null)
-      { // Dual channel
-        if (IsNotificationChannelOk) return WcfState.Ok;
-      }
-      else
-      { // Polling channel
-        if (IsConnected)  return WcfState.Ok;
-      }
-      if (IsFaulted)      return WcfState.Faulted;
-      return WcfState.Disconnected;
-      //return WcfState.Connecting;
-    }*/
 
     /// <summary>
     /// Dummy implementation. Client stub is always connected to the service.
@@ -388,31 +278,19 @@ namespace Remact.Net.Internal
     /// <summary>
     /// Send a request to the service internally connected to this client-stub.
     /// </summary>
-    /// <param name="id">A <see cref="WcfReqIdent"/>the 'Sender' property references the sending partner, where the response is expected.</param>
-    public void SendOut (WcfReqIdent id)
+    /// <param name="id">A <see cref="Request"/>the 'Sender' property references the sending partner, where the response is expected.</param>
+    public void SendOut (Request id)
     {
-      ClientIdent.SendOut(id); // post to service input queue
+        ClientIdent.SendOut(id); // post to service input queue
     }
 
     /// <summary>
     /// Send a response to the remote client belonging to this client-stub.
     /// </summary>
-    /// <param name="rsp">A <see cref="WcfReqIdent"/>the 'Sender' property references the sending partner, where the response is expected.</param>
-    public void PostInput( WcfReqIdent rsp )
+    /// <param name="rsp">A <see cref="Request"/>the 'Sender' property references the sending partner, where the response is expected.</param>
+    public void PostInput( Request req )
     {
-        if (rsp.MessageSaved == null)
-        {
-            rsp.MessageSaved = rsp.Message; // keep the first message as main response
-        }
-        else
-        {
-            if( rsp.NotifyList == null )
-            {
-                rsp.NotifyList = new WcfNotifyResponse();
-            }
-            rsp.NotifyList.Notifications.Add( rsp.Message );
-        }
-        rsp.SendId = ++ClientIdent.LastSentId;
+        m_wampProxy.CallResult(req.RequestId.ToString(), new JObject(req.Message));
     }
 
     /// <summary>
@@ -420,7 +298,22 @@ namespace Remact.Net.Internal
     /// </summary>
     public Uri Uri {get{return ClientIdent.Uri;}}
 
-    #endregion
 
-  }// class WcfBasicServiceUser
-}// namespace
+    #endregion
+    //----------------------------------------------------------------------------------------------
+    #region IWampRpcV1ClientCallbacks implementation
+
+    void IWampRpcV1Server.Call(IActorOutput client, string callId, string procUri, object[] arguments)
+    {
+        throw new NotImplementedException();
+    }
+
+    void IWampRpcV1Server.CallError(string callId, string errorUri, string errorDesc, object errorDetails)
+    {
+        throw new NotImplementedException();
+    }
+
+    #endregion
+    //----------------------------------------------------------------------------------------------
+  }
+}

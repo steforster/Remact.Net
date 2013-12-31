@@ -34,9 +34,9 @@ namespace Remact.Net.Internal
     /// <param name="serviceIdent">This WcfPartners input is linked to network.</param>
     /// <param name="tcpPort">The TCP port for the service or 0, when automatic port allocation may be used.</param>
     /// <param name="publishToRouter">True(=default): The servicename will be published to the WcfRouter on localhost.</param>
-    /// <param name="serviceConfig">Plugin your own service configuration instead of WcfDefault.ServiceConfiguration.</param>
+    /// <param name="serviceConfig">Plugin your own service configuration instead of RemactDefaults.ServiceConfiguration.</param>
     internal WcfServiceAssistant(ActorInput serviceIdent, int tcpPort = 0, bool publishToRouter = true,
-                                 IWcfServiceConfiguration serviceConfig = null )
+                                 IActorInputConfiguration serviceConfig = null )
       : base (serviceIdent, /*firstClient=*/1, /*maxClients=*/20)
     {
         m_nTcpPort = tcpPort;
@@ -44,7 +44,7 @@ namespace Remact.Net.Internal
         m_WcfServiceConfig = serviceConfig;
         if( m_WcfServiceConfig == null )
         {
-            m_WcfServiceConfig = WcfDefault.Instance;
+            m_WcfServiceConfig = RemactDefaults.Instance;
         }
     }// CTOR
     
@@ -87,13 +87,13 @@ namespace Remact.Net.Internal
         
         WcfRouterClient.Instance().RemoveService (this); // send disable message to WcfRouterService
 
-        if( base.ServiceIdent.Uri != null ) WcfTrc.Info( "Wcf", "Closed service " + base.ServiceIdent.Uri, base.ServiceIdent.Logger );
-                                       else WcfTrc.Info( "Wcf", "Closed service " + base.ServiceIdent.Name, base.ServiceIdent.Logger );
+        if( base.ServiceIdent.Uri != null ) RaTrc.Info( "Wcf", "Closed service " + base.ServiceIdent.Uri, base.ServiceIdent.Logger );
+                                       else RaTrc.Info( "Wcf", "Closed service " + base.ServiceIdent.Name, base.ServiceIdent.Logger );
         base.Disconnect();
       }
       catch (Exception ex)
       {
-          WcfTrc.Exception( "Svc: Error while closing the service", ex, base.ServiceIdent.Logger );
+          RaTrc.Exception( "Svc: Error while closing the service", ex, base.ServiceIdent.Logger );
       }
     }// Disconnect
     
@@ -109,7 +109,7 @@ namespace Remact.Net.Internal
 
     private int                      m_nTcpPort;
     private bool                     m_boPublishToRouter;
-    private IWcfServiceConfiguration m_WcfServiceConfig;
+    private IActorInputConfiguration m_WcfServiceConfig;
 
     private static int ms_nSharedTcpPort;
     private static int ms_nSharedTcpPortCount;
@@ -120,18 +120,18 @@ namespace Remact.Net.Internal
     /// <summary>
     /// Gets or sets the state of the incoming service connection from the network.
     /// </summary>
-    /// <returns>A <see cref="WcfState"/></returns>
-    public WcfState InputStateFromNetwork
+    /// <returns>A <see cref="PortState"/></returns>
+    public PortState InputStateFromNetwork
     {
       get
       {
-        if (m_ServiceHost == null) return WcfState.Disconnected;
-        if (m_ServiceHost.State == CommunicationState.Opened) return WcfState.Ok;
-        return WcfState.Faulted;
+        if (m_ServiceHost == null) return PortState.Disconnected;
+        if (m_ServiceHost.State == CommunicationState.Opened) return PortState.Ok;
+        return PortState.Faulted;
       }
       set
       {
-        if (value == WcfState.Ok || value == WcfState.Connecting)
+        if (value == PortState.Ok || value == PortState.Connecting)
         {
           if (!IsOpen) OpenService ();
         }
@@ -229,10 +229,10 @@ namespace Remact.Net.Internal
           Uri uri = new Uri ("http://"
                 + base.ServiceIdent.HostName     // initialized with Dns.GetHostName()
                 +":"+m_nTcpPort
-                +"/"+WcfDefault.WsNamespace+"/"+base.ServiceIdent.Name);// ServiceName, not the ServiceType
+                +"/"+RemactDefaults.WsNamespace+"/"+base.ServiceIdent.Name);// ServiceName, not the ServiceType
 
           // Add the dynamically created endpoint. And let the library user add binding and security credentials.
-          // By default WcfDefault.DoServiceConfiguration is called.
+          // By default RemactDefaults.DoServiceConfiguration is called.
           m_WcfServiceConfig.DoServiceConfiguration( m_ServiceHost, ref uri, /*isRouter=*/false );
           base.ServiceIdent.Uri = uri;
         }
@@ -261,12 +261,12 @@ namespace Remact.Net.Internal
         }
         
         // The service can now be accessed, but must be registered.
-        WcfTrc.Info( "Wcf", "Opened service " + base.ServiceIdent.Uri, base.ServiceIdent.Logger );
+        RaTrc.Info( "Wcf", "Opened service " + base.ServiceIdent.Uri, base.ServiceIdent.Logger );
         return true;
       }
       catch (Exception ex)
       {
-          WcfTrc.Exception( "could not open " + base.ServiceIdent.Name, ex, base.ServiceIdent.Logger );
+          RaTrc.Exception( "could not open " + base.ServiceIdent.Name, ex, base.ServiceIdent.Logger );
           base.LastAction = ex.Message;
       }
       return false;
@@ -481,16 +481,16 @@ namespace Remact.Net.Internal
                       ConcurrencyMode = ConcurrencyMode.Multiple,
                       UseSynchronizationContext = false )] // every request comes on its own threadpool thread.
 
-    private class InternalMultithreadedServiceNet40 : IWcfBasicContractSync
+    private class InternalMultithreadedServiceNet40 //: IWcfBasicContractSync
     {
         private WcfServiceAssistant m_myServiceAssistant = null;
 
         // The legacy IWcfBasicServiceSync entrypoint
-        public IWcfMessage WcfRequest( IWcfMessage msg, ref WcfReqIdent id )
+        public object WcfRequest(object msg, ref Request id)
         {
-            // before V3.0 Message was not a [DataMember] of WcfReqIdent. Now, msg is transfered two times, when sending through this legacy interface!
+            // before V3.0 Message was not a [DataMember] of Request. Now, msg is transfered two times, when sending through this legacy interface!
             id.Message = msg;
-            IWcfMessage response = null;
+            object response = null;
             try
             {
                 WcfBasicServiceUser svcUser;
@@ -512,8 +512,8 @@ namespace Remact.Net.Internal
                     if (connectMsg != null) // no error and connected
                     {
                         id.Sender.LastSentId--; // correct for reqCopy
-                        var reqCopy = new WcfReqIdent(id.Sender, id.ClientId, id.RequestId, id.Message, id.SourceLambda);
-                        reqCopy.Response = reqCopy; // do not send a WcfIdleMessage
+                        var reqCopy = new Request(id.Sender, id.ClientId, id.RequestId, id.Message, id.SourceLambda);
+                        reqCopy.Response = reqCopy; // do not send a ReadyMessage
                         reqCopy.Input = id.Input;
                         var task = DoRequestAsync( reqCopy ); // call event OnInputConnected or OnInputDisconnected on the correct thread.
                         if (connectMsg.Usage != ActorMessage.Use.ServiceDisconnectResponse)
@@ -525,17 +525,16 @@ namespace Remact.Net.Internal
                 }
                 else
                 {
-                    svcUser.StartNewRequest( id );
+                    //svcUser.StartNewRequest( id );
                     var task = DoRequestAsync( id );
                     id = task.Result; // blocking wait!
-                    response = svcUser.GetNotificationsAndResponse( ref id ); // changes id
+                    //response = svcUser.GetNotificationsAndResponse( ref id ); // changes id
                 }
             }
             catch( Exception ex )
             {
-                WcfTrc.Exception( id.SvcRcvId, ex, m_myServiceAssistant.ServiceIdent.Logger );
-                response = new WcfErrorMessage( WcfErrorMessage.Code.UnhandledExceptionOnService, ex );
-                if (id.Sender != null) id.SendId = ++id.Sender.LastSentId;
+                RaTrc.Exception( id.SvcRcvId, ex, m_myServiceAssistant.ServiceIdent.Logger );
+                response = new ErrorMessage( ErrorMessage.Code.UnhandledExceptionOnService, ex );
             }
 
             id.Message = response;
@@ -544,9 +543,9 @@ namespace Remact.Net.Internal
 
 
 
-        private Task<WcfReqIdent> DoRequestAsync( WcfReqIdent id )
+        private Task<Request> DoRequestAsync( Request id )
         {
-            var tcs = new TaskCompletionSource<WcfReqIdent>();
+            var tcs = new TaskCompletionSource<Request>();
 
             if( id.Input.IsMultithreaded
              || id.Input.SyncContext == null
@@ -579,7 +578,7 @@ namespace Remact.Net.Internal
                         }
                         catch( Exception ex )
                         {
-                            WcfTrc.Exception( "Request to " + id.Input.Name + " cannot be handled by application", ex );
+                            RaTrc.Exception( "Request to " + id.Input.Name + " cannot be handled by application", ex );
                             tcs.SetException( ex );
                         }
                     }, null )); // obj

@@ -12,14 +12,11 @@ using System.Net;                  // IPAddress
 
 namespace Remact.Net
 {
-  //----------------------------------------------------------------------------------------------
-  #region == class WcfPartnerMessage ==
-
   /// <summary>
   /// <para>This class identifies a communication partner (client or service).</para>
   /// <para>It is used to open and close communication.</para>
   /// </summary>
-  [DataContract (Namespace=WcfDefault.WsNamespace)]
+  [DataContract (Namespace=RemactDefaults.WsNamespace)]
   public class ActorMessage: WcfMessage
   {
     /// <summary>
@@ -39,7 +36,7 @@ namespace Remact.Net
     [DataMember] public string  AppName;
     
     /// <summary>
-    /// Unique instance number of the application (unique in a plant or on a host, depending on WcfDefault.IsAppIdUniqueInPlant).
+    /// Unique instance number of the application (unique in a plant or on a host, depending on RemactDefaults.IsAppIdUniqueInPlant).
     /// </summary>
     [DataMember] public int     AppInstance;
     
@@ -193,7 +190,7 @@ namespace Remact.Net
     /// </summary>
     /// <param name="p">Copy data from partner p.</param>
     /// <param name="usage">Usage enumeration of this message.</param>
-    public ActorMessage (IActorPortId p, Use usage)
+    public ActorMessage (IActorPort p, Use usage)
     {
       AppName     = p.AppName;
       AppVersion  = p.AppVersion;
@@ -259,7 +256,7 @@ namespace Remact.Net
       {
         return Name.Equals (p.Name); // a service may be moved to another host or another application
       }
-      else if (WcfDefault.Instance.IsAppIdUniqueInPlant (AppInstance))
+      else if (RemactDefaults.Instance.IsAppIdUniqueInPlant (AppInstance))
       { // plant unique client
         return AppInstance == p.AppInstance
             && Name.Equals (p.Name)
@@ -268,7 +265,7 @@ namespace Remact.Net
       else
       { // host unique client
         return AppInstance ==  p.AppInstance
-            &&(!WcfDefault.Instance.IsProcessIdUsed (AppInstance) || ProcessId == p.ProcessId) // process id is valid for a running client only
+            &&(!RemactDefaults.Instance.IsProcessIdUsed (AppInstance) || ProcessId == p.ProcessId) // process id is valid for a running client only
             && HostName.Equals (p.HostName)
             && Name.Equals (p.Name)
             && AppName.Equals (p.AppName);  // these clients may not be moved
@@ -280,7 +277,7 @@ namespace Remact.Net
     /// </summary>
     /// <param name="p">second partner</param>
     /// <returns>true if AppName + AppInstance + Client- or ServiceName are equal</returns>
-    public bool IsEqualTo (IActorPortId p)
+    public bool IsEqualTo (IActorPort p)
     {
       if (p == null || IsServiceName != p.IsServiceName) return false;
 
@@ -288,7 +285,7 @@ namespace Remact.Net
       {
         return Name.Equals (p.Name); // a service may be moved to another host or another application
       }
-      else if (WcfDefault.Instance.IsAppIdUniqueInPlant (AppInstance))
+      else if (RemactDefaults.Instance.IsAppIdUniqueInPlant (AppInstance))
       { // plant unique client
         return AppInstance == p.AppInstance
             && Name.Equals (p.Name)
@@ -297,7 +294,7 @@ namespace Remact.Net
       else
       { // host unique client
         return AppInstance ==  p.AppInstance
-            &&(!WcfDefault.Instance.IsProcessIdUsed (AppInstance) || ProcessId == p.ProcessId) // process id is valid for a running client only
+            &&(!RemactDefaults.Instance.IsProcessIdUsed (AppInstance) || ProcessId == p.ProcessId) // process id is valid for a running client only
             && HostName.Equals (p.HostName)
             && Name.Equals (p.Name)
             && AppName.Equals (p.AppName);  // these clients may not be moved
@@ -323,7 +320,7 @@ namespace Remact.Net
       }
       else
       {
-          name = WcfDefault.Instance.GetAppIdentification(AppName, AppInstance, HostName, ProcessId) + "/" + Name;
+          name = RemactDefaults.Instance.GetAppIdentification(AppName, AppInstance, HostName, ProcessId) + "/" + Name;
       }
 
       switch (Usage)
@@ -341,8 +338,5 @@ namespace Remact.Net
     #if MONO
     public static new IEnumerable<Type> z_GetKnownTypeList()  {return WcfMessage.z_GetKnownTypeList();}
     #endif
-  }// ActorInfo
-
-  #endregion
-
-}// namespace
+  }
+}

@@ -29,7 +29,7 @@ namespace Remact.Net
     /// </summary>
     /// <param name="name">The unique name of this service.</param>
     /// <param name="requestHandler">The method to be called when a request is received.</param>
-    public ActorInput (string name, WcfMessageHandler requestHandler)
+    public ActorInput (string name, MessageHandler requestHandler)
          : base (name, requestHandler)
     {
         IsServiceName = true;
@@ -40,7 +40,7 @@ namespace Remact.Net
     /// </summary>
     /// <param name="name">The unique name of this service.</param>
     internal ActorInput(string name)
-        : base(name, (WcfMessageHandler)null)
+        : base(name, (MessageHandler)null)
     {
         IsServiceName = true;
     }// CTOR2
@@ -82,7 +82,7 @@ namespace Remact.Net
       IsServiceName = true;
       HostName = routerHost;
       Name = serviceName;
-      Uri = new Uri("routed://" + routerHost + "/" + WcfDefault.WsNamespace + "/" + serviceName);
+      Uri = new Uri("routed://" + routerHost + "/" + RemactDefaults.WsNamespace + "/" + serviceName);
     }
 
     // prepare for tracing of connect-process
@@ -110,9 +110,9 @@ namespace Remact.Net
     /// <param name="serviceName">The unique name of the service or null, when this partners name is equal to the servicename. </param>
     /// <param name="tcpPort">The TCP port for the service or 0, when automatic port allocation will be used.</param>
     /// <param name="publishToRouter">True(=default): The servicename will be published to the WcfRouter on localhost.</param>
-    /// <param name="serviceConfig">Plugin your own service configuration instead of WcfDefault.ServiceConfiguration.</param>
+    /// <param name="serviceConfig">Plugin your own service configuration instead of RemactDefaults.ServiceConfiguration.</param>
     public void LinkInputToNetwork( string serviceName = null, int tcpPort = 0, bool publishToRouter = true,
-                                    IWcfServiceConfiguration serviceConfig = null )
+                                    IActorInputConfiguration serviceConfig = null )
     {
       if (serviceName != null) this.Name = serviceName;
       this.IsServiceName = true;
@@ -149,16 +149,16 @@ namespace Remact.Net
     /// <summary>
     /// <para>Gets or sets the state of the incoming connection from the network to the service.</para>
     /// <para>May be called from any thread.</para>
-    /// <para>Setting InputStateFromNetwork to WcfState.Ok or WcfState.Connecting reconnects a previously disconnected link.</para>
+    /// <para>Setting InputStateFromNetwork to PortState.Ok or PortState.Connecting reconnects a previously disconnected link.</para>
     /// <para>These states may be set only after an initial call to TryConnect from the actors internal thread.</para>
     /// <para>Setting other states will disconnect the WCF service from network.</para>
     /// </summary>
-    /// <returns>A <see cref="WcfState"/></returns>
-    public WcfState InputStateFromNetwork 
+    /// <returns>A <see cref="PortState"/></returns>
+    public PortState InputStateFromNetwork 
     { get{
         if (m_MyInputService != null) return m_MyInputService.InputStateFromNetwork;
-        if( m_Connected ) return WcfState.Ok;
-        return WcfState.Unlinked;
+        if( m_Connected ) return PortState.Ok;
+        return PortState.Unlinked;
       } 
       set{} 
     }
@@ -188,15 +188,15 @@ namespace Remact.Net
 
     /// <summary>
     /// The event is risen, when a client is connected to this service.
-    /// The response to the WcfReqIdent is sent by AsyncWcfLib. No further response is required. 
+    /// The response to the Request is sent by AsyncWcfLib. No further response is required. 
     /// </summary>
-    public event WcfMessageHandler OnInputConnected;
+    public event MessageHandler OnInputConnected;
     
     /// <summary>
     /// The event is risen, when a client is disconnected from this service.
-    /// The response to the WcfReqIdent is sent by AsyncWcfLib. No further response is required. 
+    /// The response to the Request is sent by AsyncWcfLib. No further response is required. 
     /// </summary>
-    public event WcfMessageHandler OnInputDisconnected;
+    public event MessageHandler OnInputDisconnected;
 
 
     #endregion
@@ -242,8 +242,8 @@ namespace Remact.Net
     /// <summary>
     /// May not be called.
     /// </summary>
-    /// <param name="id">A <see cref="WcfReqIdent"/>the 'Sender' property references the sending partner, where the response is expected.</param>
-    public void SendOut(WcfReqIdent id)
+    /// <param name="id">A <see cref="Request"/>the 'Sender' property references the sending partner, where the response is expected.</param>
+    public void SendOut(Request id)
     {
         throw new Exception("AsyncWcfLib: Input '" + Name + "' cannot SendOut");
     }
@@ -295,8 +295,8 @@ namespace Remact.Net
     /// <summary>
     /// Used internally: Threadsafe enqueue message at the receiving partner. No response is expected.
     /// </summary>
-    /// <param name="msg">The IWcfMessage to enqueue.</param>
-    public void PostInput (IWcfMessage msg)
+    /// <param name="msg">The message to enqueue.</param>
+    public void PostInput(object msg)
     {
       PostInputFrom (null, msg, null);
     }
@@ -305,8 +305,8 @@ namespace Remact.Net
     /// Used internally: Threadsafe enqueue message at the receiving partner.
     /// </summary>
     /// <param name="sender">The source partner sending the message <see cref="ActorPort"/>. Its default message handler will receive the response.</param>
-    /// <param name="msg">The IWcfMessage to enqueue.</param>
-    public void PostInputFrom (ActorOutput sender, IWcfMessage msg)
+    /// <param name="msg">The message to enqueue.</param>
+    public void PostInputFrom(ActorOutput sender, object msg)
     {
       PostInputFrom (sender, msg, null);
     }
@@ -315,9 +315,9 @@ namespace Remact.Net
     /// Used internally: Threadsafe enqueue message at the receiving partner.
     /// </summary>
     /// <param name="sender">The source partner sending the message <see cref="ActorPort"/></param>
-    /// <param name="msg">The IWcfMessage to enqueue.</param>
+    /// <param name="msg">The message to enqueue.</param>
     /// <param name="responseHandler">The lambda expression executed at the source partner, when a response arrives.</param>
-    public void PostInputFrom (ActorOutput sender, IWcfMessage msg, AsyncResponseHandler responseHandler)
+    public void PostInputFrom(ActorOutput sender, object msg, AsyncResponseHandler responseHandler)
     {
       if (sender == null)
       {
@@ -342,18 +342,18 @@ namespace Remact.Net
       }
 
       if (sender.LastRequestIdSent == uint.MaxValue) sender.LastRequestIdSent = 10;
-      WcfReqIdent id = new WcfReqIdent (sender, 0, ++sender.LastRequestIdSent, msg, responseHandler);
+      Request id = new Request (sender, 0, ++sender.LastRequestIdSent, msg, responseHandler);
       PostInput (id); // Message is posted into the message queue
     }
 
 
     /// <summary>
-    /// Message is passed to users connect/disconnect event handler, may be overloaded and call a WcfMessageHandler&lt;TSC>
+    /// Message is passed to users connect/disconnect event handler, may be overloaded and call a MessageHandler;TSC>
     /// </summary>
-    /// <param name="id">WcfReqIdent containing Message and Sender.</param>
+    /// <param name="id">Request containing Message and Sender.</param>
     /// <param name="msg">The message.</param>
     /// <returns>True when handled.</returns>
-    protected override bool OnConnectDisconnect (WcfReqIdent id, ActorMessage msg)
+    protected override bool OnConnectDisconnect (Request id, ActorMessage msg)
     {
       if      (msg.Usage == ActorMessage.Use.ClientConnectRequest)
       {
@@ -424,27 +424,27 @@ namespace Remact.Net
   {
     /// <summary>
     /// The event is risen, when a client is connected to this service.
-    /// The response to the WcfReqIdent is sent by AsyncWcfLib. No further response is required. 
+    /// The response to the Request is sent by AsyncWcfLib. No further response is required. 
     /// </summary>
-    public new event WcfMessageHandler<TSC> OnInputConnected;
+    public new event MessageHandler<TSC> OnInputConnected;
 
 
     /// <summary>
     /// The event is risen, when a client is disconnected from this service.
-    /// The response to the WcfReqIdent is sent by AsyncWcfLib. No further response is required. 
+    /// The response to the Request is sent by AsyncWcfLib. No further response is required. 
     /// </summary>
-    public new event WcfMessageHandler<TSC> OnInputDisconnected;
+    public new event MessageHandler<TSC> OnInputDisconnected;
 
 
-    private WcfMessageHandler<TSC> m_defaultTscInputHandler;
+    private MessageHandler<TSC> m_defaultTscInputHandler;
 
 
     /// <summary>
     /// Creates a ActorInput using a handler method with TSC object for each client.
     /// </summary>
     /// <param name="name">The application internal name of this service or client</param>
-    /// <param name="requestHandler">The method to be called when a request is received. See <see cref="WcfMessageHandler&lt;TSC>"/>.</param>
-    public ActorInput(string name, WcfMessageHandler<TSC> requestHandler)
+    /// <param name="requestHandler">The method to be called when a request is received. See <see cref="MessageHandler;TSC>"/>.</param>
+    public ActorInput(string name, MessageHandler<TSC> requestHandler)
         : base(name)
     {
       DefaultInputHandler      = OnDefaultInput;
@@ -462,10 +462,10 @@ namespace Remact.Net
     /// <summary>
     /// Message is passed to users connect/disconnect event handler.
     /// </summary>
-    /// <param name="id">WcfReqIdent containing Message and Sender.</param>
+    /// <param name="id">Request containing Message and Sender.</param>
     /// <param name="msg">The message.</param>
     /// <returns>True when handled.</returns>
-    protected override bool OnConnectDisconnect (WcfReqIdent id, ActorMessage msg)
+    protected override bool OnConnectDisconnect (Request id, ActorMessage msg)
     {
       TSC senderCtx = GetSenderContext(id);
 
@@ -485,7 +485,7 @@ namespace Remact.Net
     }
 
 
-    internal static TSC GetSenderContext (WcfReqIdent id)
+    internal static TSC GetSenderContext (Request id)
     {
         // We are peer   : SendingP is an ActorOutput. It has only one Output and therefore only one (our) SenderContext. 
         // We are service: SendingP is the client  proxy (WcfBasicServiceUser). It has our SenderContext.
@@ -508,18 +508,18 @@ namespace Remact.Net
     /// <summary>
     /// Message is passed to users default handler.
     /// </summary>
-    /// <param name="id">WcfReqIdent containing Message and Sender.</param>
-    private void OnDefaultInput (WcfReqIdent id)
+    /// <param name="id">Request containing Message and Sender.</param>
+    private void OnDefaultInput (Request id)
     {
       TSC senderCtx = GetSenderContext(id);
 
       if (m_defaultTscInputHandler != null)
       {
-        m_defaultTscInputHandler (id, senderCtx); // WcfMessageHandler<TSC> delegate
+        m_defaultTscInputHandler (id, senderCtx); // MessageHandlerC> delegate
       } 
       else 
       {
-          WcfTrc.Error( "AsyncWcfLib", "Unhandled request: " + id.Message, Logger );
+          RaTrc.Error( "AsyncWcfLib", "Unhandled request: " + id.Message, Logger );
       }
     }
   }// class ActorInput<TSC>

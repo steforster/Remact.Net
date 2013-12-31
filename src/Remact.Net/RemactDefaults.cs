@@ -8,29 +8,30 @@ using System.Reflection;           // Assembly
 using System.Net;                  // Dns
 using System.IO;                   // Files
 using Remact.Net.Internal;
+using Remact.Net.Internal.Wamp;
 
 namespace Remact.Net
 {
   /// <summary>
   /// Common definitions for all interacting actors.
-  /// Library users may plug in their own implementation of this class to WcfDefault.Instance.
+  /// Library users may plug in their own implementation of this class to RemactDefaults.Instance.
   /// </summary>
-  public class WcfDefault : IWcfDefault
+  public class RemactDefaults : IRemactDefaults
   {
     //----------------------------------------------------------------------------------------------
     #region == Instance and plugin ==
 
-    private static IWcfDefault m_instance;
+    private static IRemactDefaults m_instance;
 
     /// <summary>
-    /// Library users may plug in their own implementation of IWcfDefault to WcfDefault.Instance.
+    /// Library users may plug in their own implementation of IRemactDefaults to RemactDefaults.Instance.
     /// </summary>
-    public static IWcfDefault Instance
+    public static IRemactDefaults Instance
     {
         get{
             if( m_instance == null )
             {
-                m_instance = new WcfDefault ();
+                m_instance = new RemactDefaults ();
             }
             return m_instance;
         }
@@ -42,9 +43,9 @@ namespace Remact.Net
 
 
     /// <summary>
-    /// When the Library users does not plug in its own implementation of IWcfDefault, WcfDefault will be used.
+    /// When the Library users does not plug in its own implementation of IRemactDefaults, RemactDefaults will be used.
     /// </summary>
-    protected WcfDefault() // constructor
+    protected RemactDefaults() // constructor
     {
         m_appAssembly = Assembly.GetEntryAssembly();// exe Application
         if (m_appAssembly == null)
@@ -140,11 +141,8 @@ namespace Remact.Net
     /// <param name="clientBase">The ClientBase object to modify the endpoint and security credentials.</param>
     /// <param name="uri">The endpoint URI to connect.</param>
     /// <param name="forRouter">true if used for WcfRouter service.</param>
-    public virtual void DoClientConfiguration (ClientBase<IWcfBasicContractSync> clientBase, ref Uri uri, bool forRouter)
+    public virtual void DoClientConfiguration (object clientBase, ref Uri uri, bool forRouter)
     {
-      clientBase.Endpoint.Binding = GetDefaultBinding (ref uri, forRouter);
-      clientBase.Endpoint.Address = new EndpointAddress (uri);
-      //clientBase.ClientCredentials... http://msdn.microsoft.com/en-us/library/ms732391%28v=VS.100%29.aspx
     }
 
     #endregion
@@ -183,7 +181,7 @@ namespace Remact.Net
     /// <summary>
     /// Library users may change here how to get an application instance id.
     /// </summary>
-    public virtual int     ApplicationInstance {get{return WcfTrc.ApplicationInstance;}}
+    public virtual int     ApplicationInstance {get{return RaTrc.ApplicationInstance;}}
 
     /// <summary>
     /// Library users may change here whether an application instance is unique in plant or on host.
@@ -248,7 +246,7 @@ namespace Remact.Net
     /// <param name="args">the commandline arguments passed to Main()</param>
     /// <param name="traceWriter">null or the plugin to write trace</param>
     /// <param name="installExitHandler">when true: install handlers for normal and exceptional application exit</param>
-    public static void ApplicationStart (string[] args, WcfTrc.ITracePlugin traceWriter, bool installExitHandler)
+    public static void ApplicationStart (string[] args, RaTrc.ITracePlugin traceWriter, bool installExitHandler)
     {
       int appInstance = 0;
       try
@@ -256,10 +254,10 @@ namespace Remact.Net
         if (args.Length > 0) appInstance = Convert.ToInt32 (args[0]); // by default the first commandline argument
       }
       catch{}
-      WcfTrc.UsePlugin (traceWriter);
-      WcfTrc.Start (appInstance);
-      if (installExitHandler) WcfApplication.InstallExitHandler();
-      WcfTrc.Run(); // open file and write first messages
+      RaTrc.UsePlugin (traceWriter);
+      RaTrc.Start (appInstance);
+      if (installExitHandler) RemactApplication.InstallExitHandler();
+      RaTrc.Run(); // open file and write first messages
     }
 
     private string m_TraceFolder = null;
@@ -272,7 +270,7 @@ namespace Remact.Net
       get{
         if (m_TraceFolder != null) return m_TraceFolder;
 
-        string sBase = Path.GetFullPath (Path.GetDirectoryName (WcfApplication.ExecutablePath));
+        string sBase = Path.GetFullPath (Path.GetDirectoryName (RemactApplication.ExecutablePath));
         m_TraceFolder = sBase+"/../trace";
         if (Directory.Exists(m_TraceFolder)) return m_TraceFolder;
 

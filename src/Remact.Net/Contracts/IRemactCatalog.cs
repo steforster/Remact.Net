@@ -5,6 +5,10 @@ namespace Remact.Net.Contracts
 {
     /// <summary>
     /// Remotly callable methods provided by the Remact.Catalog.exe application.
+    /// <para>
+    /// Note: Method calls returning void are not awaitable for a reply on the client side. These are 'one way' requests.
+    /// Use 'ReadyMessage' as return value to be able to await a reply on client side.
+    /// </para>
     /// </summary>
     public interface IRemactCatalog
     {
@@ -12,13 +16,13 @@ namespace Remact.Net.Contracts
         /// Called when an actor opens its input for remote access.
         /// </summary>
         /// <param name="actorInput">The <see cref="ActorMessage"/> of the opened service (ActorInput).</param>
-        void Opened(ActorMessage actorInput);
+        ReadyMessage OpenedInput(ActorMessage actorInput);
 
         /// <summary>
         /// Called before an actor closes its remotly accessable input.
         /// </summary>
         /// <param name="actorInput">The <see cref="ActorMessage"/> of the closing service (ActorInput).</param>
-        void Closing(ActorMessage actorInput);
+        ReadyMessage ClosingInput(ActorMessage actorInput);
 
         /// <summary>
         /// Called when a client looks up an ActorInput (service).
@@ -30,6 +34,6 @@ namespace Remact.Net.Contracts
         /// and the clients try to reconnnect the lost connection.
         /// </param>
         /// <returns>The <see cref="ActorMessage"/> of an opened ActorInput (service). Null, when no such ActorInput is found.</returns>
-        ActorMessage Lookup(string actorInputName);
+        ActorMessage LookupInput(string actorInputName);
     }
 }

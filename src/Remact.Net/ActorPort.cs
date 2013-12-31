@@ -18,7 +18,7 @@ namespace Remact.Net
   /// <para>The base class of ActorInput and ActorOutput.</para>
   /// <para>It is the source or destination of message exchange.</para>
   /// </summary>
-  public class ActorPort: IActorPortId
+  public class ActorPort: IActorPort
   {
     #region Identification and Constructor
     
@@ -39,7 +39,7 @@ namespace Remact.Net
     public string  AppName          {get; private set;}
     
     /// <summary>
-    /// Unique instance number of the application (unique in a plant or on a host, depending on WcfDefault.IsAppIdUniqueInPlant).
+    /// Unique instance number of the application (unique in a plant or on a host, depending on RemactDefaults.IsAppIdUniqueInPlant).
     /// </summary>
     public int     AppInstance      {get; private set;}
     
@@ -53,7 +53,7 @@ namespace Remact.Net
     /// The AppIdentification is composed from AppName, HostName, AppInstance and processId to for a unique string
     /// </summary>
     public string  AppIdentification
-      {get {return WcfDefault.Instance.GetAppIdentification (AppName, AppInstance, HostName, ProcessId);}}
+      {get {return RemactDefaults.Instance.GetAppIdentification (AppName, AppInstance, HostName, ProcessId);}}
 
     /// <summary>
     /// Assembly version of the application.
@@ -101,12 +101,12 @@ namespace Remact.Net
     /// </summary>
     /// <param name="name">The application internal name of this service or client.</param>
     /// <param name="defaultMessageHandler">The method to be called when a request or response is received and no other handler is applicatable.</param>
-    public ActorPort ( string name, WcfMessageHandler defaultMessageHandler=null )
+    public ActorPort ( string name, MessageHandler defaultMessageHandler=null )
     {
-      AppName          = WcfDefault.Instance.ApplicationName;
-      AppVersion       = WcfDefault.Instance.ApplicationVersion;
-      AppInstance      = WcfDefault.Instance.ApplicationInstance;
-      ProcessId        = WcfDefault.Instance.ProcessId;
+      AppName          = RemactDefaults.Instance.ApplicationName;
+      AppVersion       = RemactDefaults.Instance.ApplicationVersion;
+      AppInstance      = RemactDefaults.Instance.ApplicationInstance;
+      ProcessId        = RemactDefaults.Instance.ProcessId;
       Name             = name;
       IsServiceName    = false; // must be set to true by user, when a unique servicename is given.
       CifComponentName = WcfMessage.CifAssembly.GetName().Name;
@@ -117,7 +117,7 @@ namespace Remact.Net
       DefaultInputHandler = defaultMessageHandler;
 
       // Prepare uri for application internal partner. May be overwritten, when linking to external partner.
-      if (!WcfDefault.Instance.IsProcessIdUsed (AppInstance))
+      if (!RemactDefaults.Instance.IsProcessIdUsed (AppInstance))
       {
         Uri = new Uri(string.Format ("cli://{0}/{1}-{2:0#}/{3}", HostName, AppName, AppInstance, Name));
       }
@@ -266,7 +266,7 @@ namespace Remact.Net
         }
         catch (Exception ex)
         {
-            WcfTrc.Exception("Svc: Error while closing all services and disconnecting all clients", ex, WcfApplication.Logger);
+            RaTrc.Exception("Svc: Error while closing all services and disconnecting all clients", ex, RemactApplication.Logger);
         }
     }// DisconnectAll
 
@@ -278,12 +278,12 @@ namespace Remact.Net
     /// Serviceside: Sender.PostInput() sends a response from client-stub to the remote client.
     /// Clientside:  Post a response into this clients input queue.
     /// </summary>
-    /// <param name="id">A <see cref="WcfReqIdent"/> the 'Sender' property references the sending partner.</param>
-    public void PostInput (WcfReqIdent id)
+    /// <param name="id">A <see cref="Request"/> the 'Sender' property references the sending partner.</param>
+    public void PostInput (Request id)
     {
         if( !m_Connected )
         {
-            DispatchingError( id, new WcfErrorMessage( WcfErrorMessage.Code.NotConnected, "Cannot post message" ));
+            DispatchingError( id, new ErrorMessage( ErrorMessage.Code.NotConnected, "Cannot post message" ));
         }
         else if (m_RedirectIncoming != null)
         {
@@ -309,7 +309,7 @@ namespace Remact.Net
             }
             catch( Exception ex )
             {
-                DispatchingError( id, new WcfErrorMessage( WcfErrorMessage.Code.CouldNotDispatch, ex ));
+                DispatchingError( id, new ErrorMessage( ErrorMessage.Code.CouldNotDispatch, ex ));
             }
         }
     }
@@ -336,8 +336,8 @@ namespace Remact.Net
 
     /// <summary>
     /// Set your logging object here (null by default).
-    /// It is passed to the logging methods of WcfTrc.ITracePlugin.
-    /// You will use it when writing your own adapter class based on WcfTrc.ITracePlugin.
+    /// It is passed to the logging methods of RaTrc.ITracePlugin.
+    /// You will use it when writing your own adapter class based on RaTrc.ITracePlugin.
     /// The adapter class is needed to redirect trace output to your own logging/tracing framework.
     /// </summary>
     public    object                 Logger       { get; set; }
@@ -372,20 +372,20 @@ namespace Remact.Net
     /// </summary>
     internal protected bool          m_Connected;
 
-    private   WcfReqIdent            m_CurrentReq;
+    private   Request            m_CurrentReq;
     internal  SynchronizationContext SyncContext;
     internal  int                    ManagedThreadId;
-    internal WcfMessageHandler DefaultInputHandler;
+    internal MessageHandler DefaultInputHandler;
 #if !BEFORE_NET45
     internal  WcfMessageHandlerAsync DefaultInputHandlerAsync;
 #endif
 
 
-    private void DispatchingError( WcfReqIdent id, WcfErrorMessage err )
+    private void DispatchingError( Request id, ErrorMessage err )
     {
         try
         {
-            var err1 = id.Message as WcfErrorMessage;
+            var err1 = id.Message as ErrorMessage;
             if( err1 != null )
             {
                 err.InnerMessage = err1.Message;
@@ -394,17 +394,17 @@ namespace Remact.Net
 
             if( id.IsRequest )
             {
-                if (err.Error == WcfErrorMessage.Code.CouldNotDispatch) err.Error = WcfErrorMessage.Code.UnhandledExceptionOnService;
+                if (err.Error == ErrorMessage.Code.CouldNotDispatch) err.Error = ErrorMessage.Code.UnhandledExceptionOnService;
                 id.SendResponseFrom( this, err, null );
             }
             else
             {
-                WcfTrc.Error( id.SvcSndId, err.ToString(), Logger );
+                RaTrc.Error( id.SvcSndId, err.ToString(), Logger );
             }
         }
         catch( Exception ex )
         {
-            WcfTrc.Exception( "Cannot return dispatching error message", ex, Logger );
+            RaTrc.Exception( "Cannot return dispatching error message", ex, Logger );
         }
     }
 
@@ -433,7 +433,7 @@ namespace Remact.Net
                 int threadId = Thread.CurrentThread.ManagedThreadId;
                 if (SyncContext != null && ManagedThreadId != threadId && m_Connected)
                 {
-                    WcfTrc.Error( "AsyncWcfLib", "Thread connecting ActorPort '" + Name + "' has changed. Only one synchronization context is supported!", Logger );
+                    RaTrc.Error( "AsyncWcfLib", "Thread connecting ActorPort '" + Name + "' has changed. Only one synchronization context is supported!", Logger );
                 }
                 ManagedThreadId = threadId;
                 SyncContext = currentThreadSyncContext;
@@ -546,27 +546,27 @@ namespace Remact.Net
     {
         try
         {
-            DispatchMessage( userState as WcfReqIdent );
+            DispatchMessage( userState as Request );
         }
         catch( Exception ex )
         {
-            DispatchingError( userState as WcfReqIdent, new WcfErrorMessage( WcfErrorMessage.Code.CouldNotDispatch, ex ) );
+            DispatchingError( userState as Request, new ErrorMessage( ErrorMessage.Code.CouldNotDispatch, ex ) );
         }
     }// MessageHandlerBase
 
 
     // Message is passed to the lambda functions of the sending context or to the default response handler
-    internal void DispatchMessage (WcfReqIdent id)
+    internal void DispatchMessage (Request id)
     {
         if( !m_Connected )
         {
-            WcfTrc.Warning( "AsyncWcfLib", "ActorPort '" + Name + "' is not connected. Cannot dispatch message!", Logger );
+            RaTrc.Warning( "AsyncWcfLib", "ActorPort '" + Name + "' is not connected. Cannot dispatch message!", Logger );
             return;
         }
 
         if( m_CurrentReq != null )
         {
-            WcfTrc.Error( "AsyncWcfLib", "Multithreading not allowed when dispatching a message in " + Name, Logger );
+            RaTrc.Error( "AsyncWcfLib", "Multithreading not allowed when dispatching a message in " + Name, Logger );
             Thread.Sleep(0); // let the other thread finish - may be it helps..
         }
 
@@ -590,14 +590,14 @@ namespace Remact.Net
                 }
                 else if (TraceConnect && IsServiceName)
                 {
-                    WcfTrc.Info(id.SvcRcvId, String.Format("{0} to WCF service './{1}'", connectMsg.Usage.ToString(), Name), Logger);
+                    RaTrc.Info(id.SvcRcvId, String.Format("{0} to WCF service './{1}'", connectMsg.Usage.ToString(), Name), Logger);
                 }
             }
 
             if (TraceReceive && connectMsg == null)
             {
-                if( IsServiceName ) WcfTrc.Info( id.SvcRcvId, id.ToString(), Logger );
-                               else WcfTrc.Info( id.CltRcvId, id.ToString(), Logger );
+                if( IsServiceName ) RaTrc.Info( id.SvcRcvId, id.ToString(), Logger );
+                               else RaTrc.Info( id.CltRcvId, id.ToString(), Logger );
             }
             bool needsResponse = id.IsRequest;
 
@@ -615,17 +615,17 @@ namespace Remact.Net
                 }
                 else if (DefaultInputHandler != null)
                 {
-                    DefaultInputHandler (id); // WcfMessageHandler delegate
+                    DefaultInputHandler (id); // MessageHandlerlegate
                 }
                 else
                 {
-                    WcfTrc.Error( "WcfLib", "Unhandled response: " + id.Message, Logger );
+                    RaTrc.Error( "WcfLib", "Unhandled response: " + id.Message, Logger );
                 }
             }
 
             if (needsResponse && id.Response == null)
             {
-                id.SendResponse(new WcfIdleMessage());
+                id.SendResponse(new ReadyMessage());
             }
         }
         finally
@@ -636,12 +636,12 @@ namespace Remact.Net
 
 
     /// <summary>
-    /// Message is passed to users connect/disconnect event handler, may be overloaded and call a WcfMessageHandler&lt;TSC>
+    /// Message is passed to users connect/disconnect event handler, may be overloaded and call a MessageHandler;TSC>
     /// </summary>
-    /// <param name="id">WcfReqIdent containing Message and Sender.</param>
+    /// <param name="id">Request containing Message and Sender.</param>
     /// <param name="msg">The message.</param>
     /// <returns>True when handled.</returns>
-    protected virtual bool OnConnectDisconnect(WcfReqIdent id, ActorMessage msg)
+    protected virtual bool OnConnectDisconnect(Request id, ActorMessage msg)
     {
          return false;
     }

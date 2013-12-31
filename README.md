@@ -33,6 +33,18 @@ Remact is work in progress. The following goals are intended to reach:
 [ ] WebSockets and Json are used to link actors written in Java or JavaScript (browser based actors)
 
 
+Documentation
+-------------
+Currently, [the main conceptual ideas](http://sourceforge.net/p/asyncwcflib/wiki/Actors/) should be read on the AsyncWcfLib pages.
+
+The folder **src/Remact.Net/Contracts** contains remotly callable methods and their corresponding request- and response messages.
+These definitions and their XML comments form the basic interface definition of actors.
+
+Application actors will add more contracts in an other assembly. 
+These definitions must be present on both sides of the communication channel.
+For actors not written in a .NET programming language (e.g. Java Script), the interface definition must be translated. 
+
+
 Third party components and standards
 ------------------------------------
 Remact.Net is built on open standards and uses open components, namely

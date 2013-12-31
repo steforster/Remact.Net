@@ -8,21 +8,21 @@ using System.Reflection;    // Assembly, Attributes
 
 namespace Remact.Net
 {
-public partial class WcfTrc
+public partial class RaTrc
 {
 	/// <summary>
     /// <para>The default implementation of a ITracePlugin</para>
     /// <para>Writes to visual studio diagnostic console or to Terminal/Console.</para>
     /// <para>You can easyly write a similar adapter class to redirect trace output to your own logging framework.</para>
     /// </summary>
-	public class PluginDefault: ITracePlugin
+	public class PluginConsole: ITracePlugin
 	{
     //------------------------------------------------------------
     // implement ITracePlugin
     /// <summary>
     /// Write trace header and store 'ApplicationInstance'
     /// </summary>
-    /// <param name="appInstance">a number to identify the application instance, see WcfDefault</param>
+    /// <param name="appInstance">a number to identify the application instance, see RemactDefaults</param>
     public void Start (int appInstance)
     {
       ApplicationInstance = appInstance;
@@ -107,6 +107,6 @@ public partial class WcfTrc
       }
     }
     
-  }//class PluginDefault
-}// partial class WcfTrc
+  }//class PluginConsole
+}// partial class RaTrc
 }// namespace

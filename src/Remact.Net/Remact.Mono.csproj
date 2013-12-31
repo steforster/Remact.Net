@@ -33,6 +33,7 @@
     <DocumentationFile>bin\release\mono\Remact.Net.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="Mono.Posix">
       <HintPath>..\..\lib\Mono\Mono.Posix.dll</HintPath>
     </Reference>
@@ -55,32 +56,35 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Contracts\ActorMessage.cs" />
+    <Compile Include="Contracts\ReadyMessage.cs" />
     <Compile Include="Contracts\IRemactService.cs" />
     <Compile Include="Contracts\IRemactCatalog.cs" />
     <Compile Include="Contracts\ErrorMessage.cs" />
     <Compile Include="Contracts\IWampRpcV1.cs" />
+    <Compile Include="Internal\Wamp\WampClientProxy.cs" />
+    <Compile Include="Internal\Wamp\WampServer.cs" />
+    <Compile Include="Internal\Wamp\WampClient.cs" />
+    <Compile Include="IRemactDefaults.cs" />
+    <Compile Include="RemactDefaults.cs" />
+    <Compile Include="RemactDelegates.cs" />
     <Compile Include="Request.cs" />
-    <Compile Include="WcfDefault.cs" />
-    <Compile Include="WcfExtensionMethods.cs" />
-    <Compile Include="Internal\IWcfBasicContract.cs" />
     <Compile Include="Internal\IWcfBasicPartner.cs" />
     <Compile Include="Internal\WcfBasicClientAsync.cs" />
-    <Compile Include="Internal\WcfBasicClientGenerated.cs" />
+    <None Include="Internal\WcfBasicClientGenerated.cs" />
     <Compile Include="Internal\WcfBasicMessages.cs" />
     <Compile Include="Internal\WcfBasicService.cs" />
     <Compile Include="Internal\WcfBasicServiceUser.cs" />
     <Compile Include="Internal\WcfRouterClient.cs" />
     <Compile Include="Internal\WcfServiceAssistant.cs" />
-    <Compile Include="Util\WcfApplication.cs" />
-    <Compile Include="Util\WcfTrc.cs" />
-    <Compile Include="Util\WcfTrcPluginDefault.cs" />
-    <Compile Include="Util\WcfTrcPluginFile.cs" />
+    <Compile Include="Util\RaTrc.cs" />
+    <Compile Include="Util\RaTrcConsole.cs" />
+    <Compile Include="Util\RaTrcPluginFile.cs" />
+    <Compile Include="Util\RemactApplication.cs" />
     <Compile Include="ActorInput.cs" />
     <Compile Include="ActorOutput.cs" />
     <Compile Include="ActorPort.cs" />
     <Compile Include="IActor.cs" />
     <Compile Include="Properties\AssemblyInfoCommon.cs" />
-    <Compile Include="IWcfDefault.cs" />
     <Compile Include="Properties\AssemblyInfo.Mono.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
@@ -91,5 +95,10 @@
     <PostBuildEvent>
     </PostBuildEvent>
   </PropertyGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Alchemy-Websockets\src\Alchemy\Alchemy.csproj">
+      <Project>{45486cde-86a3-4769-952f-e0821bf79493}</Project>
+      <Name>Alchemy</Name>
+    </ProjectReference>
+  </ItemGroup>
 </Project>

@@ -82,7 +82,7 @@ namespace Remact.Net.Internal
         }//-------------------------------
         else if (m_RouterClient.IsFaulted)
         {
-          if (m_nConnectTries < 0) WcfTrc.Error ("Wcf", "Router client in Fault state !", WcfApplication.Logger );
+          if (m_nConnectTries < 0) RaTrc.Error ("Wcf", "Router client in Fault state !", RemactApplication.Logger );
           m_RouterClient.AbortCommunication ();
           m_Timer.Change (15000, 1000); // 15 s warten und neu starten
         }//-------------------------------
@@ -92,7 +92,7 @@ namespace Remact.Net.Internal
           {
             //m_nSendingThreadId = Thread.CurrentThread.ManagedThreadId;
             if (++m_nConnectTries >= 10) m_nConnectTries = 1;
-            var uri = new Uri("http://localhost:" + WcfDefault.Instance.RouterPort + "/" + WcfDefault.WsNamespace + "/" + WcfDefault.Instance.RouterServiceName);
+            var uri = new Uri("http://localhost:" + RemactDefaults.Instance.RouterPort + "/" + RemactDefaults.WsNamespace + "/" + RemactDefaults.Instance.RouterServiceName);
             m_RouterClient.TryConnectVia( uri, OnWcfMessageReceived, toRouter:true );
           }
           lock (ms_Lock)
@@ -121,15 +121,15 @@ namespace Remact.Net.Internal
               {
                 svc.NextEnableMessage = DateTime.Now.AddSeconds(20);
                 svc.IsServiceRegistered = true;
-                WcfReqIdent id = m_RouterClient.SendOut (req);
-                WcfTrc.Info( id.CltSndId, "send to WcfRouter: " + req.ToString(), WcfApplication.Logger );// id.CltSndId is updated in Send()
+                Request id = m_RouterClient.SendOut (req);
+                RaTrc.Info( id.CltSndId, "send to WcfRouter: " + req.ToString(), RemactApplication.Logger );// id.CltSndId is updated in Send()
 
               }
               else if (m_ServiceList[m_nCurrentSvc].NextEnableMessage < DateTime.Now)
               {
                 m_ServiceList[m_nCurrentSvc].NextEnableMessage  = DateTime.Now.AddSeconds(20);
                 m_RouterClient.SendOut (req);
-                //WcfTrc.Info (req.CltSndId, "Alive    "+req.ToString ()); // req.CltSndId is updated in Send()
+                //RaTrc.Info (req.CltSndId, "Alive    "+req.ToString ()); // req.CltSndId is updated in Send()
               }
               m_nCurrentSvc++; // next Svc on next timer event
             }
@@ -140,27 +140,27 @@ namespace Remact.Net.Internal
       }
       catch (Exception ex)
       {
-          WcfTrc.Exception( "during RouterClient timer", ex, WcfApplication.Logger );
+          RaTrc.Exception( "during RouterClient timer", ex, RemactApplication.Logger );
       }
       m_Running = false;
     }// OnTimerTick
 
     
     // Response callback from WcfRouterService
-    private void OnWcfMessageReceived (WcfReqIdent rsp)
+    private void OnWcfMessageReceived (Request rsp)
     {
-      if (rsp.Message is WcfErrorMessage)
+      if (rsp.Message is ErrorMessage)
       {
         if (m_nConnectTries % 20 == 1) {
-          WcfErrorMessage err = rsp.Message as WcfErrorMessage;
-          if (err.Error == WcfErrorMessage.Code.ServiceNotRunning
-           || err.Error == WcfErrorMessage.Code.RouterNotRunning)
+          ErrorMessage err = rsp.Message as ErrorMessage;
+          if (err.Error == ErrorMessage.Code.ServiceNotRunning
+           || err.Error == ErrorMessage.Code.RouterNotRunning)
           {
-              WcfTrc.Warning( rsp.CltRcvId, "WCF router service not running at  '" + rsp.Sender.Uri + "'", WcfApplication.Logger );
+              RaTrc.Warning( rsp.CltRcvId, "WCF router service not running at  '" + rsp.Sender.Uri + "'", RemactApplication.Logger );
           }
           else
           {
-              WcfTrc.Warning( rsp.CltRcvId, err.ToString(), WcfApplication.Logger );
+              RaTrc.Warning( rsp.CltRcvId, err.ToString(), RemactApplication.Logger );
           }
         }
       }
@@ -170,7 +170,7 @@ namespace Remact.Net.Internal
       }
       else
       {
-          WcfTrc.Info( rsp.CltRcvId, rsp.ToString(), WcfApplication.Logger );
+          RaTrc.Info( rsp.CltRcvId, rsp.ToString(), RemactApplication.Logger );
       }
     }// OnWcfMessageReceived
     
@@ -247,7 +247,7 @@ namespace Remact.Net.Internal
             {
               m_RouterClient.Disconnect(); // send last messages, contrary to AbortCommunication();
               m_RouterClient = null;
-              WcfTrc.Info( "Wcf", "Router client disconnected.", WcfApplication.Logger );
+              RaTrc.Info( "Wcf", "Router client disconnected.", RemactApplication.Logger );
             }
             catch
             {
@@ -257,7 +257,7 @@ namespace Remact.Net.Internal
           if( m_RouterClient != null && !m_RouterClient.IsDisconnected )
           {
             m_RouterClient.AbortCommunication();
-            WcfTrc.Error( "Wcf", "Router client aborted, outstanding responses = " + n, WcfApplication.Logger );
+            RaTrc.Error( "Wcf", "Router client aborted, outstanding responses = " + n, RemactApplication.Logger );
           }
         }
         
@@ -302,8 +302,8 @@ namespace Remact.Net.Internal
         {
           ActorMessage req = new ActorMessage (m_ServiceList[n].ServiceIdent, 
                                                          ActorMessage.Use.ServiceDisableRequest);
-          WcfReqIdent id = m_RouterClient.SendOut (req);
-          WcfTrc.Info( id.CltSndId, "Disable  " + req.ToString(), WcfApplication.Logger );
+          Request id = m_RouterClient.SendOut (req);
+          RaTrc.Info( id.CltSndId, "Disable  " + req.ToString(), RemactApplication.Logger );
           m_ServiceList[n].IsServiceRegistered = false;
         }
         m_ServiceList.RemoveAt(n);

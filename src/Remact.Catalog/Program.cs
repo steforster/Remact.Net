@@ -26,11 +26,11 @@ namespace Remact.Catalog
         if (args.Length > 0) appInstance = Convert.ToInt32 (args[0]); // by default the first commandline argument
       }
       catch { }
-      WcfTrc.UsePlugin (new WcfTrc.PluginFile ());
-      WcfTrc.Start (appInstance);
-      WcfApplication.InstallExitHandler ();
-      WcfTrc.Run (); // open file and write first messages
-      WcfTrc.Info( "Router", "Start" );
+      RaTrc.UsePlugin (new RaTrc.PluginFile ());
+      RaTrc.Start (appInstance);
+      RemactApplication.InstallExitHandler ();
+      RaTrc.Run (); // open file and write first messages
+      RaTrc.Info( "Router", "Start" );
       try
       {
         Router = new Router();
@@ -41,11 +41,11 @@ namespace Remact.Catalog
       }
       catch (Exception ex) // any Exception
       {
-        WcfTrc.Exception("Router: Fatal error", ex);
+        RaTrc.Exception("Router: Fatal error", ex);
         Router.Dispose();
       }
-      WcfTrc.Info( "Router", "Stop" );
-      WcfTrc.Stop();
+      RaTrc.Info( "Router", "Stop" );
+      RaTrc.Stop();
     }// Main
   }
 }

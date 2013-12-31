@@ -11,7 +11,7 @@ using System.Threading;     // Sleep
 
 namespace Remact.Net
 {
-public partial class WcfTrc
+public partial class RaTrc
 {
 	/// <summary>
   /// <para>The 'file' implementation of a ITracePlugin</para>
@@ -26,7 +26,7 @@ public partial class WcfTrc
     /// Write trace header and store 'ApplicationInstance'
     /// You can easyly write a similar adapter class to redirect trace output to your own logging framework. See WcfTrcPluginDefault.
     /// </summary>
-    /// <param name="appInstance">a number to identify the application instance, see WcfDefault</param>
+    /// <param name="appInstance">a number to identify the application instance, see RemactDefaults</param>
     public void Start (int appInstance)
     {
       ApplicationInstance = appInstance;
@@ -117,12 +117,12 @@ public partial class WcfTrc
           if (calledByUser)
           {
             System.Diagnostics.Trace.WriteLine (String.Format ("| {0:D} {0:T} {1} stopped, Exit code = {2}", 
-                                           DateTime.Now, WcfDefault.Instance.AppIdentification, Environment.ExitCode));
+                                           DateTime.Now, RemactDefaults.Instance.AppIdentification, Environment.ExitCode));
           }
           else
           {
             System.Diagnostics.Trace.WriteLine (String.Format ("| {0:D} {0:T} {1} interrupted, Exit code = {2}", 
-                                           DateTime.Now, WcfDefault.Instance.AppIdentification, Environment.ExitCode));
+                                           DateTime.Now, RemactDefaults.Instance.AppIdentification, Environment.ExitCode));
           }
           System.Diagnostics.Trace.WriteLine ("+-------------------------------------------------------------------------------------------------");
           System.Diagnostics.Trace.Flush ();
@@ -175,8 +175,8 @@ public partial class WcfTrc
       {
         if (i_FileName == null || i_FileName.Length == 0)
         {
-          i_FileName = WcfDefault.Instance.TraceFolder;
-          // i_FileName += "/" + Path.GetFileNameWithoutExtension (WcfApplication.ExecutablePath);
+          i_FileName = RemactDefaults.Instance.TraceFolder;
+          // i_FileName += "/" + Path.GetFileNameWithoutExtension (RemactApplication.ExecutablePath);
           // if (!Directory.Exists(i_FileName)) Directory.CreateDirectory(i_FileName);
 
           // older files than 30 days will be deleted
@@ -193,7 +193,7 @@ public partial class WcfTrc
             }
             catch (Exception) {}
           }
-          i_FileName += "/" + WcfDefault.Instance.AppIdentification + ".trace.txt";
+          i_FileName += "/" + RemactDefaults.Instance.AppIdentification + ".trace.txt";
         }
       }
       catch (Exception ex)
@@ -344,15 +344,15 @@ public partial class WcfTrc
         }
         
         s += "\r\n|";
-        s += "\r\n|   Machine    \t: " + Environment.MachineName + " (Process Id " + WcfDefault.Instance.ProcessId + ")";
+        s += "\r\n|   Machine    \t: " + Environment.MachineName + " (Process Id " + RemactDefaults.Instance.ProcessId + ")";
         s += "\r\n|   OS         \t: " + Environment.OSVersion;
         s += "\r\n|   Framework  \t: ";
-        if (WcfApplication.IsRunningWithMono) s+="Mono"; else s+=".NET";
+        if (RemactApplication.IsRunningWithMono) s+="Mono"; else s+=".NET";
         s += " Version " + Environment.Version;
         s += "\r\n|   User       \t: " + Environment.UserName;
         if (Environment.UserInteractive) s += " (interactive)";
                                     else s += " (not interactive)";
-        if (WcfApplication.ServiceName.Length > 0) s += ", running as service "+WcfApplication.ServiceName;
+        if (RemactApplication.ServiceName.Length > 0) s += ", running as service "+RemactApplication.ServiceName;
                                    
         string[] arg = Environment.GetCommandLineArgs();
         s += "\r\n|";                            
@@ -401,11 +401,11 @@ public partial class WcfTrc
       catch (Exception ex)
       {
         MessageBox.Show(Message+"\r\n-------\r\n"+ex.Message, 
-                        "Exception while tracing for "+WcfDefault.Instance.AppIdentification,
+                        "Exception while tracing for "+RemactDefaults.Instance.AppIdentification,
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
       }
     }// static TracingExeception
 
   }//class PluginFile
-}// partial class WcfTrc
+}// partial class RaTrc
 }// namespace

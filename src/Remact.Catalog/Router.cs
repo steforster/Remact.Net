@@ -28,7 +28,7 @@ namespace Remact.Catalog
   /// The Router Class is used to Create and Dispose the RouterService.
   /// It has to be called periodically to do checks on all connections and update the statusdisplay.
   /// </summary>
-  class Router : IWcfServiceConfiguration, IWcfClientConfiguration
+  class Router : IActorInputConfiguration, IActorOutputConfiguration
   {
     //----------------------------------------------------------------------------------------------
     #region Fields
@@ -41,7 +41,7 @@ namespace Remact.Catalog
     //----------------------------------------------------------------------------------------------
     #region Properties
 
-    public  IActorPortId             Service { get{ return m_WcfService;} }
+    public  IActorPort             Service { get{ return m_WcfService;} }
     public  WcfPartnerListMessage    SvcRegister;
     public  bool                     SvcRegisterChanged = true;
     public  List<ActorOutput<SvcDat>> PeerRouters;
@@ -71,13 +71,13 @@ namespace Remact.Catalog
             m_WcfService.Disconnect();
             m_WcfService.OnInputConnected    -= m_RouterService.OnClientConnectedOrDisconnected;
             m_WcfService.OnInputDisconnected -= m_RouterService.OnClientConnectedOrDisconnected;
-            WcfTrc.Info( "Wcf", "Closed service " + m_WcfService.Uri );
+            RaTrc.Info( "Wcf", "Closed service " + m_WcfService.Uri );
             m_WcfService = null;
         }
       }
       catch (Exception ex)
       {
-        WcfTrc.Exception ("Wcf: Error while closing the service", ex);
+        RaTrc.Exception ("Wcf: Error while closing the service", ex);
       }
     }
 
@@ -101,7 +101,7 @@ namespace Remact.Catalog
                 {
                     s.Usage = ActorMessage.Use.ServiceDisableRequest;
                     SvcRegisterChanged = true;
-                    WcfTrc.Warning("   "+s.Name+"  ", "Timeout  "+s.ToString ());
+                    RaTrc.Warning("   "+s.Name+"  ", "Timeout  "+s.ToString ());
                 }
             }
             
@@ -153,7 +153,7 @@ namespace Remact.Catalog
                                                                       else sb.Append ("--");
                 sb.Append (s.Uri);
                 sb.Append (" in ");
-                sb.Append (WcfDefault.Instance.GetAppIdentification (s.AppName, s.AppInstance, s.HostName, s.ProcessId));
+                sb.Append (RemactDefaults.Instance.GetAppIdentification (s.AppName, s.AppInstance, s.HostName, s.ProcessId));
                 sb.Append (" (V");
                 sb.Append (s.AppVersion.ToString (versionCount));
                 sb.Append (")");
@@ -208,7 +208,7 @@ namespace Remact.Catalog
       if (svc.Usage != ActorMessage.Use.ServiceEnableRequest
        && svc.Usage != ActorMessage.Use.ServiceDisableRequest)
       {
-        WcfTrc.Error (mark, "Got wrong status: "+svc.ToString ());
+        RaTrc.Error (mark, "Got wrong status: "+svc.ToString ());
         svc.Usage = ActorMessage.Use.ServiceDisableRequest;
       }
 
@@ -216,7 +216,7 @@ namespace Remact.Catalog
       int found = SvcRegister.Item.FindIndex (s => s.IsEqualTo (svc));
       if (found < 0)
       {
-          WcfTrc.Info( mark, "Register  " + svc.Uri.ToString() );
+          RaTrc.Info( mark, "Register  " + svc.Uri.ToString() );
           SvcRegister.Item.Add (svc);
           Program.Router.SvcRegisterChanged = true;
           return true;
@@ -231,7 +231,7 @@ namespace Remact.Catalog
           if (registered.Usage == ActorMessage.Use.ServiceDisableRequest
                   && svc.Usage == ActorMessage.Use.ServiceEnableRequest)
           {
-              WcfTrc.Info( mark, "Start new   " + svc.Uri.ToString() );
+              RaTrc.Info( mark, "Start new   " + svc.Uri.ToString() );
               changed = true;
           }
           else if (registered.Usage == ActorMessage.Use.ServiceEnableRequest
@@ -239,12 +239,12 @@ namespace Remact.Catalog
           {
             if (registered.ApplicationRunTime < svc.ApplicationRunTime)
             {
-                WcfTrc.Info( mark, "Switch to " + svc.Uri.ToString ());
+                RaTrc.Info( mark, "Switch to " + svc.Uri.ToString ());
                 changed = true;
             }
             else //if (svc.RouterHopCount > 1)
             { // will be removed from all registers after some time
-                WcfTrc.Info( mark, "Backup    " + svc.Uri.ToString() );
+                RaTrc.Info( mark, "Backup    " + svc.Uri.ToString() );
             }
           }
         }
@@ -257,19 +257,19 @@ namespace Remact.Catalog
           else if( registered.Usage == ActorMessage.Use.ServiceDisableRequest
                        && svc.Usage == ActorMessage.Use.ServiceEnableRequest)
           {
-              WcfTrc.Info( mark, "Restart   " + svc.Uri.ToString() );
+              RaTrc.Info( mark, "Restart   " + svc.Uri.ToString() );
               changed = true;
           }
           else if (registered.Usage == ActorMessage.Use.ServiceEnableRequest
                        && svc.Usage == ActorMessage.Use.ServiceDisableRequest)
           {
-              WcfTrc.Info( mark, "Stopped   " + svc.Uri.ToString() );
+              RaTrc.Info( mark, "Stopped   " + svc.Uri.ToString() );
               changed = true;
           }
           else if (registered.Usage == ActorMessage.Use.ServiceEnableRequest
                        && svc.Usage == ActorMessage.Use.ServiceEnableRequest)
           {
-              WcfTrc.Info( mark, "Alive     " + svc.Uri.ToString() );
+              RaTrc.Info( mark, "Alive     " + svc.Uri.ToString() );
               SvcRegister.Item[found].TimeoutSeconds = svc.TimeoutSeconds;// Restart timeout
           }
         }
@@ -294,10 +294,10 @@ namespace Remact.Catalog
         m_RouterService = new RouterService();
 
         // Open the service
-        m_WcfService = new ActorInput(WcfDefault.Instance.RouterServiceName, m_RouterService.OnRequest);
+        m_WcfService = new ActorInput(RemactDefaults.Instance.RouterServiceName, m_RouterService.OnRequest);
         m_WcfService.OnInputConnected    += m_RouterService.OnClientConnectedOrDisconnected;
         m_WcfService.OnInputDisconnected += m_RouterService.OnClientConnectedOrDisconnected;
-        m_WcfService.LinkInputToNetwork( null, WcfDefault.Instance.RouterPort, publishToRouter: false, serviceConfig: this ); // calls our DoServiceConfiguration
+        m_WcfService.LinkInputToNetwork( null, RemactDefaults.Instance.RouterPort, publishToRouter: false, serviceConfig: this ); // calls our DoServiceConfiguration
         m_WcfService.TraceConnect = false;
         m_WcfService.TryConnect();
       
@@ -307,8 +307,8 @@ namespace Remact.Catalog
             if (host != null && host.Trim().Length > 0)
             {
                 var output = new ActorOutput<SvcDat>("Clt>"+host, OnResponseFromPeerRouter);
-                output.LinkOutputToRemoteService(new Uri("http://" + host + ':' + WcfDefault.Instance.RouterPort
-                                 + "/" + WcfDefault.WsNamespace + "/" + WcfDefault.Instance.RouterServiceName),// no router lookup as uri is given.
+                output.LinkOutputToRemoteService(new Uri("http://" + host + ':' + RemactDefaults.Instance.RouterPort
+                                 + "/" + RemactDefaults.WsNamespace + "/" + RemactDefaults.Instance.RouterServiceName),// no router lookup as uri is given.
                                  this ); // calls our DoClientConfiguration
                 output.OutputContext = new SvcDat();
                 output.TryConnect();
@@ -316,43 +316,43 @@ namespace Remact.Catalog
                 names += host+", ";
             }
         }
-        WcfTrc.Info( "Wcf", "Opened clients for peer routers on " + PeerRouters.Count + " configured PeerHosts: " + names );
+        RaTrc.Info( "Wcf", "Opened clients for peer routers on " + PeerRouters.Count + " configured PeerHosts: " + names );
     }// Open
 
 
-    // implement IWcfServiceConfiguration
+    // implement IActorInputConfiguration
     public void DoServiceConfiguration(ServiceHost serviceHost, ref Uri uri, bool isRouter)
     {
-        WcfDefault.Instance.DoServiceConfiguration( serviceHost, ref uri, /*isRouter=*/ true );
+        RemactDefaults.Instance.DoServiceConfiguration( serviceHost, ref uri, /*isRouter=*/ true );
     }
 
 
-    // implement IWcfClientConfiguration
+    // implement IActorOutputConfiguration
     public void DoClientConfiguration( ClientBase<IWcfBasicContractSync> clientBase, ref Uri uri, bool forRouter )
     {
-        WcfDefault.Instance.DoClientConfiguration( clientBase, ref uri, /*forRouter=*/ true );
+        RemactDefaults.Instance.DoClientConfiguration( clientBase, ref uri, /*forRouter=*/ true );
     }
     
 
-    private void OnResponseFromPeerRouter(WcfReqIdent id, SvcDat svcDat)
+    private void OnResponseFromPeerRouter(Request id, SvcDat svcDat)
     {
       if (
        id.On<ActorMessage>(partner=>
       {
-        WcfTrc.Info      (id.CltRcvId, "PeerRtr   "+partner.ToString ());
+        RaTrc.Info      (id.CltRcvId, "PeerRtr   "+partner.ToString ());
       })
-      .On<WcfErrorMessage>(err=>
+      .On<ErrorMessage>(err=>
       {
-        if (err.Error == WcfErrorMessage.Code.ServiceNotRunning) {
-          WcfTrc.Warning (id.CltRcvId, "PeerRtr   "+err.Error.ToString ()+" at '"+id.Sender.Uri+"'");
+        if (err.Error == ErrorMessage.Code.ServiceNotRunning) {
+          RaTrc.Warning (id.CltRcvId, "PeerRtr   "+err.Error.ToString ()+" at '"+id.Sender.Uri+"'");
         }
         else {
-          WcfTrc.Error   (id.CltRcvId, "PeerRtr   "+err.ToString ()+Environment.NewLine+"   partner uri = '"+id.Sender.Uri+"'");
+          RaTrc.Error   (id.CltRcvId, "PeerRtr   "+err.ToString ()+Environment.NewLine+"   partner uri = '"+id.Sender.Uri+"'");
         }
       })
       .On<WcfPartnerListMessage>(list=>
       {
-          WcfTrc.Info( id.CltRcvId, "PeerRtr responds with list containing " + list.Item.Count + " services." );
+          RaTrc.Info( id.CltRcvId, "PeerRtr responds with list containing " + list.Item.Count + " services." );
           foreach( ActorMessage s in list.Item )
         {
           RegisterService (s, id.CltRcvId);
@@ -360,7 +360,7 @@ namespace Remact.Catalog
       }
       ) != null)
       {
-        WcfTrc.Warning ("Wcf", "Received unexpected message from "+id.Sender.Name+": "+id.Message.ToString());
+        RaTrc.Warning ("Wcf", "Received unexpected message from "+id.Sender.Name+": "+id.Message.ToString());
       }
     }
     

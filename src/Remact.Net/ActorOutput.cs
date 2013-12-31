@@ -29,7 +29,7 @@ namespace Remact.Net
     /// </summary>
     /// <param name="name">The application internal name of this output port.</param>
     /// <param name="defaultResponseHandler">The method to be called when a response is received and no other handler is applicatable.</param>
-    public ActorOutput (string name, WcfMessageHandler defaultResponseHandler=null)
+    public ActorOutput (string name, MessageHandler defaultResponseHandler=null)
         : base(name, defaultResponseHandler)
     {
     }// CTOR1
@@ -95,8 +95,8 @@ namespace Remact.Net
     /// WcfRouter may have synchronized its service register with peer routers on other hosts.
     /// </summary>
     /// <param name="serviceName">The unique service name to connect to.</param>
-    /// <param name="clientConfig">Plugin your own client configuration instead of WcfDefault.Instance.DoClientConfiguration.</param>
-    public void LinkOutputToRemoteService( string serviceName, IWcfClientConfiguration clientConfig = null )
+    /// <param name="clientConfig">Plugin your own client configuration instead of RemactDefaults.Instance.DoClientConfiguration.</param>
+    public void LinkOutputToRemoteService( string serviceName, IActorOutputConfiguration clientConfig = null )
     {
         LinkOutputToRemoteService( "localhost", serviceName, clientConfig );
     }
@@ -107,8 +107,8 @@ namespace Remact.Net
     /// </summary>
     /// <param name="routerHost">The hostname, where the WcfRouter runs.</param>
     /// <param name="serviceName">The unique service name.</param>
-    /// <param name="clientConfig">Plugin your own client configuration instead of WcfDefault.Instance.DoClientConfiguration.</param>
-    public void LinkOutputToRemoteService( string routerHost, string serviceName, IWcfClientConfiguration clientConfig = null )
+    /// <param name="clientConfig">Plugin your own client configuration instead of RemactDefaults.Instance.DoClientConfiguration.</param>
+    public void LinkOutputToRemoteService( string routerHost, string serviceName, IActorOutputConfiguration clientConfig = null )
     {
       Disconnect();
       if (routerHost != null && serviceName != null && serviceName.Length > 0)
@@ -129,8 +129,8 @@ namespace Remact.Net
     /// Link output to remote service. No lookup at WcfRouter is needed as we know the romote host and the services TCP portnumber.
     /// </summary>
     /// <param name="serviceUri">The uri of the remote service.</param>
-    /// <param name="clientConfig">Plugin your own client configuration instead of WcfDefault.DoClientConfiguration.</param>
-    public void LinkOutputToRemoteService( Uri serviceUri, IWcfClientConfiguration clientConfig = null )
+    /// <param name="clientConfig">Plugin your own client configuration instead of RemactDefaults.DoClientConfiguration.</param>
+    public void LinkOutputToRemoteService( Uri serviceUri, IActorOutputConfiguration clientConfig = null )
     {
       Disconnect();
       if (serviceUri != null)
@@ -149,19 +149,19 @@ namespace Remact.Net
     /// <summary>
     /// When true: Sending of requests is possible
     /// </summary>
-    public bool IsOutputConnected {get{return WcfState.Ok == OutputState;}}
+    public bool IsOutputConnected {get{return PortState.Ok == OutputState;}}
 
     /// <summary>
     /// When true: TryConnect() must be called (first connect or reconnect)
     /// </summary>
-    public bool MustConnectOutput {get {WcfState s=OutputState; return s==WcfState.Disconnected || s==WcfState.Faulted; } }
+    public bool MustConnectOutput {get {PortState s=OutputState; return s==PortState.Disconnected || s==PortState.Faulted; } }
 
     /// <summary>
-    /// OutputSidePartner is an IActorPortId interface to the service (or its proxy) that is linked to this output.
-    /// It returns null, as long as we are not linked (OutputState==WcfState.Unlinked).
-    /// It is used to return identification data like Uri, AppVersion... (see IActorPortId).
+    /// OutputSidePartner is an IActorPort interface to the service (or its proxy) that is linked to this output.
+    /// It returns null, as long as we are not linked (OutputState==PortState.Unlinked).
+    /// It is used to return identification data like Uri, AppVersion... (see IActorPort).
     /// </summary>
-    public IActorPortId OutputSidePartner
+    public IActorPort OutputSidePartner
     {
       get
       {
@@ -180,22 +180,22 @@ namespace Remact.Net
     /// <summary>
     /// <para>Gets or sets the state of the outgoing connection.</para>
     /// <para>May be called from any thread.</para>
-    /// <para>Setting OutputState to WcfState.Ok or WcfState.Connecting reconnects a previously disconnected link.</para>
+    /// <para>Setting OutputState to PortState.Ok or PortState.Connecting reconnects a previously disconnected link.</para>
     /// <para>These states may be set only after an initial call to TryConnect from the active services internal thread.</para>
     /// <para>Setting other states will disconnect the WCF client from network.</para>
     /// </summary>
-    /// <returns>A <see cref="WcfState"/></returns>
-    public WcfState OutputState
+    /// <returns>A <see cref="PortState"/></returns>
+    public PortState OutputState
     {
       get
       {
         if (m_MyOutputProxy != null) return m_MyOutputProxy.OutputState; // proxy for remote actor
         if( m_BasicOutput != null )
         {   // internal actor
-            if( m_Connected ) return WcfState.Ok;
-            return WcfState.Disconnected; 
+            if( m_Connected ) return PortState.Ok;
+            return PortState.Disconnected; 
         }
-        return WcfState.Unlinked;
+        return PortState.Unlinked;
       }
       set
       {
@@ -213,7 +213,7 @@ namespace Remact.Net
     /// TryConnect picks up the synchronization context and must be called on the sending thread only!
     /// The connect-process runs asynchronous and may involve an address lookup at the WcfRouter.
     /// A WcfPartnerMessage is received, after the connection has been established.
-    /// A WcfErrorMessage is received, when the partner is not reachable.
+    /// A ErrorMessage is received, when the partner is not reachable.
     /// </summary>
     /// <returns>false, when the connect-process is not startable.</returns>
     public bool TryConnect()
@@ -236,19 +236,19 @@ namespace Remact.Net
 
     /// <summary>
     /// Send a request message to the partner on the outgoing connection.
-    /// At least a WcfIdleMessage will asynchronously be received through 'PostInput', when the partner has processed the request.
+    /// At least a ReadyMessage will asynchronously be received through 'PostInput', when the partner has processed the request.
     /// Usage:
     /// Clientside:  Send a request to the connected remote service.
     /// Internal:    Send a message to the connected partner running on another thread synchronization context.
     /// Serviceside: Sender.SendOut() sends a request from client-proxy to the internal service.
     /// </summary>
-    /// <param name="id">A <see cref="WcfReqIdent"/>the 'Sender' property references the sending partner, where the response is expected.</param>
-    public void SendOut (WcfReqIdent id)
+    /// <param name="id">A <see cref="Request"/>the 'Sender' property references the sending partner, where the response is expected.</param>
+    public void SendOut (Request id)
     {
       if (m_BasicOutput == null) throw new Exception ("AsyncWcfLib: Output of '"+Name+"' has not been linked");
       if( !m_Connected )
       {
-          WcfTrc.Warning( "AsyncWcfLib", "ActorPort '" + Name + "' is not connected. Cannot send message!", Logger );
+          RaTrc.Warning( "AsyncWcfLib", "ActorPort '" + Name + "' is not connected. Cannot send message!", Logger );
           return;
       }
       if( !IsMultithreaded )
@@ -368,26 +368,26 @@ namespace Remact.Net
 
     /// <summary>
     /// Send a request message to the partner on the outgoing connection.
-    /// At least a WcfIdleMessage will asynchronously be received through 'PostInput', after the partner has processed the request.
+    /// At least a ReadyMessage will asynchronously be received through 'PostInput', after the partner has processed the request.
     /// </summary>
     /// <param name="msg">The message to send.</param>
-    public void SendOut (IWcfMessage msg)
+    public void SendOut(object msg)
     {
       if (LastRequestIdSent == uint.MaxValue) LastRequestIdSent = 10;
-      WcfReqIdent id = new WcfReqIdent (this, OutputClientId, ++LastRequestIdSent, msg, null);
+      Request id = new Request (this, OutputClientId, ++LastRequestIdSent, msg, null);
       SendOut (id);
     }
 
     /// <summary>
     /// Send a request message to the partner on the outgoing connection.
-    /// At least a WcfIdleMessage will asynchronously be received in responseHandler.
+    /// At least a ReadyMessage will asynchronously be received in responseHandler.
     /// </summary>
     /// <param name="msg">The message to send.</param>
     /// <param name="responseHandler">A method or lambda expression handling the asynchronous response.</param>
-    public void SendOut (IWcfMessage msg, AsyncResponseHandler responseHandler)
+    public void SendOut(object msg, AsyncResponseHandler responseHandler)
     {
       if (LastRequestIdSent == uint.MaxValue) LastRequestIdSent = 10;
-      WcfReqIdent id = new WcfReqIdent (this, OutputClientId, ++LastRequestIdSent, msg, responseHandler);
+      Request id = new Request (this, OutputClientId, ++LastRequestIdSent, msg, responseHandler);
       SendOut (id);
     }
 
@@ -432,28 +432,28 @@ namespace Remact.Net
       /// </summary>
       /// <param name="name">The application internal name of this output port.</param>
       /// <param name="defaultTocResponseHandler">The method to be called when a response is received and no other handler is applicatable. May be null.</param>
-      public ActorOutput (string name, WcfMessageHandler<TOC> defaultTocResponseHandler = null)
+      public ActorOutput (string name, MessageHandler<TOC> defaultTocResponseHandler = null)
           : base(name)
       {
           DefaultInputHandler = OnDefaultInput;
           m_defaultTocResponseHandler = defaultTocResponseHandler;
       }
 
-      private WcfMessageHandler<TOC> m_defaultTocResponseHandler;
+      private MessageHandler<TOC> m_defaultTocResponseHandler;
 
       /// <summary>
       /// Message is passed to users default handler.
       /// </summary>
-      /// <param name="id">WcfReqIdent containing Message and Sender.</param>
-      private void OnDefaultInput (WcfReqIdent id)
+      /// <param name="id">Request containing Message and Sender.</param>
+      private void OnDefaultInput (Request id)
       {
           if (m_defaultTocResponseHandler != null)
           {
-              m_defaultTocResponseHandler(id, OutputContext); // WcfMessageHandler<TSC> delegate
+              m_defaultTocResponseHandler(id, OutputContext); // MessageHandlerC> delegate
           }
           else
           {
-              WcfTrc.Error("AsyncWcfLib", "Unhandled response: " + id.Message, Logger);
+              RaTrc.Error("AsyncWcfLib", "Unhandled response: " + id.Message, Logger);
           }
       }
 

@@ -13,9 +13,9 @@ namespace Remact.Net
 {
   /// <summary>
   /// Common definitions for all interacting actors.
-  /// Library users may plug in their own implementation of this class to WcfDefault.Instance.
+  /// Library users may plug in their own implementation of this class to RemactDefaults.Instance.
   /// </summary>
-  public interface IWcfDefault : IWcfServiceConfiguration, IWcfClientConfiguration
+  public interface IRemactDefaults : IActorInputConfiguration, IActorOutputConfiguration
   {
     //----------------------------------------------------------------------------------------------
     #region == WCF Router configuration ==

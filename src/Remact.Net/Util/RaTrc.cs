@@ -9,12 +9,12 @@ namespace Remact.Net
   /// <para>Use these static methods to write debugging trace or logs.</para> 
   /// <para>This way you are able to redirect your trace anywhere.</para>
   /// <para>How to run it:</para>
-  /// <para>1. call WcfTrc.UsePlugin(x) when you don't want to use WcfTrcPluginDefault</para>
-  /// <para>2. call WcfTrc.Start(appInstance) to direct output to the correct file and write a trace-header</para> 
-  /// <para>3. periodically call WcfTrc.Run() to write the filebuffer to disk</para>
-  /// <para>4. calling WcfTrc.Stop() during shutdown writes the trace-footer</para>
+  /// <para>1. call RaTrc.UsePlugin(x) when you don't want to use WcfTrcPluginDefault</para>
+  /// <para>2. call RaTrc.Start(appInstance) to direct output to the correct file and write a trace-header</para> 
+  /// <para>3. periodically call RaTrc.Run() to write the filebuffer to disk</para>
+  /// <para>4. calling RaTrc.Stop() during shutdown writes the trace-footer</para>
 	/// </summary>
-  public partial class WcfTrc
+  public partial class RaTrc
   {
     //------------------------------------------------------------
     /// <summary>
@@ -26,7 +26,7 @@ namespace Remact.Net
     /// <summary>
     /// Write trace header and store 'ApplicationInstance'
     /// </summary>
-    /// <param name="appInstance">a number to identify the application instance, see WcfDefault</param>
+    /// <param name="appInstance">a number to identify the application instance, see RemactDefaults</param>
     public static void Start (int appInstance)   {ApplicationInstance = appInstance;
                                                   if (ms_Plugin != null) ms_Plugin.Start (appInstance);}
 
@@ -98,7 +98,7 @@ namespace Remact.Net
       /// <summary>
       /// Write trace header and store 'ApplicationInstance'
       /// </summary>
-      /// <param name="appInstance">A number to identify the application instance, see WcfDefault</param>
+      /// <param name="appInstance">A number to identify the application instance, see RemactDefaults</param>
       void Start (int appInstance);
       
       /// <summary>
@@ -171,6 +171,6 @@ namespace Remact.Net
         WarningCount = 0;
         ErrorCount = 0;
     }
-  }//class WcfTrc
+  }//class RaTrc
 }//namespace
 

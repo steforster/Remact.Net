@@ -16,7 +16,7 @@ namespace Remact.Net
   /// Static members to handle application start and shutdown in a compatible way.
   /// Supports Microsoft and Linux operating systems.
   /// </summary>
-  public class WcfApplication
+  public class RemactApplication
   {
     private static bool m_boKernel32Available = false;
     private static bool m_boUnixSignalsAvailable = false;
@@ -40,8 +40,8 @@ namespace Remact.Net
 
     /// <summary>
     /// Set your logging object here (null by default).
-    /// It is passed to the logging methods of WcfTrc.ITracePlugin.
-    /// You will use it when writing your own adapter class based on WcfTrc.ITracePlugin.
+    /// It is passed to the logging methods of RaTrc.ITracePlugin.
+    /// You will use it when writing your own adapter class based on RaTrc.ITracePlugin.
     /// The adapter class is needed to redirect trace output to your own logging/tracing framework.
     /// </summary>
     public static object Logger { get; set; }
@@ -52,7 +52,7 @@ namespace Remact.Net
     /// or not they wish to abort execution.
     ///
     /// Before 'Application.Run' add the event handler for handling UI thread exceptions: 
-    ///   Application.ThreadException += new ThreadExceptionEventHandler(WcfTrc.DefaultTracePlugin.WinForms_ThreadException);
+    ///   Application.ThreadException += new ThreadExceptionEventHandler(RaTrc.DefaultTracePlugin.WinForms_ThreadException);
     /// Set the unhandled exception mode to force all Windows Forms errors to go through our handler.
     ///   Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
     /// </summary>
@@ -62,10 +62,10 @@ namespace Remact.Net
       try
       {
         string errorMsg = "An application error occurred. Please contact the adminstrator with the following information:";
-        WcfTrc.Exception( errorMsg, e.Exception, Logger );
-        WcfTrc.Run ();
+        RaTrc.Exception( errorMsg, e.Exception, Logger );
+        RaTrc.Run ();
         result = MessageBox.Show (errorMsg+ "\n\n" + e.Exception.Message + "\n\nStack Trace:\n" + e.Exception.StackTrace,
-                     "Windows Forms Error in "+WcfDefault.Instance.AppIdentification,
+                     "Windows Forms Error in "+RemactDefaults.Instance.AppIdentification,
                       MessageBoxButtons.AbortRetryIgnore, MessageBoxIcon.Stop);
       }
       catch
@@ -87,7 +87,7 @@ namespace Remact.Net
     /// 
     /// Before 'Application.Run' add the handler for handling non-UI thread exceptions to the event:
     ///   AppDomain.CurrentDomain.UnhandledException 
-    ///     += new UnhandledExceptionEventHandler(WcfTrc.DefaultTracePlugin.CurrentDomain_UnhandledException);
+    ///     += new UnhandledExceptionEventHandler(RaTrc.DefaultTracePlugin.CurrentDomain_UnhandledException);
     /// </summary>
     public static void CurrentDomain_UnhandledException (object sender, UnhandledExceptionEventArgs e)
     {
@@ -97,7 +97,7 @@ namespace Remact.Net
         Thread.Sleep(20); // let the signal handler start, this may be Console.Read that throws an exception after terminal is closed
         if (m_boExitRunning)
         { // "Invalid handle to path [Unknown]"-exception when Unix signals "Hangup" of hosting terminal process.
-          WcfTrc.Error("Exception", ex.GetType().ToString(), Logger);
+          RaTrc.Error("Exception", ex.GetType().ToString(), Logger);
           return;
         }
       }
@@ -105,8 +105,8 @@ namespace Remact.Net
       string errorMsg = "An application error occurred. Please contact the adminstrator with the following information:";
       try
       {
-          WcfTrc.Exception( errorMsg, ex, Logger );
-        WcfTrc.Run ();
+          RaTrc.Exception( errorMsg, ex, Logger );
+        RaTrc.Run ();
 
         // Since we can't prevent the app from terminating, log this to the event log.
         if (!EventLog.SourceExists ("ThreadException"))
@@ -127,7 +127,7 @@ namespace Remact.Net
         MessageBoxButtons buttons = MessageBoxButtons.AbortRetryIgnore;
         if (e.IsTerminating) buttons = MessageBoxButtons.OK;
         result = MessageBox.Show (errorMsg + "\n\n" + ex.Message + "\n\nStack Trace:\n" + ex.StackTrace,
-                        "Error in "+WcfDefault.Instance.AppIdentification,
+                        "Error in "+RemactDefaults.Instance.AppIdentification,
                         buttons, MessageBoxIcon.Error);
       }
       catch
@@ -145,7 +145,7 @@ namespace Remact.Net
     {
       if (m_boExitRunning)
       {
-          WcfTrc.Warning( "WcfApplication", "detected multiple exit calls in Exit", Logger );
+          RaTrc.Warning( "RemactApplication", "detected multiple exit calls in Exit", Logger );
         return;
       }
       m_boExitRunning = true;
@@ -157,7 +157,7 @@ namespace Remact.Net
       }
       catch (Exception ex)
       {
-          WcfTrc.Exception( "in application exit handler for " + closeType, ex, Logger );
+          RaTrc.Exception( "in application exit handler for " + closeType, ex, Logger );
         goExit = true;
       }
 
@@ -167,18 +167,18 @@ namespace Remact.Net
         {
           ExitToUnix ("exit to Unix after "+closeType); // never returning exit to Unix. Mono.Posix.dll must be available to process this call.
         }
-        WcfTrc.Info( "WcfApplication", "exit to Windows after " + closeType, Logger );
-        WcfTrc.Stop ();
+        RaTrc.Info( "RemactApplication", "exit to Windows after " + closeType, Logger );
+        RaTrc.Stop ();
         Environment.Exit (Environment.ExitCode); // never returning exit to Windows
       }
       catch (Exception ex)
       {
-          WcfTrc.Exception( "when exiting application", ex, Logger );
+          RaTrc.Exception( "when exiting application", ex, Logger );
           Environment.Exit (Environment.ExitCode); // never returning exit
       }
 
-      WcfTrc.Info( "WcfApplication", "continue after " + closeType, Logger );
-      WcfTrc.Run();
+      RaTrc.Info( "RemactApplication", "continue after " + closeType, Logger );
+      RaTrc.Run();
       m_boExitRunning = false;
     }
 
@@ -191,8 +191,8 @@ namespace Remact.Net
 //    private static void ExitEventHandler (object sender, EventArgs e)
 //    {
 //      Console.WriteLine("**ExitEventHandler**");
-//      WcfTrc.Mark("WcfApplication","ExitEventHandler");
-//      WcfTrc.Run();
+//      RaTrc.Mark("RemactApplication","ExitEventHandler");
+//      RaTrc.Run();
 //    }
 
     // CTRL+C pressed on Windows console or Unix terminal
@@ -235,7 +235,7 @@ namespace Remact.Net
       }
       catch //(Exception ex)
       {
-        //WcfTrc.Exception("cannot install ConsoleCtrlHandler",ex);
+        //RaTrc.Exception("cannot install ConsoleCtrlHandler",ex);
       }
 
       // Unix only
@@ -246,7 +246,7 @@ namespace Remact.Net
       }
       catch (Exception ex)
       {
-          WcfTrc.Exception( "cannot install signal handler", ex, Logger );
+          RaTrc.Exception( "cannot install signal handler", ex, Logger );
       }
 
       // Windows+Unix: Add the event handler for Console or Service thread exceptions:
@@ -257,8 +257,8 @@ namespace Remact.Net
       Application.ThreadException += new ThreadExceptionEventHandler (WinForms_ThreadException);
       Application.SetUnhandledExceptionMode (UnhandledExceptionMode.CatchException);
 
-      if( m_boKernel32Available ) WcfTrc.Info( "WcfApplication", "windows exit handlers are ready", Logger );
-      else if( !m_boUnixSignalsAvailable ) WcfTrc.Info( "WcfApplication", "application exception handlers are ready", Logger );
+      if( m_boKernel32Available ) RaTrc.Info( "RemactApplication", "windows exit handlers are ready", Logger );
+      else if( !m_boUnixSignalsAvailable ) RaTrc.Info( "RemactApplication", "application exception handlers are ready", Logger );
 
       Environment.ExitCode = 1; // = Stdlib.EXIT_FAILURE, default on Unix, set on Windows for compatibility with Unix.
     }
@@ -349,7 +349,7 @@ namespace Remact.Net
       //if (closeType == CloseType.CtrlC || closeType == CloseType.CtrlBreak) return false; // handled in Console_CancelKeyPress
       if (m_boExitRunning)
       {
-          WcfTrc.Warning( "WcfApplication", "detected multiple exit calls in ConsoleCtrlEventHandler", Logger );
+          RaTrc.Warning( "RemactApplication", "detected multiple exit calls in ConsoleCtrlEventHandler", Logger );
           return false; // next Win32 handler -> exit
       }
       // when cleanup takes too long, windows displays a message box asking whether to exit or wait.
@@ -388,7 +388,7 @@ namespace Remact.Net
       {
         while (true)
         {
-          WcfTrc.Info( "WcfApplication", "unix signal handlers are ready", Logger );
+          RaTrc.Info( "RemactApplication", "unix signal handlers are ready", Logger );
           m_nUnixSignal = -1;
           int index = UnixSignal.WaitAny (sigArray, -1);
 
@@ -410,7 +410,7 @@ namespace Remact.Net
           case Signum.SIGABRT: closeType = CloseType.ApplicationError; break; // ???Abort signal from abort.
           default:             closeType = CloseType.CloseEvent; break;       // SIGTERM, SIGHUP
           }
-          //WcfTrc.Mark ("WcfApplication","received unix signal "+signum+ ", starting event handlers for "+closeType);
+          //RaTrc.Mark ("RemactApplication","received unix signal "+signum+ ", starting event handlers for "+closeType);
 
           Exit (closeType, true); // will never return
         }
@@ -426,10 +426,10 @@ namespace Remact.Net
     private static void ExitToUnix(string exitReason)
     {
       if (m_nUnixSignal >= 0) exitReason += " (received unix signal " + m_nUnixSignal + " = " + (Signum)m_nUnixSignal + ")";
-      WcfTrc.Info( "WcfApplication", exitReason, Logger );
-      WcfTrc.Stop ();
+      RaTrc.Info( "RemactApplication", exitReason, Logger );
+      RaTrc.Stop ();
       Stdlib.exit (Environment.ExitCode); // never returning exit to Unix (or Stdlib.abort or Stdlib.raise..)
     }
     
-  }// class WcfApplication
+  }// class RemactApplication
 }

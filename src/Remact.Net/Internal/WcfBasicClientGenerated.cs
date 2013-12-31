@@ -19,7 +19,7 @@ namespace Remact.Net.Internal
     /// <summary>
     /// The service interface is used internally. It must be public in order to access ClientBase&lt;IWcfBasic>
     /// </summary>
-//    [ServiceContract( Namespace=WcfDefault.WsNamespace, 
+//    [ServiceContract( Namespace=RemactDefaults.WsNamespace, 
 //                      ConfigurationName = "AsyncWcfLib.ClientContract")]
 //    [ServiceKnownType( "z_GetServiceKnownTypes", typeof( WcfMessage ) )]
 //    public interface IWcfBasic
@@ -31,9 +31,9 @@ namespace Remact.Net.Internal
 //        /// <param name="id">Internally used identification info for a request (received and returned).</param>
 //        /// <returns>The response message.</returns>
 //        [OperationContract]
-//          //Action=WcfDefault.WsNamespace+"/IWcfBasic/WcfRequest",
-//          //ReplyAction=WcfDefault.WsNamespace+"/IWcfBasic/WcfRequestResponse")]
-//        IWcfMessage WcfRequest (IWcfMessage msg, ref WcfReqIdent id);
+//          //Action=RemactDefaults.WsNamespace+"/IWcfBasic/WcfRequest",
+//          //ReplyAction=RemactDefaults.WsNamespace+"/IWcfBasic/WcfRequestResponse")]
+//        IWcfMessage WcfRequest (IWcfMessage msg, ref Request id);
 //
 //#if !BEFORE_NET45
 //        /// <summary>
@@ -41,9 +41,9 @@ namespace Remact.Net.Internal
 //        /// See http://blogs.msdn.com/b/endpoint/archive/2010/11/13/simplified-asynchronous-programming-model-in-wcf-with-async-await.aspx
 //        /// </summary>
 //        /// <param name="id">Internally used identification info for a request containing the request message.</param>
-//        /// <returns>A WcfReqIdent containing the response message.</returns>
+//        /// <returns>A Request containing the response message.</returns>
 //        [OperationContract]
-//        Task<WcfReqIdent> SendReceiveAsync (WcfReqIdent id);
+//        Task<Request> SendReceiveAsync (Request id);
 //#endif
 //    }// interface IWcfBasic
 
@@ -79,7 +79,7 @@ namespace Remact.Net.Internal
         private  bool                m_boFirstResponseReceived;
 
         // Asynchronous open the connection
-        internal void WcfOpenAsync (WcfBasicClientAsync asyncClient, WcfReqIdent id)
+        internal void WcfOpenAsync (WcfBasicClientAsync asyncClient, Request id)
         {
             m_AsyncClient = asyncClient;
             m_boFirstResponseReceived = false;
@@ -88,7 +88,7 @@ namespace Remact.Net.Internal
 
         private void OpenOnThreadpool(object idObj)
         {
-          WcfReqIdent id = idObj as WcfReqIdent;
+          Request id = idObj as Request;
           SyncOpen(id);
 
           if (m_AsyncClient.ClientIdent.IsMultithreaded)
@@ -97,7 +97,7 @@ namespace Remact.Net.Internal
           }
           else if (m_AsyncClient.ClientIdent.SyncContext == null)
           {
-            WcfTrc.Error( "AsyncWcfLib", "No synchronization context to open " + m_AsyncClient.ClientIdent.Name, m_AsyncClient.ClientIdent.Logger );
+            RaTrc.Error( "AsyncWcfLib", "No synchronization context to open " + m_AsyncClient.ClientIdent.Name, m_AsyncClient.ClientIdent.Logger );
             m_AsyncClient.OnOpenCompleted (id);
           }
           else
@@ -107,7 +107,7 @@ namespace Remact.Net.Internal
         }// OpenOnThreadpool
 
 
-        internal void SyncOpen (WcfReqIdent id)
+        internal void SyncOpen (Request id)
         {
             try
             {
@@ -116,11 +116,11 @@ namespace Remact.Net.Internal
             }
             catch (EndpointNotFoundException ex)
             {
-                id.Message = new WcfErrorMessage(WcfErrorMessage.Code.ServiceNotRunning, ex);
+                id.Message = new ErrorMessage(ErrorMessage.Code.ServiceNotRunning, ex);
             }
             catch (Exception ex)
             {
-                id.Message = new WcfErrorMessage(WcfErrorMessage.Code.CouldNotOpen, ex);
+                id.Message = new ErrorMessage(ErrorMessage.Code.CouldNotOpen, ex);
             }
         }// SyncOpen
 
@@ -128,15 +128,15 @@ namespace Remact.Net.Internal
         // class to hold state during receive operation
         internal class ReceivingState
         {
-          internal WcfReqIdent idSnd;
-          internal WcfReqIdent idRcv;
+          internal Request idSnd;
+          internal Request idRcv;
           internal bool        timeout;
           internal bool        disposed;
         }
 
 
         // Asynchronous send a request
-        internal void WcfRequestAsync (WcfReqIdent id)
+        internal void WcfRequestAsync (Request id)
         {
           // Variant a) 240 Reqests/sec + blocks client !!!!!! in Test2
           //IWcfMessage msg = id.Message;
@@ -150,7 +150,7 @@ namespace Remact.Net.Internal
 
         private void SendOnThreadpool (object idObj)
         {
-            ReceivingState data = SyncSend (idObj as WcfReqIdent);
+            ReceivingState data = SyncSend (idObj as Request);
 
             if (data.disposed)
             {
@@ -169,7 +169,7 @@ namespace Remact.Net.Internal
 
 
         // Synchronous send a request
-        internal ReceivingState SyncSend (WcfReqIdent id)
+        internal ReceivingState SyncSend (Request id)
         {
             ReceivingState data = new ReceivingState();
             try
@@ -179,7 +179,7 @@ namespace Remact.Net.Internal
                 IWcfMessage msg = base.Channel.WcfRequest(data.idSnd.Message, ref data.idRcv);
                 if (msg == null)
                 {
-                    msg = new WcfErrorMessage(WcfErrorMessage.Code.RspNotDeserializableOnClient, "<null> message received");
+                    msg = new ErrorMessage(ErrorMessage.Code.RspNotDeserializableOnClient, "<null> message received");
                 }
                 data.idSnd.Message = null; // not used anymore
                 data.idRcv.Message = msg;
@@ -194,8 +194,8 @@ namespace Remact.Net.Internal
 
         internal void HandleSendException(ReceivingState data, Exception ex)
         {
-            //WcfTrc.Exception("Could not send to Wcf service", ex);
-            WcfErrorMessage.Code Code;
+            //RaTrc.Exception("Could not send to Wcf service", ex);
+            ErrorMessage.Code Code;
             bool onSvc = false;
 
             if (ex is System.Reflection.TargetInvocationException)
@@ -206,41 +206,41 @@ namespace Remact.Net.Internal
 
             if (ex is TimeoutException)
             {
-                if (onSvc) Code = WcfErrorMessage.Code.TimeoutOnService;
-                else Code = WcfErrorMessage.Code.TimeoutOnClient;
+                if (onSvc) Code = ErrorMessage.Code.TimeoutOnService;
+                else Code = ErrorMessage.Code.TimeoutOnClient;
                 data.timeout = true;
             }
             else if (ex is ProtocolException)
             {
-                Code = WcfErrorMessage.Code.RequestTypeUnknownOnService;
+                Code = ErrorMessage.Code.RequestTypeUnknownOnService;
             }
             else if (ex is FaultException)
             { // including FaultException<TDetail>
-                Code = WcfErrorMessage.Code.ReqOrRspNotSerializableOnService;
+                Code = ErrorMessage.Code.ReqOrRspNotSerializableOnService;
                 onSvc = true;
                 data.timeout = true; // stop sending, enter Faulted state
             }
             else if (ex is CommunicationException)
             {
-                if (!m_boFirstResponseReceived) Code = WcfErrorMessage.Code.CouldNotConnect;
-                else Code = WcfErrorMessage.Code.ReqOrRspNotSerializableOnService; // ???
+                if (!m_boFirstResponseReceived) Code = ErrorMessage.Code.CouldNotConnect;
+                else Code = ErrorMessage.Code.ReqOrRspNotSerializableOnService; // ???
                 data.timeout = true; // stop sending, enter Faulted state
             }
             else if (ex is ObjectDisposedException && !onSvc)
             {
-                Code = WcfErrorMessage.Code.CouldNotSend;
+                Code = ErrorMessage.Code.CouldNotSend;
                 data.timeout = true;
                 data.disposed = true;
             }
             else
             {
-                if (onSvc) Code = WcfErrorMessage.Code.ClientDetectedUnhandledExceptionOnService;
-                else Code = WcfErrorMessage.Code.CouldNotSend;
+                if (onSvc) Code = ErrorMessage.Code.ClientDetectedUnhandledExceptionOnService;
+                else Code = ErrorMessage.Code.CouldNotSend;
                 data.timeout = true; // stop sending, enter Faulted state
             }
             m_boFirstResponseReceived = true;
             data.idSnd.Message = null; // Send and Receive normally point to the same id
-            data.idRcv.Message = new WcfErrorMessage(Code, ex);
+            data.idRcv.Message = new ErrorMessage(Code, ex);
         }
 
     }// class WcfBasicClient
