@@ -89,7 +89,7 @@ namespace Remact.Net
     /// Each router increments the hopcount on reception of a message.
     /// A router accepts new data only if the receiving hop count is smaller than the stored.
     /// </summary>
-    [DataMember] public int     RouterHopCount;
+    [DataMember] public int RouterHopCount;
 
     /// <summary>
     /// A service having a longer ApplicationRunTime wins the competition when two services with same name are running.

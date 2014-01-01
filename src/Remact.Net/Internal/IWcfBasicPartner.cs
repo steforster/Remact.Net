@@ -34,9 +34,9 @@ namespace Remact.Net.Internal
     /// ** Usage **
     /// Internal:             Send a message to the connected partner running on another thread synchronization context.
     /// ActorOutput (client): Send a request to the connected remote service.
-    /// Serviceside:          Sender.SendOut() send a request from client-proxy to the internal service.
+    /// Serviceside:          Source.SendOut() send a request from client-proxy to the internal service.
     /// </summary>
-    /// <param name="id">A <see cref="ActorMessage"/>the 'Sender' property references the sending partner, where the response is expected.</param>
+    /// <param name="id">A <see cref="ActorMessage"/>the 'Source' property references the sending partner, where the response is expected.</param>
     void SendOut (ActorMessage id); // TODO is it needed anymore ????
 
     /// <summary>
@@ -45,9 +45,9 @@ namespace Remact.Net.Internal
     /// Internal:                                  Post a message into this partners input queue.
     /// ActorOutput (client):                      Post a response into this clients input queue.
     /// ActorOutput.m_OutputClient (server-proxy): Send a request to the connected remote service.
-    /// Serviceside:                               Sender.PostInput() sends a response from client-stub to the remote client.
+    /// Serviceside:                               Source.PostInput() sends a response from client-stub to the remote client.
     /// </summary>
-    /// <param name="id">A <see cref="ActorMessage"/> the 'Sender' property references the sending partner.</param>
+    /// <param name="id">A <see cref="ActorMessage"/> the 'Source' property references the sending partner.</param>
     void PostInput (ActorMessage id);
 
     /// <summary>

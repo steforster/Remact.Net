@@ -233,7 +233,7 @@ namespace Remact.Net.Internal
 
           // Add the dynamically created endpoint. And let the library user add binding and security credentials.
           // By default RemactDefaults.DoServiceConfiguration is called.
-          m_WcfServiceConfig.DoServiceConfiguration( m_ServiceHost, ref uri, /*isRouter=*/false );
+////TODO          m_WcfServiceConfig.DoServiceConfiguration( m_ServiceHost, ref uri, /*isRouter=*/false );
           base.ServiceIdent.Uri = uri;
         }
         else
@@ -488,8 +488,8 @@ namespace Remact.Net.Internal
         // The legacy IWcfBasicServiceSync entrypoint
         public object WcfRequest(object msg, ref ActorMessage id)
         {
-            // before V3.0 Message was not a [DataMember] of ActorMessage. Now, msg is transfered two times, when sending through this legacy interface!
-            id.Message = msg;
+            // before V3.0 Payload was not a [DataMember] of ActorMessage. Now, msg is transfered two times, when sending through this legacy interface!
+            id.Payload = msg;
             object response = null;
             try
             {
@@ -511,10 +511,9 @@ namespace Remact.Net.Internal
                     var connectMsg = response as ActorInfo;
                     if (connectMsg != null) // no error and connected
                     {
-                        id.Sender.LastSentId--; // correct for reqCopy
-                        var reqCopy = new ActorMessage(id.Sender, id.ClientId, id.RequestId, id.Message, id.SourceLambda);
+                        var reqCopy = new ActorMessage(id.Source, id.ClientId, id.RequestId, id.Payload, id.SourceLambda);
                         reqCopy.Response = reqCopy; // do not send a ReadyMessage
-                        reqCopy.Input = id.Input;
+                        reqCopy.Destination = id.Destination;
                         var task = DoRequestAsync( reqCopy ); // call event OnInputConnected or OnInputDisconnected on the correct thread.
                         if (connectMsg.Usage != ActorInfo.Use.ServiceDisconnectResponse)
                         {
@@ -537,8 +536,8 @@ namespace Remact.Net.Internal
                 response = new ErrorMessage( ErrorMessage.Code.UnhandledExceptionOnService, ex );
             }
 
-            id.Message = response;
-            return id.Message;
+            id.Payload = response;
+            return id.Payload;
         }
 
 
@@ -547,23 +546,23 @@ namespace Remact.Net.Internal
         {
             var tcs = new TaskCompletionSource<ActorMessage>();
 
-            if( id.Input.IsMultithreaded
-             || id.Input.SyncContext == null
-             || id.Input.ManagedThreadId == Thread.CurrentThread.ManagedThreadId )
+            if( id.Destination.IsMultithreaded
+             || id.Destination.SyncContext == null
+             || id.Destination.ManagedThreadId == Thread.CurrentThread.ManagedThreadId )
             { // execute request on the calling thread or multi-threaded
             #if !BEFORE_NET45
                 id.Input.DispatchMessageAsync( id )
                   .ContinueWith((t)=>
                       tcs.SetResult( id )); // when finished the first task: finish tcs and let the original request thread return the response.
             #else
-                id.Input.DispatchMessage( id );
+                id.Destination.DispatchMessage( id );
                 tcs.SetResult( id );
             #endif
             }
             else
             {
                 Task.Factory.StartNew(() => 
-                    id.Input.SyncContext.Post( obj =>
+                    id.Destination.SyncContext.Post( obj =>
                     {   // execute task on the specified thread after passing the delegate through the message queue...
                         try
                         {
@@ -572,13 +571,13 @@ namespace Remact.Net.Internal
                               .ContinueWith((t)=>
                                   tcs.SetResult( id )); // when finished the first task: finish tcs and let the original request thread return the response.
                 #else
-                            id.Input.DispatchMessage( id );// execute request synchronously on the thread bound to the Input
+                            id.Destination.DispatchMessage( id );// execute request synchronously on the thread bound to the Destination
                             tcs.SetResult( id );
                 #endif
                         }
                         catch( Exception ex )
                         {
-                            RaTrc.Exception( "ActorMessage to " + id.Input.Name + " cannot be handled by application", ex );
+                            RaTrc.Exception( "ActorMessage to " + id.Destination.Name + " cannot be handled by application", ex );
                             tcs.SetException( ex );
                         }
                     }, null )); // obj

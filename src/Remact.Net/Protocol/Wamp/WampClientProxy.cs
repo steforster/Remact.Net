@@ -12,8 +12,10 @@ using Remact.Net.Contracts;
 
 namespace Remact.Net.Protocol.Wamp
 {
-    public class WampClientProxy : IRemactProtocolDriverCallbacks
+    public class WampClientProxy
     {
+        private ActorPort _clientPort;
+        private int _clientId;
         private UserContext _wsChannel;
         private IRemactProtocolDriverService _requestHandler;
 
@@ -47,44 +49,59 @@ namespace Remact.Net.Protocol.Wamp
             throw new NotImplementedException();
         }
 
-        public void CallResult(string callId, JToken result)
+        public void Response(ActorMessage response)
         {
+            string callId = response.RequestId.ToString();
+
             // eg. CALLRESULT message with 'null' result: [3, "CcDnuI2bl2oLGBzO", null] 
 
-            var wamp = new JArray(WampMessageType.v1CallResult, callId, result);
+            var wamp = new JArray(WampMessageType.v1CallResult, callId, response.Payload);
             _wsChannel.Send(wamp.ToString(Formatting.None));
         }
 
-        public void CallError(string callId, string errorUri, string errorDesc, object errorDetails = null)
+        private void RequestNotDeserializable(int id, string errorDesc)
         {
-            // eg. CALLERROR message with generic error: [4, "gwbN3EDtFv6JvNV5", "http://autobahn.tavendo.de/error#generic", "math domain error"]
+            var error = new ErrorMessage(ErrorMessage.Code.ReqOrRspNotSerializableOnService, errorDesc);
+            var message = new ActorMessage(null, 0, id, error, null);
+            ErrorFromService(message);
+        }
 
+        public void ErrorFromService(ActorMessage message)
+        {
+            string callId = message.RequestId.ToString();
             if (callId == null)
             {
                 callId = string.Empty;
             }
 
-            if (errorDesc == null)
+            string errorUri = string.Empty;
+            string errorDesc = string.Empty;
+            var error = message.Payload as ErrorMessage;
+            if (error != null)
             {
-                errorDesc = string.Empty;
+                errorUri = error.Error.ToString();
+                errorDesc = error.Message;
             }
+
+            // eg. CALLERROR message with generic error: [4, "gwbN3EDtFv6JvNV5", "http://autobahn.tavendo.de/error#generic", "math domain error"]
+
 
             var wamp = new JArray(WampMessageType.v1CallError, callId, errorUri, errorDesc);
 
-            if (errorDetails != null)
+            if (error != null)
             {
-                wamp.Add(errorDetails);
+                wamp.Add(error);
             }
 
             _wsChannel.Send(wamp.ToString(Formatting.None));
         }
 
         // TODO, this event comes without subscription !?
-        public void Event(string topic, JToken notification)
+        public void Notification(ActorMessage notification)
         {
             // eg. EVENT message with 'null' as payload: [8, "http://example.com/simple", null]
 
-            var wamp = new JArray(WampMessageType.v1Event, topic, notification);
+            var wamp = new JArray(WampMessageType.v1Event, notification.DestinationMethod, notification.Payload);
             _wsChannel.Send(wamp.ToString(Formatting.None));
         }
 
@@ -97,54 +114,61 @@ namespace Remact.Net.Protocol.Wamp
         private void OnReceived(UserContext context)
         {
             Console.WriteLine("Received Data From :" + context.ClientAddress);
-            string id = null;
+            int id = 0;
+            bool errorReceived = false; 
 
             try
             {
                 string json = context.DataFrame.ToString();
 
                 JArray wamp = JArray.Parse(json);
-                id = (string)wamp[1];
                 if(wamp.Count < 3)
                 {
-                    CallError(id, WampError.ServiceCannotDeserializeWampMessage.ToString(""), "Wamp call with 3 or more arguments expected");
+                    RequestNotDeserializable(id, "Wamp call with 3 or more arguments expected");
                     return;
                 }
 
                 int wampType = (int)wamp[0];
+                id = int.Parse((string)wamp[1]);
                 if (wampType == (int)WampMessageType.v1Call)
                 {
                     // eg. CALL message for RPC with no arguments: [2, "7DK6TdN4wLiUJgNM", "http://example.com/api#howdy"]
-                    var arguments = new object[wamp.Count-3];
-                    for (int i=3; i<wamp.Count; i++)
+                    object payload = null;
+                    if (wamp.Count > 3)
                     {
-                        arguments[i-3] = wamp[i];
+                        payload = wamp[3];
                     }
+                    var request = new ActorMessage(_clientPort, _clientId, id, payload, null);
+                    request.DestinationMethod = (string)wamp[2];
 
-                    _requestHandler.Call(null, id, (string)wamp[2], arguments);
+                    _requestHandler.Request(request);
                 }
                 else if (wampType == (int)WampMessageType.v1CallError)
                 {
-                    if (wamp.Count >= 4)
-                    {
-                        _requestHandler.CallError(id, (string)wamp[2], (string)wamp[3], (object)wamp[4]);
-                    }
-                    else
-                    {
-                        _requestHandler.CallError(id, (string)wamp[2], (string)wamp[3]);
-                    }
+                    // eg. CALLERROR message with generic error: [4, "gwbN3EDtFv6JvNV5", "http://autobahn.tavendo.de/error#generic", "math domain error"]
+                    errorReceived = true;
+                    string errorUri = (string)wamp[2];
+                    var code = (ErrorMessage.Code)Enum.Parse(typeof(ErrorMessage.Code), errorUri, false);
+                    string errorDesc = (string)wamp[3];
+                    var error = new ErrorMessage(code, errorDesc);
+                    var message = new ActorMessage(null, 0, id, error, null);
+                    //if (wamp.Count >= 4)
+                    //{
+                    //    message. (object)wamp[4]); TODO
+                    //}
+                    _requestHandler.ErrorFromClient(message);
                 }
                 else
                 {
-                    CallError(id, WampError.ServiceCannotDeserializeWampMessage.ToString(""), "expected wamp message type 2 (v1Call)");
+                    RequestNotDeserializable(id, "expected wamp message type 2 (v1Call)");
                 }
             }
             catch (Exception ex)
             {
-                //var r = new Response { Type = ResponseType.Error, Data = new { e.Message } };
+                //var r = new Response { Type = ResponseType.Error, Data = new { e.Payload } };
                 //context.Send(JsonConvert.SerializeObject(r));
                 //TODO full qualified name
-                CallError(id, WampError.ServiceCannotDeserializeWampMessage.ToString(""), ex.Message);
+                if (!errorReceived) RequestNotDeserializable(id, ex.Message);
             }
         }
 

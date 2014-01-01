@@ -36,7 +36,7 @@ namespace Remact.Net
         {
             if (id != null)
             {
-                T typedMsg = id.Message as T;
+                T typedMsg = id.Payload as T;
                 if (typedMsg == null)
                 {
                     return id; // call next On extension method
@@ -48,67 +48,74 @@ namespace Remact.Net
         }
     }
 
+
+    public enum ActorMessageType
+    {
+        Request, // default
+        Response,
+        Notification,
+        Error
+    }
+
     #endregion
     //----------------------------------------------------------------------------------------------
     #region == class ActorMessage ==
 
     /// <summary>
     /// <para>All data for a message sent through AsyncWcfLib.</para>
-    /// <para>Contains the Message itself as well as some request identification and a reference to the sending ActorPort.</para>
+    /// <para>Contains the Payload itself as well as some request identification and a reference to the sending ActorPort.</para>
     /// <para>The class may be used to send a response to the sender and to trace unique message identification.</para>
     /// </summary>
     [DataContract (Namespace=RemactDefaults.WsNamespace)]
     public class ActorMessage
     {
         /// <summary>
-        /// Requests and responses carry a reference to the message. Only the message is transferred over the wire.
-        /// The Message itself may be sent to several internal partners. It will then be referenced by several Requests.
-        /// Be careful, use the message as unmutable, readonly for application internal communication!
+        /// Requests and responses carry a reference to the payload data. Only the payload is transferred over the wire.
+        /// The payload itself may be sent to several internal partners. It will then be referenced by several Requests.
+        /// Be careful, use the payload as unmutable, readonly for application internal communication!
         /// </summary>
-        public object Message { get; internal set; }
+        public object Payload { get; internal set; }
 
         /// <summary>
         /// <para>Identifies the client sending the request on the remote service.</para>
         /// <para>0=no remote connection or message not sent yet. Id is created by remote service on first connect.</para>
         /// </summary>
-        [DataMember] public int         ClientId;
+        public int ClientId;
     
         /// <summary>
         /// <para>RequestId is incremented by WcfAsyncClient for remote connections only. Remote service returns the same number.</para>
         /// <para>0=Notification, 11...=remote requests</para>
         /// It is used to detect programming errors.
         /// </summary>
-        [DataMember] public uint        RequestId;
-    
-        /// <summary>
-        /// SendId is incremented by WcfAsyncClient for remote connections and remote service on each send operation.
-        /// It is used to detect missing messages.
-        /// </summary>
-      //  [DataMember] public uint        SendId;
+        public int RequestId;
     
         /// <summary>
         /// ActorMessage carry a reference to the ActorPort that has sent the message.
-        /// Service side: Sender is the client or client-stub   (ActorOutput) that has sent the request. 
-        /// Client side : Sender is the service or service-proxy (ActorInput) that has sent the response.
+        /// Service side: Source is the client or client-stub   (ActorOutput) that has sent the request. 
+        /// Client side : Source is the service or service-proxy (ActorInput) that has sent the response or notification.
         /// </summary>
-        public   ActorPort              Sender {get; internal set;}
+        public ActorPort Source {get; internal set;}
     
         /// <summary>
         /// ActorMessage carry a reference to the ActorPort that is receiving the message. 
-        /// Service side: Input is the service (ActorInput) that is receiving a request. 
-        /// Client side : Input is the client (ActorOutput) that is receiving a response.
+        /// Service side: Destination is the service (ActorInput) that is receiving a request. 
+        /// Client side : Destination is the client (ActorOutput) that is receiving a response.
         /// </summary>
-        public   ActorPort              Input  {get; internal set;}
-    
+        public ActorPort Destination  {get; internal set;}
+
+        /// <summary>
+        /// The method to be called on the destination actor. Defines the data type of Payload for requests and notifications.
+        /// </summary>
+        public string DestinationMethod { get; internal set; }
+
         /// <summary>
         /// For local and remote requests the send operation may specify a lambda expression handling the response.
         /// </summary>
         internal AsyncResponseHandler   SourceLambda;      // delegate IWcfMessage  AsyncResponseHandler (IWcfMessage msg);
         internal AsyncResponseHandler   DestinationLambda; // copied from source, when returning the message
 
-        internal ActorMessage                Response;     // for WcfBasicServiceUser
+        internal ActorMessage           Response;     // for WcfBasicServiceUser
         internal object                 MessageSaved; // for WcfBasicServiceUser
-      //  internal WcfNotifyResponse      NotifyList;   // for WcfBasicServiceUser
 
         /// <summary>
         /// Create a new ActorMessage.
@@ -118,45 +125,44 @@ namespace Remact.Net
         /// <param name="requestId">The RequestId is incremented by the client.</param>
         /// <param name="message">The user payload message to send.</param>
         /// <param name="responseHandler">null or a lamda expression to be called, when a response is aynchronously received.</param>
-        internal ActorMessage( ActorPort sender, int clientId, uint requestId, object message, AsyncResponseHandler responseHandler )
+        internal ActorMessage( ActorPort sender, int clientId, int requestId, object message, AsyncResponseHandler responseHandler )
         {
-            Sender   = sender;
-            Input    = sender;   // default for tracing on client side
+            Source = sender;
+            Destination = sender;   // default for tracing on client side
             ClientId = clientId;
             RequestId = requestId;
-            //SendId = ++sender.LastSentId;
             var m = message as IExtensibleWcfMessage;
             if (m != null)
             {
                 m.BoundSyncContext = null;
                 m.IsSent = true;
             }
-            Message = message;
+            Payload = message;
             SourceLambda = responseHandler;
         }// CTOR
 
+        public ActorMessageType Type { get; internal set; }
 
         /// <summary>
-        /// After creation a ActorMessage is a request.
-        /// After reception on client side a ActorMessage is either a notification or a response.
+        /// Notification is sent from service to client without a matching request.
         /// </summary>
-        private bool m_boResponse;
-
-        /// <summary>
-        /// Notification is sent from service to client without matching request.
-        /// </summary>
-        public bool IsNotification { get { return m_boResponse && RequestId == 0; } }
+        public bool IsNotification { get { return Type == ActorMessageType.Notification; } }
 
         /// <summary>
         /// ActorMessage is sent from client to service (new messages are requests by default).
         /// </summary>
-        public bool IsRequest { get { return !m_boResponse; } }
+        public bool IsRequest { get { return Type == ActorMessageType.Request; } }
 
         /// <summary>
         /// Response is sent from service to client as answer to a request.
         /// </summary>
-        public bool HasResponse { get { return m_boResponse && RequestId != 0; } 
-                                    internal set{m_boResponse = value;}}
+        public bool IsResponse { get { return Type == ActorMessageType.Response; } }
+
+        /// <summary>
+        /// Error messages may be sent from server to client or from client to server. 
+        /// Errors do not match the expected response type. There is never a response to a error.
+        /// </summary>
+        public bool IsError { get { return Type == ActorMessageType.Error; } }
 
 
         /// <summary>
@@ -167,7 +173,7 @@ namespace Remact.Net
         /// <param name="msg">The message to send as response.</param>
         public void SendResponse (object msg)
         {
-            SendResponseFrom (Input, msg, null);
+            SendResponseFrom (Destination, msg, null);
         }
 
 
@@ -185,18 +191,17 @@ namespace Remact.Net
             if (Response == null || Response.MessageSaved == null) // first response message or not gathering notifications
             {
                 Response = new ActorMessage(service, ClientId, RequestId, msg, responseHandler);
-                Response.m_boResponse = true;
+                Type = ActorMessageType.Response;
                 Response.DestinationLambda = SourceLambda; // SourceLambda will be called later on for the first response only
                 SourceLambda = null;
                 //Response.NotifyList = NotifyList; // notifications gathered before this request
             }
             else
             {
-                Response.Message = msg; // msg will be added to NotifyList later on
-                ++service.LastSentId; // count messages on the service, Response.SendId will be set by BasicServiceUser later on
+                Response.Payload = msg; // msg will be added to NotifyList later on
             }
             if (service.TraceSend) RaTrc.Info(this.SvcSndId, Response.ToString(), service.Logger);
-            Sender.PostInput(Response); // several responses may be added in BasicServiceUser
+            Source.PostInput(Response); // several responses may be added in BasicServiceUser
         }
 
 
@@ -206,9 +211,9 @@ namespace Remact.Net
         /// <returns>The message in readable text form.</returns>
         public override string ToString ()
         {
-            if(Message != null)
+            if(Payload != null)
             {
-                return Message.ToString();
+                return Payload.ToString();
             }
             else
             {
@@ -224,13 +229,13 @@ namespace Remact.Net
         {
             get 
             {
-            if (Input == null || Input.Name == null)
+            if (Destination == null || Destination.Name == null)
             {
                 return string.Format("C[{0:0#}]", ClientId);
             }
             else
             {
-                return string.Format("{0}[{1:0#}]", Input.Name, ClientId);
+                return string.Format("{0}[{1:0#}]", Destination.Name, ClientId);
             }
             }
         }// ClientMark
@@ -243,13 +248,13 @@ namespace Remact.Net
         {
             get
             {
-                if (Sender == null || Sender.Name == null || Sender.HostName == null)
+                if (Source == null || Source.Name == null || Source.HostName == null)
                 {
                     return string.Format("C[{0:0#}]", ClientId);
                 }
                 else
                 {
-                    return string.Format ("{0}/{1}[{2:0#}]", Sender.AppIdentification, Sender.Name, ClientId);
+                    return string.Format ("{0}/{1}[{2:0#}]", Source.AppIdentification, Source.Name, ClientId);
                 }
             }
         }// SenderMark

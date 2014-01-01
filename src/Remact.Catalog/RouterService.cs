@@ -29,7 +29,7 @@ namespace Remact.Catalog
 
     public void OnRequest (ActorMessage id)
     {
-        ActorInfo service = id.Message as ActorInfo;
+        ActorInfo service = id.Payload as ActorInfo;
         bool ok = false;
         if (service != null && service.IsServiceName)
         {
@@ -42,7 +42,7 @@ namespace Remact.Catalog
             }
         }
 
-        WcfPartnerListMessage list = id.Message as WcfPartnerListMessage;
+        WcfPartnerListMessage list = id.Payload as WcfPartnerListMessage;
         if (list != null)
         {
             ok = RegisterList(list, id);
@@ -51,7 +51,7 @@ namespace Remact.Catalog
 
         if (!ok)
         {
-            RaTrc.Warning(id.SvcRcvId, "Unknown request or no service: " + id.Message.ToString());
+            RaTrc.Warning(id.SvcRcvId, "Unknown request or no service: " + id.Payload.ToString());
             id.SendResponse(new ErrorMessage(ErrorMessage.Code.AppRequestNotAcceptedByService, "WcfRouterService"));
         }
     }

@@ -71,7 +71,7 @@ namespace Remact.Net
 
     #endregion
     //----------------------------------------------------------------------------------------------
-    #region Input linking, service creation
+    #region Destination linking, service creation
 
     private ActorOutput          m_Anonymous; // each input may have one anonymous partner carrying one TSC (sender context)
     private WcfServiceAssistant  m_MyInputService;
@@ -242,10 +242,10 @@ namespace Remact.Net
     /// <summary>
     /// May not be called.
     /// </summary>
-    /// <param name="id">A <see cref="ActorMessage"/>the 'Sender' property references the sending partner, where the response is expected.</param>
+    /// <param name="id">A <see cref="ActorMessage"/>the 'Source' property references the sending partner, where the response is expected.</param>
     public void SendOut(ActorMessage id)
     {
-        throw new Exception("AsyncWcfLib: Input '" + Name + "' cannot SendOut");
+        throw new Exception("AsyncWcfLib: Destination '" + Name + "' cannot SendOut");
     }
 
     // may be called on any thread
@@ -256,7 +256,7 @@ namespace Remact.Net
 
     #endregion
     //----------------------------------------------------------------------------------------------
-    #region Message dispatching
+    #region Payload dispatching
 
     /// <summary>
     /// Returns 0 for inputs.
@@ -341,16 +341,16 @@ namespace Remact.Net
         }
       }
 
-      if (sender.LastRequestIdSent == uint.MaxValue) sender.LastRequestIdSent = 10;
+      if (sender.LastRequestIdSent == int.MaxValue) sender.LastRequestIdSent = 10;
       ActorMessage id = new ActorMessage (sender, 0, ++sender.LastRequestIdSent, msg, responseHandler);
-      PostInput (id); // Message is posted into the message queue
+      PostInput (id); // Payload is posted into the message queue
     }
 
 
     /// <summary>
-    /// Message is passed to users connect/disconnect event handler, may be overloaded and call a MessageHandler;TSC>
+    /// Payload is passed to users connect/disconnect event handler, may be overloaded and call a MessageHandler;TSC>
     /// </summary>
-    /// <param name="id">ActorMessage containing Message and Sender.</param>
+    /// <param name="id">ActorMessage containing Payload and Source.</param>
     /// <param name="msg">The message.</param>
     /// <returns>True when handled.</returns>
     protected override bool OnConnectDisconnect (ActorMessage id, ActorInfo msg)
@@ -455,14 +455,14 @@ namespace Remact.Net
     // called when linking output or adding a client partner
     internal override object GetNewSenderContext()
     {
-      return new TSC(); // create default SenderContext. It will be stored on the Sender partner.
+      return new TSC(); // create default SenderContext. It will be stored on the Source partner.
     }
 
     
     /// <summary>
-    /// Message is passed to users connect/disconnect event handler.
+    /// Payload is passed to users connect/disconnect event handler.
     /// </summary>
-    /// <param name="id">ActorMessage containing Message and Sender.</param>
+    /// <param name="id">ActorMessage containing Payload and Source.</param>
     /// <param name="msg">The message.</param>
     /// <returns>True when handled.</returns>
     protected override bool OnConnectDisconnect (ActorMessage id, ActorInfo msg)
@@ -491,13 +491,13 @@ namespace Remact.Net
         // We are service: SendingP is the client  proxy (WcfBasicServiceUser). It has our SenderContext.
         // We NEVER are client : SendingP is ServiceIdent of WcfBasicClientAsync. It's SenderContext is the same as its ClientIdent.SenderContext. 
         TSC senderCtx = null;
-        var sender = id.Sender as ActorOutput;
+        var sender = id.Source as ActorOutput;
         if (sender != null)
         {
             senderCtx = sender.GetSenderContext() as TSC;  // base does not create a new ctx
         }
 
-        //if (senderCtx == null && id.Sender.Uri == null) // anonymous partner
+        //if (senderCtx == null && id.Source.Uri == null) // anonymous partner
         //{
         //    senderCtx = GetAnonymousSenderContext();
         //}
@@ -506,9 +506,9 @@ namespace Remact.Net
 
 
     /// <summary>
-    /// Message is passed to users default handler.
+    /// Payload is passed to users default handler.
     /// </summary>
-    /// <param name="id">ActorMessage containing Message and Sender.</param>
+    /// <param name="id">ActorMessage containing Payload and Source.</param>
     private void OnDefaultInput (ActorMessage id)
     {
       TSC senderCtx = GetSenderContext(id);
@@ -519,7 +519,7 @@ namespace Remact.Net
       } 
       else 
       {
-          RaTrc.Error( "AsyncWcfLib", "Unhandled request: " + id.Message, Logger );
+          RaTrc.Error( "AsyncWcfLib", "Unhandled request: " + id.Payload, Logger );
       }
     }
   }// class ActorInput<TSC>

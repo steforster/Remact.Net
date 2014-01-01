@@ -239,7 +239,7 @@ namespace Remact.Net
         while (ex != null)
         {
         //InnerMessage += " Inner exception: ";
-        //InnerMessage += ex.Message;
+        //InnerMessage += ex.Payload;
           if (mainText == ex.Message) {
             InnerMessage += " ...";
           }

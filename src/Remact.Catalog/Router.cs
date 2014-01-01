@@ -10,6 +10,7 @@ using System.ServiceModel;
 using System.ServiceModel.Description; // ServiceHost
 using System.Windows.Forms;
 using System.Net;
+using Alchemy;
 using Remact.Net;
 using Remact.Net.Internal;
 
@@ -321,9 +322,9 @@ namespace Remact.Catalog
 
 
     // implement IActorInputConfiguration
-    public void DoServiceConfiguration(ServiceHost serviceHost, ref Uri uri, bool isRouter)
+    public void DoServiceConfiguration(WebSocketServer server, ref Uri uri, bool isRouter)
     {
-        RemactDefaults.Instance.DoServiceConfiguration( serviceHost, ref uri, /*isRouter=*/ true );
+////TODO        RemactDefaults.Instance.DoServiceConfiguration( serviceHost, ref uri, /*isRouter=*/ true );
     }
 
 
@@ -344,10 +345,10 @@ namespace Remact.Catalog
       .On<ErrorMessage>(err=>
       {
         if (err.Error == ErrorMessage.Code.ServiceNotRunning) {
-          RaTrc.Warning (id.CltRcvId, "PeerRtr   "+err.Error.ToString ()+" at '"+id.Sender.Uri+"'");
+          RaTrc.Warning (id.CltRcvId, "PeerRtr   "+err.Error.ToString ()+" at '"+id.Source.Uri+"'");
         }
         else {
-          RaTrc.Error   (id.CltRcvId, "PeerRtr   "+err.ToString ()+Environment.NewLine+"   partner uri = '"+id.Sender.Uri+"'");
+          RaTrc.Error   (id.CltRcvId, "PeerRtr   "+err.ToString ()+Environment.NewLine+"   partner uri = '"+id.Source.Uri+"'");
         }
       })
       .On<WcfPartnerListMessage>(list=>
@@ -360,7 +361,7 @@ namespace Remact.Catalog
       }
       ) != null)
       {
-        RaTrc.Warning ("Wcf", "Received unexpected message from "+id.Sender.Name+": "+id.Message.ToString());
+        RaTrc.Warning ("Wcf", "Received unexpected message from "+id.Source.Name+": "+id.Payload.ToString());
       }
     }
     

@@ -28,7 +28,7 @@ namespace Remact.Net
     /// A handler for internal and external messages to ActorPort objects. Called on the correct thread (synchronization context).
     /// </summary>
     /// <param name="id">the received request or response containing message and sender.</param>
-    /// <param name="senderContext">the local id.Sender.SenderContext object present when the request or response is recived.</param>
+    /// <param name="senderContext">the local id.Source.SenderContext object present when the request or response is recived.</param>
     public delegate void MessageHandler<TSC>( ActorMessage id, TSC senderContext ) where TSC : class; // TODO remove, legacy
 
     #if !BEFORE_NET45

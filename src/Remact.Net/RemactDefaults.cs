@@ -7,6 +7,7 @@ using System.ServiceModel.Channels;// Binding
 using System.Reflection;           // Assembly
 using System.Net;                  // Dns
 using System.IO;                   // Files
+using Alchemy;
 using Remact.Net.Internal;
 using Remact.Net.Protocol.Wamp;
 
@@ -101,8 +102,8 @@ namespace Remact.Net
       // see. http://msdn.microsoft.com/en-us/library/ms729709%28v=VS.100%29.aspx
       // and  http://msdn.microsoft.com/en-us/library/ms735093%28v=VS.100%29.aspx
       //NetTcpBinding    binding = new NetTcpBinding ();
-      //binding.Security.Mode = SecurityMode.Message;
-      //binding.Security.Message.ClientCredentialType = MessageCredentialType.Windows;
+      //binding.Security.Mode = SecurityMode.Payload;
+      //binding.Security.Payload.ClientCredentialType = MessageCredentialType.Windows;
       
       // (Variant 4) binary serialization.
       NetTcpBinding    binding = new NetTcpBinding ();
@@ -119,19 +120,19 @@ namespace Remact.Net
     /// <summary>
     /// Sets the default service configuration, when no endpoint in app.config is found.
     /// </summary>
-    /// <param name="serviceHost">The ServiceHost to add the endpoint with security credentials.</param>
+    /// <param name="server">The web socket server.</param>
     /// <param name="uri">The dynamically generated URI for this service.</param>
     /// <param name="isRouter">true if used for WcfRouter service.</param>
-    public virtual void DoServiceConfiguration (ServiceHost serviceHost, ref Uri uri, bool isRouter)
+    public virtual void DoServiceConfiguration(WebSocketServer server, ref Uri uri, bool isRouter)
     {
 #if !MONO
       serviceHost.AddServiceEndpoint (
              "AsyncWcfLib.ServiceContract", // ConfigurationName needed for .NET 3.5 framework
               GetDefaultBinding (ref uri, isRouter), uri);
 #else
-      serviceHost.AddServiceEndpoint (
-             "SourceForge.AsyncWcfLib.Basic.IWcfBasicContractSync", // Implementation as ConfigurationName-attribute is ignored on monoi
-              GetDefaultBinding (ref uri, isRouter), uri);
+      //serviceHost.AddServiceEndpoint (
+      //       "SourceForge.AsyncWcfLib.Basic.IWcfBasicContractSync", // Implementation as ConfigurationName-attribute is ignored on monoi
+      //        GetDefaultBinding (ref uri, isRouter), uri);
 #endif
     }
 

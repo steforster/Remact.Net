@@ -149,14 +149,14 @@ namespace Remact.Net.Internal
     // Response callback from WcfRouterService
     private void OnWcfMessageReceived (ActorMessage rsp)
     {
-      if (rsp.Message is ErrorMessage)
+      if (rsp.Payload is ErrorMessage)
       {
         if (m_nConnectTries % 20 == 1) {
-          ErrorMessage err = rsp.Message as ErrorMessage;
+          ErrorMessage err = rsp.Payload as ErrorMessage;
           if (err.Error == ErrorMessage.Code.ServiceNotRunning
            || err.Error == ErrorMessage.Code.RouterNotRunning)
           {
-              RaTrc.Warning( rsp.CltRcvId, "WCF router service not running at  '" + rsp.Sender.Uri + "'", RemactApplication.Logger );
+              RaTrc.Warning( rsp.CltRcvId, "WCF router service not running at  '" + rsp.Source.Uri + "'", RemactApplication.Logger );
           }
           else
           {
@@ -164,7 +164,7 @@ namespace Remact.Net.Internal
           }
         }
       }
-      else if (rsp.Message is ActorInfo && m_ServiceList != null)
+      else if (rsp.Payload is ActorInfo && m_ServiceList != null)
       {
           m_Timer.Change (20, 1000); // 20ms warten und nächsten ActorMessage senden, bis alle erledigt sind
       }

@@ -135,7 +135,7 @@ namespace Remact.Net.Internal
     #region Client connect / disconnect
 
     // Internally called to create an ActorOutput as client stub.
-    internal virtual WcfBasicServiceUser AddNewSvcUser (ActorInfo receivedClientMsg, int index)
+    internal virtual WcfBasicServiceUser AddNewSvcUser (ActorInfo receivedClientMsg, int index, WcfBasicServiceUser svcUser)
     {
       if (index < 0) // add a new element
       {
@@ -143,18 +143,13 @@ namespace Remact.Net.Internal
         index = ServiceIdent.InputClientList.Count-1;
       }
 
-      var clt = new ActorOutput ();
-      WcfBasicServiceUser svcUser = new WcfBasicServiceUser (clt, index + m_FirstClientId);
-      clt.SvcUser = svcUser;
-      clt.LinkOutputTo (ServiceIdent); // requests are posted to our service. Also creates a new TSC object if ServiceIdent is ActorInput<TSC>
-      clt.IsMultithreaded = ServiceIdent.IsMultithreaded;
-      clt.TraceConnect = ServiceIdent.TraceConnect;
-      clt.TraceSend = ServiceIdent.TraceSend;
-      clt.TraceReceive = ServiceIdent.TraceReceive;
-      clt.Logger = ServiceIdent.Logger;
-      clt.PassResponsesTo( svcUser );   // this service posts notifications to svcUser, it will pass it to the remote client
-      svcUser.UseDataFrom (receivedClientMsg);
-      ServiceIdent.InputClientList[index] = clt;
+      if (svcUser == null)
+      {
+          svcUser = new WcfBasicServiceUser(null, ServiceIdent); // TODO
+      }
+
+      svcUser.UseDataFrom (receivedClientMsg, index + m_FirstClientId);
+      ServiceIdent.InputClientList[index] = svcUser.ClientIdent;
       return svcUser;
     }
 
@@ -180,7 +175,7 @@ namespace Remact.Net.Internal
           svcUser = ServiceIdent.InputClientList[i].SvcUser;
           if (svcUser == null)
           {
-            svcUser = AddNewSvcUser (client, i);
+            svcUser = AddNewSvcUser (client, i, null);
             LastAction = "Reconnect after service restart";
           }
           else if (!client.IsEqualTo (svcUser.ClientIdent))
@@ -193,19 +188,19 @@ namespace Remact.Net.Internal
           {
             LastAction = "Reconnect, no disconnect";
             RaTrc.Warning( req.SvcRcvId, svcUser.ClientIdent.ToString( LastAction, 0 ), ServiceIdent.Logger );
-            svcUser.UseDataFrom (client);
+            svcUser.UseDataFrom(client, req.ClientId);
             m_ConnectedClientCount--; // wird sofort wieder inkrementiert
           }
           else if (svcUser.IsFaulted)
           {
             LastAction = "Reconnect after network failure";
             RaTrc.Warning( req.SvcRcvId, svcUser.ClientIdent.ToString( LastAction, 0 ), ServiceIdent.Logger );
-            svcUser.UseDataFrom (client);
+            svcUser.UseDataFrom(client, req.ClientId);
             if (RemactDefaults.Instance.IsProcessIdUsed (svcUser.ClientIdent.ProcessId)) m_UnusedClientCount--;
           }
           else
           {
-            svcUser.UseDataFrom (client);
+            svcUser.UseDataFrom(client, req.ClientId);
             LastAction = "Reconnect after client disconnect";
             if (RemactDefaults.Instance.IsProcessIdUsed (svcUser.ClientIdent.ProcessId)) m_UnusedClientCount--;
           }
@@ -225,7 +220,7 @@ namespace Remact.Net.Internal
         int found = ServiceIdent.InputClientList.FindIndex (c => client.IsEqualTo (c));
         if (found < 0)
         {
-          svcUser = AddNewSvcUser (client, found);
+          svcUser = AddNewSvcUser (client, found, null);
           LastAction = "Connect first time";
           m_ConnectedClientCount++;
         }
@@ -241,19 +236,19 @@ namespace Remact.Net.Internal
               LastAction = "Reconnect after client restart";
               m_ConnectedClientCount++;
           }
-          svcUser.UseDataFrom (client);
+          svcUser.UseDataFrom(client, found + m_FirstClientId);
         }
       }
 
       // Connection state is kept in client object
       svcUser.ChannelTestTimer = 0;
-      svcUser.SetConnected( true, ServiceIdent );
+      svcUser.SetConnected();
       //svcUser.OpenNotificationChannel();
       HasConnectionStateChanged = true;
       
       // reply ServiceIdent
       ActorInfo response = new ActorInfo (ServiceIdent, ActorInfo.Use.ServiceConnectResponse);
-      req.Sender   = svcUser.ClientIdent;
+      req.Source   = svcUser.ClientIdent;
       req.ClientId = svcUser.ClientId;
       return response;
     }// Connect
@@ -274,11 +269,11 @@ namespace Remact.Net.Internal
         svcUser = ServiceIdent.InputClientList[i].SvcUser;
         svcUser.ChannelTestTimer = 0;
         //req.CurrentSvcUser = svcUser;
-        req.Sender = svcUser.ClientIdent;
+        req.Source = svcUser.ClientIdent;
         HasConnectionStateChanged = true;
         if (client.IsEqualTo (svcUser.ClientIdent))
         {
-          svcUser.SetConnected( false, ServiceIdent );    // disconnected
+          svcUser.Disconnect();
           LastAction = "Disconnect";
           if (RemactDefaults.Instance.IsProcessIdUsed (svcUser.ClientIdent.ProcessId))
           {
@@ -318,12 +313,12 @@ namespace Remact.Net.Internal
       {
         svcUser = ServiceIdent.InputClientList[i].SvcUser;
         svcUser.ChannelTestTimer = 0;
-        req.Sender = svcUser.ClientIdent;
+        req.Source = svcUser.ClientIdent;
 
         if (!svcUser.IsConnected)
         {
           RaTrc.Error( req.SvcRcvId, "Reconnect without ConnectRequest, RequestId = " + req.RequestId, ServiceIdent.Logger );
-          svcUser.SetConnected( true, ServiceIdent );
+          svcUser.SetConnected();
           //svcUser.OpenNotificationChannel();
           if (RemactDefaults.Instance.IsProcessIdUsed (svcUser.ClientIdent.ProcessId)) m_UnusedClientCount--;
           m_ConnectedClientCount++;
@@ -367,11 +362,11 @@ namespace Remact.Net.Internal
       if( m != null ) m.IsSent = true;
 #endif
       
-      req.Input = ServiceIdent;
+      req.Destination = ServiceIdent;
       req.DestinationLambda = null;// make sure to call the DefaultHandler
       svcUser = null;
       object response = null;
-      ActorInfo cltReq = req.Message as ActorInfo;
+      ActorInfo cltReq = req.Payload as ActorInfo;
       if (cltReq != null)
       {
         if (ServiceIdent.Uri == null)

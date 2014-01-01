@@ -111,6 +111,10 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Alchemy-Websockets\src\Alchemy\Alchemy.csproj">
+      <Project>{45486cde-86a3-4769-952f-e0821bf79493}</Project>
+      <Name>Alchemy</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Remact.Net\Remact.Mono.csproj">
       <Project>{9DC114F4-F328-4770-B1EA-2BD4D0FA5A5A}</Project>
       <Name>Remact.Mono</Name>

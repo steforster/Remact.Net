@@ -275,10 +275,10 @@ namespace Remact.Net
     /// Used by the library to post a request or response message to the input of this partner. May be called on any thread.
     /// Usage:
     /// Internal:    Post a message into this partners input queue.
-    /// Serviceside: Sender.PostInput() sends a response from client-stub to the remote client.
+    /// Serviceside: Source.PostInput() sends a response from client-stub to the remote client.
     /// Clientside:  Post a response into this clients input queue.
     /// </summary>
-    /// <param name="id">A <see cref="ActorMessage"/> the 'Sender' property references the sending partner.</param>
+    /// <param name="id">A <see cref="ActorMessage"/> the 'Source' property references the sending partner.</param>
     public void PostInput (ActorMessage id)
     {
         if( !m_Connected )
@@ -295,7 +295,7 @@ namespace Remact.Net
         }
         else if (this.SyncContext == null)
         {
-            throw new Exception ("AsyncWcfLib: Input of '"+Name+"' has not picked up a thread synchronization context.");
+            throw new Exception ("AsyncWcfLib: Destination of '"+Name+"' has not picked up a thread synchronization context.");
         }
         else
         {
@@ -304,7 +304,7 @@ namespace Remact.Net
             #if !BEFORE_NET45
                 this.SyncContext.Post( MessageHandlerBaseAsync, id );// Message is posted into the message queue
             #else
-                this.SyncContext.Post( MessageHandlerBase, id );// Message is posted into the message queue
+                this.SyncContext.Post( MessageHandlerBase, id );// Payload is posted into the message queue
             #endif
             }
             catch( Exception ex )
@@ -317,7 +317,7 @@ namespace Remact.Net
 
     #endregion
     //----------------------------------------------------------------------------------------------
-    #region Message dispatching
+    #region Payload dispatching
 
     /// <summary>
     /// Trace switch: Traces all sent messages. Default = false;
@@ -343,18 +343,11 @@ namespace Remact.Net
     public    object                 Logger       { get; set; }
 
     /// <summary>
-    /// The send id given to the last message sent from this sender.
-    /// It is used to detect missing messages on the receiving side.
-    /// </summary>
-    public    uint                   LastSentId   {get; internal set;}
-
-    /// <summary>
     /// The request id given to the last message sent from this client.
     /// The request id is incremented by the client for each request.
     /// The same id is returned in the response from the service.
-    /// It is used to detect programming erors leading to request/response mismatch.
     /// </summary>
-    public    uint                   LastRequestIdSent  {get; internal set;}
+    public    int                    LastRequestIdSent  {get; internal set;}
 
     /// <summary>
     /// Multithreaded partners do not use a message input queue. All threads may directly call InputHandler delegates.
@@ -385,7 +378,7 @@ namespace Remact.Net
     {
         try
         {
-            var err1 = id.Message as ErrorMessage;
+            var err1 = id.Payload as ErrorMessage;
             if( err1 != null )
             {
                 err.InnerMessage = err1.Message;
@@ -541,7 +534,7 @@ namespace Remact.Net
     }// DispatchMessageAsync
 #endif
 
-    // Message comes out of message queue in user thread
+    // Payload comes out of message queue in user thread
     private void MessageHandlerBase( object userState )
     {
         try
@@ -555,7 +548,7 @@ namespace Remact.Net
     }// MessageHandlerBase
 
 
-    // Message is passed to the lambda functions of the sending context or to the default response handler
+    // Payload is passed to the lambda functions of the sending context or to the default response handler
     internal void DispatchMessage (ActorMessage id)
     {
         if( !m_Connected )
@@ -572,15 +565,15 @@ namespace Remact.Net
 
         if (!IsMultithreaded)
         {
-            var m = id.Message as IExtensibleWcfMessage;
+            var m = id.Payload as IExtensibleWcfMessage;
             if( m != null ) m.BoundSyncContext = SyncContext;
         }
 
         try
         {
             m_CurrentReq   = id;
-            id.Input = this;
-            var connectMsg = id.Message as ActorInfo;
+            id.Destination = this;
+            var connectMsg = id.Payload as ActorInfo;
             if (connectMsg != null)
             {
                 if (connectMsg.Usage != ActorInfo.Use.ClientConnectRequest
@@ -619,7 +612,7 @@ namespace Remact.Net
                 }
                 else
                 {
-                    RaTrc.Error( "WcfLib", "Unhandled response: " + id.Message, Logger );
+                    RaTrc.Error( "WcfLib", "Unhandled response: " + id.Payload, Logger );
                 }
             }
 
@@ -636,9 +629,9 @@ namespace Remact.Net
 
 
     /// <summary>
-    /// Message is passed to users connect/disconnect event handler, may be overloaded and call a MessageHandler;TSC>
+    /// Payload is passed to users connect/disconnect event handler, may be overloaded and call a MessageHandler;TSC>
     /// </summary>
-    /// <param name="id">ActorMessage containing Message and Sender.</param>
+    /// <param name="id">ActorMessage containing Payload and Source.</param>
     /// <param name="msg">The message.</param>
     /// <returns>True when handled.</returns>
     protected virtual bool OnConnectDisconnect(ActorMessage id, ActorInfo msg)

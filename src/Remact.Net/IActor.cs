@@ -7,6 +7,7 @@ using System.Runtime.Serialization;// DataContract
 using System.ServiceModel;         // ServiceHost
 using System.Net;                  // Dns
 using System.Threading;            // SynchronizationContext
+using Alchemy;
 using Remact.Net.Internal;
 using Remact.Net.Protocol.Wamp;
 #if !BEFORE_NET45
@@ -173,10 +174,10 @@ namespace Remact.Net
       /// <summary>
       /// Sets the service configuration, when no endpoint in app.config is found.
       /// </summary>
-      /// <param name="serviceHost">The ServiceHost to add the endpoint with security credentials.</param>
+      /// <param name="server">The WebSocketServer.</param>
       /// <param name="uri">The dynamically generated URI for this service.</param>
       /// <param name="isRouter">true if used for WcfRouter service.</param>
-      void DoServiceConfiguration( ServiceHost serviceHost, ref Uri uri, bool isRouter );
+      void DoServiceConfiguration( WebSocketServer server, ref Uri uri, bool isRouter );
   }
 
   #endregion
@@ -289,18 +290,12 @@ namespace Remact.Net
     void LinkOutputToRemoteService( Uri serviceUri, IActorOutputConfiguration clientConfig = null );
 
     /// <summary>
-    /// The send id given to the last message sent from this sender.
-    /// It is used to detect missing messages on the receiving side.
-    /// </summary>
-    uint LastSentId {get;}
-
-    /// <summary>
     /// The request id given to the last message sent from this client.
     /// The request id is incremented by the client for each request.
     /// The same id is returned in the response from the service.
     /// It is used to detect programming erors leading to request/response mismatch.
     /// </summary>
-    uint LastRequestIdSent {get;}
+    int LastRequestIdSent {get;}
 
     /// <summary>
     /// The number of requests not yet responded by the service connected to this output.

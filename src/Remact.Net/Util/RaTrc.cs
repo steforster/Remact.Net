@@ -31,7 +31,7 @@ namespace Remact.Net
                                                   if (ms_Plugin != null) ms_Plugin.Start (appInstance);}
 
     /// <summary>
-    /// Call it periodically (e.g. 5 sec.) to flush buffer to tracefile
+    /// Request it periodically (e.g. 5 sec.) to flush buffer to tracefile
     /// </summary>
     public static void Run()                     {if (ms_Plugin != null) ms_Plugin.Run();}
     
@@ -102,7 +102,7 @@ namespace Remact.Net
       void Start (int appInstance);
       
       /// <summary>
-      /// Call it periodically (e.g. 5 sec.) to flush buffer to tracefile.
+      /// Request it periodically (e.g. 5 sec.) to flush buffer to tracefile.
       /// </summary>
       void Run ();
       

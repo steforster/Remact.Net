@@ -240,9 +240,9 @@ namespace Remact.Net
     /// Usage:
     /// Clientside:  Send a request to the connected remote service.
     /// Internal:    Send a message to the connected partner running on another thread synchronization context.
-    /// Serviceside: Sender.SendOut() sends a request from client-proxy to the internal service.
+    /// Serviceside: Source.SendOut() sends a request from client-proxy to the internal service.
     /// </summary>
-    /// <param name="id">A <see cref="ActorMessage"/>the 'Sender' property references the sending partner, where the response is expected.</param>
+    /// <param name="id">A <see cref="ActorMessage"/>the 'Source' property references the sending partner, where the response is expected.</param>
     public void SendOut (ActorMessage id)
     {
       if (m_BasicOutput == null) throw new Exception ("AsyncWcfLib: Output of '"+Name+"' has not been linked");
@@ -373,7 +373,7 @@ namespace Remact.Net
     /// <param name="msg">The message to send.</param>
     public void SendOut(object msg)
     {
-      if (LastRequestIdSent == uint.MaxValue) LastRequestIdSent = 10;
+      if (LastRequestIdSent == int.MaxValue) LastRequestIdSent = 10;
       ActorMessage id = new ActorMessage (this, OutputClientId, ++LastRequestIdSent, msg, null);
       SendOut (id);
     }
@@ -386,7 +386,7 @@ namespace Remact.Net
     /// <param name="responseHandler">A method or lambda expression handling the asynchronous response.</param>
     public void SendOut(object msg, AsyncResponseHandler responseHandler)
     {
-      if (LastRequestIdSent == uint.MaxValue) LastRequestIdSent = 10;
+      if (LastRequestIdSent == int.MaxValue) LastRequestIdSent = 10;
       ActorMessage id = new ActorMessage (this, OutputClientId, ++LastRequestIdSent, msg, responseHandler);
       SendOut (id);
     }
@@ -442,9 +442,9 @@ namespace Remact.Net
       private MessageHandler<TOC> m_defaultTocResponseHandler;
 
       /// <summary>
-      /// Message is passed to users default handler.
+      /// Payload is passed to users default handler.
       /// </summary>
-      /// <param name="id">ActorMessage containing Message and Sender.</param>
+      /// <param name="id">ActorMessage containing Payload and Source.</param>
       private void OnDefaultInput (ActorMessage id)
       {
           if (m_defaultTocResponseHandler != null)
@@ -453,7 +453,7 @@ namespace Remact.Net
           }
           else
           {
-              RaTrc.Error("AsyncWcfLib", "Unhandled response: " + id.Message, Logger);
+              RaTrc.Error("AsyncWcfLib", "Unhandled response: " + id.Payload, Logger);
           }
       }
 

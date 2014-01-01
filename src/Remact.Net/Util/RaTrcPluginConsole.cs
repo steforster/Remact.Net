@@ -29,7 +29,7 @@ public partial class RaTrc
     }
 
     /// <summary>
-    /// Call it periodically (e.g. 5 sec.) to flush buffer to tracefile.
+    /// Request it periodically (e.g. 5 sec.) to flush buffer to tracefile.
     /// </summary>
     public void Run () { }
 

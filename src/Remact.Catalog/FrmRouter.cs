@@ -33,7 +33,7 @@ namespace Remact.Catalog
 
     #endregion
     //----------------------------------------------------------------------------------------------
-    #region Event Handlers
+    #region Notification Handlers
 
     private int  m_Seconds=0;
     //---------------------------------------------------
