@@ -92,14 +92,14 @@ namespace Remact.Catalog
         int connectedPeerRouters = UpdatePeerRouters( seconds );
         int servicesFromPeerRouters = 0;
 
-        foreach (ActorMessage s in SvcRegister.Item)
+        foreach (ActorInfo s in SvcRegister.Item)
         {
-            if (s.Usage == ActorMessage.Use.ServiceEnableRequest)
+            if (s.Usage == ActorInfo.Use.ServiceEnableRequest)
             {
                 s.TimeoutSeconds -= seconds;
                 if (s.TimeoutSeconds < 0)
                 {
-                    s.Usage = ActorMessage.Use.ServiceDisableRequest;
+                    s.Usage = ActorInfo.Use.ServiceDisableRequest;
                     SvcRegisterChanged = true;
                     RaTrc.Warning("   "+s.Name+"  ", "Timeout  "+s.ToString ());
                 }
@@ -137,7 +137,7 @@ namespace Remact.Catalog
             sb.Append(" configured remote routers.");
             sb.AppendLine();
         
-            foreach (ActorMessage s in SvcRegister.Item)
+            foreach (ActorInfo s in SvcRegister.Item)
             {
                 int versionCount = 2;
                 if (s.AppVersion.Revision != 0)
@@ -149,7 +149,7 @@ namespace Remact.Catalog
                     versionCount = 3;
                 }
                 sb.AppendLine();
-                if (s.Usage == ActorMessage.Use.ServiceEnableRequest) sb.Append ("++");
+                if (s.Usage == ActorInfo.Use.ServiceEnableRequest) sb.Append ("++");
                                                                       else sb.Append ("--");
                 sb.Append (s.Uri);
                 sb.Append (" in ");
@@ -200,16 +200,16 @@ namespace Remact.Catalog
 
 
     // Register remote service. returns true, when svc is referenced by SvcRegister.
-    public bool RegisterService (ActorMessage svc, string mark)
+    public bool RegisterService (ActorInfo svc, string mark)
     {
       svc.RouterHopCount++;                                 // ==1: Direct info from service on local host
       if (svc.RouterHopCount > 1) svc.TimeoutSeconds = 120; // > 1: Indirect info from another router
       
-      if (svc.Usage != ActorMessage.Use.ServiceEnableRequest
-       && svc.Usage != ActorMessage.Use.ServiceDisableRequest)
+      if (svc.Usage != ActorInfo.Use.ServiceEnableRequest
+       && svc.Usage != ActorInfo.Use.ServiceDisableRequest)
       {
         RaTrc.Error (mark, "Got wrong status: "+svc.ToString ());
-        svc.Usage = ActorMessage.Use.ServiceDisableRequest;
+        svc.Usage = ActorInfo.Use.ServiceDisableRequest;
       }
 
       bool changed = false;
@@ -223,19 +223,19 @@ namespace Remact.Catalog
       }
       else
       {
-        ActorMessage registered = SvcRegister.Item[found];
+        ActorInfo registered = SvcRegister.Item[found];
         
         if (registered.Uri != svc.Uri)
         {
           // a changed or a second service tries to register
-          if (registered.Usage == ActorMessage.Use.ServiceDisableRequest
-                  && svc.Usage == ActorMessage.Use.ServiceEnableRequest)
+          if (registered.Usage == ActorInfo.Use.ServiceDisableRequest
+                  && svc.Usage == ActorInfo.Use.ServiceEnableRequest)
           {
               RaTrc.Info( mark, "Start new   " + svc.Uri.ToString() );
               changed = true;
           }
-          else if (registered.Usage == ActorMessage.Use.ServiceEnableRequest
-                       && svc.Usage == ActorMessage.Use.ServiceEnableRequest) 
+          else if (registered.Usage == ActorInfo.Use.ServiceEnableRequest
+                       && svc.Usage == ActorInfo.Use.ServiceEnableRequest) 
           {
             if (registered.ApplicationRunTime < svc.ApplicationRunTime)
             {
@@ -254,20 +254,20 @@ namespace Remact.Catalog
           {
               // circular reference: do not use this old information
           }
-          else if( registered.Usage == ActorMessage.Use.ServiceDisableRequest
-                       && svc.Usage == ActorMessage.Use.ServiceEnableRequest)
+          else if( registered.Usage == ActorInfo.Use.ServiceDisableRequest
+                       && svc.Usage == ActorInfo.Use.ServiceEnableRequest)
           {
               RaTrc.Info( mark, "Restart   " + svc.Uri.ToString() );
               changed = true;
           }
-          else if (registered.Usage == ActorMessage.Use.ServiceEnableRequest
-                       && svc.Usage == ActorMessage.Use.ServiceDisableRequest)
+          else if (registered.Usage == ActorInfo.Use.ServiceEnableRequest
+                       && svc.Usage == ActorInfo.Use.ServiceDisableRequest)
           {
               RaTrc.Info( mark, "Stopped   " + svc.Uri.ToString() );
               changed = true;
           }
-          else if (registered.Usage == ActorMessage.Use.ServiceEnableRequest
-                       && svc.Usage == ActorMessage.Use.ServiceEnableRequest)
+          else if (registered.Usage == ActorInfo.Use.ServiceEnableRequest
+                       && svc.Usage == ActorInfo.Use.ServiceEnableRequest)
           {
               RaTrc.Info( mark, "Alive     " + svc.Uri.ToString() );
               SvcRegister.Item[found].TimeoutSeconds = svc.TimeoutSeconds;// Restart timeout
@@ -328,16 +328,16 @@ namespace Remact.Catalog
 
 
     // implement IActorOutputConfiguration
-    public void DoClientConfiguration( ClientBase<IWcfBasicContractSync> clientBase, ref Uri uri, bool forRouter )
+    public void DoClientConfiguration( object clientBase, ref Uri uri, bool forRouter )
     {
         RemactDefaults.Instance.DoClientConfiguration( clientBase, ref uri, /*forRouter=*/ true );
     }
     
 
-    private void OnResponseFromPeerRouter(Request id, SvcDat svcDat)
+    private void OnResponseFromPeerRouter(ActorMessage id, SvcDat svcDat)
     {
       if (
-       id.On<ActorMessage>(partner=>
+       id.On<ActorInfo>(partner=>
       {
         RaTrc.Info      (id.CltRcvId, "PeerRtr   "+partner.ToString ());
       })
@@ -353,7 +353,7 @@ namespace Remact.Catalog
       .On<WcfPartnerListMessage>(list=>
       {
           RaTrc.Info( id.CltRcvId, "PeerRtr responds with list containing " + list.Item.Count + " services." );
-          foreach( ActorMessage s in list.Item )
+          foreach( ActorInfo s in list.Item )
         {
           RegisterService (s, id.CltRcvId);
         }

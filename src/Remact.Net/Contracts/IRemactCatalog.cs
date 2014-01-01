@@ -15,14 +15,14 @@ namespace Remact.Net.Contracts
         /// <summary>
         /// Called when an actor opens its input for remote access.
         /// </summary>
-        /// <param name="actorInput">The <see cref="ActorMessage"/> of the opened service (ActorInput).</param>
-        ReadyMessage OpenedInput(ActorMessage actorInput);
+        /// <param name="actorInput">The <see cref="ActorInfo"/> of the opened service (ActorInput).</param>
+        ReadyMessage OpenedInput(ActorInfo actorInput);
 
         /// <summary>
         /// Called before an actor closes its remotly accessable input.
         /// </summary>
-        /// <param name="actorInput">The <see cref="ActorMessage"/> of the closing service (ActorInput).</param>
-        ReadyMessage ClosingInput(ActorMessage actorInput);
+        /// <param name="actorInput">The <see cref="ActorInfo"/> of the closing service (ActorInput).</param>
+        ReadyMessage ClosingInput(ActorInfo actorInput);
 
         /// <summary>
         /// Called when a client looks up an ActorInput (service).
@@ -33,7 +33,7 @@ namespace Remact.Net.Contracts
         /// This allows to start 'backup' actors that will come into play, when the longest running actor is shut down 
         /// and the clients try to reconnnect the lost connection.
         /// </param>
-        /// <returns>The <see cref="ActorMessage"/> of an opened ActorInput (service). Null, when no such ActorInput is found.</returns>
-        ActorMessage LookupInput(string actorInputName);
+        /// <returns>The <see cref="ActorInfo"/> of an opened ActorInput (service). Null, when no such ActorInput is found.</returns>
+        ActorInfo LookupInput(string actorInputName);
     }
 }

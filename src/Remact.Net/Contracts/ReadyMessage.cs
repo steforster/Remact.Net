@@ -113,7 +113,7 @@ namespace Remact.Net
       AddKnownType (typeof(ReadyMessage));
       AddKnownType (typeof(ErrorMessage));
       //AddKnownType (typeof(WcfNotifyResponse));
-      AddKnownType (typeof(ActorMessage));
+      AddKnownType (typeof(ActorInfo));
       AddKnownType (typeof(WcfPartnerListMessage));
     }
 

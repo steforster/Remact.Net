@@ -170,7 +170,7 @@ namespace Remact.Net
       RequestTypeUnknownOnService,
       
       /// <summary>
-      /// Request with unknown client id.
+      /// ActorMessage with unknown client id.
       /// </summary>
       ClientIdNotFoundOnService,
 

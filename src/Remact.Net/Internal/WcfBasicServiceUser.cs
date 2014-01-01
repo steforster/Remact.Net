@@ -4,8 +4,9 @@
 using System;
 using System.ServiceModel;         // OperationContext
 using System.Net;                  // Dns
-using Remact.Net.Contracts;
 using Newtonsoft.Json.Linq;
+using Remact.Net.Protocol;
+using Remact.Net.Protocol.Wamp;
 
 namespace Remact.Net.Internal
 {
@@ -15,7 +16,7 @@ namespace Remact.Net.Internal
   /// <para>Has the possibility to store and forward notifications that are not expected by the client.</para>
   /// <para>This could also be handled by the more cumbersome 'DualHttpBinding'.</para>
   /// </summary>
-  internal class WcfBasicServiceUser: IWcfBasicPartner, IWampRpcV1Server
+    internal class WcfBasicServiceUser : IWcfBasicPartner, IRemactProtocolDriverService
   {
     //----------------------------------------------------------------------------------------------
     #region Properties
@@ -40,7 +41,7 @@ namespace Remact.Net.Internal
     internal int                       ChannelTestTimer;
     internal object                    ClientAccessLock   = new Object();
 
-    private Wamp.WampClientProxy       m_wampProxy;
+    private WampClientProxy            m_wampProxy;
     private bool                       m_boDisconnectReq;
     private bool                       m_boTimeout;
 
@@ -59,7 +60,7 @@ namespace Remact.Net.Internal
         ClientIdent = clientIdent;
     }// CTOR
 
-    internal void UseDataFrom (ActorMessage remoteClient)
+    internal void UseDataFrom (ActorInfo remoteClient)
     {
         ClientIdent.UseDataFrom (remoteClient);
         UriBuilder uri = new UriBuilder (ClientIdent.Uri);
@@ -225,7 +226,7 @@ namespace Remact.Net.Internal
     }}
 
 /*
-    internal void StartNewRequest( Request id )
+    internal void StartNewRequest( ActorMessage id )
     {
       if( m_NotifyList.Notifications.Count > 0 )
       {
@@ -240,7 +241,7 @@ namespace Remact.Net.Internal
     /// <para>It must be called to return the response by the service.</para>
     /// </summary>
     /// <returns>The responses plus notifications.</returns>
-    public object GetNotificationsAndResponse(ref Request id)
+    public object GetNotificationsAndResponse(ref ActorMessage id)
     {
       if( id.Response == null )
       {
@@ -278,8 +279,8 @@ namespace Remact.Net.Internal
     /// <summary>
     /// Send a request to the service internally connected to this client-stub.
     /// </summary>
-    /// <param name="id">A <see cref="Request"/>the 'Sender' property references the sending partner, where the response is expected.</param>
-    public void SendOut (Request id)
+    /// <param name="id">A <see cref="ActorMessage"/>the 'Sender' property references the sending partner, where the response is expected.</param>
+    public void SendOut (ActorMessage id)
     {
         ClientIdent.SendOut(id); // post to service input queue
     }
@@ -287,8 +288,8 @@ namespace Remact.Net.Internal
     /// <summary>
     /// Send a response to the remote client belonging to this client-stub.
     /// </summary>
-    /// <param name="rsp">A <see cref="Request"/>the 'Sender' property references the sending partner, where the response is expected.</param>
-    public void PostInput( Request req )
+    /// <param name="rsp">A <see cref="ActorMessage"/>the 'Sender' property references the sending partner, where the response is expected.</param>
+    public void PostInput( ActorMessage req )
     {
         m_wampProxy.CallResult(req.RequestId.ToString(), new JObject(req.Message));
     }
@@ -303,12 +304,12 @@ namespace Remact.Net.Internal
     //----------------------------------------------------------------------------------------------
     #region IWampRpcV1ClientCallbacks implementation
 
-    void IWampRpcV1Server.Call(IActorOutput client, string callId, string procUri, object[] arguments)
+    void IRemactProtocolDriverService.Call(IActorOutput client, string callId, string procUri, object[] arguments)
     {
         throw new NotImplementedException();
     }
 
-    void IWampRpcV1Server.CallError(string callId, string errorUri, string errorDesc, object errorDetails)
+    void IRemactProtocolDriverService.CallError(string callId, string errorUri, string errorDesc, object errorDetails)
     {
         throw new NotImplementedException();
     }

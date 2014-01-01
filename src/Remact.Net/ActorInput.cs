@@ -188,13 +188,13 @@ namespace Remact.Net
 
     /// <summary>
     /// The event is risen, when a client is connected to this service.
-    /// The response to the Request is sent by AsyncWcfLib. No further response is required. 
+    /// The response to the ActorMessage is sent by AsyncWcfLib. No further response is required. 
     /// </summary>
     public event MessageHandler OnInputConnected;
     
     /// <summary>
     /// The event is risen, when a client is disconnected from this service.
-    /// The response to the Request is sent by AsyncWcfLib. No further response is required. 
+    /// The response to the ActorMessage is sent by AsyncWcfLib. No further response is required. 
     /// </summary>
     public event MessageHandler OnInputDisconnected;
 
@@ -242,8 +242,8 @@ namespace Remact.Net
     /// <summary>
     /// May not be called.
     /// </summary>
-    /// <param name="id">A <see cref="Request"/>the 'Sender' property references the sending partner, where the response is expected.</param>
-    public void SendOut(Request id)
+    /// <param name="id">A <see cref="ActorMessage"/>the 'Sender' property references the sending partner, where the response is expected.</param>
+    public void SendOut(ActorMessage id)
     {
         throw new Exception("AsyncWcfLib: Input '" + Name + "' cannot SendOut");
     }
@@ -342,7 +342,7 @@ namespace Remact.Net
       }
 
       if (sender.LastRequestIdSent == uint.MaxValue) sender.LastRequestIdSent = 10;
-      Request id = new Request (sender, 0, ++sender.LastRequestIdSent, msg, responseHandler);
+      ActorMessage id = new ActorMessage (sender, 0, ++sender.LastRequestIdSent, msg, responseHandler);
       PostInput (id); // Message is posted into the message queue
     }
 
@@ -350,16 +350,16 @@ namespace Remact.Net
     /// <summary>
     /// Message is passed to users connect/disconnect event handler, may be overloaded and call a MessageHandler;TSC>
     /// </summary>
-    /// <param name="id">Request containing Message and Sender.</param>
+    /// <param name="id">ActorMessage containing Message and Sender.</param>
     /// <param name="msg">The message.</param>
     /// <returns>True when handled.</returns>
-    protected override bool OnConnectDisconnect (Request id, ActorMessage msg)
+    protected override bool OnConnectDisconnect (ActorMessage id, ActorInfo msg)
     {
-      if      (msg.Usage == ActorMessage.Use.ClientConnectRequest)
+      if      (msg.Usage == ActorInfo.Use.ClientConnectRequest)
       {
         if (OnInputConnected != null) OnInputConnected (id); // optional event
       }
-      else if (msg.Usage == ActorMessage.Use.ClientDisconnectRequest)
+      else if (msg.Usage == ActorInfo.Use.ClientDisconnectRequest)
       {
         if (OnInputDisconnected != null) OnInputDisconnected (id); // optional event
       }
@@ -424,14 +424,14 @@ namespace Remact.Net
   {
     /// <summary>
     /// The event is risen, when a client is connected to this service.
-    /// The response to the Request is sent by AsyncWcfLib. No further response is required. 
+    /// The response to the ActorMessage is sent by AsyncWcfLib. No further response is required. 
     /// </summary>
     public new event MessageHandler<TSC> OnInputConnected;
 
 
     /// <summary>
     /// The event is risen, when a client is disconnected from this service.
-    /// The response to the Request is sent by AsyncWcfLib. No further response is required. 
+    /// The response to the ActorMessage is sent by AsyncWcfLib. No further response is required. 
     /// </summary>
     public new event MessageHandler<TSC> OnInputDisconnected;
 
@@ -462,18 +462,18 @@ namespace Remact.Net
     /// <summary>
     /// Message is passed to users connect/disconnect event handler.
     /// </summary>
-    /// <param name="id">Request containing Message and Sender.</param>
+    /// <param name="id">ActorMessage containing Message and Sender.</param>
     /// <param name="msg">The message.</param>
     /// <returns>True when handled.</returns>
-    protected override bool OnConnectDisconnect (Request id, ActorMessage msg)
+    protected override bool OnConnectDisconnect (ActorMessage id, ActorInfo msg)
     {
       TSC senderCtx = GetSenderContext(id);
 
-      if      (msg.Usage == ActorMessage.Use.ClientConnectRequest)
+      if      (msg.Usage == ActorInfo.Use.ClientConnectRequest)
       {
         if (OnInputConnected != null) OnInputConnected (id, senderCtx); // optional event
       }
-      else if (msg.Usage == ActorMessage.Use.ClientDisconnectRequest)
+      else if (msg.Usage == ActorInfo.Use.ClientDisconnectRequest)
       {
         if (OnInputDisconnected != null) OnInputDisconnected (id, senderCtx); // optional event
       }
@@ -485,7 +485,7 @@ namespace Remact.Net
     }
 
 
-    internal static TSC GetSenderContext (Request id)
+    internal static TSC GetSenderContext (ActorMessage id)
     {
         // We are peer   : SendingP is an ActorOutput. It has only one Output and therefore only one (our) SenderContext. 
         // We are service: SendingP is the client  proxy (WcfBasicServiceUser). It has our SenderContext.
@@ -508,8 +508,8 @@ namespace Remact.Net
     /// <summary>
     /// Message is passed to users default handler.
     /// </summary>
-    /// <param name="id">Request containing Message and Sender.</param>
-    private void OnDefaultInput (Request id)
+    /// <param name="id">ActorMessage containing Message and Sender.</param>
+    private void OnDefaultInput (ActorMessage id)
     {
       TSC senderCtx = GetSenderContext(id);
 

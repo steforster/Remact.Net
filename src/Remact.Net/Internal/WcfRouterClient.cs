@@ -114,14 +114,14 @@ namespace Remact.Net.Internal
           {
             lock (ms_Lock)
             {
-              ActorMessage req = new ActorMessage (m_ServiceList[m_nCurrentSvc].ServiceIdent,
-                                                             ActorMessage.Use.ServiceEnableRequest);
+              ActorInfo req = new ActorInfo (m_ServiceList[m_nCurrentSvc].ServiceIdent,
+                                                             ActorInfo.Use.ServiceEnableRequest);
               WcfBasicService svc = m_ServiceList[m_nCurrentSvc];
               if (!svc.IsServiceRegistered)
               {
                 svc.NextEnableMessage = DateTime.Now.AddSeconds(20);
                 svc.IsServiceRegistered = true;
-                Request id = m_RouterClient.SendOut (req);
+                ActorMessage id = m_RouterClient.SendOut (req);
                 RaTrc.Info( id.CltSndId, "send to WcfRouter: " + req.ToString(), RemactApplication.Logger );// id.CltSndId is updated in Send()
 
               }
@@ -147,7 +147,7 @@ namespace Remact.Net.Internal
 
     
     // Response callback from WcfRouterService
-    private void OnWcfMessageReceived (Request rsp)
+    private void OnWcfMessageReceived (ActorMessage rsp)
     {
       if (rsp.Message is ErrorMessage)
       {
@@ -164,9 +164,9 @@ namespace Remact.Net.Internal
           }
         }
       }
-      else if (rsp.Message is ActorMessage && m_ServiceList != null)
+      else if (rsp.Message is ActorInfo && m_ServiceList != null)
       {
-          m_Timer.Change (20, 1000); // 20ms warten und nächsten Request senden, bis alle erledigt sind
+          m_Timer.Change (20, 1000); // 20ms warten und nächsten ActorMessage senden, bis alle erledigt sind
       }
       else
       {
@@ -300,9 +300,9 @@ namespace Remact.Net.Internal
         if (n < 0) return; // already removed
         if (m_RouterClient != null && m_RouterClient.IsConnected)
         {
-          ActorMessage req = new ActorMessage (m_ServiceList[n].ServiceIdent, 
-                                                         ActorMessage.Use.ServiceDisableRequest);
-          Request id = m_RouterClient.SendOut (req);
+          ActorInfo req = new ActorInfo (m_ServiceList[n].ServiceIdent, 
+                                                         ActorInfo.Use.ServiceDisableRequest);
+          ActorMessage id = m_RouterClient.SendOut (req);
           RaTrc.Info( id.CltSndId, "Disable  " + req.ToString(), RemactApplication.Logger );
           m_ServiceList[n].IsServiceRegistered = false;
         }

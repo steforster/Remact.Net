@@ -486,9 +486,9 @@ namespace Remact.Net.Internal
         private WcfServiceAssistant m_myServiceAssistant = null;
 
         // The legacy IWcfBasicServiceSync entrypoint
-        public object WcfRequest(object msg, ref Request id)
+        public object WcfRequest(object msg, ref ActorMessage id)
         {
-            // before V3.0 Message was not a [DataMember] of Request. Now, msg is transfered two times, when sending through this legacy interface!
+            // before V3.0 Message was not a [DataMember] of ActorMessage. Now, msg is transfered two times, when sending through this legacy interface!
             id.Message = msg;
             object response = null;
             try
@@ -508,15 +508,15 @@ namespace Remact.Net.Internal
                 // multithreaded access, several requests may run in parallel. They are scheduled for execution on the right synchronization context.
                 if( response != null )
                 {
-                    var connectMsg = response as ActorMessage;
+                    var connectMsg = response as ActorInfo;
                     if (connectMsg != null) // no error and connected
                     {
                         id.Sender.LastSentId--; // correct for reqCopy
-                        var reqCopy = new Request(id.Sender, id.ClientId, id.RequestId, id.Message, id.SourceLambda);
+                        var reqCopy = new ActorMessage(id.Sender, id.ClientId, id.RequestId, id.Message, id.SourceLambda);
                         reqCopy.Response = reqCopy; // do not send a ReadyMessage
                         reqCopy.Input = id.Input;
                         var task = DoRequestAsync( reqCopy ); // call event OnInputConnected or OnInputDisconnected on the correct thread.
-                        if (connectMsg.Usage != ActorMessage.Use.ServiceDisconnectResponse)
+                        if (connectMsg.Usage != ActorInfo.Use.ServiceDisconnectResponse)
                         {
                             var dummy = task.Result; // blocking wait!
                         }
@@ -543,9 +543,9 @@ namespace Remact.Net.Internal
 
 
 
-        private Task<Request> DoRequestAsync( Request id )
+        private Task<ActorMessage> DoRequestAsync( ActorMessage id )
         {
-            var tcs = new TaskCompletionSource<Request>();
+            var tcs = new TaskCompletionSource<ActorMessage>();
 
             if( id.Input.IsMultithreaded
              || id.Input.SyncContext == null
@@ -578,7 +578,7 @@ namespace Remact.Net.Internal
                         }
                         catch( Exception ex )
                         {
-                            RaTrc.Exception( "Request to " + id.Input.Name + " cannot be handled by application", ex );
+                            RaTrc.Exception( "ActorMessage to " + id.Input.Name + " cannot be handled by application", ex );
                             tcs.SetException( ex );
                         }
                     }, null )); // obj

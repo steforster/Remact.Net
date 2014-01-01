@@ -242,8 +242,8 @@ namespace Remact.Net
     /// Internal:    Send a message to the connected partner running on another thread synchronization context.
     /// Serviceside: Sender.SendOut() sends a request from client-proxy to the internal service.
     /// </summary>
-    /// <param name="id">A <see cref="Request"/>the 'Sender' property references the sending partner, where the response is expected.</param>
-    public void SendOut (Request id)
+    /// <param name="id">A <see cref="ActorMessage"/>the 'Sender' property references the sending partner, where the response is expected.</param>
+    public void SendOut (ActorMessage id)
     {
       if (m_BasicOutput == null) throw new Exception ("AsyncWcfLib: Output of '"+Name+"' has not been linked");
       if( !m_Connected )
@@ -374,7 +374,7 @@ namespace Remact.Net
     public void SendOut(object msg)
     {
       if (LastRequestIdSent == uint.MaxValue) LastRequestIdSent = 10;
-      Request id = new Request (this, OutputClientId, ++LastRequestIdSent, msg, null);
+      ActorMessage id = new ActorMessage (this, OutputClientId, ++LastRequestIdSent, msg, null);
       SendOut (id);
     }
 
@@ -387,7 +387,7 @@ namespace Remact.Net
     public void SendOut(object msg, AsyncResponseHandler responseHandler)
     {
       if (LastRequestIdSent == uint.MaxValue) LastRequestIdSent = 10;
-      Request id = new Request (this, OutputClientId, ++LastRequestIdSent, msg, responseHandler);
+      ActorMessage id = new ActorMessage (this, OutputClientId, ++LastRequestIdSent, msg, responseHandler);
       SendOut (id);
     }
 
@@ -444,8 +444,8 @@ namespace Remact.Net
       /// <summary>
       /// Message is passed to users default handler.
       /// </summary>
-      /// <param name="id">Request containing Message and Sender.</param>
-      private void OnDefaultInput (Request id)
+      /// <param name="id">ActorMessage containing Message and Sender.</param>
+      private void OnDefaultInput (ActorMessage id)
       {
           if (m_defaultTocResponseHandler != null)
           {

@@ -17,7 +17,7 @@ namespace Remact.Net
   /// <para>It is used to open and close communication.</para>
   /// </summary>
   [DataContract (Namespace=RemactDefaults.WsNamespace)]
-  public class ActorMessage: WcfMessage
+  public class ActorInfo: WcfMessage
   {
     /// <summary>
     /// IsServiceName=true : A service name must be unique in the plant, independant of host or application.
@@ -190,7 +190,7 @@ namespace Remact.Net
     /// </summary>
     /// <param name="p">Copy data from partner p.</param>
     /// <param name="usage">Usage enumeration of this message.</param>
-    public ActorMessage (IActorPort p, Use usage)
+    public ActorInfo (IActorPort p, Use usage)
     {
       AppName     = p.AppName;
       AppVersion  = p.AppVersion;
@@ -224,7 +224,7 @@ namespace Remact.Net
     /// <para>Copy a WcfPartnerMessage.</para>
     /// </summary>
     /// <param name="p">Copy data from partner p.</param>
-    public ActorMessage (ActorMessage p)
+    public ActorInfo (ActorInfo p)
     {
       AppName     = p.AppName;
       AppVersion  = p.AppVersion;
@@ -248,7 +248,7 @@ namespace Remact.Net
     /// </summary>
     /// <param name="p">second partner</param>
     /// <returns>true if AppName + AppInstance + Client- or ServiceName are equal</returns>
-    public bool IsEqualTo (ActorMessage p)
+    public bool IsEqualTo (ActorInfo p)
     {
       if (p == null || IsServiceName != p.IsServiceName) return false;
 

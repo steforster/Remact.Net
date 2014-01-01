@@ -9,13 +9,13 @@ using Remact.Net.Internal;
 namespace Remact.Net
 {
     //----------------------------------------------------------------------------------------------
-    #region == class RequestExtensions ==
+    #region == class ActorMessageExtensions ==
 
     /// <summary>
     /// Contains extension methods for AsyncWcfLib.
     /// To use extension methods you need to reference assembly 'System.Core'
     /// </summary>
-    public static class RequestExtensions
+    public static class ActorMessageExtensions
     {
         /// <summary>
         /// <para>Execute code, when message type matches the template parameter. Used to add lambda expressions, e.g.</para>
@@ -29,9 +29,9 @@ namespace Remact.Net
         // inspired by http://blogs.infosupport.com/blogs/frankb/archive/2008/02/02/Using-C_2300_-3.0-Extension-methods-and-Lambda-expressions-to-avoid-nasty-Null-Checks.aspx
 
 #if !MONO
-        public static WcfReqIdent On<T> (this Request id, Action<T> handle) where T: class
+        public static ActorMessage On<T> (this ActorMessage id, Action<T> handle) where T : class
 #else
-        public static Request On<T>(this Request id, Action<T> handle) where T : class
+        public static ActorMessage On<T> (this ActorMessage id, Action<T> handle) where T : class
 #endif
         {
             if (id != null)
@@ -50,7 +50,7 @@ namespace Remact.Net
 
     #endregion
     //----------------------------------------------------------------------------------------------
-    #region == class Request ==
+    #region == class ActorMessage ==
 
     /// <summary>
     /// <para>All data for a message sent through AsyncWcfLib.</para>
@@ -58,7 +58,7 @@ namespace Remact.Net
     /// <para>The class may be used to send a response to the sender and to trace unique message identification.</para>
     /// </summary>
     [DataContract (Namespace=RemactDefaults.WsNamespace)]
-    public class Request
+    public class ActorMessage
     {
         /// <summary>
         /// Requests and responses carry a reference to the message. Only the message is transferred over the wire.
@@ -87,14 +87,14 @@ namespace Remact.Net
       //  [DataMember] public uint        SendId;
     
         /// <summary>
-        /// Request carry a reference to the ActorPort that has sent the message.
+        /// ActorMessage carry a reference to the ActorPort that has sent the message.
         /// Service side: Sender is the client or client-stub   (ActorOutput) that has sent the request. 
         /// Client side : Sender is the service or service-proxy (ActorInput) that has sent the response.
         /// </summary>
         public   ActorPort              Sender {get; internal set;}
     
         /// <summary>
-        /// Request carry a reference to the ActorPort that is receiving the message. 
+        /// ActorMessage carry a reference to the ActorPort that is receiving the message. 
         /// Service side: Input is the service (ActorInput) that is receiving a request. 
         /// Client side : Input is the client (ActorOutput) that is receiving a response.
         /// </summary>
@@ -106,19 +106,19 @@ namespace Remact.Net
         internal AsyncResponseHandler   SourceLambda;      // delegate IWcfMessage  AsyncResponseHandler (IWcfMessage msg);
         internal AsyncResponseHandler   DestinationLambda; // copied from source, when returning the message
 
-        internal Request                Response;     // for WcfBasicServiceUser
+        internal ActorMessage                Response;     // for WcfBasicServiceUser
         internal object                 MessageSaved; // for WcfBasicServiceUser
       //  internal WcfNotifyResponse      NotifyList;   // for WcfBasicServiceUser
 
         /// <summary>
-        /// Create a new Request.
+        /// Create a new ActorMessage.
         /// </summary>
         /// <param name="sender">The sending partner.</param>
         /// <param name="clientId">The ClientId used on the service.</param>
         /// <param name="requestId">The RequestId is incremented by the client.</param>
         /// <param name="message">The user payload message to send.</param>
         /// <param name="responseHandler">null or a lamda expression to be called, when a response is aynchronously received.</param>
-        internal Request( ActorPort sender, int clientId, uint requestId, object message, AsyncResponseHandler responseHandler )
+        internal ActorMessage( ActorPort sender, int clientId, uint requestId, object message, AsyncResponseHandler responseHandler )
         {
             Sender   = sender;
             Input    = sender;   // default for tracing on client side
@@ -137,8 +137,8 @@ namespace Remact.Net
 
 
         /// <summary>
-        /// After creation a Request is a request.
-        /// After reception on client side a Request is either a notification or a response.
+        /// After creation a ActorMessage is a request.
+        /// After reception on client side a ActorMessage is either a notification or a response.
         /// </summary>
         private bool m_boResponse;
 
@@ -148,7 +148,7 @@ namespace Remact.Net
         public bool IsNotification { get { return m_boResponse && RequestId == 0; } }
 
         /// <summary>
-        /// Request is sent from client to service (new messages are requests by default).
+        /// ActorMessage is sent from client to service (new messages are requests by default).
         /// </summary>
         public bool IsRequest { get { return !m_boResponse; } }
 
@@ -184,7 +184,7 @@ namespace Remact.Net
             // return same request ID
             if (Response == null || Response.MessageSaved == null) // first response message or not gathering notifications
             {
-                Response = new Request(service, ClientId, RequestId, msg, responseHandler);
+                Response = new ActorMessage(service, ClientId, RequestId, msg, responseHandler);
                 Response.m_boResponse = true;
                 Response.DestinationLambda = SourceLambda; // SourceLambda will be called later on for the first response only
                 SourceLambda = null;

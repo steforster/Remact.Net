@@ -15,15 +15,15 @@ namespace Remact.Net.Contracts
         /// <summary>
         /// Called when a client connects to a service.
         /// </summary>
-        /// <param name="actorOutput">The <see cref="ActorMessage"/> of the client.</param>
-        /// <returns>The <see cref="ActorMessage"/> of the service (ActorInput).</returns>
-        ActorMessage ConnectOutput(ActorMessage actorOutput);
+        /// <param name="actorOutput">The <see cref="ActorInfo"/> of the client.</param>
+        /// <returns>The <see cref="ActorInfo"/> of the service (ActorInput).</returns>
+        ActorInfo ConnectOutput(ActorInfo actorOutput);
 
         /// <summary>
         /// Called when a client gracefully disconnects from a service.
         /// </summary>
-        /// <param name="actorOutput">The <see cref="ActorMessage"/> of the client.</param>
-        /// <returns>The <see cref="ActorMessage"/> of the service (ActorInput).</returns>
-        ActorMessage DisconnectOutput(ActorMessage actorOutput);
+        /// <param name="actorOutput">The <see cref="ActorInfo"/> of the client.</param>
+        /// <returns>The <see cref="ActorInfo"/> of the service (ActorInput).</returns>
+        ActorInfo DisconnectOutput(ActorInfo actorOutput);
     }
 }

@@ -8,7 +8,7 @@ using System.ServiceModel;         // ServiceHost
 using System.Net;                  // Dns
 using System.Threading;            // SynchronizationContext
 using Remact.Net.Internal;
-using Remact.Net.Internal.Wamp;
+using Remact.Net.Protocol.Wamp;
 #if !BEFORE_NET45
     using System.Threading.Tasks;
 #endif

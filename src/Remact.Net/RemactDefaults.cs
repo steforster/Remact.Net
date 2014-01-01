@@ -8,7 +8,7 @@ using System.Reflection;           // Assembly
 using System.Net;                  // Dns
 using System.IO;                   // Files
 using Remact.Net.Internal;
-using Remact.Net.Internal.Wamp;
+using Remact.Net.Protocol.Wamp;
 
 namespace Remact.Net
 {

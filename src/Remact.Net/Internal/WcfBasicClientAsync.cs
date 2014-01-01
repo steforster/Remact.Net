@@ -10,9 +10,10 @@ using System.ServiceModel;
 using System.Net;            // Dns
 using System.Threading;
 using System.ComponentModel; // AsyncOperation
-using Remact.Net.Contracts;
 using Alchemy;
 using Newtonsoft.Json.Linq;
+using Remact.Net.Protocol;
+using Remact.Net.Protocol.Wamp;
 
 namespace Remact.Net.Internal
 {
@@ -26,7 +27,7 @@ namespace Remact.Net.Internal
   /// <para>We accept only reference types as TSC. This allows to modify user context when receiving a message.</para>
   /// <para>Specify WcfBasicClientAsync&lt;object>, when you do not need the user context.</para>
   /// </summary>
-  internal class WcfBasicClientAsync: IWcfBasicPartner, IWampRpcV1ClientCallbacks
+    internal class WcfBasicClientAsync : IWcfBasicPartner, IRemactProtocolDriverCallbacks
   {
     //----------------------------------------------------------------------------------------------
     #region Properties
@@ -55,7 +56,7 @@ namespace Remact.Net.Internal
     /// <summary>
     /// The lower level client.
     /// </summary>
-    internal  Wamp.WampClient   m_wampClient; // internal protected is not allowed ?!
+    internal  WampClient        m_wampClient; // internal protected is not allowed ?!
     
     /// <summary>
     /// <para>Set m_boTimeout to true, when the connect operation fails or some errormessages are received.</para>
@@ -124,9 +125,9 @@ namespace Remact.Net.Internal
     protected bool m_TraceConnectBefore;
 
     /// <summary>
-    /// Map: callId --> Request
+    /// Map: callId --> ActorMessage
     /// </summary>
-    protected Dictionary<string,Request> m_outstandingRequests;
+    protected Dictionary<string,ActorMessage> m_outstandingRequests;
 
     #endregion
     //----------------------------------------------------------------------------------------------
@@ -173,7 +174,7 @@ namespace Remact.Net.Internal
       m_RouterHostToLookup = null;
       websocketUri = NormalizeHostName(websocketUri);
       m_RequestedServiceUri = websocketUri;
-      m_wampClient = new Wamp.WampClient(websocketUri);
+      m_wampClient = new WampClient(websocketUri);
       // Let now the library user change binding and security credentials.
       // By default RemactDefaults.OnClientConfiguration is called.
       DoClientConfiguration(ref websocketUri, /*forRouter=*/false);
@@ -304,7 +305,7 @@ namespace Remact.Net.Internal
           ClientIdent.DefaultInputHandler = viaResponseHandler;
           websocketUri = NormalizeHostName(websocketUri);
           m_RequestedServiceUri = websocketUri;
-          m_wampClient = new Wamp.WampClient(websocketUri);
+          m_wampClient = new WampClient(websocketUri);
           // Let now the library user change binding and security credentials.
           // By default RemactDefaults.OnClientConfiguration is called.
           DoClientConfiguration(ref websocketUri, toRouter); // TODO: changes in uri are not reflected in a new m_wampClient
@@ -409,7 +410,7 @@ namespace Remact.Net.Internal
     /// </summary>
     internal protected virtual void SendDisconnectMessage()
     {
-        SendOut (new ActorMessage (ClientIdent, ActorMessage.Use.ClientDisconnectRequest));
+        SendOut (new ActorInfo (ClientIdent, ActorInfo.Use.ClientDisconnectRequest));
         Thread.Sleep(30);
     }
 
@@ -464,7 +465,7 @@ namespace Remact.Net.Internal
       ClientIdent.PickupSynchronizationContext();
       ClientIdent.m_Connected = true; // internal, from ActorOutput to WcfBasicClientAsync
       ClientIdent.LastSentId = 0; // ++ = 1 = connect
-      Request id = new Request (ClientIdent, ClientIdent.OutputClientId, ++ClientIdent.LastRequestIdSent, null, null);
+      ActorMessage id = new ActorMessage (ClientIdent, ClientIdent.OutputClientId, ++ClientIdent.LastRequestIdSent, null, null);
       m_wampClient.WcfOpenAsync (this, id); 
       // Callback to OnOpenCompleted when channel has been opened locally (no TCP connection opened on mono).
     }// OpenConnectionToService
@@ -473,7 +474,7 @@ namespace Remact.Net.Internal
     // Eventhandler, running on user thread, dispatched from m_wampClient.
     public void OnOpenCompleted (object obj)
     {
-        Request request = obj as Request;
+        ActorMessage request = obj as ActorMessage;
         request.DestinationLambda = null; // our call has been reached.
         request.SourceLambda = null;
       
@@ -495,7 +496,7 @@ namespace Remact.Net.Internal
           else
           {
               string serviceAddr = GetSetServiceAddress();
-              request.Message = new ActorMessage(ClientIdent, ActorMessage.Use.ClientConnectRequest);
+              request.Message = new ActorInfo(ClientIdent, ActorInfo.Use.ClientConnectRequest);
   
               if (ClientIdent.TraceConnect) {
                   if (m_boTemporaryRouterConn) RaTrc.Info(request.CltSndId, string.Concat("Temporary connecting .....: '", serviceAddr, "'"), ClientIdent.Logger);
@@ -571,7 +572,7 @@ namespace Remact.Net.Internal
                 }
                 if (m != null) m.IsSent = true;
 
-                ActorMessage rsp = message.Message as ActorMessage;
+                ActorInfo rsp = message.Message as ActorInfo;
 
                 if (rsp != null && HandleActorMessage (message, rsp))
                 {
@@ -596,25 +597,25 @@ namespace Remact.Net.Internal
     /// This function is normally only used internally by OnRequestCompleted. It checks whether the response has to be handled by application code.
     /// </summary>
     /// <param name="result">received response.</param>
-    /// <param name="rsp">response is of type ActorMessage.</param>
+    /// <param name="rsp">response is of type ActorInfo.</param>
     /// <returns>True if response has been handled internally; False, when response must be handled by application</returns>
-    protected bool HandleActorMessage(Request result, ActorMessage rsp)
+    protected bool HandleActorMessage(ActorMessage result, ActorInfo rsp)
     {
-        if (rsp.Usage == ActorMessage.Use.ServiceConnectResponse)
+        if (rsp.Usage == ActorInfo.Use.ServiceConnectResponse)
         { // First message received from Service
           rsp.Uri = ServiceIdent.Uri; // keep the Uri used to request the message (maybe IP address instead of hostname used)
           ServiceIdent.UseDataFrom (rsp);
           ClientIdent.OutputClientId = result.ClientId; // defined by server
           OnConnectMessage (result);
         }
-        else if (rsp.Usage == ActorMessage.Use.ServiceDisconnectResponse)
+        else if (rsp.Usage == ActorInfo.Use.ServiceDisconnectResponse)
         {
             RaTrc.Info( result.CltRcvId, rsp.ToString(), ClientIdent.Logger );//"Disconnected svc",0));
             return true;
         }
-        else if (rsp.Usage == ActorMessage.Use.ServiceAddressResponse
-              || rsp.Usage == ActorMessage.Use.ServiceEnableResponse
-              || rsp.Usage == ActorMessage.Use.ServiceDisableResponse)
+        else if (rsp.Usage == ActorInfo.Use.ServiceAddressResponse
+              || rsp.Usage == ActorInfo.Use.ServiceEnableResponse
+              || rsp.Usage == ActorInfo.Use.ServiceDisableResponse)
         {
           // service address management
         }
@@ -631,7 +632,7 @@ namespace Remact.Net.Internal
     // 1. call from WcfRouterService
     // 2. call from looked up service
     // the same message will be sent to OnWcfResponseFromRouterService or to application later on.
-    internal void OnConnectMessage(Request id)
+    internal void OnConnectMessage(ActorMessage id)
     {
         if (m_RouterHostToLookup == null || ServiceIdent.Name == m_ServiceNameToLookup)
         {
@@ -645,20 +646,20 @@ namespace Remact.Net.Internal
 
 
     // Response callback from WcfRouterService
-    private void OnWcfResponseFromRouterService(Request rsp)
+    private void OnWcfResponseFromRouterService(ActorMessage rsp)
     {
-        ActorMessage svcRsp = rsp.Message as ActorMessage;
-        if (svcRsp != null && svcRsp.Usage == ActorMessage.Use.ServiceConnectResponse)
+        ActorInfo svcRsp = rsp.Message as ActorInfo;
+        if (svcRsp != null && svcRsp.Usage == ActorInfo.Use.ServiceConnectResponse)
         {
             if( ClientIdent.TraceSend ) RaTrc.Info( rsp.CltRcvId, "Temporary connected router: '" + svcRsp.Name + "' on '" + svcRsp.HostName + "'", ClientIdent.Logger );
             ActorPort lookup = new ActorPort();
             lookup.HostName = m_RouterHostToLookup;
             lookup.Name = m_ServiceNameToLookup;
             lookup.IsServiceName = true;
-            ActorMessage req = new ActorMessage(lookup, ActorMessage.Use.ServiceAddressRequest);
+            ActorInfo req = new ActorInfo(lookup, ActorInfo.Use.ServiceAddressRequest);
             SendOut(req); // lookup the service URI (especially the TCP port)
         }
-        else if (svcRsp != null && svcRsp.Usage == ActorMessage.Use.ServiceAddressResponse)
+        else if (svcRsp != null && svcRsp.Usage == ActorInfo.Use.ServiceAddressResponse)
         {
             ServiceIdent.UseDataFrom( svcRsp );
             if( ClientIdent.TraceSend )
@@ -701,7 +702,7 @@ namespace Remact.Net.Internal
 
 
     // Response callback from real service
-    private void OnConnectionResponseFromService( Request rsp )
+    private void OnConnectionResponseFromService( ActorMessage rsp )
     {
         if( m_boFirstResponseReceived )
         {
@@ -738,7 +739,7 @@ namespace Remact.Net.Internal
     }
 
 
-    private void EndOfConnectionTries( Request rsp )
+    private void EndOfConnectionTries( ActorMessage rsp )
     {
         m_boTimeout = !m_boFirstResponseReceived; // Fault state when not correct response in OnConnectMessage
         if( m_boTemporaryRouterConn )
@@ -768,7 +769,7 @@ namespace Remact.Net.Internal
     #region IWampRpcV1ClientCallbacks implementation
 
 
-    void IWampRpcV1ClientCallbacks.CallResult(string callId, Newtonsoft.Json.Linq.JToken result)
+    void IRemactProtocolDriverCallbacks.CallResult(string callId, Newtonsoft.Json.Linq.JToken result)
     {
         if (ClientIdent.IsMultithreaded || ClientIdent.SyncContext == null)
         {
@@ -780,12 +781,12 @@ namespace Remact.Net.Internal
         }
     }
 
-    void IWampRpcV1ClientCallbacks.CallError(string callId, string errorUri, string errorDesc, object errorDetails)
+    void IRemactProtocolDriverCallbacks.CallError(string callId, string errorUri, string errorDesc, object errorDetails)
     {
         throw new NotImplementedException();
     }
 
-    void IWampRpcV1ClientCallbacks.Event(string topic, JToken notification)
+    void IRemactProtocolDriverCallbacks.Event(string topic, JToken notification)
     {
         if (ClientIdent.IsMultithreaded || ClientIdent.SyncContext == null)
         {
@@ -794,7 +795,7 @@ namespace Remact.Net.Internal
         else
         {
             // RequestId == 0 == notification
-            var message = new Request(ServiceIdent, ClientIdent.OutputClientId, 0, notification, null);
+            var message = new ActorMessage(ServiceIdent, ClientIdent.OutputClientId, 0, notification, null);
             message.HasResponse = true;
             ClientIdent.SyncContext.Post(OnNotification, message);
         }
@@ -804,7 +805,7 @@ namespace Remact.Net.Internal
     {
         try
         {
-            var message = (Request)obj;
+            var message = (ActorMessage)obj;
 
             //if (!m_boTimeout)
             //{
@@ -911,8 +912,8 @@ namespace Remact.Net.Internal
     /// Post a request to the input of the remote partner. It will be sent over the network.
     /// Called from ClientIdent, when SendOut a message to remote partner.
     /// </summary>
-    /// <param name="request">A <see cref="Request"/></param>
-    public virtual void PostInput (Request request)
+    /// <param name="request">A <see cref="ActorMessage"/></param>
+    public virtual void PostInput (ActorMessage request)
     {
         ErrorMessage err = null;
         string callId = request.RequestId.ToString();
@@ -945,8 +946,8 @@ namespace Remact.Net.Internal
     /// <summary>
     /// the intuitive action is to send the message to remote service.
     /// </summary>
-    /// <param name="id">A <see cref="Request"/></param>
-    public void SendOut (Request id)
+    /// <param name="id">A <see cref="ActorMessage"/></param>
+    public void SendOut (ActorMessage id)
     {
       PostInput(id);
     }
@@ -957,7 +958,7 @@ namespace Remact.Net.Internal
     /// <para>when a response or errormessage arrives or a timeout has passed.</para>
     /// </summary>
     /// <param name="request">The message to send.</param>
-    public Request SendOut(object request)
+    public ActorMessage SendOut(object request)
     {
       return SendOut (request, null);
     }
@@ -972,11 +973,11 @@ namespace Remact.Net.Internal
     /// <para>.On&lt;ErrorMessage>(err => {do something with error message 'err'}));</para>
     /// </summary>
     /// <param name="request">The message to send.</param>
-    /// <param name="asyncResponseHandler"><see cref="RequestExtensions.On&lt;T>(WcRequestction&lt;T>)"/></param>
-    public Request SendOut(object request, AsyncResponseHandler asyncResponseHandler)
+    /// <param name="asyncResponseHandler"><see cref="ActorMessageExtensions.On&lt;T>(WcRequestction&lt;T>)"/></param>
+    public ActorMessage SendOut(object request, AsyncResponseHandler asyncResponseHandler)
     {
       if (ClientIdent.LastRequestIdSent == uint.MaxValue) ClientIdent.LastRequestIdSent = 10;
-      Request id = new Request (ClientIdent, ClientIdent.OutputClientId, ++ClientIdent.LastRequestIdSent, request, asyncResponseHandler);
+      ActorMessage id = new ActorMessage (ClientIdent, ClientIdent.OutputClientId, ++ClientIdent.LastRequestIdSent, request, asyncResponseHandler);
       PostInput  (id);
       return id;
     }

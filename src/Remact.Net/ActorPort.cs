@@ -164,7 +164,7 @@ namespace Remact.Net
     /// <para>(internal) Copy data from a WcfPartnerMessage, but keep SenderContext.</para>
     /// </summary>
     /// <param name="p">Copy data from partner p</param>
-    internal void UseDataFrom (ActorMessage p)
+    internal void UseDataFrom (ActorInfo p)
     {
       // copy ActorPort members from a remote Actor:
       AppName     = p.AppName;
@@ -278,8 +278,8 @@ namespace Remact.Net
     /// Serviceside: Sender.PostInput() sends a response from client-stub to the remote client.
     /// Clientside:  Post a response into this clients input queue.
     /// </summary>
-    /// <param name="id">A <see cref="Request"/> the 'Sender' property references the sending partner.</param>
-    public void PostInput (Request id)
+    /// <param name="id">A <see cref="ActorMessage"/> the 'Sender' property references the sending partner.</param>
+    public void PostInput (ActorMessage id)
     {
         if( !m_Connected )
         {
@@ -372,7 +372,7 @@ namespace Remact.Net
     /// </summary>
     internal protected bool          m_Connected;
 
-    private   Request            m_CurrentReq;
+    private   ActorMessage            m_CurrentReq;
     internal  SynchronizationContext SyncContext;
     internal  int                    ManagedThreadId;
     internal MessageHandler DefaultInputHandler;
@@ -381,7 +381,7 @@ namespace Remact.Net
 #endif
 
 
-    private void DispatchingError( Request id, ErrorMessage err )
+    private void DispatchingError( ActorMessage id, ErrorMessage err )
     {
         try
         {
@@ -546,17 +546,17 @@ namespace Remact.Net
     {
         try
         {
-            DispatchMessage( userState as Request );
+            DispatchMessage( userState as ActorMessage );
         }
         catch( Exception ex )
         {
-            DispatchingError( userState as Request, new ErrorMessage( ErrorMessage.Code.CouldNotDispatch, ex ) );
+            DispatchingError( userState as ActorMessage, new ErrorMessage( ErrorMessage.Code.CouldNotDispatch, ex ) );
         }
     }// MessageHandlerBase
 
 
     // Message is passed to the lambda functions of the sending context or to the default response handler
-    internal void DispatchMessage (Request id)
+    internal void DispatchMessage (ActorMessage id)
     {
         if( !m_Connected )
         {
@@ -580,11 +580,11 @@ namespace Remact.Net
         {
             m_CurrentReq   = id;
             id.Input = this;
-            var connectMsg = id.Message as ActorMessage;
+            var connectMsg = id.Message as ActorInfo;
             if (connectMsg != null)
             {
-                if (connectMsg.Usage != ActorMessage.Use.ClientConnectRequest
-                 && connectMsg.Usage != ActorMessage.Use.ClientDisconnectRequest)
+                if (connectMsg.Usage != ActorInfo.Use.ClientConnectRequest
+                 && connectMsg.Usage != ActorInfo.Use.ClientDisconnectRequest)
                 {
                     connectMsg = null;
                 }
@@ -638,10 +638,10 @@ namespace Remact.Net
     /// <summary>
     /// Message is passed to users connect/disconnect event handler, may be overloaded and call a MessageHandler;TSC>
     /// </summary>
-    /// <param name="id">Request containing Message and Sender.</param>
+    /// <param name="id">ActorMessage containing Message and Sender.</param>
     /// <param name="msg">The message.</param>
     /// <returns>True when handled.</returns>
-    protected virtual bool OnConnectDisconnect(Request id, ActorMessage msg)
+    protected virtual bool OnConnectDisconnect(ActorMessage id, ActorInfo msg)
     {
          return false;
     }
