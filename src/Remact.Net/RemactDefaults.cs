@@ -9,6 +9,8 @@ using System.Net;                  // Dns
 using System.IO;                   // Files
 using Remact.Net.Internal;
 using Remact.Net.Protocol;
+using Remact.Net.Protocol.Wamp;
+using Alchemy;
 
 namespace Remact.Net
 {
@@ -119,20 +121,36 @@ namespace Remact.Net
     /// <summary>
     /// Sets the default service configuration, when no endpoint in app.config is found.
     /// </summary>
-    /// <param name="server">The web socket server.</param>
-    /// <param name="uri">The dynamically generated URI for this service.</param>
-    /// <param name="isRouter">true if used for WcfRouter service.</param>
-    public virtual void DoServiceConfiguration(IRemactProtocolDriverService server, ref Uri uri, bool isRouter)
+      /// <param name="service">The server.</param>
+      /// <param name="uri">The dynamically generated URI for this service.</param>
+      /// <param name="isRouter">true if used for WcfRouter service.</param>
+      /// <returns>The protocol driver (for dispose).</returns>
+    public IDisposable DoServiceConfiguration(WcfBasicService service, ref Uri uri, bool isRouter)
     {
-#if !MONO
-      serviceHost.AddServiceEndpoint (
-             "AsyncWcfLib.ServiceContract", // ConfigurationName needed for .NET 3.5 framework
-              GetDefaultBinding (ref uri, isRouter), uri);
-#else
-      //serviceHost.AddServiceEndpoint (
-      //       "SourceForge.AsyncWcfLib.Basic.IWcfBasicContractSync", // Implementation as ConfigurationName-attribute is ignored on monoi
-      //        GetDefaultBinding (ref uri, isRouter), uri);
-#endif
+       var wsServer = new MyWebSocketServer()
+        {
+            Port = uri.Port,
+            SubProtocols = new string[] { "wamp" },
+            OnConnected = (userContext) =>
+                {
+                    var svcUser = new WcfBasicServiceUser (service.ServiceIdent);
+                    var handler = new InternalMultithreadedServiceNet40(service, svcUser);
+                    var wampProxy = new WampClientProxy(svcUser.ClientIdent, service.ServiceIdent, handler, userContext);
+                    svcUser.SetCallbackHandler(wampProxy);
+                }
+        };
+
+        wsServer.Start();
+        return wsServer; // IDisposable
+    }
+
+    private class MyWebSocketServer : WebSocketServer, IDisposable
+    {
+        public new void Dispose()
+        {
+            Stop();
+            base.Dispose();
+        }
     }
 
     /// <summary>

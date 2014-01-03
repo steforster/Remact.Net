@@ -74,7 +74,7 @@ namespace Remact.Net
     #region Destination linking, service creation
 
     private ActorOutput          m_Anonymous; // each input may have one anonymous partner carrying one TSC (sender context)
-    private WcfServiceAssistant  m_MyInputService;
+    private WcfBasicService      m_MyInputService;
 
     // prepare for tracing of connect-process
     internal void PrepareServiceName (string routerHost, string serviceName)
@@ -132,13 +132,14 @@ namespace Remact.Net
           }
           catch { }
       }
-      m_MyInputService = new WcfServiceAssistant( this, tcpPort, publishToRouter, serviceConfig ); // sets this.Uri. SenderContext is set into client stubs on connecting.
+
+      m_MyInputService = new WcfBasicService( this, tcpPort, publishToRouter, serviceConfig ); // sets this.Uri. SenderContext is set into client stubs on connecting.
     }
 
     /// <summary>
     /// When the input is linked to network, BasicService provides some informations about the WCF service.
     /// </summary>
-    public WcfServiceAssistant BasicService { get { return m_MyInputService; } }
+    public WcfBasicService BasicService { get { return m_MyInputService; } }
 
     /// <summary>
     /// When true: TryConnect() must be called (will open the service host)

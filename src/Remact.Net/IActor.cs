@@ -173,10 +173,11 @@ namespace Remact.Net
       /// <summary>
       /// Sets the service configuration, when no endpoint in app.config is found.
       /// </summary>
-      /// <param name="server">The WebSocketServer.</param>
+      /// <param name="service">The server.</param>
       /// <param name="uri">The dynamically generated URI for this service.</param>
       /// <param name="isRouter">true if used for WcfRouter service.</param>
-      void DoServiceConfiguration(IRemactProtocolDriverService server, ref Uri uri, bool isRouter);
+      /// <returns>The protocol driver (for dispose).</returns>
+      IDisposable DoServiceConfiguration(WcfBasicService service, ref Uri uri, bool isRouter);
   }
 
   #endregion

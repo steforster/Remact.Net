@@ -16,7 +16,7 @@ namespace Remact.Net.Internal
   /// <para>Has the possibility to store and forward notifications that are not expected by the client.</para>
   /// <para>This could also be handled by the more cumbersome 'DualHttpBinding'.</para>
   /// </summary>
-  internal class WcfBasicServiceUser : IWcfBasicPartner
+  public class WcfBasicServiceUser : IWcfBasicPartner
   {
     //----------------------------------------------------------------------------------------------
     #region Properties

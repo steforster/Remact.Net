@@ -6,6 +6,8 @@
 *.user
 *.userprefs
 *.pidb
+*.bak
+*.zip
 
 _ReSharper.*
 

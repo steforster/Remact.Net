@@ -61,7 +61,7 @@
     <Compile Include="Contracts\IRemactService.cs" />
     <Compile Include="Contracts\IRemactCatalog.cs" />
     <Compile Include="Contracts\ErrorMessage.cs" />
-    <Compile Include="Internal\WebSocketService.cs" />
+    <Compile Include="Internal\InternalMultithreadedServiceNet40.cs" />
     <Compile Include="IRemactDefaults.cs" />
     <Compile Include="Protocol\IRemactProtocolDriver.cs" />
     <Compile Include="Protocol\Wamp\WampClient.cs" />
@@ -76,7 +76,6 @@
     <Compile Include="Internal\WcfBasicService.cs" />
     <Compile Include="Internal\WcfBasicServiceUser.cs" />
     <Compile Include="Internal\WcfRouterClient.cs" />
-    <Compile Include="Internal\WcfServiceAssistant.cs" />
     <Compile Include="Util\RaTrc.cs" />
     <Compile Include="Util\RaTrcPluginConsole.cs" />
     <Compile Include="Util\RaTrcPluginFile.cs" />

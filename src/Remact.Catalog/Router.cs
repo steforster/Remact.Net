@@ -322,9 +322,9 @@ namespace Remact.Catalog
 
 
     // implement IActorInputConfiguration
-    public void DoServiceConfiguration(IRemactProtocolDriverService server, ref Uri uri, bool isRouter)
+    public IDisposable DoServiceConfiguration(WcfBasicService service, ref Uri uri, bool isRouter)
     {
-////TODO        RemactDefaults.Instance.DoServiceConfiguration( serviceHost, ref uri, /*isRouter=*/ true );
+        return RemactDefaults.Instance.DoServiceConfiguration(service, ref uri, /*isRouter=*/ true);
     }
 
 
