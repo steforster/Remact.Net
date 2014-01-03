@@ -7,9 +7,8 @@ using System.Runtime.Serialization;// DataContract
 using System.ServiceModel;         // ServiceHost
 using System.Net;                  // Dns
 using System.Threading;            // SynchronizationContext
-using Alchemy;
 using Remact.Net.Internal;
-using Remact.Net.Protocol.Wamp;
+using Remact.Net.Protocol;
 #if !BEFORE_NET45
     using System.Threading.Tasks;
 #endif
@@ -177,7 +176,7 @@ namespace Remact.Net
       /// <param name="server">The WebSocketServer.</param>
       /// <param name="uri">The dynamically generated URI for this service.</param>
       /// <param name="isRouter">true if used for WcfRouter service.</param>
-      void DoServiceConfiguration( WebSocketServer server, ref Uri uri, bool isRouter );
+      void DoServiceConfiguration(IRemactProtocolDriverService server, ref Uri uri, bool isRouter);
   }
 
   #endregion
@@ -221,23 +220,23 @@ namespace Remact.Net
     /// <summary>
     /// Threadsafe enqueue message at the receiving partner. No response is expected.
     /// </summary>
-    /// <param name="msg">The message to enqueue.</param>
-    void PostInput(object msg);
+    /// <param name="payload">The message payload to enqueue.</param>
+    void PostInput(object payload);
 
     /// <summary>
     /// Threadsafe enqueue message at the receiving partner.
     /// </summary>
     /// <param name="sender">The source partner sending the message <see cref="ActorPort"/>. Its default message handler will receive the response.</param>
-    /// <param name="msg">The message to enqueue.</param>
-    void PostInputFrom(ActorOutput sender, object msg);
+    /// <param name="payload">The message payload to enqueue.</param>
+    void PostInputFrom(ActorOutput sender, object payload);
 
     /// <summary>
     /// Threadsafe enqueue message at the receiving partner.
     /// </summary>
     /// <param name="sender">The source partner sending the message <see cref="ActorPort"/></param>
-    /// <param name="msg">The message to enqueue.</param>
+    /// <param name="payload">The message to enqueue.</param>
     /// <param name="responseHandler">The lambda expression executed at the source partner, when a response arrives.</param>
-    void PostInputFrom(ActorOutput sender, object msg, AsyncResponseHandler responseHandler);
+    void PostInputFrom(ActorOutput sender, object payload, AsyncResponseHandler responseHandler);
 
     /// <summary>
     /// <para>Gets or sets the state of the incoming service connection from the network.</para>
@@ -293,7 +292,6 @@ namespace Remact.Net
     /// The request id given to the last message sent from this client.
     /// The request id is incremented by the client for each request.
     /// The same id is returned in the response from the service.
-    /// It is used to detect programming erors leading to request/response mismatch.
     /// </summary>
     int LastRequestIdSent {get;}
 

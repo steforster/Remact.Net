@@ -242,8 +242,8 @@ namespace Remact.Net
     /// <summary>
     /// May not be called.
     /// </summary>
-    /// <param name="id">A <see cref="ActorMessage"/>the 'Source' property references the sending partner, where the response is expected.</param>
-    public void SendOut(ActorMessage id)
+    /// <param name="msg">A <see cref="ActorMessage"/>the 'Source' property references the sending partner, where the response is expected.</param>
+    void IWcfBasicPartner.SendOut(ActorMessage msg)
     {
         throw new Exception("AsyncWcfLib: Destination '" + Name + "' cannot SendOut");
     }
@@ -256,7 +256,7 @@ namespace Remact.Net
 
     #endregion
     //----------------------------------------------------------------------------------------------
-    #region Payload dispatching
+    #region Message dispatching
 
     /// <summary>
     /// Returns 0 for inputs.
@@ -295,29 +295,29 @@ namespace Remact.Net
     /// <summary>
     /// Used internally: Threadsafe enqueue message at the receiving partner. No response is expected.
     /// </summary>
-    /// <param name="msg">The message to enqueue.</param>
-    public void PostInput(object msg)
+    /// <param name="payload">The message to enqueue.</param>
+    public void PostInput(object payload)
     {
-      PostInputFrom (null, msg, null);
+        PostInputFrom(null, payload, null);
     }
 
     /// <summary>
     /// Used internally: Threadsafe enqueue message at the receiving partner.
     /// </summary>
     /// <param name="sender">The source partner sending the message <see cref="ActorPort"/>. Its default message handler will receive the response.</param>
-    /// <param name="msg">The message to enqueue.</param>
-    public void PostInputFrom(ActorOutput sender, object msg)
+    /// <param name="payload">The message to enqueue.</param>
+    public void PostInputFrom(ActorOutput sender, object payload)
     {
-      PostInputFrom (sender, msg, null);
+        PostInputFrom(sender, payload, null);
     }
 
     /// <summary>
     /// Used internally: Threadsafe enqueue message at the receiving partner.
     /// </summary>
     /// <param name="sender">The source partner sending the message <see cref="ActorPort"/></param>
-    /// <param name="msg">The message to enqueue.</param>
+    /// <param name="payload">The message to enqueue.</param>
     /// <param name="responseHandler">The lambda expression executed at the source partner, when a response arrives.</param>
-    public void PostInputFrom(ActorOutput sender, object msg, AsyncResponseHandler responseHandler)
+    public void PostInputFrom(ActorOutput sender, object payload, AsyncResponseHandler responseHandler)
     {
       if (sender == null)
       {
@@ -342,32 +342,32 @@ namespace Remact.Net
       }
 
       if (sender.LastRequestIdSent == int.MaxValue) sender.LastRequestIdSent = 10;
-      ActorMessage id = new ActorMessage (sender, 0, ++sender.LastRequestIdSent, msg, responseHandler);
-      PostInput (id); // Payload is posted into the message queue
+      ActorMessage msg = new ActorMessage(sender, 0, ++sender.LastRequestIdSent, payload, responseHandler);
+      PostInput (msg); // Message is posted into the message queue
     }
 
 
     /// <summary>
-    /// Payload is passed to users connect/disconnect event handler, may be overloaded and call a MessageHandler;TSC>
+    /// Message is passed to users connect/disconnect event handler, may be overloaded and call a MessageHandler;TSC>
     /// </summary>
-    /// <param name="id">ActorMessage containing Payload and Source.</param>
-    /// <param name="msg">The message.</param>
+    /// <param name="msg">ActorMessage containing Payload and Source.</param>
+    /// <param name="info">The ActorInfo payload.</param>
     /// <returns>True when handled.</returns>
-    protected override bool OnConnectDisconnect (ActorMessage id, ActorInfo msg)
+    protected override bool OnConnectDisconnect (ActorMessage msg, ActorInfo info)
     {
-      if      (msg.Usage == ActorInfo.Use.ClientConnectRequest)
-      {
-        if (OnInputConnected != null) OnInputConnected (id); // optional event
-      }
-      else if (msg.Usage == ActorInfo.Use.ClientDisconnectRequest)
-      {
-        if (OnInputDisconnected != null) OnInputDisconnected (id); // optional event
-      }
-      else
-      {
-        return false;
-      }
-      return true;
+        if (info.Usage == ActorInfo.Use.ClientConnectRequest)
+        {
+            if (OnInputConnected != null) OnInputConnected(msg); // optional event
+        }
+        else if (info.Usage == ActorInfo.Use.ClientDisconnectRequest)
+        {
+            if (OnInputDisconnected != null) OnInputDisconnected(msg); // optional event
+        }
+        else
+        {
+            return false;
+        }
+        return true;
     }
 
     #endregion
@@ -460,44 +460,44 @@ namespace Remact.Net
 
     
     /// <summary>
-    /// Payload is passed to users connect/disconnect event handler.
+    /// Message is passed to users connect/disconnect event handler.
     /// </summary>
-    /// <param name="id">ActorMessage containing Payload and Source.</param>
-    /// <param name="msg">The message.</param>
+    /// <param name="msg">ActorMessage containing Payload and Source.</param>
+    /// <param name="info">The ActorInfo payload.</param>
     /// <returns>True when handled.</returns>
-    protected override bool OnConnectDisconnect (ActorMessage id, ActorInfo msg)
+    protected override bool OnConnectDisconnect (ActorMessage msg, ActorInfo info)
     {
-      TSC senderCtx = GetSenderContext(id);
+        TSC senderCtx = GetSenderContext(msg);
 
-      if      (msg.Usage == ActorInfo.Use.ClientConnectRequest)
-      {
-        if (OnInputConnected != null) OnInputConnected (id, senderCtx); // optional event
-      }
-      else if (msg.Usage == ActorInfo.Use.ClientDisconnectRequest)
-      {
-        if (OnInputDisconnected != null) OnInputDisconnected (id, senderCtx); // optional event
-      }
-      else
-      {
-        return false;
-      }
-      return true;
+        if (info.Usage == ActorInfo.Use.ClientConnectRequest)
+        {
+            if (OnInputConnected != null) OnInputConnected(msg, senderCtx); // optional event
+        }
+        else if (info.Usage == ActorInfo.Use.ClientDisconnectRequest)
+        {
+            if (OnInputDisconnected != null) OnInputDisconnected(msg, senderCtx); // optional event
+        }
+        else
+        {
+            return false;
+        }
+        return true;
     }
 
 
-    internal static TSC GetSenderContext (ActorMessage id)
+    internal static TSC GetSenderContext (ActorMessage msg)
     {
         // We are peer   : SendingP is an ActorOutput. It has only one Output and therefore only one (our) SenderContext. 
         // We are service: SendingP is the client  proxy (WcfBasicServiceUser). It has our SenderContext.
         // We NEVER are client : SendingP is ServiceIdent of WcfBasicClientAsync. It's SenderContext is the same as its ClientIdent.SenderContext. 
         TSC senderCtx = null;
-        var sender = id.Source as ActorOutput;
+        var sender = msg.Source as ActorOutput;
         if (sender != null)
         {
             senderCtx = sender.GetSenderContext() as TSC;  // base does not create a new ctx
         }
 
-        //if (senderCtx == null && id.Source.Uri == null) // anonymous partner
+        //if (senderCtx == null && msg.Source.Uri == null) // anonymous partner
         //{
         //    senderCtx = GetAnonymousSenderContext();
         //}
@@ -506,21 +506,21 @@ namespace Remact.Net
 
 
     /// <summary>
-    /// Payload is passed to users default handler.
+    /// Message is passed to users default handler.
     /// </summary>
-    /// <param name="id">ActorMessage containing Payload and Source.</param>
-    private void OnDefaultInput (ActorMessage id)
+    /// <param name="msg">ActorMessage containing Payload and Source.</param>
+    private void OnDefaultInput(ActorMessage msg)
     {
-      TSC senderCtx = GetSenderContext(id);
+        TSC senderCtx = GetSenderContext(msg);
 
-      if (m_defaultTscInputHandler != null)
-      {
-        m_defaultTscInputHandler (id, senderCtx); // MessageHandlerC> delegate
-      } 
-      else 
-      {
-          RaTrc.Error( "AsyncWcfLib", "Unhandled request: " + id.Payload, Logger );
-      }
+        if (m_defaultTscInputHandler != null)
+        {
+            m_defaultTscInputHandler(msg, senderCtx); // MessageHandlerC> delegate
+        } 
+        else 
+        {
+            RaTrc.Error("AsyncWcfLib", "Unhandled request: " + msg.Payload, Logger);
+        }
     }
   }// class ActorInput<TSC>
 

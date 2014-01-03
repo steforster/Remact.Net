@@ -422,7 +422,7 @@ namespace Remact.Net
       return signal_thread != null; // signal_thread keeps running
     }
 
-    // separate call to assembly Mono.Posix.dll. Request to functions referencing this assembly will throw an exception if mono is not available.
+    // separate call to assembly Mono.Posix.dll. Call to functions referencing this assembly will throw an exception if mono is not available.
     private static void ExitToUnix(string exitReason)
     {
       if (m_nUnixSignal >= 0) exitReason += " (received unix signal " + m_nUnixSignal + " = " + (Signum)m_nUnixSignal + ")";

@@ -21,7 +21,7 @@ namespace Remact.Net
   {
     /// <summary>
     /// IsServiceName=true : A service name must be unique in the plant, independant of host or application.
-    /// IsServiceName=false: A client  name must for unique identification be combined with application name, host name, instance- or process id.
+    /// IsServiceName=false: A client  name must be combined with application name, host name, instance- or process id for unique identification.
     /// </summary>
     [DataMember] public bool    IsServiceName;
     

@@ -9,7 +9,6 @@ using System.ServiceModel;
 using System.Net;            // Dns
 using System.Threading;
 using System.ComponentModel; // AsyncOperation
-using Alchemy;
 using Newtonsoft.Json.Linq;
 using Remact.Net.Protocol;
 using Remact.Net.Protocol.Wamp;
@@ -26,7 +25,7 @@ namespace Remact.Net.Internal
   /// <para>We accept only reference types as TSC. This allows to modify user context when receiving a message.</para>
   /// <para>Specify WcfBasicClientAsync&lt;object>, when you do not need the user context.</para>
   /// </summary>
-    internal class WcfBasicClientAsync : IWcfBasicPartner
+    internal class WcfBasicClientAsync : IWcfBasicPartner, IRemactProtocolDriverCallbacks
   {
     //----------------------------------------------------------------------------------------------
     #region Properties
@@ -49,7 +48,7 @@ namespace Remact.Net.Internal
     /// <summary>
     /// The lower level client.
     /// </summary>
-    internal  WampClient        m_wampClient; // internal protected is not allowed ?!
+    internal IRemactProtocolDriverService m_protocolClient; // internal protected is not allowed ?!
     
     /// <summary>
     /// <para>Set m_boTimeout to true, when the connect operation fails or some errormessages are received.</para>
@@ -162,7 +161,7 @@ namespace Remact.Net.Internal
       m_RouterHostToLookup = null;
       websocketUri = NormalizeHostName(websocketUri);
       m_RequestedServiceUri = websocketUri;
-      m_wampClient = new WampClient(websocketUri, OnIncomingMessage);
+      m_protocolClient = new WampClient(websocketUri);
       // Let now the library user change binding and security credentials.
       // By default RemactDefaults.OnClientConfiguration is called.
       DoClientConfiguration(ref websocketUri, /*forRouter=*/false);
@@ -200,7 +199,7 @@ namespace Remact.Net.Internal
         {
             m_WcfClientConfig = RemactDefaults.Instance;
         }
-        m_WcfClientConfig.DoClientConfiguration( m_wampClient, ref serviceUri, forRouter );
+        m_WcfClientConfig.DoClientConfiguration( m_protocolClient, ref serviceUri, forRouter );
     }
 
 
@@ -253,8 +252,8 @@ namespace Remact.Net.Internal
     //  try
     //  {
     //    m_RouterHostToLookup = null;
-    //    m_wampClient = new WcfBasicClient(ClientIdent.Name, this); // config-name
-    //    m_RequestedServiceUri = NormalizeHostName( m_wampClient.Endpoint.Address.Uri );
+    //    m_protocolClient = new WcfBasicClient(ClientIdent.Name, this); // config-name
+    //    m_RequestedServiceUri = NormalizeHostName( m_protocolClient.Endpoint.Address.Uri );
     //    m_boTemporaryRouterConn = false;
     //    OpenConnectionToService();
     //  }
@@ -293,10 +292,10 @@ namespace Remact.Net.Internal
           ClientIdent.DefaultInputHandler = viaResponseHandler;
           websocketUri = NormalizeHostName(websocketUri);
           m_RequestedServiceUri = websocketUri;
-          m_wampClient = new WampClient(websocketUri, OnIncomingMessage);
+          m_protocolClient = new WampClient(websocketUri);
           // Let now the library user change binding and security credentials.
           // By default RemactDefaults.OnClientConfiguration is called.
-          DoClientConfiguration(ref websocketUri, toRouter); // TODO: changes in uri are not reflected in a new m_wampClient
+          DoClientConfiguration(ref websocketUri, toRouter); // TODO: changes in uri are not reflected in a new m_protocolClient
           OpenConnectionToService();
       }
       catch (Exception ex)
@@ -310,23 +309,25 @@ namespace Remact.Net.Internal
     /// <summary>
     /// A client is connected after the ServiceConnectResponse has been received.
     /// </summary>
-    public bool IsConnected    { get { return m_wampClient != null 
+    public bool IsConnected    { get { return m_protocolClient != null 
                                            && m_boFirstResponseReceived
                                            && !m_boTimeout
-                                           && m_wampClient.ReadyState == WebSocketClient.ReadyStates.OPEN; }}
+                                           && m_protocolClient.ReadyState == ReadyState.Connected; }}
 
     /// <summary>
     /// A client is disconnected after construction, after a call to Disconnect() or AbortCommunication()
     /// </summary>
-    public bool IsDisconnected { get { return m_wampClient == null 
+    public bool IsDisconnected { get { return m_protocolClient == null 
                                        ||   (!m_boConnecting && !m_boFirstResponseReceived && !m_boTimeout);}}
 
     /// <summary>
     /// A client is in Fault state when a connection cannot be kept open or a timeout has passed.
     /// </summary>
     public bool IsFaulted      { get { return m_boTimeout
-                                       ||    (m_wampClient != null
-                                           && m_wampClient.ReadyState == WebSocketClient.ReadyStates.CLOSED); }}
+                                       ||    (m_protocolClient != null
+                                           && m_protocolClient.ReadyState == ReadyState.Faulted);
+    }
+    }
 
     /// <summary>
     /// Returns the number of requests that have not received a response by the service.
@@ -363,15 +364,15 @@ namespace Remact.Net.Internal
           {
             WcfRouterClient.Instance().RemoveClient(this);
             SendDisconnectMessage();
-            m_wampClient.Dispose();
-            m_wampClient = null;
+            m_protocolClient.Dispose();
+            m_protocolClient = null;
           }
           catch
           {
           }
         }
         
-        if (m_wampClient != null) 
+        if (m_protocolClient != null) 
         {
           WcfRouterClient.Instance ().RemoveClient (this);
           //TraceState("Abortd");
@@ -382,7 +383,7 @@ namespace Remact.Net.Internal
           RaTrc.Exception( "Cannot abort Wcf connection", ex, ClientIdent.Logger );
       }
       
-      m_wampClient = null;
+      m_protocolClient = null;
       m_boConnecting = false;
       m_boFirstResponseReceived = false;
       m_boTimeout = false;
@@ -416,7 +417,7 @@ namespace Remact.Net.Internal
 
     #endregion
     //----------------------------------------------------------------------------------------------
-    #region Payload handling
+    #region Message handling
 
     /// <summary>
     /// Trace internal state of this client
@@ -424,17 +425,17 @@ namespace Remact.Net.Internal
     /// <param name="mark">6 char mark: Opened, Abortd, ...</param>
     public void TraceState (string mark)
     {
-      if (m_wampClient != null)
+      if (m_protocolClient != null)
       {
         RaTrc.Info("WcfClt", "["+mark.PadRight(6)+"] "+ ClientIdent.Name+"["+ClientIdent.OutputClientId+"]"
-                    +", WampClient=" + m_wampClient.ReadyState
+                    +", ReadyState=" + m_protocolClient.ReadyStateAsString
                     , ClientIdent.Logger );
       }
     }// TraceState
     
 
     /// <summary>
-    /// Connect this Client to the prepared m_wampClient
+    /// Connect this Client to the prepared m_protocolClient
     /// </summary>
     //  Running on the user thread
     private void OpenConnectionToService()
@@ -445,20 +446,20 @@ namespace Remact.Net.Internal
         m_boFirstResponseReceived = false;
         m_boTimeout = false;
         m_boConnecting = true;
-        if (ServiceIdent.Uri == null) ServiceIdent.PrepareServiceName(m_wampClient.Uri);
+        if (ServiceIdent.Uri == null) ServiceIdent.PrepareServiceName(m_protocolClient.ServiceUri);
         ServiceIdent.IsMultithreaded = ClientIdent.IsMultithreaded;
         ServiceIdent.TryConnect(); // internal, from ServiceIdent to ClientIdent
 
         ClientIdent.PickupSynchronizationContext();
         ClientIdent.m_Connected = true; // internal, from ActorOutput to WcfBasicClientAsync
         ActorMessage id = new ActorMessage (ClientIdent, ClientIdent.OutputClientId, ++ClientIdent.LastRequestIdSent, null, null);
-        m_wampClient.OpenAsync(id, OnOpenCompleted); 
+        m_protocolClient.OpenAsync(id, this); 
         // Callback to OnOpenCompleted when channel has been opened locally (no TCP connection opened on mono).
     }// OpenConnectionToService
 
 
-    // Eventhandler, running on user thread, dispatched from m_wampClient.
-    public void OnOpenCompleted (object obj)
+    // Eventhandler, running on user thread, sent from m_protocolClient.
+    void IRemactProtocolDriverCallbacks.OnOpenCompleted(object obj)
     {
         ActorMessage request = obj as ActorMessage;
         request.DestinationLambda = null; // our call has been reached.
@@ -490,7 +491,7 @@ namespace Remact.Net.Internal
                 }
 
                 // send first connection request on user thread --> response will be received on this thread also
-                m_wampClient.Request(request);
+                m_protocolClient.MessageFromClient(request);
             }
         }
         catch (Exception ex)
@@ -527,13 +528,15 @@ namespace Remact.Net.Internal
         // mono:
         // ClientIdent.Uri = new Uri ("http://"+ClientIdent.HostName+"/"+RemactDefaults.WsNamespace
         //                              +string.Format ("/{0}/{1}", ClientIdent.AppIdentification, ClientIdent.Name));
-        ServiceIdent.Uri = m_wampClient.Uri;
-        return m_wampClient.Uri.ToString ();
+        ServiceIdent.Uri = m_protocolClient.ServiceUri;
+        return m_protocolClient.ServiceUri.ToString();
 #endif
     }
 
-    // Delegated callback
-    private void OnIncomingMessage(ActorMessage message)
+    string IRemactProtocolDriverCallbacks.ClientAddress { get { return string.Empty; } }
+
+    // sent from m_protocolClient
+    void IRemactProtocolDriverCallbacks.MessageFromService(ActorMessage message)
     {
         if (ClientIdent.IsMultithreaded || ClientIdent.SyncContext == null)
         {
@@ -616,7 +619,7 @@ namespace Remact.Net.Internal
             RaTrc.Error( result.CltRcvId, "Unknown use of " + rsp.ToString(), ClientIdent.Logger );
         }
 
-        return false; // Payload must be handled by application
+        return false; // Message must be handled by application
     }
 
 
@@ -852,7 +855,7 @@ namespace Remact.Net.Internal
             try
             {
                 if (ClientIdent.TraceSend) RaTrc.Info(request.CltSndId, request.ToString(), ClientIdent.Logger);
-                m_wampClient.Request(request);
+                m_protocolClient.MessageFromClient(request);
             }
             catch (Exception ex)
             {
@@ -873,10 +876,10 @@ namespace Remact.Net.Internal
     /// <summary>
     /// the intuitive action is to send the message to remote service.
     /// </summary>
-    /// <param name="id">A <see cref="ActorMessage"/></param>
-    public void SendOut (ActorMessage id)
+    /// <param name="msg">A <see cref="ActorMessage"/></param>
+    public void SendOut (ActorMessage msg)
     {
-      PostInput(id);
+      PostInput(msg);
     }
 
     /// <summary>

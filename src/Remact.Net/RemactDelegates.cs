@@ -12,8 +12,8 @@ namespace Remact.Net
     /// <summary>
     /// A general handler for internal and external messages. Called on the correct thread (synchronization context).
     /// </summary>
-    /// <param name="id">the received request or response containing message and sender.</param>
-    public delegate void MessageHandler( ActorMessage id ); // TODO remove, legacy
+    /// <param name="msg">the received request or response containing payload and sender.</param>
+    public delegate void MessageHandler( ActorMessage msg ); // TODO remove, legacy
 
     #if !BEFORE_NET45
     /// <summary>
@@ -27,9 +27,9 @@ namespace Remact.Net
     /// <summary>
     /// A handler for internal and external messages to ActorPort objects. Called on the correct thread (synchronization context).
     /// </summary>
-    /// <param name="id">the received request or response containing message and sender.</param>
-    /// <param name="senderContext">the local id.Source.SenderContext object present when the request or response is recived.</param>
-    public delegate void MessageHandler<TSC>( ActorMessage id, TSC senderContext ) where TSC : class; // TODO remove, legacy
+    /// <param name="msg">the received request or response containing payload and sender.</param>
+    /// <param name="senderContext">the local msg.Source.SenderContext object present when the request or response is recived.</param>
+    public delegate void MessageHandler<TSC>( ActorMessage msg, TSC senderContext ) where TSC : class; // TODO remove, legacy
 
     #if !BEFORE_NET45
     /// <summary>
@@ -45,6 +45,6 @@ namespace Remact.Net
     /// Extension method On implements this delegate for handling messages directly in a Send context.
     /// <see cref="ActorMessageExtensions.On&lt;T>(ActorMessage,Action&lt;T>)"/>, <see cref="ActorOutput.SendOut(IWcfMessage, AsyncResponseHandler)"/>
     /// </summary>
-    /// <param name="id">the received response or errormessage from the connected service</param>
-    public delegate ActorMessage AsyncResponseHandler (ActorMessage id);
+    /// <param name="msg">the received response or errormessage from the connected service</param>
+    public delegate ActorMessage AsyncResponseHandler (ActorMessage msg);
 }

@@ -242,15 +242,17 @@ namespace Remact.Net
     /// Internal:    Send a message to the connected partner running on another thread synchronization context.
     /// Serviceside: Source.SendOut() sends a request from client-proxy to the internal service.
     /// </summary>
-    /// <param name="id">A <see cref="ActorMessage"/>the 'Source' property references the sending partner, where the response is expected.</param>
-    public void SendOut (ActorMessage id)
+    /// <param name="msg">A <see cref="ActorMessage"/>the 'Source' property references the sending partner, where the response is expected.</param>
+    public void SendOut (ActorMessage msg)
     {
       if (m_BasicOutput == null) throw new Exception ("AsyncWcfLib: Output of '"+Name+"' has not been linked");
+
       if( !m_Connected )
       {
           RaTrc.Warning( "AsyncWcfLib", "ActorPort '" + Name + "' is not connected. Cannot send message!", Logger );
           return;
       }
+
       if( !IsMultithreaded )
       {
           int threadId = Thread.CurrentThread.ManagedThreadId;
@@ -264,7 +266,7 @@ namespace Remact.Net
               throw new Exception("AsyncWcfLib: wrong thread synchronization context when sending from '" + Name + "'");
           }
       }
-      m_BasicOutput.PostInput( id );
+      m_BasicOutput.PostInput(msg);
     }
 
     /// <summary>
@@ -370,25 +372,25 @@ namespace Remact.Net
     /// Send a request message to the partner on the outgoing connection.
     /// At least a ReadyMessage will asynchronously be received through 'PostInput', after the partner has processed the request.
     /// </summary>
-    /// <param name="msg">The message to send.</param>
-    public void SendOut(object msg)
+    /// <param name="payload">The message payload to send.</param>
+    public void SendOut(object payload)
     {
       if (LastRequestIdSent == int.MaxValue) LastRequestIdSent = 10;
-      ActorMessage id = new ActorMessage (this, OutputClientId, ++LastRequestIdSent, msg, null);
-      SendOut (id);
+      ActorMessage msg = new ActorMessage(this, OutputClientId, ++LastRequestIdSent, payload, null);
+      SendOut(msg);
     }
 
     /// <summary>
     /// Send a request message to the partner on the outgoing connection.
     /// At least a ReadyMessage will asynchronously be received in responseHandler.
     /// </summary>
-    /// <param name="msg">The message to send.</param>
+    /// <param name="payload">The message payload to send.</param>
     /// <param name="responseHandler">A method or lambda expression handling the asynchronous response.</param>
-    public void SendOut(object msg, AsyncResponseHandler responseHandler)
+    public void SendOut(object payload, AsyncResponseHandler responseHandler)
     {
       if (LastRequestIdSent == int.MaxValue) LastRequestIdSent = 10;
-      ActorMessage id = new ActorMessage (this, OutputClientId, ++LastRequestIdSent, msg, responseHandler);
-      SendOut (id);
+      ActorMessage msg = new ActorMessage(this, OutputClientId, ++LastRequestIdSent, payload, responseHandler);
+      SendOut (msg);
     }
 
     #endregion
@@ -442,18 +444,18 @@ namespace Remact.Net
       private MessageHandler<TOC> m_defaultTocResponseHandler;
 
       /// <summary>
-      /// Payload is passed to users default handler.
+      /// Message is passed to users default handler.
       /// </summary>
-      /// <param name="id">ActorMessage containing Payload and Source.</param>
-      private void OnDefaultInput (ActorMessage id)
+      /// <param name="msg">ActorMessage containing Payload and Source.</param>
+      private void OnDefaultInput (ActorMessage msg)
       {
           if (m_defaultTocResponseHandler != null)
           {
-              m_defaultTocResponseHandler(id, OutputContext); // MessageHandlerC> delegate
+              m_defaultTocResponseHandler(msg, OutputContext); // MessageHandlerC> delegate
           }
           else
           {
-              RaTrc.Error("AsyncWcfLib", "Unhandled response: " + id.Payload, Logger);
+              RaTrc.Error("AsyncWcfLib", "Unhandled response: " + msg.Payload, Logger);
           }
       }
 

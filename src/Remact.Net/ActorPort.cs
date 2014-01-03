@@ -24,7 +24,7 @@ namespace Remact.Net
     
     /// <summary>
     /// IsServiceName=true : A service name must be unique in the plant, independant of host or application.
-    /// IsServiceName=false: A client  name must for unique identification be combined with application name, host name, instance- or process id.
+    /// IsServiceName=false: A client  name must be combined with application name, host name, instance- or process id for unique identification.
     /// </summary>
     public bool    IsServiceName    {get; internal set;}
     
@@ -278,20 +278,20 @@ namespace Remact.Net
     /// Serviceside: Source.PostInput() sends a response from client-stub to the remote client.
     /// Clientside:  Post a response into this clients input queue.
     /// </summary>
-    /// <param name="id">A <see cref="ActorMessage"/> the 'Source' property references the sending partner.</param>
-    public void PostInput (ActorMessage id)
+    /// <param name="msg">A <see cref="ActorMessage"/> the 'Source' property references the sending partner.</param>
+    public void PostInput(ActorMessage msg)
     {
         if( !m_Connected )
         {
-            DispatchingError( id, new ErrorMessage( ErrorMessage.Code.NotConnected, "Cannot post message" ));
+            DispatchingError(msg, new ErrorMessage(ErrorMessage.Code.NotConnected, "Cannot post message"));
         }
         else if (m_RedirectIncoming != null)
         {
-            m_RedirectIncoming.PostInput(id); // to BasicServiceUser (post notification) or to ClientIdent of BasicClientAsync
+            m_RedirectIncoming.PostInput(msg); // to BasicServiceUser (post notification) or to ClientIdent of BasicClientAsync
         }
         else if (IsMultithreaded)
         {
-            MessageHandlerBase (id); // response to unsynchronized context (Test1.ClientNoSync)
+            MessageHandlerBase(msg); // response to unsynchronized context (Test1.ClientNoSync)
         }
         else if (this.SyncContext == null)
         {
@@ -302,14 +302,14 @@ namespace Remact.Net
             try
             {
             #if !BEFORE_NET45
-                this.SyncContext.Post( MessageHandlerBaseAsync, id );// Message is posted into the message queue
+                this.SyncContext.Post( MessageHandlerBaseAsync, msg );// Message is posted into the message queue
             #else
-                this.SyncContext.Post( MessageHandlerBase, id );// Payload is posted into the message queue
+                this.SyncContext.Post(MessageHandlerBase, msg);// Message is posted into the message queue
             #endif
             }
             catch( Exception ex )
             {
-                DispatchingError( id, new ErrorMessage( ErrorMessage.Code.CouldNotDispatch, ex ));
+                DispatchingError(msg, new ErrorMessage(ErrorMessage.Code.CouldNotDispatch, ex));
             }
         }
     }
@@ -317,7 +317,7 @@ namespace Remact.Net
 
     #endregion
     //----------------------------------------------------------------------------------------------
-    #region Payload dispatching
+    #region Message dispatching
 
     /// <summary>
     /// Trace switch: Traces all sent messages. Default = false;
@@ -374,25 +374,25 @@ namespace Remact.Net
 #endif
 
 
-    private void DispatchingError( ActorMessage id, ErrorMessage err )
+    private void DispatchingError( ActorMessage msg, ErrorMessage err )
     {
         try
         {
-            var err1 = id.Payload as ErrorMessage;
+            var err1 = msg.Payload as ErrorMessage;
             if( err1 != null )
             {
                 err.InnerMessage = err1.Message;
                 err.StackTrace = err1.StackTrace;
             }
 
-            if( id.IsRequest )
+            if (msg.IsRequest)
             {
                 if (err.Error == ErrorMessage.Code.CouldNotDispatch) err.Error = ErrorMessage.Code.UnhandledExceptionOnService;
-                id.SendResponseFrom( this, err, null );
+                msg.SendResponseFrom(this, err, null);
             }
             else
             {
-                RaTrc.Error( id.SvcSndId, err.ToString(), Logger );
+                RaTrc.Error(msg.SvcSndId, err.ToString(), Logger);
             }
         }
         catch( Exception ex )
@@ -534,7 +534,7 @@ namespace Remact.Net
     }// DispatchMessageAsync
 #endif
 
-    // Payload comes out of message queue in user thread
+    // Message comes out of message queue in user thread
     private void MessageHandlerBase( object userState )
     {
         try
@@ -548,7 +548,7 @@ namespace Remact.Net
     }// MessageHandlerBase
 
 
-    // Payload is passed to the lambda functions of the sending context or to the default response handler
+    // Message is passed to the lambda functions of the sending context or to the default response handler
     internal void DispatchMessage (ActorMessage id)
     {
         if( !m_Connected )
@@ -629,12 +629,12 @@ namespace Remact.Net
 
 
     /// <summary>
-    /// Payload is passed to users connect/disconnect event handler, may be overloaded and call a MessageHandler;TSC>
+    /// Message is passed to users connect/disconnect event handler, may be overloaded and call a MessageHandler;TSC>
     /// </summary>
-    /// <param name="id">ActorMessage containing Payload and Source.</param>
-    /// <param name="msg">The message.</param>
+    /// <param name="msg">ActorMessage containing Payload and Source.</param>
+    /// <param name="info">The message payload.</param>
     /// <returns>True when handled.</returns>
-    protected virtual bool OnConnectDisconnect(ActorMessage id, ActorInfo msg)
+    protected virtual bool OnConnectDisconnect(ActorMessage msg, ActorInfo info)
     {
          return false;
     }

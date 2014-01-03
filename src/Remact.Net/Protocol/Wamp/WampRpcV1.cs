@@ -7,7 +7,7 @@ namespace Remact.Net.Protocol.Wamp
 {
 #pragma warning disable 1591
     /// <summary>
-    /// Represents message types defined by the WAMP protocol version1 and 2.
+    /// Represents message types defined by the WAMP protocol version 1 and 2. See http://wamp.ws/spec/.
     /// </summary>
     public enum WampMessageType
     {
@@ -41,7 +41,7 @@ namespace Remact.Net.Protocol.Wamp
     }
 
     /// <summary>
-    /// The full quailified name of these enums is the 'errorUri' of errors, detected on the wamp level.
+    /// The full quailified name of these enums is the 'errorUri' of errors, detected on the wamp protocol level.
     /// </summary>
     public enum WampError
     {

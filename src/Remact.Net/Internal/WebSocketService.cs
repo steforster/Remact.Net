@@ -12,6 +12,8 @@ using System.Threading;   // SynchronizationContext
 #endif
 using Alchemy;
 using Alchemy.Classes;
+using Remact.Net.Protocol;
+using Remact.Net.Protocol.Wamp;
 
 
 
@@ -24,7 +26,7 @@ namespace Remact.Net.Internal
     /// <para>- handling of new connected clients</para>
     /// <para>- coordinated shutdown of all Services</para>
     /// </summary>
-    public class WebSocketService: WcfBasicService
+    public class WebSocketService : WcfBasicService
     {
         //----------------------------------------------------------------------------------------------
         #region == Constructors and Destructors ==
@@ -208,7 +210,8 @@ namespace Remact.Net.Internal
 
                     // Add the dynamically created endpoint. And let the library user add binding and security credentials.
                     // By default RemactDefaults.DoServiceConfiguration is called.
-                    _serviceConfig.DoServiceConfiguration(_wsServer, ref uri, /*isRouter=*/false);
+                    // TODO _wsServer should be configured
+                    _serviceConfig.DoServiceConfiguration(null, ref uri, /*isRouter=*/false);
                     base.ServiceIdent.Uri = uri;
                 //}
                 //else
@@ -249,13 +252,13 @@ namespace Remact.Net.Internal
         
         private void OnClientConnected(UserContext context)
         {
+            var svcUser = new WcfBasicServiceUser(ServiceIdent);
+            var handler = new InternalMultithreadedServiceNet40(this, svcUser);
+            var wampProxy = new WampClientProxy(svcUser.ClientIdent, ServiceIdent, handler, context);
+            svcUser.SetCallbackHandler(wampProxy);
         }
 
-
-        #endregion
-        //----------------------------------------------------------------------------------------------
-        #region == Internal singlethreaded service class ==
-
+        // TODO OnDisconnected
 
         #endregion
         //----------------------------------------------------------------------------------------------
@@ -265,32 +268,30 @@ namespace Remact.Net.Internal
         #if !BEFORE_NET40
         /// <summary>
         /// This is the Service Entrypoint. It dispatches requests and returns a response.
-        /// Synchronization, see "Programming WCF Services" by Juval Löwi, 
-        /// chapters "Resources and Services", "Resource Synchronization Context", "Service Synchronization Context"
         /// </summary>
-        private class InternalMultithreadedServiceNet40
+        private class InternalMultithreadedServiceNet40 : IRemactProtocolDriverService
         {
-            private WcfServiceAssistant m_myServiceAssistant = null;
+            private WcfBasicService _service;
+            private WcfBasicServiceUser _svcUser;
 
-            // The legacy IWcfBasicServiceSync entrypoint
-            public object WcfRequest(object msg, ref ActorMessage id)
+            public InternalMultithreadedServiceNet40(WcfBasicService service, WcfBasicServiceUser svcUser)
             {
-                // before V3.0 Payload was not a [DataMember] of ActorMessage. Now, msg is transfered two times, when sending through this legacy interface!
-                id.Payload = msg;
+                _service = service;
+                _svcUser = svcUser;
+            }
+
+            /// <summary>
+            /// Occurs when a WampClientProxy calls a service.
+            /// </summary>
+            void IRemactProtocolDriverService.MessageFromClient(ActorMessage message)
+            {
                 object response = null;
                 try
                 {
-                    WcfBasicServiceUser svcUser;
-                    lock( ms_Lock )
-                    {
-                        // first request of a session ?
-                        if( m_myServiceAssistant == null )
-                        {
-////TODO                            m_myServiceAssistant = ms_serviceMap[OperationContext.Current.Channel.LocalAddress.Uri];
-                        }
-
-                        response = m_myServiceAssistant.CheckBasicResponse( id, out svcUser );
-                    }
+                    // unlike WCF, a channel oriented protocol has the _svcUser before the first ActorInfo message
+                    // TODO CheckBasicResponse should not return another svcUser
+                    var tempSvcUser = _svcUser;
+                    response = _service.CheckBasicResponse(message, ref tempSvcUser);
 
                     // multithreaded access, several requests may run in parallel. They are scheduled for execution on the right synchronization context.
                     if( response != null )
@@ -298,9 +299,9 @@ namespace Remact.Net.Internal
                         var connectMsg = response as ActorInfo;
                         if (connectMsg != null) // no error and connected
                         {
-                            var reqCopy = new ActorMessage(id.Source, id.ClientId, id.RequestId, id.Payload, id.SourceLambda);
+                            var reqCopy = new ActorMessage(message.Source, message.ClientId, message.RequestId, message.Payload, message.SourceLambda);
                             reqCopy.Response = reqCopy; // do not send a ReadyMessage
-                            reqCopy.Destination = id.Destination;
+                            reqCopy.Destination = message.Destination;
                             var task = DoRequestAsync( reqCopy ); // call event OnInputConnected or OnInputDisconnected on the correct thread.
                             if (connectMsg.Usage != ActorInfo.Use.ServiceDisconnectResponse)
                             {
@@ -311,45 +312,43 @@ namespace Remact.Net.Internal
                     }
                     else
                     {
-                        //svcUser.StartNewRequest( id );
-                        var task = DoRequestAsync( id );
-                        id = task.Result; // blocking wait!
-                        //response = svcUser.GetNotificationsAndResponse( ref id ); // changes id
+                        var task = DoRequestAsync(message);
+                        message = task.Result; // blocking wait!
+                        // Response and optional notifications have been returned to the client already
+                        return;
                     }
                 }
                 catch( Exception ex )
                 {
-                    RaTrc.Exception( id.SvcRcvId, ex, m_myServiceAssistant.ServiceIdent.Logger );
+                    RaTrc.Exception(message.SvcRcvId, ex, _service.ServiceIdent.Logger);
                     response = new ErrorMessage( ErrorMessage.Code.UnhandledExceptionOnService, ex );
                 }
-
-                id.Payload = response;
-                return id.Payload;
+                message.SendResponse(response);
             }
 
 
 
-            private Task<ActorMessage> DoRequestAsync( ActorMessage id )
+            private Task<ActorMessage> DoRequestAsync( ActorMessage msg )
             {
                 var tcs = new TaskCompletionSource<ActorMessage>();
 
-                if( id.Destination.IsMultithreaded
-                    || id.Destination.SyncContext == null
-                    || id.Destination.ManagedThreadId == Thread.CurrentThread.ManagedThreadId )
+                if( msg.Destination.IsMultithreaded
+                    || msg.Destination.SyncContext == null
+                    || msg.Destination.ManagedThreadId == Thread.CurrentThread.ManagedThreadId )
                 { // execute request on the calling thread or multi-threaded
                 #if !BEFORE_NET45
                     id.Input.DispatchMessageAsync( id )
                         .ContinueWith((t)=>
                             tcs.SetResult( id )); // when finished the first task: finish tcs and let the original request thread return the response.
                 #else
-                    id.Destination.DispatchMessage( id );
-                    tcs.SetResult( id );
+                    msg.Destination.DispatchMessage( msg );
+                    tcs.SetResult( msg );
                 #endif
                 }
                 else
                 {
                     Task.Factory.StartNew(() => 
-                        id.Destination.SyncContext.Post( obj =>
+                        msg.Destination.SyncContext.Post( obj =>
                         {   // execute task on the specified thread after passing the delegate through the message queue...
                             try
                             {
@@ -358,13 +357,13 @@ namespace Remact.Net.Internal
                                     .ContinueWith((t)=>
                                         tcs.SetResult( id )); // when finished the first task: finish tcs and let the original request thread return the response.
                     #else
-                                id.Destination.DispatchMessage( id );// execute request synchronously on the thread bound to the Destination
-                                tcs.SetResult( id );
+                                msg.Destination.DispatchMessage( msg );// execute request synchronously on the thread bound to the Destination
+                                tcs.SetResult( msg );
                     #endif
                             }
                             catch( Exception ex )
                             {
-                                RaTrc.Exception( "ActorMessage to " + id.Destination.Name + " cannot be handled by application", ex );
+                                RaTrc.Exception( "ActorMessage to " + msg.Destination.Name + " cannot be handled by application", ex );
                                 tcs.SetException( ex );
                             }
                         }, null )); // obj
@@ -372,6 +371,12 @@ namespace Remact.Net.Internal
 
                 return tcs.Task;
             }
+
+            void       IRemactProtocolDriverService.OpenAsync(ActorMessage message, IRemactProtocolDriverCallbacks callback) { }
+            Uri        IRemactProtocolDriverService.ServiceUri { get { return null; } }
+            ReadyState IRemactProtocolDriverService.ReadyState { get { return ReadyState.Connected; } }
+            string     IRemactProtocolDriverService.ReadyStateAsString { get { return ReadyState.Connected.ToString(); } }
+            void       IRemactProtocolDriverService.Dispose() { }
 
         }//class InternalMultithreadedServiceNet40
         #endif // !BEFORE_NET40

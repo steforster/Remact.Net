@@ -488,12 +488,12 @@ namespace Remact.Net.Internal
         // The legacy IWcfBasicServiceSync entrypoint
         public object WcfRequest(object msg, ref ActorMessage id)
         {
-            // before V3.0 Payload was not a [DataMember] of ActorMessage. Now, msg is transfered two times, when sending through this legacy interface!
+            // before V3.0 Payload was not a [DataMember] of ActorMessage. Now, payload is transfered two times, when sending through this legacy interface!
             id.Payload = msg;
             object response = null;
             try
             {
-                WcfBasicServiceUser svcUser;
+                WcfBasicServiceUser svcUser = null;
                 lock( ms_Lock )
                 {
                     // first request of a session ?
@@ -502,7 +502,7 @@ namespace Remact.Net.Internal
                         m_myServiceAssistant = ServiceMap[OperationContext.Current.Channel.LocalAddress.Uri];
                     }
 
-                    response = m_myServiceAssistant.CheckBasicResponse( id, out svcUser );
+                    response = m_myServiceAssistant.CheckBasicResponse( id, ref svcUser );
                 }
 
                 // multithreaded access, several requests may run in parallel. They are scheduled for execution on the right synchronization context.
@@ -524,10 +524,10 @@ namespace Remact.Net.Internal
                 }
                 else
                 {
-                    //svcUser.StartNewRequest( id );
+                    //svcUser.StartNewRequest( payload );
                     var task = DoRequestAsync( id );
                     id = task.Result; // blocking wait!
-                    //response = svcUser.GetNotificationsAndResponse( ref id ); // changes id
+                    //response = svcUser.GetNotificationsAndResponse( ref payload ); // changes payload
                 }
             }
             catch( Exception ex )

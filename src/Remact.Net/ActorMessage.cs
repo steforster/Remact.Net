@@ -23,23 +23,23 @@ namespace Remact.Net
         /// <para>   .On&lt;ErrorMessage>(err => {do something with error message 'err'})</para>
         /// </summary>
         /// <typeparam name="T">The message type looked for.</typeparam>
-        /// <param name="id">Parameter is added by the compiler.</param>
+        /// <param name="msg">Parameter is added by the compiler.</param>
         /// <param name="handle">A delegate or lambda expression that will be executed, when the type matches.</param>
         /// <returns>The same request, for chained calls.</returns>
         // inspired by http://blogs.infosupport.com/blogs/frankb/archive/2008/02/02/Using-C_2300_-3.0-Extension-methods-and-Lambda-expressions-to-avoid-nasty-Null-Checks.aspx
 
 #if !MONO
-        public static ActorMessage On<T> (this ActorMessage id, Action<T> handle) where T : class
+        public static ActorMessage On<T> (this ActorMessage msg, Action<T> handle) where T : class
 #else
-        public static ActorMessage On<T> (this ActorMessage id, Action<T> handle) where T : class
+        public static ActorMessage On<T> (this ActorMessage msg, Action<T> handle) where T : class
 #endif
         {
-            if (id != null)
+            if (msg != null)
             {
-                T typedMsg = id.Payload as T;
+                T typedMsg = msg.Payload as T;
                 if (typedMsg == null)
                 {
-                    return id; // call next On extension method
+                    return msg; // call next On extension method
                 }
 
                 handle(typedMsg);
@@ -71,7 +71,7 @@ namespace Remact.Net
     {
         /// <summary>
         /// Requests and responses carry a reference to the payload data. Only the payload is transferred over the wire.
-        /// The payload itself may be sent to several internal partners. It will then be referenced by several Requests.
+        /// The payload itself may be sent to several internal partners. It will then be referenced by several ActorMessage objects.
         /// Be careful, use the payload as unmutable, readonly for application internal communication!
         /// </summary>
         public object Payload { get; internal set; }
@@ -111,33 +111,32 @@ namespace Remact.Net
         /// <summary>
         /// For local and remote requests the send operation may specify a lambda expression handling the response.
         /// </summary>
-        internal AsyncResponseHandler   SourceLambda;      // delegate IWcfMessage  AsyncResponseHandler (IWcfMessage msg);
+        internal AsyncResponseHandler   SourceLambda;      // delegate ActorMessage  AsyncResponseHandler (ActorMessage msg);
         internal AsyncResponseHandler   DestinationLambda; // copied from source, when returning the message
 
-        internal ActorMessage           Response;     // for WcfBasicServiceUser
-        internal object                 MessageSaved; // for WcfBasicServiceUser
+        internal ActorMessage           Response;          // to check whether a response has been sent
 
         /// <summary>
-        /// Create a new ActorMessage.
+        /// Creates a new ActorMessage.
         /// </summary>
         /// <param name="sender">The sending partner.</param>
         /// <param name="clientId">The ClientId used on the service.</param>
         /// <param name="requestId">The RequestId is incremented by the client.</param>
-        /// <param name="message">The user payload message to send.</param>
+        /// <param name="payload">The user payload to send.</param>
         /// <param name="responseHandler">null or a lamda expression to be called, when a response is aynchronously received.</param>
-        internal ActorMessage( ActorPort sender, int clientId, int requestId, object message, AsyncResponseHandler responseHandler )
+        internal ActorMessage(ActorPort sender, int clientId, int requestId, object payload, AsyncResponseHandler responseHandler)
         {
             Source = sender;
             Destination = sender;   // default for tracing on client side
             ClientId = clientId;
             RequestId = requestId;
-            var m = message as IExtensibleWcfMessage;
+            var m = payload as IExtensibleWcfMessage;
             if (m != null)
             {
                 m.BoundSyncContext = null;
                 m.IsSent = true;
             }
-            Payload = message;
+            Payload = payload;
             SourceLambda = responseHandler;
         }// CTOR
 
@@ -170,38 +169,40 @@ namespace Remact.Net
         /// The individual messages are received on client side.
         /// If SendResponse is not called on a request, AsyncWcfLib automatically returns a ReadyMessage to the client.
         /// </summary>
-        /// <param name="msg">The message to send as response.</param>
-        public void SendResponse (object msg)
+        /// <param name="payload">The message to send as response.</param>
+        public void SendResponse(object payload)
         {
-            SendResponseFrom (Destination, msg, null);
+            SendResponseFrom(Destination, payload, null);
         }
 
 
         // Return a response to the sender.
-        internal void SendResponseFrom(ActorPort service, object msg, AsyncResponseHandler responseHandler)
+        internal void SendResponseFrom(ActorPort service, object payload, AsyncResponseHandler responseHandler)
         {
-            var m = msg as IExtensibleWcfMessage;
+            var m = payload as IExtensibleWcfMessage;
             if (m != null && m.BoundSyncContext != null && m.BoundSyncContext != SynchronizationContext.Current)
             {
                 string name = service == null ? "null" : service.Name;
                 throw new Exception("AsyncWcfLib: wrong thread synchronization context when responding from '" + name + "'");
             }
 
-            // return same request ID
-            if (Response == null || Response.MessageSaved == null) // first response message or not gathering notifications
+            // return same request ID for first call to SendResponse
+            if (Type == ActorMessageType.Request && Response == null)
             {
-                Response = new ActorMessage(service, ClientId, RequestId, msg, responseHandler);
-                Type = ActorMessageType.Response;
+                Response = new ActorMessage(service, ClientId, RequestId, payload, responseHandler);
+                Response.Type = ActorMessageType.Response;
                 Response.DestinationLambda = SourceLambda; // SourceLambda will be called later on for the first response only
                 SourceLambda = null;
-                //Response.NotifyList = NotifyList; // notifications gathered before this request
+                if (service.TraceSend) RaTrc.Info(this.SvcSndId, Response.ToString(), service.Logger);
+                Source.PostInput(Response);
             }
             else
             {
-                Response.Payload = msg; // msg will be added to NotifyList later on
+                var msg = new ActorMessage(service, ClientId, RequestId, payload, responseHandler);
+                msg.Type = ActorMessageType.Notification;
+                if (service.TraceSend) RaTrc.Info(msg.SvcSndId, msg.ToString(), service.Logger);
+                Source.PostInput(msg);
             }
-            if (service.TraceSend) RaTrc.Info(this.SvcSndId, Response.ToString(), service.Logger);
-            Source.PostInput(Response); // several responses may be added in BasicServiceUser
         }
 
 

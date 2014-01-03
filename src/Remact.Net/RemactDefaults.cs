@@ -7,9 +7,8 @@ using System.ServiceModel.Channels;// Binding
 using System.Reflection;           // Assembly
 using System.Net;                  // Dns
 using System.IO;                   // Files
-using Alchemy;
 using Remact.Net.Internal;
-using Remact.Net.Protocol.Wamp;
+using Remact.Net.Protocol;
 
 namespace Remact.Net
 {
@@ -57,7 +56,7 @@ namespace Remact.Net
 
     #endregion
     //----------------------------------------------------------------------------------------------
-    #region == Default WCF Service and Client configuration ==
+    #region == Default Service and Client configuration ==
 
     /// <summary>
     /// The Webservice communication namespace is used by clients and services to uniquely identify services.
@@ -102,8 +101,8 @@ namespace Remact.Net
       // see. http://msdn.microsoft.com/en-us/library/ms729709%28v=VS.100%29.aspx
       // and  http://msdn.microsoft.com/en-us/library/ms735093%28v=VS.100%29.aspx
       //NetTcpBinding    binding = new NetTcpBinding ();
-      //binding.Security.Mode = SecurityMode.Payload;
-      //binding.Security.Payload.ClientCredentialType = MessageCredentialType.Windows;
+      //binding.Security.Mode = SecurityMode.Message;
+      //binding.Security.Message.ClientCredentialType = MessageCredentialType.Windows;
       
       // (Variant 4) binary serialization.
       NetTcpBinding    binding = new NetTcpBinding ();
@@ -123,7 +122,7 @@ namespace Remact.Net
     /// <param name="server">The web socket server.</param>
     /// <param name="uri">The dynamically generated URI for this service.</param>
     /// <param name="isRouter">true if used for WcfRouter service.</param>
-    public virtual void DoServiceConfiguration(WebSocketServer server, ref Uri uri, bool isRouter)
+    public virtual void DoServiceConfiguration(IRemactProtocolDriverService server, ref Uri uri, bool isRouter)
     {
 #if !MONO
       serviceHost.AddServiceEndpoint (
@@ -191,7 +190,7 @@ namespace Remact.Net
     public virtual bool    IsAppIdUniqueInPlant (int appId) {return appId >= 100;}
 
     /// <summary>
-    /// When ApplicationInstance remains 0, the operating system process id is used as a application instance id for communication and trace.
+    /// When ApplicationInstance remains 0, the operating system process id is used as a application instance payload for communication and trace.
     /// </summary>
     public bool            IsProcessIdUsed      (int appId) {return appId == 0;}
 

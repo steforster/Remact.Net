@@ -16,7 +16,7 @@ namespace Remact.Net.Internal
   /// <para>Has the possibility to store and forward notifications that are not expected by the client.</para>
   /// <para>This could also be handled by the more cumbersome 'DualHttpBinding'.</para>
   /// </summary>
-  internal class WcfBasicServiceUser : IWcfBasicPartner, IRemactProtocolDriverService
+  internal class WcfBasicServiceUser : IWcfBasicPartner
   {
     //----------------------------------------------------------------------------------------------
     #region Properties
@@ -30,19 +30,12 @@ namespace Remact.Net.Internal
     private  ActorInput                _serviceIdent;
 
     /// <summary>
-    /// The ClientId used on this service.
-    /// </summary>
-    public   int                       ClientId    {get; private set;}
-
-    internal uint                      LastReceivedSendId;
-
-    /// <summary>
     /// Set to 0 when a message has been received or sent. Incremented by milliseconds in TestNotificationChannel().
     /// </summary>
     internal int                       ChannelTestTimer;
     internal object                    ClientAccessLock   = new Object();
 
-    private WampClientProxy            m_wampProxy;
+    private IRemactProtocolDriverCallbacks _protocolCallback;
     private bool                       m_boDisconnectReq;
     private bool                       m_boTimeout;
 
@@ -53,9 +46,8 @@ namespace Remact.Net.Internal
     /// <summary>
     /// Internally called to create a WcfBasicServiceUser object
     /// </summary>
-    /// <param name="clientIdent">client using this service</param>
-    /// <param name="clientId">client id used for this client on this service.</param>
-    internal WcfBasicServiceUser(WampClientProxy wampProxy, ActorInput serviceIdent)
+    /// <param name="serviceIdent">client using this service</param>
+    internal WcfBasicServiceUser(ActorInput serviceIdent)
     {
         _serviceIdent = serviceIdent;
         ClientIdent = new ActorOutput()
@@ -70,17 +62,20 @@ namespace Remact.Net.Internal
 
         ClientIdent.LinkOutputTo(serviceIdent); // requests are posted to our service. Also creates a new TSC object if ServiceIdent is ActorInput<TSC>
         ClientIdent.PassResponsesTo(this);  // the service posts notifications to svcUser, we will pass it to the remote client
-        m_wampProxy = wampProxy;
     }// CTOR
+
+    internal void SetCallbackHandler(IRemactProtocolDriverCallbacks protocolCallback)
+    {
+        _protocolCallback = protocolCallback;
+    }
 
     internal void UseDataFrom(ActorInfo remoteClient, int clientId)
     {
-        ClientId = clientId;
         ClientIdent.UseDataFrom(remoteClient);
+        ClientIdent.OutputClientId = clientId;
         UriBuilder uri = new UriBuilder (ClientIdent.Uri);
         uri.Scheme = ClientIdent.OutputSidePartner.Uri.Scheme; // the service's Uri scheme (e.g. http)
         ClientIdent.Uri = uri.Uri;
-        //TODO m_wampProxy =
     }
 
     internal void SetConnected()
@@ -108,7 +103,7 @@ namespace Remact.Net.Internal
     public bool IsConnected
     {
       get {
-          return !m_boDisconnectReq && !m_boTimeout && m_wampProxy != null;
+          return !m_boDisconnectReq && !m_boTimeout && _protocolCallback != null;
       }
     }
 
@@ -124,10 +119,10 @@ namespace Remact.Net.Internal
     /// <param name="mark">6 char, eg. 'Connec', 'Discon', 'Abortd'</param>
     public void TraceState(string mark)
     {
-        if (m_wampProxy != null)
+        if (_protocolCallback != null)
         {
             RaTrc.Info ("WcfSvc", "["+mark.PadRight (6)+"] "+ ClientMark
-                            + ", ClientAddress=" + m_wampProxy.ClientAddress.ToString()
+                            + ", ClientAddress=" + _protocolCallback.ClientAddress
                             , ClientIdent.Logger );
         }
     }
@@ -135,7 +130,7 @@ namespace Remact.Net.Internal
     /// <summary>
     /// Used for tracing messages from/to this client.
     /// </summary>
-    public string ClientMark {get{return string.Format("{0}/{1}[{2}]", ClientIdent.HostName, ClientIdent.Name, ClientId);}}
+    public string ClientMark {get{return string.Format("{0}/{1}[{2}]", ClientIdent.HostName, ClientIdent.Name, ClientIdent.OutputClientId);}}
 
     /// <summary>
     /// Internally called by DoPeriodicTasks(), notifies idle messages and disconnects the client connection in case of failure.
@@ -143,7 +138,7 @@ namespace Remact.Net.Internal
     /// <returns>True, when connection state has changed.</returns>
     internal bool TestChannel (int i_nMillisecondsPassed)
     {
-        if (m_wampProxy != null)
+        if (_protocolCallback != null)
         {
             try
             {
@@ -181,25 +176,25 @@ namespace Remact.Net.Internal
     /// </summary>
     internal void AbortNotificationChannel ()
     {
-        if (m_wampProxy == null) return;
+        if (_protocolCallback == null) return;
 
         try
         {
             Disconnect();
             //TraceState("Abortd");
-            m_wampProxy.Dispose();
-            m_wampProxy = null;
+            //_protocolCallback.Dispose(); TODO
+            _protocolCallback = null;
         }
         catch (Exception ex)
         {
-            m_wampProxy = null;
+            _protocolCallback = null;
             RaTrc.Exception( "Cannot abort '" + ClientMark + "' from service", ex, ClientIdent.Logger );
         }
     }
 
 
     /// <summary>
-    /// <para>Request SendNotification(...) to enqueue a notification message.</para>
+    /// <para>Call SendNotification(...) to enqueue a notification message.</para>
     /// </summary>
     /// <param name="notification">a message not requested by the client</param>
     public void SendNotification(object notification)
@@ -207,14 +202,15 @@ namespace Remact.Net.Internal
         ChannelTestTimer = 0;
         try
         {
-            if (m_wampProxy == null)
+            if (_protocolCallback == null)
             {
                 RaTrc.Error( "WcfSvc", "Closed notification channel to " + ClientMark, ClientIdent.Logger );
             }
             else
             {
                 var message = new ActorMessage(null, 0, 0, notification, null);
-                m_wampProxy.Notification(message);
+                message.Type = ActorMessageType.Notification;
+                _protocolCallback.MessageFromService(message);
             }
         }
         catch (Exception ex)
@@ -233,44 +229,6 @@ namespace Remact.Net.Internal
             return 0;
     }}
 
-/*
-    internal void StartNewRequest( ActorMessage id )
-    {
-      if( m_NotifyList.Notifications.Count > 0 )
-      {
-        id.NotifyList = m_NotifyList; // take notifications not sent to a particular request
-        m_NotifyList  = new WcfNotifyResponse(); // prepare for next notifications
-      }
-    }
-
-
-    /// <summary>
-    /// <para>GetNotificationsAndResponse() returns a message of type 'WcfNotifyResponse' when  notification messages are queued.</para>
-    /// <para>It must be called to return the response by the service.</para>
-    /// </summary>
-    /// <returns>The responses plus notifications.</returns>
-    public object GetNotificationsAndResponse(ref ActorMessage id)
-    {
-      if( id.Response == null )
-      {
-          id.SendResponse( new ReadyMessage() ); // no other information to return
-      }
-
-      id = id.Response; // return the new id also
-      if (id.NotifyList != null)
-      {
-          m_boOutstandingNotification = false;
-          id.NotifyList.Response = id.MessageSaved;
-          id.Payload = id.NotifyList;
-      }
-      else
-      {
-          id.Payload = id.MessageSaved;
-      }
-      return id.Payload;
-    }
-*/
-
     #endregion
     //----------------------------------------------------------------------------------------------
     #region IWcfPartner implementation
@@ -287,10 +245,10 @@ namespace Remact.Net.Internal
     /// <summary>
     /// Send a request to the service internally connected to this client-stub.
     /// </summary>
-    /// <param name="id">A <see cref="ActorMessage"/>the 'Source' property references the sending partner, where the response is expected.</param>
-    public void SendOut (ActorMessage id)
+    /// <param name="msg">A <see cref="ActorMessage"/>the 'Source' property references the sending partner, where the response is expected.</param>
+    public void SendOut (ActorMessage msg)
     {
-        ClientIdent.SendOut(id); // post to service input queue
+        ClientIdent.SendOut(msg); // post to service input queue
     }
 
     /// <summary>
@@ -299,7 +257,7 @@ namespace Remact.Net.Internal
     /// <param name="response">A <see cref="ActorMessage"/>.</param>
     public void PostInput(ActorMessage response)
     {
-        m_wampProxy.Response(response);
+        _protocolCallback.MessageFromService(response);
     }
 
     /// <summary>
@@ -307,20 +265,6 @@ namespace Remact.Net.Internal
     /// </summary>
     public Uri Uri {get{return ClientIdent.Uri;}}
 
-
-    #endregion
-    //----------------------------------------------------------------------------------------------
-    #region IRemactProtocolDriverService implementation
-
-    void IRemactProtocolDriverService.Request(ActorMessage message)
-    {
-        throw new NotImplementedException();
-    }
-
-    void IRemactProtocolDriverService.ErrorFromClient(ActorMessage message)
-    {
-        throw new NotImplementedException();
-    }
 
     #endregion
     //----------------------------------------------------------------------------------------------

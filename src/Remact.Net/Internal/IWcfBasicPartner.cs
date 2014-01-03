@@ -36,8 +36,8 @@ namespace Remact.Net.Internal
     /// ActorOutput (client): Send a request to the connected remote service.
     /// Serviceside:          Source.SendOut() send a request from client-proxy to the internal service.
     /// </summary>
-    /// <param name="id">A <see cref="ActorMessage"/>the 'Source' property references the sending partner, where the response is expected.</param>
-    void SendOut (ActorMessage id); // TODO is it needed anymore ????
+    /// <param name="msg">A <see cref="ActorMessage"/>the 'Source' property references the sending partner, where the response is expected.</param>
+    void SendOut(ActorMessage msg); // TODO is it needed anymore ????
 
     /// <summary>
     /// Post a request or response message to the input of this partner.
@@ -47,8 +47,8 @@ namespace Remact.Net.Internal
     /// ActorOutput.m_OutputClient (server-proxy): Send a request to the connected remote service.
     /// Serviceside:                               Source.PostInput() sends a response from client-stub to the remote client.
     /// </summary>
-    /// <param name="id">A <see cref="ActorMessage"/> the 'Source' property references the sending partner.</param>
-    void PostInput (ActorMessage id);
+    /// <param name="msg">A <see cref="ActorMessage"/> the 'Source' property references the sending partner.</param>
+    void PostInput(ActorMessage msg);
 
     /// <summary>
     /// Universal resource identifier for the service or client.

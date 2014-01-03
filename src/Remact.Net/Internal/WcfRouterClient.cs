@@ -122,7 +122,7 @@ namespace Remact.Net.Internal
                 svc.NextEnableMessage = DateTime.Now.AddSeconds(20);
                 svc.IsServiceRegistered = true;
                 ActorMessage id = m_RouterClient.SendOut (req);
-                RaTrc.Info( id.CltSndId, "send to WcfRouter: " + req.ToString(), RemactApplication.Logger );// id.CltSndId is updated in Send()
+                RaTrc.Info( id.CltSndId, "send to WcfRouter: " + req.ToString(), RemactApplication.Logger );// msg.CltSndId is updated in Send()
 
               }
               else if (m_ServiceList[m_nCurrentSvc].NextEnableMessage < DateTime.Now)

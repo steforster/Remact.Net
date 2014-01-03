@@ -10,9 +10,9 @@ using System.ServiceModel;
 using System.ServiceModel.Description; // ServiceHost
 using System.Windows.Forms;
 using System.Net;
-using Alchemy;
 using Remact.Net;
 using Remact.Net.Internal;
+using Remact.Net.Protocol;
 
 namespace Remact.Catalog
 {
@@ -322,7 +322,7 @@ namespace Remact.Catalog
 
 
     // implement IActorInputConfiguration
-    public void DoServiceConfiguration(WebSocketServer server, ref Uri uri, bool isRouter)
+    public void DoServiceConfiguration(IRemactProtocolDriverService server, ref Uri uri, bool isRouter)
     {
 ////TODO        RemactDefaults.Instance.DoServiceConfiguration( serviceHost, ref uri, /*isRouter=*/ true );
     }

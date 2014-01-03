@@ -12,40 +12,54 @@ using Remact.Net.Protocol;
 
 namespace Remact.Net.Protocol.Wamp
 {
+    /// <summary>
+    /// Implements the protocol level for a WAMP client. See http://wamp.ws/spec/.
+    /// </summary>
     public class WampClient : IRemactProtocolDriverService
     {
         private WebSocketClient _wsClient;
         private Dictionary<int, ActorMessage> _outstandingRequests;
-        private SendOrPostCallback _onOpenCompleted; // OnOpenCompleted(object actorMessage)
-        private MessageHandler _onIncomingMessage;
+        private IRemactProtocolDriverCallbacks _callback;
+        private int _lowLevelErrorCount;
 
-
-        public WampClient(Uri websocketUri, MessageHandler onIncomingMessage)
+        public WampClient(Uri websocketUri)
         {
-            Uri = websocketUri;
+            ServiceUri = websocketUri;
             _wsClient = new WebSocketClient(websocketUri.ToString())
             {
-                //OnSend = OnSend,
+                //OnSend = OnSend,// Message has been dequeued and passed to the socket buffer
                 OnReceive = OnReceived,
-                //OnConnect = OnConnect,
-                //OnConnected = OnConnected,
+                //OnConnect = OnConnect,// TCP socket is connected to the server
+                //OnConnected = OnConnected,// WebSocket connection has been built and authenticated
                 OnDisconnect = OnDisconnect,
                 ConnectTimeout = new TimeSpan(0, 0, 50), // 50 sec
                 SubProtocols = new string[]{"wamp"} // null: take all subprotocols
                 //TODO Origin = see rfc6455
             };
-            _onIncomingMessage = onIncomingMessage;
         }
 
-        public Uri Uri { get; private set; }
+        public Uri ServiceUri { get; private set; }
 
-        public WebSocketClient.ReadyStates ReadyState { get { return _wsClient.ReadyState; } }
+        public ReadyState ReadyState 
+        { 
+            get 
+            {
+                switch (_wsClient.ReadyState)
+                {
+                    case WebSocketClient.ReadyStates.OPEN: return ReadyState.Connected;
+                        //TODO Faulted
+                    default: return ReadyState.Closed;
+                }
+            } 
+        }
+
+        public string ReadyStateAsString {get {return _wsClient.ReadyState.ToString(); }}
 
         
         // Asynchronous open the connection
-        internal void OpenAsync(ActorMessage request, SendOrPostCallback onOpenCompleted)
+        public void OpenAsync(ActorMessage request, IRemactProtocolDriverCallbacks callback)
         {
-            _onOpenCompleted = onOpenCompleted;
+            _callback = callback;
             ThreadPool.UnsafeQueueUserWorkItem(OpenOnThreadpool, request);
         }
 
@@ -73,16 +87,16 @@ namespace Remact.Net.Protocol.Wamp
 
             if (request.Source.IsMultithreaded)
             {
-                _onOpenCompleted(request); // Test1.ClientNoSync, RouterClient
+                _callback.OnOpenCompleted(request); // Test1.ClientNoSync, RouterClient
             }
             else if (request.Source.SyncContext == null)
             {
                 RaTrc.Error("AsyncWcfLib", "No synchronization context to open " + request.Source.Name, request.Source.Logger);
-                _onOpenCompleted(request);
+                _callback.OnOpenCompleted(request);
             }
             else
             {
-                request.Source.SyncContext.Post(_onOpenCompleted, request);
+                request.Source.SyncContext.Post(_callback.OnOpenCompleted, request);
             }
         }// OpenOnThreadpool
 
@@ -99,7 +113,7 @@ namespace Remact.Net.Protocol.Wamp
         #region IRemactProtocolDriverService proxy implementation
 
 
-        public void Request(ActorMessage request)
+        public void MessageFromClient(ActorMessage request)
         {
             _outstandingRequests.Add(request.RequestId, request);
             string callId = request.RequestId.ToString();
@@ -118,6 +132,11 @@ namespace Remact.Net.Protocol.Wamp
 
         private void ResponseNotDeserializable(int id, string errorDesc)
         {
+            if (++_lowLevelErrorCount > 100)
+            {
+                return; // do not respond endless on erronous error messages
+            }
+
             var error = new ErrorMessage(ErrorMessage.Code.RspNotDeserializableOnClient, errorDesc);
             var message = new ActorMessage(null, 0, id, error, null);
             ErrorFromClient(message);
@@ -158,11 +177,6 @@ namespace Remact.Net.Protocol.Wamp
         #region Alchemy callbacks
 
 
-        // Payload has been dequeued and passed to the socket buffer
-        //private void OnSend(UserContext context)
-        //{
-        //}
-
         // DataFrame.State == Handlers.WebSocket.DataFrame.DataState.Complete
         private void OnReceived(UserContext context)
         {
@@ -181,8 +195,8 @@ namespace Remact.Net.Protocol.Wamp
                 //    case (int)CommandType.Register:
                 //        Register(obj.Name.Value, context);
                 //        break;
-                //    case (int)CommandType.Payload:
-                //        ChatMessage(obj.Payload.Value, context);
+                //    case (int)CommandType.Message:
+                //        ChatMessage(obj.Message.Value, context);
                 //        break;
                 //    case (int)CommandType.NameChange:
                 //        NameChange(obj.Name.Value, context);
@@ -191,20 +205,22 @@ namespace Remact.Net.Protocol.Wamp
 
                 JArray wamp = JArray.Parse(json);
                 int wampType = (int)wamp[0];
-                id = int.Parse((string)wamp[1]);
                 if (wampType == (int)WampMessageType.v1CallResult)
                 {
                     // eg. CALLRESULT message with 'null' result: [3, "CcDnuI2bl2oLGBzO", null]
+                    id = int.Parse((string)wamp[1]);
                     var message = _outstandingRequests[id];
                     _outstandingRequests.Remove(id);
                     message.Payload = wamp[2];
                     message.Type = ActorMessageType.Response;
-                    _onIncomingMessage(message);
+
+                    _callback.MessageFromService(message); // adds source and destination
                 }
                 else if (wampType == (int)WampMessageType.v1CallError)
                 {
                     // eg. CALLERROR message with generic error: [4, "gwbN3EDtFv6JvNV5", "http://autobahn.tavendo.de/error#generic", "math domain error"]
                     errorReceived = true;
+                    id = int.Parse((string)wamp[1]);
                     string errorUri = (string)wamp[2];
                     var code = (ErrorMessage.Code)Enum.Parse(typeof(ErrorMessage.Code), errorUri, false);
                     string errorDesc = (string)wamp[3];
@@ -215,7 +231,18 @@ namespace Remact.Net.Protocol.Wamp
                     //{
                     //    message. (object)wamp[4]); TODO
                     //}
-                    _onIncomingMessage(message);
+                    _callback.MessageFromService(message); // adds source and destination
+                }
+                else if (wampType == (int)WampMessageType.v1Event)
+                {
+                    // eg. EVENT message with 'null' as payload: [8, "http://example.com/simple", null]
+
+                    object payload = payload = wamp[2];
+                    var message = new ActorMessage(null, 0, 0, payload, null);
+                    message.DestinationMethod = (string)wamp[1]; // TODO
+                    message.Type = ActorMessageType.Notification;
+
+                    _callback.MessageFromService(message); // adds source and destination
                 }
                 else
                 {
@@ -224,22 +251,12 @@ namespace Remact.Net.Protocol.Wamp
             }
             catch (Exception ex)
             {
-                //var r = new Response { Type = ResponseType.Error, Data = new { e.Payload } };
+                //var r = new Response { Type = ResponseType.Error, Data = new { e.Message } };
                 //context.Send(JsonConvert.SerializeObject(r));
                 //TODO full qualified name
                 if (!errorReceived) ResponseNotDeserializable(id, ex.Message);
             }
         }
-
-        // TCP socket is connected to the server
-        //private void OnConnect(UserContext context)
-        //{
-        //}
-
-        // WebSocket connection has been built and authenticated
-        //private void OnConnected(UserContext context)
-        //{
-        //}
 
         // Connect failure or disposing context 
         private void OnDisconnect(UserContext context)
