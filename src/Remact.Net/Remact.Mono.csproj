@@ -12,25 +12,25 @@
     <FileAlignment>512</FileAlignment>
     <RootNamespace>Remact.Net</RootNamespace>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug.Mono|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\debug\mono\</OutputPath>
+    <OutputPath>bin\Debug.Mono\</OutputPath>
     <DefineConstants>DEBUG;TRACE;MONO;BEFORE_NET45</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\debug\mono\Remact.Net.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug.Mono\Remact.Net.XML</DocumentationFile>
     <UseVSHostingProcess>false</UseVSHostingProcess>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release.Mono|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\release\mono\</OutputPath>
+    <OutputPath>bin\Release.Mono\</OutputPath>
     <DefineConstants>TRACE;MONO;BEFORE_NET45</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\release\mono\Remact.Net.XML</DocumentationFile>
+    <DocumentationFile>bin\Release.Mono\Remact.Net.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
