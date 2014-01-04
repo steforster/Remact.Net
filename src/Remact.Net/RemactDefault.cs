@@ -2,8 +2,6 @@
 // Copyright (c) 2014, github.com/steforster/Remact.Net
 
 using System;
-using System.ServiceModel;         // Channels
-using System.ServiceModel.Channels;// Binding
 using System.Reflection;           // Assembly
 using System.Net;                  // Dns
 using System.IO;                   // Files
@@ -16,24 +14,24 @@ namespace Remact.Net
 {
   /// <summary>
   /// Common definitions for all interacting actors.
-  /// Library users may plug in their own implementation of this class to RemactDefaults.Instance.
+  /// Library users may plug in their own implementation of this class to RemactDefault.Instance.
   /// </summary>
-  public class RemactDefaults : IRemactDefaults
+  public class RemactDefault : IRemactDefault
   {
     //----------------------------------------------------------------------------------------------
     #region == Instance and plugin ==
 
-    private static IRemactDefaults m_instance;
+    private static IRemactDefault m_instance;
 
     /// <summary>
-    /// Library users may plug in their own implementation of IRemactDefaults to RemactDefaults.Instance.
+    /// Library users may plug in their own implementation of IRemactDefault to RemactDefault.Instance.
     /// </summary>
-    public static IRemactDefaults Instance
+    public static IRemactDefault Instance
     {
         get{
             if( m_instance == null )
             {
-                m_instance = new RemactDefaults ();
+                m_instance = new RemactDefault ();
             }
             return m_instance;
         }
@@ -47,7 +45,7 @@ namespace Remact.Net
     /// <summary>
     /// When the Library users does not plug in its own implementation of IRemactDefaults, RemactDefaults will be used.
     /// </summary>
-    protected RemactDefaults() // constructor
+    protected RemactDefault() // constructor
     {
         m_appAssembly = Assembly.GetEntryAssembly();// exe Application
         if (m_appAssembly == null)
@@ -62,72 +60,21 @@ namespace Remact.Net
 
     /// <summary>
     /// The Webservice communication namespace is used by clients and services to uniquely identify services.
-    /// Library users may change this constant to e.g. "YourCompany.com/YourProduct" and rebuild AsyncWcsLib.
-    /// Sorry, currently it seems there is no other possibility to set your own namespace !
+    /// Library users may change this constant to e.g. "YourCompany.com/YourProduct".
+    /// For use in attrbutes (Microsoft WCF ServiceContract) this is defined as a constant string.
     /// </summary>
-    public const string  WsNamespace = "AsyncWcfLib";
-
-    /// <summary>
-    /// Returns the default binding, used by services and clients.
-    /// URI may be changed e.g. from http:// to https://
-    /// </summary>
-    protected Binding GetDefaultBinding (ref Uri uri, bool forRouter)
-    {
-      // (Variant 1) uses BasicHttpBinding, it has no security but is 4 times faster than WS2007HttpBinding
-      //             Problem under Windows 7: see "netsh http add uriacl". URI reservation is needed for *each* portnumber under UAC (user account control) without elevated administrator level.
-      //BasicHttpBinding binding = new BasicHttpBinding ();
-      //if (uri.Scheme != Uri.UriSchemeHttp)
-      //{
-      //  UriBuilder b = new UriBuilder (uri);
-      //  b.Scheme = Uri.UriSchemeHttp;
-      //  uri = b.Uri;
-      //}
-
-      // (Variant 2) uses HTTPS transport. This is secure between this client and its service.
-      //WSHttpBinding binding = new WSHttpBinding ();
-      //binding.Security.Mode = SecurityMode.Transport; // HTTPS
-      //if (uri.Scheme != Uri.UriSchemeHttps)
-      //{
-      //  UriBuilder b = new UriBuilder (uri);
-      //  b.Scheme = Uri.UriSchemeHttps;
-      //  uri = b.Uri;
-      //}
-
-      // Add credentials:
-      // Service: http://msdn.microsoft.com/en-us/library/ms733130%28v=VS.100%29.aspx
-      // Endpoint + EndPointIdentity
-
-      // Client: ServiceReference.ClientCredentials...
-
-      // (Variant 3) uses secure messaging and binary serialization.
-      // see. http://msdn.microsoft.com/en-us/library/ms729709%28v=VS.100%29.aspx
-      // and  http://msdn.microsoft.com/en-us/library/ms735093%28v=VS.100%29.aspx
-      //NetTcpBinding    binding = new NetTcpBinding ();
-      //binding.Security.Mode = SecurityMode.Message;
-      //binding.Security.Message.ClientCredentialType = MessageCredentialType.Windows;
-      
-      // (Variant 4) binary serialization.
-      NetTcpBinding    binding = new NetTcpBinding ();
-      binding.Security.Mode = SecurityMode.None;
-      if (uri.Scheme != Uri.UriSchemeNetTcp)
-      {
-        UriBuilder b = new UriBuilder (uri);
-        b.Scheme = Uri.UriSchemeNetTcp;
-        uri = b.Uri;
-      }
-      return binding;
-    }
+    public const string  WsNamespace = "Remact";
 
     /// <summary>
     /// Sets the default service configuration, when no endpoint in app.config is found.
     /// </summary>
-      /// <param name="service">The server.</param>
-      /// <param name="uri">The dynamically generated URI for this service.</param>
-      /// <param name="isRouter">true if used for WcfRouter service.</param>
-      /// <returns>The protocol driver (for dispose).</returns>
+    /// <param name="service">The server.</param>
+    /// <param name="uri">The dynamically generated URI for this service.</param>
+    /// <param name="isRouter">true if used for WcfRouter service.</param>
+    /// <returns>The protocol driver (for dispose).</returns>
     public IDisposable DoServiceConfiguration(WcfBasicService service, ref Uri uri, bool isRouter)
     {
-       var wsServer = new MyWebSocketServer()
+        var wsServer = new MyWebSocketServer()
         {
             Port = uri.Port,
             SubProtocols = new string[] { "wamp" },
@@ -161,6 +108,7 @@ namespace Remact.Net
     /// <param name="forRouter">true if used for WcfRouter service.</param>
     public virtual void DoClientConfiguration (object clientBase, ref Uri uri, bool forRouter)
     {
+        // TODO !
     }
 
     #endregion
@@ -187,6 +135,11 @@ namespace Remact.Net
     protected Assembly m_appAssembly;
 
     /// <summary>
+    /// The assembly that represents the message payload version.
+    /// </summary>
+    protected Assembly m_cifAssembly;
+
+    /// <summary>
     /// the name of this application is used for tracing and for identifying an ActorOutput
     /// </summary>
     public virtual string  ApplicationName { get { return m_appAssembly.GetName().Name; } }
@@ -195,6 +148,23 @@ namespace Remact.Net
     /// The version of this application is used for information in ActorPort
     /// </summary>
     public virtual Version ApplicationVersion { get { return m_appAssembly.GetName().Version; } }
+
+    /// <summary>
+    /// The assembly that represents the message payload version.
+    /// </summary>
+    public virtual Assembly CifAssembly
+    {
+        get
+        {
+            if (m_cifAssembly == null) return m_appAssembly;
+            return m_cifAssembly;
+        }
+
+        set 
+        { 
+            m_cifAssembly = value; 
+        }
+    }
 
     /// <summary>
     /// Library users may change here how to get an application instance id.
@@ -240,18 +210,18 @@ namespace Remact.Net
     /// </summary>
     public virtual string GetAppIdentification (string appName, int appInstance, string hostName, int processId)
     {
-      if (IsAppIdUniqueInPlant (appInstance))
-      {
-        return string.Format ("{0}-{1:00#}", appName, appInstance);
-      }
-      else if (!IsProcessIdUsed (appInstance))
-      {
-        return string.Format ("{0}.{1}-{2:0#}", appName, hostName, appInstance);
-      }
-      else
-      {
-        return string.Format ("{0}.{1}({2})", appName, hostName, processId);
-      }
+        if (IsAppIdUniqueInPlant (appInstance))
+        {
+            return string.Format ("{0}-{1:00#}", appName, appInstance);
+        }
+        else if (!IsProcessIdUsed (appInstance))
+        {
+            return string.Format ("{0}.{1}-{2:0#}", appName, hostName, appInstance);
+        }
+        else
+        {
+            return string.Format ("{0}.{1}({2})", appName, hostName, processId);
+        }
     }
 
     #endregion
@@ -266,16 +236,16 @@ namespace Remact.Net
     /// <param name="installExitHandler">when true: install handlers for normal and exceptional application exit</param>
     public static void ApplicationStart (string[] args, RaTrc.ITracePlugin traceWriter, bool installExitHandler)
     {
-      int appInstance = 0;
-      try
-      {
-        if (args.Length > 0) appInstance = Convert.ToInt32 (args[0]); // by default the first commandline argument
-      }
-      catch{}
-      RaTrc.UsePlugin (traceWriter);
-      RaTrc.Start (appInstance);
-      if (installExitHandler) RemactApplication.InstallExitHandler();
-      RaTrc.Run(); // open file and write first messages
+        int appInstance; // by default the first commandline argument
+        if (args.Length == 0 || !int.TryParse(args[0], out appInstance))
+        {
+            appInstance = 0; // use ProcessId
+        }
+
+        RaTrc.UsePlugin (traceWriter);
+        RaTrc.Start (appInstance);
+        if (installExitHandler) RemactApplication.InstallExitHandler();
+        RaTrc.Run(); // open file and write first messages
     }
 
     private string m_TraceFolder = null;
@@ -309,6 +279,6 @@ namespace Remact.Net
     }
 
     #endregion
-  }//class
-}// namespace
+  }
+}
 

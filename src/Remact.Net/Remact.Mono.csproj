@@ -62,12 +62,12 @@
     <Compile Include="Contracts\IRemactCatalog.cs" />
     <Compile Include="Contracts\ErrorMessage.cs" />
     <Compile Include="Internal\InternalMultithreadedServiceNet40.cs" />
-    <Compile Include="IRemactDefaults.cs" />
+    <Compile Include="IRemactDefault.cs" />
     <Compile Include="Protocol\IRemactProtocolDriver.cs" />
     <Compile Include="Protocol\Wamp\WampClient.cs" />
     <Compile Include="Protocol\Wamp\WampClientProxy.cs" />
     <Compile Include="Protocol\Wamp\WampRpcV1.cs" />
-    <Compile Include="RemactDefaults.cs" />
+    <Compile Include="RemactDefault.cs" />
     <Compile Include="RemactDelegates.cs" />
     <Compile Include="Internal\IWcfBasicPartner.cs" />
     <Compile Include="Internal\WcfBasicClientAsync.cs" />

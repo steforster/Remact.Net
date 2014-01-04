@@ -92,7 +92,7 @@ namespace Remact.Net.Internal
           {
             //m_nSendingThreadId = Thread.CurrentThread.ManagedThreadId;
             if (++m_nConnectTries >= 10) m_nConnectTries = 1;
-            var uri = new Uri("http://localhost:" + RemactDefaults.Instance.RouterPort + "/" + RemactDefaults.WsNamespace + "/" + RemactDefaults.Instance.RouterServiceName);
+            var uri = new Uri("ws://localhost:" + RemactDefault.Instance.RouterPort + "/" + RemactDefault.WsNamespace + "/" + RemactDefault.Instance.RouterServiceName);
             m_RouterClient.TryConnectVia( uri, OnWcfMessageReceived, toRouter:true );
           }
           lock (ms_Lock)
@@ -114,8 +114,7 @@ namespace Remact.Net.Internal
           {
             lock (ms_Lock)
             {
-              ActorInfo req = new ActorInfo (m_ServiceList[m_nCurrentSvc].ServiceIdent,
-                                                             ActorInfo.Use.ServiceEnableRequest);
+              ActorInfo req = new ActorInfo (m_ServiceList[m_nCurrentSvc].ServiceIdent, ActorInfo.Use.ServiceEnableRequest);
               WcfBasicService svc = m_ServiceList[m_nCurrentSvc];
               if (!svc.IsServiceRegistered)
               {

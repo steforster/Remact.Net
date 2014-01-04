@@ -15,7 +15,7 @@ namespace Remact.Net
   /// Common definitions for all interacting actors.
   /// Library users may plug in their own implementation of this class to RemactDefaults.Instance.
   /// </summary>
-  public interface IRemactDefaults : IActorInputConfiguration, IActorOutputConfiguration
+  public interface IRemactDefault : IActorInputConfiguration, IActorOutputConfiguration
   {
     //----------------------------------------------------------------------------------------------
     #region == WCF Router configuration ==
@@ -46,6 +46,11 @@ namespace Remact.Net
     Version ApplicationVersion   {get;}
 
     /// <summary>
+    /// The assembly that represents the message payload version.
+    /// </summary>
+    Assembly CifAssembly         {get;}
+
+    /// <summary>
     /// Library users may change here how to get an application instance id.
     /// </summary>
     int     ApplicationInstance  {get;}
@@ -69,12 +74,12 @@ namespace Remact.Net
     /// <summary>
     /// The unique AppIdentification for this application instance
     /// </summary>
-    string AppIdentification  {get;}
+    string  AppIdentification  {get;}
 
     /// <summary>
     /// The AppIdentification is composed from AppName, HostName, AppInstance and processId to for a unique string
     /// </summary>
-    string GetAppIdentification (string appName, int appInstance, string hostName, int processId);
+    string  GetAppIdentification (string appName, int appInstance, string hostName, int processId);
 
     #endregion
     //----------------------------------------------------------------------------------------------

@@ -2,7 +2,6 @@
 // Copyright (c) 2014, github.com/steforster/Remact.Net
 
 using System;
-using System.Runtime.Serialization;// DataContract
 using System.Collections.Generic;  // List
 using System.Reflection;           // Assembly
 using System.Text;                 // StringBuilder
@@ -13,30 +12,28 @@ using System.Net;                  // IPAddress
 namespace Remact.Net
 {
   /// <summary>
-  /// <para>An error-message is generated when an exeption or timeout occurs on client or service side.</para>
+  /// <para>An error payload is generated when an exeption or timeout occurs on client or service side.</para>
   /// <para>The message contains a code indicating where the error occured and a text representation of the exception.</para>
   /// </summary>
-  [DataContract (Namespace=RemactDefaults.WsNamespace)]
-
-  public class ErrorMessage : WcfMessage
+  public class ErrorMessage
   {
     /// <summary>
     /// Get the exception information.
     /// </summary>
-    [DataMember] public  string    Message;
+    public  string    Message;
 
     /// <summary>
     /// Get the exception information.
     /// </summary>
-    [DataMember] public  string    InnerMessage;
+    public  string    InnerMessage;
 
     /// <summary>
     /// Get the exception information.
     /// </summary>
-    [DataMember] public  string    StackTrace;
+    public  string    StackTrace;
 
     /// <summary>
-    /// Get or set the Error-Code
+    /// Get or set the Error-Code, TODO: do not serialize
     /// </summary>
     public Code Error 
     {
@@ -195,7 +192,7 @@ namespace Remact.Net
     /// Reason: http://msdn.microsoft.com/en-us/library/bb924412%28v=VS.100%29.aspx
     /// Error is stramed as int in order to make it reverse compatible to older communication partners
     /// </summary>
-    [DataMember] public int z_error = 0;
+    public int z_error = 0;
     
     /// <summary>
     /// Create an empty error message
@@ -271,10 +268,6 @@ namespace Remact.Net
       }                  
 
       return err.ToString();
-    }// ToString
-    
-    #if MONO
-    public static new IEnumerable<Type> z_GetKnownTypeList()  {return WcfMessage.z_GetKnownTypeList();}
-    #endif
+    }
   }
 }

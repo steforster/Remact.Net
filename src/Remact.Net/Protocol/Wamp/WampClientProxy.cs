@@ -104,7 +104,8 @@ namespace Remact.Net.Protocol.Wamp
 
             if (error != null)
             {
-                wamp.Add(error);
+                var jObject = JObject.FromObject(error);
+                wamp.Add(jObject);
             }
 
             _wsChannel.Send(wamp.ToString(Formatting.None));
@@ -115,7 +116,8 @@ namespace Remact.Net.Protocol.Wamp
         {
             // eg. EVENT message with 'null' as payload: [8, "http://example.com/simple", null]
 
-            var wamp = new JArray(WampMessageType.v1Event, notification.DestinationMethod, notification.Payload);
+            var jObject = JObject.FromObject(notification.Payload);
+            var wamp = new JArray(WampMessageType.v1Event, notification.DestinationMethod, jObject);
             _wsChannel.Send(wamp.ToString(Formatting.None));
         }
 

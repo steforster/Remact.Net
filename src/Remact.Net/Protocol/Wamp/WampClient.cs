@@ -25,6 +25,7 @@ namespace Remact.Net.Protocol.Wamp
         public WampClient(Uri websocketUri)
         {
             ServiceUri = websocketUri;
+            _outstandingRequests = new Dictionary<int, ActorMessage>(); 
             _wsClient = new WebSocketClient(websocketUri.ToString())
             {
                 //OnSend = OnSend,// Message has been dequeued and passed to the socket buffer
@@ -124,7 +125,8 @@ namespace Remact.Net.Protocol.Wamp
             var wamp = new JArray(WampMessageType.v1Call, callId, procUri);
             if (request.Payload != null)
             {
-                wamp.Add(request.Payload);
+                var jObject = JObject.FromObject(request.Payload);
+                wamp.Add(jObject);
             }
 
             _wsClient.Send(wamp.ToString(Formatting.None));
@@ -166,7 +168,8 @@ namespace Remact.Net.Protocol.Wamp
 
             if (error != null)
             {
-                wamp.Add(error);
+                var jObject = JObject.FromObject(error);
+                wamp.Add(jObject);
             }
 
             _wsClient.Send(wamp.ToString(Formatting.None));

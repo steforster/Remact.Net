@@ -369,7 +369,7 @@ namespace Remact.Net
 #endif
 
     /// <summary>
-    /// Send a request message to the partner on the outgoing connection.
+    /// Send a request payload to the partner on the outgoing connection.
     /// At least a ReadyMessage will asynchronously be received through 'PostInput', after the partner has processed the request.
     /// </summary>
     /// <param name="payload">The message payload to send.</param>
@@ -381,7 +381,7 @@ namespace Remact.Net
     }
 
     /// <summary>
-    /// Send a request message to the partner on the outgoing connection.
+    /// Send a request payload to the partner on the outgoing connection.
     /// At least a ReadyMessage will asynchronously be received in responseHandler.
     /// </summary>
     /// <param name="payload">The message payload to send.</param>
@@ -461,4 +461,4 @@ namespace Remact.Net
 
   }// class ActorOutput<TSC>
   #endregion
-}// namespace
+}

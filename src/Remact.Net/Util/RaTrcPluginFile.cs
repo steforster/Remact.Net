@@ -117,12 +117,12 @@ public partial class RaTrc
           if (calledByUser)
           {
             System.Diagnostics.Trace.WriteLine (String.Format ("| {0:D} {0:T} {1} stopped, Exit code = {2}", 
-                                           DateTime.Now, RemactDefaults.Instance.AppIdentification, Environment.ExitCode));
+                                           DateTime.Now, RemactDefault.Instance.AppIdentification, Environment.ExitCode));
           }
           else
           {
             System.Diagnostics.Trace.WriteLine (String.Format ("| {0:D} {0:T} {1} interrupted, Exit code = {2}", 
-                                           DateTime.Now, RemactDefaults.Instance.AppIdentification, Environment.ExitCode));
+                                           DateTime.Now, RemactDefault.Instance.AppIdentification, Environment.ExitCode));
           }
           System.Diagnostics.Trace.WriteLine ("+-------------------------------------------------------------------------------------------------");
           System.Diagnostics.Trace.Flush ();
@@ -175,7 +175,7 @@ public partial class RaTrc
       {
         if (i_FileName == null || i_FileName.Length == 0)
         {
-          i_FileName = RemactDefaults.Instance.TraceFolder;
+          i_FileName = RemactDefault.Instance.TraceFolder;
           // i_FileName += "/" + Path.GetFileNameWithoutExtension (RemactApplication.ExecutablePath);
           // if (!Directory.Exists(i_FileName)) Directory.CreateDirectory(i_FileName);
 
@@ -193,7 +193,7 @@ public partial class RaTrc
             }
             catch (Exception) {}
           }
-          i_FileName += "/" + RemactDefaults.Instance.AppIdentification + ".trace.txt";
+          i_FileName += "/" + RemactDefault.Instance.AppIdentification + ".trace.txt";
         }
       }
       catch (Exception ex)
@@ -344,7 +344,7 @@ public partial class RaTrc
         }
         
         s += "\r\n|";
-        s += "\r\n|   Machine    \t: " + Environment.MachineName + " (Process Id " + RemactDefaults.Instance.ProcessId + ")";
+        s += "\r\n|   Machine    \t: " + Environment.MachineName + " (Process Id " + RemactDefault.Instance.ProcessId + ")";
         s += "\r\n|   OS         \t: " + Environment.OSVersion;
         s += "\r\n|   Framework  \t: ";
         if (RemactApplication.IsRunningWithMono) s+="Mono"; else s+=".NET";
@@ -401,7 +401,7 @@ public partial class RaTrc
       catch (Exception ex)
       {
         MessageBox.Show(Message+"\r\n-------\r\n"+ex.Message, 
-                        "Exception while tracing for "+RemactDefaults.Instance.AppIdentification,
+                        "Exception while tracing for "+RemactDefault.Instance.AppIdentification,
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
       }
     }// static TracingExeception

@@ -197,7 +197,7 @@ namespace Remact.Net.Internal
     {
         if( m_WcfClientConfig == null )
         {
-            m_WcfClientConfig = RemactDefaults.Instance;
+            m_WcfClientConfig = RemactDefault.Instance;
         }
         m_WcfClientConfig.DoClientConfiguration( m_protocolClient, ref serviceUri, forRouter );
     }
@@ -213,7 +213,7 @@ namespace Remact.Net.Internal
     /// <param name="clientConfig">Plugin your own client configuration instead of RemactDefaults.ClientConfiguration.</param>
     internal void LinkToService(string routerHost, string serviceName, IActorOutputConfiguration clientConfig = null)
     {
-        m_WcfRouterPort = RemactDefaults.Instance.RouterPort;
+        m_WcfRouterPort = RemactDefault.Instance.RouterPort;
         m_RouterHostToLookup = routerHost;
         try
         {
@@ -813,7 +813,7 @@ namespace Remact.Net.Internal
             if (m_RouterHostToLookup != null)
             {
                 // connect to router first
-                var uri = new Uri("http://" + m_RouterHostToLookup + ':' + m_WcfRouterPort + "/" + RemactDefaults.WsNamespace + "/" + RemactDefaults.Instance.RouterServiceName);
+                var uri = new Uri("http://" + m_RouterHostToLookup + ':' + m_WcfRouterPort + "/" + RemactDefault.WsNamespace + "/" + RemactDefault.Instance.RouterServiceName);
                 TryConnectVia (uri, OnWcfResponseFromRouterService, toRouter:true );
                 return true;
             }

@@ -53,7 +53,7 @@ namespace Remact.Net
     /// The AppIdentification is composed from AppName, HostName, AppInstance and processId to for a unique string
     /// </summary>
     public string  AppIdentification
-      {get {return RemactDefaults.Instance.GetAppIdentification (AppName, AppInstance, HostName, ProcessId);}}
+      {get {return RemactDefault.Instance.GetAppIdentification (AppName, AppInstance, HostName, ProcessId);}}
 
     /// <summary>
     /// Assembly version of the application.
@@ -103,21 +103,21 @@ namespace Remact.Net
     /// <param name="defaultMessageHandler">The method to be called when a request or response is received and no other handler is applicatable.</param>
     public ActorPort ( string name, MessageHandler defaultMessageHandler=null )
     {
-      AppName          = RemactDefaults.Instance.ApplicationName;
-      AppVersion       = RemactDefaults.Instance.ApplicationVersion;
-      AppInstance      = RemactDefaults.Instance.ApplicationInstance;
-      ProcessId        = RemactDefaults.Instance.ProcessId;
+      AppName          = RemactDefault.Instance.ApplicationName;
+      AppVersion       = RemactDefault.Instance.ApplicationVersion;
+      AppInstance      = RemactDefault.Instance.ApplicationInstance;
+      ProcessId        = RemactDefault.Instance.ProcessId;
       Name             = name;
       IsServiceName    = false; // must be set to true by user, when a unique servicename is given.
-      CifComponentName = WcfMessage.CifAssembly.GetName().Name;
-      CifVersion       = WcfMessage.CifAssembly.GetName().Version;
+      CifComponentName = RemactDefault.Instance.CifAssembly.GetName().Name;
+      CifVersion       = RemactDefault.Instance.CifAssembly.GetName().Version;
       TimeoutSeconds   = 60;
       TraceConnect     = true;
       HostName         = Dns.GetHostName(); // concrete name of localhost
       DefaultInputHandler = defaultMessageHandler;
 
       // Prepare uri for application internal partner. May be overwritten, when linking to external partner.
-      if (!RemactDefaults.Instance.IsProcessIdUsed (AppInstance))
+      if (!RemactDefault.Instance.IsProcessIdUsed (AppInstance))
       {
         Uri = new Uri(string.Format ("cli://{0}/{1}-{2:0#}/{3}", HostName, AppName, AppInstance, Name));
       }

@@ -2,7 +2,6 @@
 // Copyright (c) 2014, github.com/steforster/Remact.Net
 
 using System;
-using System.Runtime.Serialization;// DataContract
 using System.Threading;            // SynchronizationContext
 using Remact.Net.Internal;
 
@@ -66,7 +65,6 @@ namespace Remact.Net
     /// <para>Contains the Payload itself as well as some request identification and a reference to the sending ActorPort.</para>
     /// <para>The class may be used to send a response to the sender and to trace unique message identification.</para>
     /// </summary>
-    [DataContract (Namespace=RemactDefaults.WsNamespace)]
     public class ActorMessage
     {
         /// <summary>
@@ -309,4 +307,4 @@ namespace Remact.Net
 
     #endregion
     //----------------------------------------------------------------------------------------------
-}// namespace
+}

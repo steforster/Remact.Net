@@ -41,12 +41,12 @@ namespace Remact.Net
 
   #endregion
   //----------------------------------------------------------------------------------------------
-  #region == class WcfMessage ==
+/*  #region == class WcfMessage ==
 
   /// <summary>
   /// <para>Base class for all messages sent through AsyncWcfLib.</para>
   /// </summary>
-  [DataContract (Namespace=RemactDefaults.WsNamespace)]
+  [DataContract (Namespace=RemactDefault.WsNamespace)]
 #if !MONO
   [KnownType    ("z_GetKnownTypeList")]          // ms-help://MS.VSCC.v90/MS.MSDNQTR.v90.en/wcf_con/html/1a0baea1-27b7-470d-9136-5bbad86c4337.htm
                                                  // ms-help://MS.VSCC.v90/MS.MSDNQTR.v90.en/fxref_system.runtime.serialization/html/20c04a47-d300-0341-b725-7dffb7340bb8.htm
@@ -148,16 +148,14 @@ namespace Remact.Net
     }}
   }// class WcfMessage
 
-  #endregion
+  #endregion*/
   //----------------------------------------------------------------------------------------------
   #region == class ReadyMessage ==
 
   /// <summary>
-  /// <para>A message without information content. Just for alive check or default response.</para>
+  /// <para>A message payload without information content. Just for alive check or default response.</para>
   /// </summary>
-  [DataContract (Namespace=RemactDefaults.WsNamespace)]
-
-  public class ReadyMessage: WcfMessage
+  public class ReadyMessage
   {
   }
 

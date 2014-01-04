@@ -2,79 +2,78 @@
 // Copyright (c) 2014, github.com/steforster/Remact.Net
 
 using System;
-using System.Runtime.Serialization;// DataContract
 using System.Collections.Generic;  // List
 using System.Reflection;           // Assembly
 using System.Text;                 // StringBuilder
-using Remact.Net.Internal;
 using System.Threading;
 using System.Net;                  // IPAddress
+using Newtonsoft.Json;
+using Remact.Net.Internal;
 
 namespace Remact.Net
 {
   /// <summary>
-  /// <para>This class identifies a communication partner (client or service).</para>
+  /// <para>This message payload identifies a communication partner (client or service).</para>
   /// <para>It is used to open and close communication.</para>
   /// </summary>
-  [DataContract (Namespace=RemactDefaults.WsNamespace)]
-  public class ActorInfo: WcfMessage
+  public class ActorInfo
   {
     /// <summary>
     /// IsServiceName=true : A service name must be unique in the plant, independant of host or application.
     /// IsServiceName=false: A client  name must be combined with application name, host name, instance- or process id for unique identification.
     /// </summary>
-    [DataMember] public bool    IsServiceName;
+    public bool    IsServiceName;
     
     /// <summary>
     /// Identification in Trace and name of endpoint address in App.config file.
     /// </summary>
-    [DataMember] public string  Name;
+    public string  Name;
     
     /// <summary>
     /// Unique name of an application or service in the users WcfContract.Namespace.
     /// </summary>
-    [DataMember] public string  AppName;
+    public string  AppName;
     
     /// <summary>
     /// Unique instance number of the application (unique in a plant or on a host, depending on RemactDefaults.IsAppIdUniqueInPlant).
     /// </summary>
-    [DataMember] public int     AppInstance;
+    public int     AppInstance;
     
     /// <summary>
     /// Process id of the application, given by the operating system (unique on a host at a certain time).
     /// </summary>
-    [DataMember] public int     ProcessId;
+    public int     ProcessId;
     
     /// <summary>
     /// Assembly version of the application.
     /// </summary>
-    [DataMember] public Version AppVersion;
+    public Version AppVersion;
     
     /// <summary>
     /// Assembly name of an important CifComponent containig some messages
     /// </summary>
-    [DataMember] public string  CifComponentName;
+    public string  CifComponentName;
 
     /// <summary>
     /// Assembly version of the important CifComponent
     /// </summary>
-    [DataMember] public Version CifVersion;
+    public Version CifVersion;
     
     /// <summary>
     /// Host running the application
     /// </summary>
-    [DataMember] public string  HostName;
+    public string  HostName;
     
     /// <summary>
     /// <para>Universal resource identifier to reach the input of the service or client.</para>
     /// <para>E.g. RouterService: http://localhost:40000/AsyncWcfLib/RouterService</para>
     /// </summary>
-    [DataMember] public  Uri    Uri;
+    public  Uri    Uri;
 
     /// <summary>
     /// <para>To support networks without DNS server, the WcfRouter keeps a list of all IP-Adresses of a host.</para>
     /// </summary>
-    [DataMember] public List<IPAddress> AddressList;
+    public List<IPAddress> AddressList;
 
     /// <summary>
     /// After a service has no message received for TimeoutSeconds, it may render the connection to this client as disconnected.
@@ -82,23 +81,26 @@ namespace Remact.Net
     /// The client should send at least 2 messages each TimeoutSeconds-period in order to keep the correct connection state on the service.
     /// A Service is trying to notify 2 messages each TimeoutSeconds-period in order to check a dual-Http connection.
     /// </summary>
-    [DataMember] public int     TimeoutSeconds;
+    public int TimeoutSeconds;
 
     /// <summary>
     /// The message from the original service has RouterHopCount=0. The same message sent from the WcfRouter on the local host has RouterHopCount=1.
     /// Each router increments the hopcount on reception of a message.
     /// A router accepts new data only if the receiving hop count is smaller than the stored.
     /// </summary>
-    [DataMember] public int RouterHopCount;
+    public int RouterHopCount;
 
     /// <summary>
     /// A service having a longer ApplicationRunTime wins the competition when two services with same name are running.
     /// </summary>
-    [DataMember] public TimeSpan ApplicationRunTime;
+    public TimeSpan ApplicationRunTime;
 
     /// <summary>
     /// The message may be used for several purposes.
+    /// In Json, 'Usage' is streamed as int. We do not stream this property but stream the z_usage instead.
+    /// Then we protect us from usage-enums sent by a communication partner with newer version than ours.
     /// </summary>
+    [JsonIgnore]
     public Use Usage
     {
       get
@@ -178,11 +180,11 @@ namespace Remact.Net
     }
 
     /// <summary>
-    /// m_usage is public but used internally only! Access 'Usage' instead!
+    /// z_usage is public but used internally only! Access 'Usage' instead!
     /// Reason: http://msdn.microsoft.com/en-us/library/bb924412%28v=VS.100%29.aspx
-    /// 'Usage' is streamed as int in order to make it reverse compatible to older communication partners
+    /// 'Usage' is streamed as int in order to make it backwards compatible to older communication partners
     /// </summary>
-    [DataMember] public  int    z_usage;
+    public  int    z_usage;
 
 
     /// <summary>
@@ -256,7 +258,7 @@ namespace Remact.Net
       {
         return Name.Equals (p.Name); // a service may be moved to another host or another application
       }
-      else if (RemactDefaults.Instance.IsAppIdUniqueInPlant (AppInstance))
+      else if (RemactDefault.Instance.IsAppIdUniqueInPlant (AppInstance))
       { // plant unique client
         return AppInstance == p.AppInstance
             && Name.Equals (p.Name)
@@ -265,7 +267,7 @@ namespace Remact.Net
       else
       { // host unique client
         return AppInstance ==  p.AppInstance
-            &&(!RemactDefaults.Instance.IsProcessIdUsed (AppInstance) || ProcessId == p.ProcessId) // process id is valid for a running client only
+            &&(!RemactDefault.Instance.IsProcessIdUsed (AppInstance) || ProcessId == p.ProcessId) // process id is valid for a running client only
             && HostName.Equals (p.HostName)
             && Name.Equals (p.Name)
             && AppName.Equals (p.AppName);  // these clients may not be moved
@@ -285,7 +287,7 @@ namespace Remact.Net
       {
         return Name.Equals (p.Name); // a service may be moved to another host or another application
       }
-      else if (RemactDefaults.Instance.IsAppIdUniqueInPlant (AppInstance))
+      else if (RemactDefault.Instance.IsAppIdUniqueInPlant (AppInstance))
       { // plant unique client
         return AppInstance == p.AppInstance
             && Name.Equals (p.Name)
@@ -294,7 +296,7 @@ namespace Remact.Net
       else
       { // host unique client
         return AppInstance ==  p.AppInstance
-            &&(!RemactDefaults.Instance.IsProcessIdUsed (AppInstance) || ProcessId == p.ProcessId) // process id is valid for a running client only
+            &&(!RemactDefault.Instance.IsProcessIdUsed (AppInstance) || ProcessId == p.ProcessId) // process id is valid for a running client only
             && HostName.Equals (p.HostName)
             && Name.Equals (p.Name)
             && AppName.Equals (p.AppName);  // these clients may not be moved
@@ -320,7 +322,7 @@ namespace Remact.Net
       }
       else
       {
-          name = RemactDefaults.Instance.GetAppIdentification(AppName, AppInstance, HostName, ProcessId) + "/" + Name;
+          name = RemactDefault.Instance.GetAppIdentification(AppName, AppInstance, HostName, ProcessId) + "/" + Name;
       }
 
       switch (Usage)
@@ -334,9 +336,5 @@ namespace Remact.Net
               return String.Format ("{0} from '{1}'", Usage.ToString(), name);
       };
     }
-
-    #if MONO
-    public static new IEnumerable<Type> z_GetKnownTypeList()  {return WcfMessage.z_GetKnownTypeList();}
-    #endif
   }
 }

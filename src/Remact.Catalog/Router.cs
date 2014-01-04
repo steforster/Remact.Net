@@ -154,7 +154,7 @@ namespace Remact.Catalog
                                                                       else sb.Append ("--");
                 sb.Append (s.Uri);
                 sb.Append (" in ");
-                sb.Append (RemactDefaults.Instance.GetAppIdentification (s.AppName, s.AppInstance, s.HostName, s.ProcessId));
+                sb.Append (RemactDefault.Instance.GetAppIdentification (s.AppName, s.AppInstance, s.HostName, s.ProcessId));
                 sb.Append (" (V");
                 sb.Append (s.AppVersion.ToString (versionCount));
                 sb.Append (")");
@@ -295,10 +295,10 @@ namespace Remact.Catalog
         m_RouterService = new RouterService();
 
         // Open the service
-        m_WcfService = new ActorInput(RemactDefaults.Instance.RouterServiceName, m_RouterService.OnRequest);
+        m_WcfService = new ActorInput(RemactDefault.Instance.RouterServiceName, m_RouterService.OnRequest);
         m_WcfService.OnInputConnected    += m_RouterService.OnClientConnectedOrDisconnected;
         m_WcfService.OnInputDisconnected += m_RouterService.OnClientConnectedOrDisconnected;
-        m_WcfService.LinkInputToNetwork( null, RemactDefaults.Instance.RouterPort, publishToRouter: false, serviceConfig: this ); // calls our DoServiceConfiguration
+        m_WcfService.LinkInputToNetwork( null, RemactDefault.Instance.RouterPort, publishToRouter: false, serviceConfig: this ); // calls our DoServiceConfiguration
         m_WcfService.TraceConnect = false;
         m_WcfService.TryConnect();
       
@@ -308,8 +308,8 @@ namespace Remact.Catalog
             if (host != null && host.Trim().Length > 0)
             {
                 var output = new ActorOutput<SvcDat>("Clt>"+host, OnResponseFromPeerRouter);
-                output.LinkOutputToRemoteService(new Uri("http://" + host + ':' + RemactDefaults.Instance.RouterPort
-                                 + "/" + RemactDefaults.WsNamespace + "/" + RemactDefaults.Instance.RouterServiceName),// no router lookup as uri is given.
+                output.LinkOutputToRemoteService(new Uri("http://" + host + ':' + RemactDefault.Instance.RouterPort
+                                 + "/" + RemactDefault.WsNamespace + "/" + RemactDefault.Instance.RouterServiceName),// no router lookup as uri is given.
                                  this ); // calls our DoClientConfiguration
                 output.OutputContext = new SvcDat();
                 output.TryConnect();
@@ -324,14 +324,14 @@ namespace Remact.Catalog
     // implement IActorInputConfiguration
     public IDisposable DoServiceConfiguration(WcfBasicService service, ref Uri uri, bool isRouter)
     {
-        return RemactDefaults.Instance.DoServiceConfiguration(service, ref uri, /*isRouter=*/ true);
+        return RemactDefault.Instance.DoServiceConfiguration(service, ref uri, /*isRouter=*/ true);
     }
 
 
     // implement IActorOutputConfiguration
     public void DoClientConfiguration( object clientBase, ref Uri uri, bool forRouter )
     {
-        RemactDefaults.Instance.DoClientConfiguration( clientBase, ref uri, /*forRouter=*/ true );
+        RemactDefault.Instance.DoClientConfiguration( clientBase, ref uri, /*forRouter=*/ true );
     }
     
 

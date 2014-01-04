@@ -82,7 +82,7 @@ namespace Remact.Net
       IsServiceName = true;
       HostName = routerHost;
       Name = serviceName;
-      Uri = new Uri("routed://" + routerHost + "/" + RemactDefaults.WsNamespace + "/" + serviceName);
+      Uri = new Uri("routed://" + routerHost + "/" + RemactDefault.WsNamespace + "/" + serviceName);
     }
 
     // prepare for tracing of connect-process
@@ -294,7 +294,7 @@ namespace Remact.Net
 #endif
 
     /// <summary>
-    /// Used internally: Threadsafe enqueue message at the receiving partner. No response is expected.
+    /// Anonymous sender: Threadsafe enqueue payload at the receiving partner. No response is expected.
     /// </summary>
     /// <param name="payload">The message to enqueue.</param>
     public void PostInput(object payload)
@@ -303,7 +303,16 @@ namespace Remact.Net
     }
 
     /// <summary>
-    /// Used internally: Threadsafe enqueue message at the receiving partner.
+    /// Used internally: Threadsafe enqueue message at the receiving partner (must be implemented to guide the compiler)
+    /// </summary>
+    /// <param name="message">The message to send.</param>
+    public new void PostInput(ActorMessage message)
+    {
+        base.PostInput(message);
+    }
+
+    /// <summary>
+    /// Used internally: Threadsafe enqueue payload at the receiving partner.
     /// </summary>
     /// <param name="sender">The source partner sending the message <see cref="ActorPort"/>. Its default message handler will receive the response.</param>
     /// <param name="payload">The message to enqueue.</param>
@@ -313,7 +322,7 @@ namespace Remact.Net
     }
 
     /// <summary>
-    /// Used internally: Threadsafe enqueue message at the receiving partner.
+    /// Used internally: Threadsafe enqueue payload at the receiving partner.
     /// </summary>
     /// <param name="sender">The source partner sending the message <see cref="ActorPort"/></param>
     /// <param name="payload">The message to enqueue.</param>
@@ -344,7 +353,7 @@ namespace Remact.Net
 
       if (sender.LastRequestIdSent == int.MaxValue) sender.LastRequestIdSent = 10;
       ActorMessage msg = new ActorMessage(sender, 0, ++sender.LastRequestIdSent, payload, responseHandler);
-      PostInput (msg); // Message is posted into the message queue
+      base.PostInput (msg); // Message is posted into the message queue
     }
 
 
@@ -444,7 +453,7 @@ namespace Remact.Net
     /// Creates a ActorInput using a handler method with TSC object for each client.
     /// </summary>
     /// <param name="name">The application internal name of this service or client</param>
-    /// <param name="requestHandler">The method to be called when a request is received. See <see cref="MessageHandler;TSC>"/>.</param>
+    /// <param name="requestHandler">The method to be called when a request is received. See <see cref="MessageHandler{TSC}"/>.</param>
     public ActorInput(string name, MessageHandler<TSC> requestHandler)
         : base(name)
     {

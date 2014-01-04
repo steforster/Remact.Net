@@ -132,7 +132,7 @@ namespace Remact.Net.Internal
         _serviceConfig = serviceConfig;
         if( _serviceConfig == null )
         {
-            _serviceConfig = RemactDefaults.Instance;
+            _serviceConfig = RemactDefault.Instance;
         }
     }// CTOR
     
@@ -230,7 +230,7 @@ namespace Remact.Net.Internal
                 Uri uri = new Uri ("ws://"
                     + ServiceIdent.HostName     // initialized with Dns.GetHostName()
                     +":"+_tcpPort
-                    +"/"+RemactDefaults.WsNamespace+"/"+ServiceIdent.Name);// ServiceName, not the ServiceType
+                    +"/"+RemactDefault.WsNamespace+"/"+ServiceIdent.Name);// ServiceName, not the ServiceType
 
                 // Open the ServiceHost to start listening for messages.
                 // Add the dynamically created endpoint. And let the library user add binding and security credentials.
@@ -304,7 +304,6 @@ namespace Remact.Net.Internal
 
             if( ServiceIdent.Uri != null ) RaTrc.Info( "Wcf", "Closed service " + ServiceIdent.Uri, ServiceIdent.Logger );
                                       else RaTrc.Info( "Wcf", "Closed service " + ServiceIdent.Name, ServiceIdent.Logger );
-            Disconnect();
         }
         catch (Exception ex)
         {
@@ -392,13 +391,13 @@ namespace Remact.Net.Internal
             LastAction = "Reconnect after network failure";
             RaTrc.Warning( req.SvcRcvId, svcUser.ClientIdent.ToString( LastAction, 0 ), ServiceIdent.Logger );
             svcUser.UseDataFrom(client, req.ClientId);
-            if (RemactDefaults.Instance.IsProcessIdUsed (svcUser.ClientIdent.ProcessId)) m_UnusedClientCount--;
+            if (RemactDefault.Instance.IsProcessIdUsed (svcUser.ClientIdent.ProcessId)) m_UnusedClientCount--;
           }
           else
           {
             svcUser.UseDataFrom(client, req.ClientId);
             LastAction = "Reconnect after client disconnect";
-            if (RemactDefaults.Instance.IsProcessIdUsed (svcUser.ClientIdent.ProcessId)) m_UnusedClientCount--;
+            if (RemactDefault.Instance.IsProcessIdUsed (svcUser.ClientIdent.ProcessId)) m_UnusedClientCount--;
           }
           m_ConnectedClientCount++;
         }
@@ -471,7 +470,7 @@ namespace Remact.Net.Internal
         {
           svcUser.Disconnect();
           LastAction = "Disconnect";
-          if (RemactDefaults.Instance.IsProcessIdUsed (svcUser.ClientIdent.ProcessId))
+          if (RemactDefault.Instance.IsProcessIdUsed (svcUser.ClientIdent.ProcessId))
           {
             m_UnusedClientCount++;
             ServiceIdent.InputClientList[i] = null; // will never be used again, the client has been shutdown
@@ -516,7 +515,7 @@ namespace Remact.Net.Internal
           RaTrc.Error( req.SvcRcvId, "Reconnect without ConnectRequest, RequestId = " + req.RequestId, ServiceIdent.Logger );
           svcUser.SetConnected();
           //svcUser.OpenNotificationChannel();
-          if (RemactDefaults.Instance.IsProcessIdUsed (svcUser.ClientIdent.ProcessId)) m_UnusedClientCount--;
+          if (RemactDefault.Instance.IsProcessIdUsed (svcUser.ClientIdent.ProcessId)) m_UnusedClientCount--;
           m_ConnectedClientCount++;
           HasConnectionStateChanged = true;
         }
@@ -635,7 +634,7 @@ namespace Remact.Net.Internal
           {
               RaTrc.Warning("Svc=" + ServiceIdent.Name, u.ClientIdent.ToString("Timeout=" + u.ClientIdent.TimeoutSeconds 
                   + " sec. no message from clt[" + u.ClientIdent.OutputClientId + "]", 0), ServiceIdent.Logger);
-            if (RemactDefaults.Instance.IsProcessIdUsed(u.ClientIdent.ProcessId))
+            if (RemactDefault.Instance.IsProcessIdUsed(u.ClientIdent.ProcessId))
             {
               m_UnusedClientCount++;
               ServiceIdent.InputClientList[i] = null;// will never be used again, the client has been shutdown
@@ -647,7 +646,7 @@ namespace Remact.Net.Internal
         
         if (u.IsConnected) {
           nConnected++;
-        } else if (RemactDefaults.Instance.IsProcessIdUsed(u.ClientIdent.ProcessId)) {
+        } else if (RemactDefault.Instance.IsProcessIdUsed(u.ClientIdent.ProcessId)) {
           nUnused++;
         } 
       }
