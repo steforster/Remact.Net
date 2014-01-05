@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -10,7 +10,6 @@
     <RootNamespace>Test1.Client</RootNamespace>
     <AssemblyName>Test1.Client</AssemblyName>
     <FileAlignment>512</FileAlignment>
-    <ReleaseVersion>3.0</ReleaseVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>full</DebugType>
@@ -52,11 +51,11 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Remact.Net\Remact.Mono.csproj">
-      <Project>{9dc114f4-f328-4770-b1ea-2bd4d0fa5a5a}</Project>
+      <Project>{9DC114F4-F328-4770-B1EA-2BD4D0FA5A5A}</Project>
       <Name>Remact.Mono</Name>
     </ProjectReference>
     <ProjectReference Include="Test1.Messages.Mono.csproj">
-      <Project>{13cb30c8-528d-4c71-a937-fcf1dbc5e762}</Project>
+      <Project>{13CB30C8-528D-4C71-A937-FCF1DBC5E762}</Project>
       <Name>Test1.Messages.Mono</Name>
     </ProjectReference>
   </ItemGroup>
