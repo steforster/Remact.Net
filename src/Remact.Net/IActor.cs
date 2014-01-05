@@ -3,8 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Runtime.Serialization;// DataContract
-using System.ServiceModel;         // ServiceHost
 using System.Net;                  // Dns
 using System.Threading;            // SynchronizationContext
 using Remact.Net.Internal;
@@ -120,7 +118,7 @@ namespace Remact.Net
     /// <para>To support networks without DNS server, the WcfRouter sends a list of all IP-Adresses of a host.</para>
     /// <para>May be null, as long as no info from WcfRouter has been received.</para>
     /// </summary>
-    List<IPAddress> AddressList { get; }
+    List<string> AddressList { get; }
 
     /// <summary>
     /// Trace or display formatted status info

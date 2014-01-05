@@ -120,13 +120,13 @@ namespace Remact.Net
       {
           try
           {
-              AddressList = new List<IPAddress>();
+              AddressList = new List<string>();
               var host = Dns.GetHostEntry( this.HostName );
               foreach( var adr in host.AddressList )
               {
                   if( !adr.IsIPv6LinkLocal && ! adr.IsIPv6Multicast )
                   {
-                      AddressList.Add( adr );
+                      AddressList.Add( adr.ToString() );
                   }
               }
           }
@@ -352,7 +352,8 @@ namespace Remact.Net
       }
 
       if (sender.LastRequestIdSent == int.MaxValue) sender.LastRequestIdSent = 10;
-      ActorMessage msg = new ActorMessage(sender, 0, ++sender.LastRequestIdSent, payload, responseHandler);
+      ActorMessage msg = new ActorMessage(sender, 0, ++sender.LastRequestIdSent, 
+                                          this, payload.GetType().FullName, payload, responseHandler);
       base.PostInput (msg); // Message is posted into the message queue
     }
 

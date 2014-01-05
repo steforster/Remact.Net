@@ -3,6 +3,7 @@
 
 using System;
 using System.Threading;            // SynchronizationContext
+using Newtonsoft.Json.Linq;
 using Remact.Net.Internal;
 
 namespace Remact.Net
@@ -117,15 +118,17 @@ namespace Remact.Net
         /// <summary>
         /// Creates a new ActorMessage.
         /// </summary>
-        /// <param name="sender">The sending partner.</param>
+        /// <param name="source">The sending partner.</param>
         /// <param name="clientId">The ClientId used on the service.</param>
         /// <param name="requestId">The RequestId is incremented by the client.</param>
+        /// <param name="destination">The receiving partner.</param>
+        /// <param name="destinationMethod">The receiving method defines the payload type.</param>
         /// <param name="payload">The user payload to send.</param>
         /// <param name="responseHandler">null or a lamda expression to be called, when a response is aynchronously received.</param>
-        internal ActorMessage(ActorPort sender, int clientId, int requestId, object payload, AsyncResponseHandler responseHandler)
+        internal ActorMessage(ActorPort source, int clientId, int requestId, ActorPort destination, string destinationMethod, object payload, AsyncResponseHandler responseHandler)
         {
-            Source = sender;
-            Destination = sender;   // default for tracing on client side
+            Source = source;
+            Destination = destination;
             ClientId = clientId;
             RequestId = requestId;
             var m = payload as IExtensibleWcfMessage;
@@ -134,11 +137,48 @@ namespace Remact.Net
                 m.BoundSyncContext = null;
                 m.IsSent = true;
             }
+
+            DestinationMethod = destinationMethod;
             Payload = payload;
             SourceLambda = responseHandler;
         }// CTOR
 
         public ActorMessageType Type { get; internal set; }
+
+        
+        public bool TryConvertPayload<T>(out T result) where T : class
+        {
+            result = null;
+            if (typeof(T).FullName != DestinationMethod)
+            {
+                return false; // different type name or method name 
+            }
+
+            if (Payload == null)
+            {
+                return true; 
+            }
+
+            var correctType = Payload as T; // needs 'where T : class'
+            if (correctType != null)
+            {
+                result = correctType;
+                return true;
+            }
+
+            var jToken = Payload as JToken;
+            if (jToken != null)
+            {
+                try
+                {
+                    result = jToken.ToObject<T>();
+                    return true;
+                }
+                catch { }
+            }
+
+            return false;
+        }
 
         /// <summary>
         /// Notification is sent from service to client without a matching request.
@@ -187,7 +227,8 @@ namespace Remact.Net
             // return same request ID for first call to SendResponse
             if (Type == ActorMessageType.Request && Response == null)
             {
-                Response = new ActorMessage(service, ClientId, RequestId, payload, responseHandler);
+                Response = new ActorMessage(service, ClientId, RequestId, 
+                                            Source, payload.GetType().FullName, payload, responseHandler);
                 Response.Type = ActorMessageType.Response;
                 Response.DestinationLambda = SourceLambda; // SourceLambda will be called later on for the first response only
                 SourceLambda = null;
@@ -196,7 +237,8 @@ namespace Remact.Net
             }
             else
             {
-                var msg = new ActorMessage(service, ClientId, RequestId, payload, responseHandler);
+                var msg = new ActorMessage(service, ClientId, RequestId,
+                                           Source, payload.GetType().FullName, payload, responseHandler);
                 msg.Type = ActorMessageType.Notification;
                 if (service.TraceSend) RaTrc.Info(msg.SvcSndId, msg.ToString(), service.Logger);
                 Source.PostInput(msg);

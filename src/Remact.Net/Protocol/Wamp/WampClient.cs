@@ -125,8 +125,10 @@ namespace Remact.Net.Protocol.Wamp
             var wamp = new JArray(WampMessageType.v1Call, callId, procUri);
             if (request.Payload != null)
             {
-                var jObject = JObject.FromObject(request.Payload);
-                wamp.Add(jObject);
+                var jToken = request.Payload as JToken;
+                if (jToken == null) jToken = JToken.FromObject(request.Payload);
+
+                wamp.Add(jToken);
             }
 
             _wsClient.Send(wamp.ToString(Formatting.None));
@@ -140,7 +142,7 @@ namespace Remact.Net.Protocol.Wamp
             }
 
             var error = new ErrorMessage(ErrorMessage.Code.RspNotDeserializableOnClient, errorDesc);
-            var message = new ActorMessage(null, 0, id, error, null);
+            var message = new ActorMessage(null, 0, id, null, null, error, null);
             ErrorFromClient(message);
         }
 
@@ -166,10 +168,12 @@ namespace Remact.Net.Protocol.Wamp
 
             var wamp = new JArray(WampMessageType.v1CallError, callId, errorUri, errorDesc);
 
-            if (error != null)
+            if (message.Payload != null)
             {
-                var jObject = JObject.FromObject(error);
-                wamp.Add(jObject);
+                var jToken = message.Payload as JToken;
+                if (jToken == null) jToken = JToken.FromObject(message.Payload);
+
+                wamp.Add(jToken);
             }
 
             _wsClient.Send(wamp.ToString(Formatting.None));
@@ -228,7 +232,7 @@ namespace Remact.Net.Protocol.Wamp
                     var code = (ErrorMessage.Code)Enum.Parse(typeof(ErrorMessage.Code), errorUri, false);
                     string errorDesc = (string)wamp[3];
                     var error = new ErrorMessage(code, errorDesc);
-                    var message = new ActorMessage(null, 0, id, error, null);
+                    var message = new ActorMessage(null, 0, id, null, error.GetType().FullName, error, null);
                     message.Type = ActorMessageType.Error;
                     //if (wamp.Count >= 4)
                     //{
@@ -241,8 +245,7 @@ namespace Remact.Net.Protocol.Wamp
                     // eg. EVENT message with 'null' as payload: [8, "http://example.com/simple", null]
 
                     object payload = payload = wamp[2];
-                    var message = new ActorMessage(null, 0, 0, payload, null);
-                    message.DestinationMethod = (string)wamp[1]; // TODO
+                    var message = new ActorMessage(null, 0, 0, null, (string)wamp[1], payload, null);
                     message.Type = ActorMessageType.Notification;
 
                     _callback.MessageFromService(message); // adds source and destination

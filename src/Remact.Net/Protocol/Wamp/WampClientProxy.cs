@@ -67,17 +67,23 @@ namespace Remact.Net.Protocol.Wamp
         private void RequestNotDeserializable(int id, string errorDesc)
         {
             var error = new ErrorMessage(ErrorMessage.Code.ReqOrRspNotSerializableOnService, errorDesc);
-            var message = new ActorMessage(null, 0, id, error, null);
+            var message = new ActorMessage(null, 0, id, null, null, error, null);
             ErrorFromService(message);
         }
 
         private void ResponseFromService(ActorMessage response)
         {
             string callId = response.RequestId.ToString();
+            JToken payload = null;
+            if (response.Payload != null)
+            {
+                payload = response.Payload as JToken;
+                if (payload == null) payload = JToken.FromObject(response.Payload);
+            }
 
             // eg. CALLRESULT message with 'null' result: [3, "CcDnuI2bl2oLGBzO", null] 
 
-            var wamp = new JArray(WampMessageType.v1CallResult, callId, response.Payload);
+            var wamp = new JArray(WampMessageType.v1CallResult, callId, payload);
             _wsChannel.Send(wamp.ToString(Formatting.None));
         }
 
@@ -102,10 +108,12 @@ namespace Remact.Net.Protocol.Wamp
 
             var wamp = new JArray(WampMessageType.v1CallError, callId, errorUri, errorDesc);
 
-            if (error != null)
+            if (message.Payload != null)
             {
-                var jObject = JObject.FromObject(error);
-                wamp.Add(jObject);
+                var jToken = message.Payload as JToken;
+                if (jToken == null) jToken = JToken.FromObject(message.Payload);
+
+                wamp.Add(jToken);
             }
 
             _wsChannel.Send(wamp.ToString(Formatting.None));
@@ -116,8 +124,14 @@ namespace Remact.Net.Protocol.Wamp
         {
             // eg. EVENT message with 'null' as payload: [8, "http://example.com/simple", null]
 
-            var jObject = JObject.FromObject(notification.Payload);
-            var wamp = new JArray(WampMessageType.v1Event, notification.DestinationMethod, jObject);
+            JToken payload = null;
+            if (notification.Payload != null)
+            {
+                payload = notification.Payload as JToken;
+                if (payload == null) payload = JToken.FromObject(notification.Payload);
+            }
+
+            var wamp = new JArray(WampMessageType.v1Event, notification.DestinationMethod, payload);
             _wsChannel.Send(wamp.ToString(Formatting.None));
         }
 
@@ -149,14 +163,13 @@ namespace Remact.Net.Protocol.Wamp
                 {
                     // eg. CALL message for RPC with no arguments: [2, "7DK6TdN4wLiUJgNM", "http://example.com/api#howdy"]
                     id = int.Parse((string)wamp[1]);
-                    object payload = null;
+                    JToken payload = null;
                     if (wamp.Count > 3)
                     {
                         payload = wamp[3];
                     }
-                    var message = new ActorMessage(_clientIdent, _clientIdent.OutputClientId, id, payload, null);
-                    message.Destination = _serviceIdent;
-                    message.DestinationMethod = (string)wamp[2];
+                    var message = new ActorMessage(_clientIdent, _clientIdent.OutputClientId, id,
+                                                   _serviceIdent, (string)wamp[2], payload, null);
 
                     _requestHandler.MessageFromClient(message);
                 }
@@ -169,13 +182,12 @@ namespace Remact.Net.Protocol.Wamp
                     var code = (ErrorMessage.Code)Enum.Parse(typeof(ErrorMessage.Code), errorUri, false);
                     string errorDesc = (string)wamp[3];
                     var payload = new ErrorMessage(code, errorDesc);
-                    var message = new ActorMessage(_clientIdent, _clientIdent.OutputClientId, id, payload, null);
-                    message.Destination = _serviceIdent;
-                    //message.DestinationMethod = TODO;
+                    var message = new ActorMessage(_clientIdent, _clientIdent.OutputClientId, id, 
+                                                   _serviceIdent, payload.GetType().FullName, payload, null);
                     message.Type = ActorMessageType.Error;
                     //if (wamp.Count >= 4)
                     //{
-                    //    message. (object)wamp[4]); TODO
+                    //    message.wamp[4]); TODO
                     //}
                     _requestHandler.MessageFromClient(message);
                 }
@@ -183,10 +195,9 @@ namespace Remact.Net.Protocol.Wamp
                 {
                     // eg. EVENT message with 'null' as payload: [8, "http://example.com/simple", null]
 
-                    object payload = wamp[2];
-                    var message = new ActorMessage(_clientIdent, _clientIdent.OutputClientId, 0, payload, null);
-                    message.Destination = _serviceIdent;
-                    message.DestinationMethod = (string)wamp[1]; // TODO
+                    JToken payload = wamp[2];
+                    var message = new ActorMessage(_clientIdent, _clientIdent.OutputClientId, 0,
+                                                   _serviceIdent, (string)wamp[1], payload, null);
                     message.Type = ActorMessageType.Notification;
 
                     _requestHandler.MessageFromClient(message);
@@ -199,6 +210,7 @@ namespace Remact.Net.Protocol.Wamp
             catch (Exception ex)
             {
                 //TODO full qualified name
+                //TODO: separate: Response not deserializable
                 if (!errorReceived) RequestNotDeserializable(id, ex.Message);
             }
         }

@@ -341,7 +341,7 @@ namespace Remact.Net.Internal
 
       if (svcUser == null)
       {
-          svcUser = new WcfBasicServiceUser(ServiceIdent);
+          svcUser = new WcfBasicServiceUser(ServiceIdent); // svcUser not created, when connection has been opened
       }
 
       svcUser.UseDataFrom (receivedClientMsg, index + m_FirstClientId);
@@ -370,34 +370,37 @@ namespace Remact.Net.Internal
           svcUser = ServiceIdent.InputClientList[i].SvcUser;
           if (svcUser == null)
           {
-            svcUser = AddNewSvcUser (client, i, null);
-            LastAction = "Reconnect after service restart";
+              svcUser = AddNewSvcUser(client, i, svcUser);
+              LastAction = "Reconnect after service restart";
           }
           else if (!client.IsEqualTo (svcUser.ClientIdent))
           {
               RaTrc.Warning( req.SvcRcvId, svcUser.ClientIdent.ToString( "ClientId already used", 0 ), ServiceIdent.Logger );
-            req.ClientId = 0; // eine neue ID vergeben, kann passieren, wenn Service, aber nicht alle Clients durchgestartet werden
-            m_ConnectedClientCount -= 2; // wird sofort 2 mal inkrementiert
+              req.ClientId = 0; // eine neue ID vergeben, kann passieren, wenn Service, aber nicht alle Clients durchgestartet werden
+              m_ConnectedClientCount -= 2; // wird sofort 2 mal inkrementiert
           }
           else if (svcUser.IsConnected)
           {
-            LastAction = "Reconnect, no disconnect";
-            RaTrc.Warning( req.SvcRcvId, svcUser.ClientIdent.ToString( LastAction, 0 ), ServiceIdent.Logger );
-            svcUser.UseDataFrom(client, req.ClientId);
-            m_ConnectedClientCount--; // wird sofort wieder inkrementiert
+              LastAction = "Reconnect, no disconnect";
+              RaTrc.Warning( req.SvcRcvId, svcUser.ClientIdent.ToString( LastAction, 0 ), ServiceIdent.Logger );
+              //TODO
+              svcUser.UseDataFrom(client, req.ClientId);
+              m_ConnectedClientCount--; // wird sofort wieder inkrementiert
           }
           else if (svcUser.IsFaulted)
           {
-            LastAction = "Reconnect after network failure";
-            RaTrc.Warning( req.SvcRcvId, svcUser.ClientIdent.ToString( LastAction, 0 ), ServiceIdent.Logger );
-            svcUser.UseDataFrom(client, req.ClientId);
-            if (RemactDefault.Instance.IsProcessIdUsed (svcUser.ClientIdent.ProcessId)) m_UnusedClientCount--;
+              LastAction = "Reconnect after network failure";
+              RaTrc.Warning( req.SvcRcvId, svcUser.ClientIdent.ToString( LastAction, 0 ), ServiceIdent.Logger );
+              //TODO
+              svcUser.UseDataFrom(client, req.ClientId);
+              if (RemactDefault.Instance.IsProcessIdUsed (svcUser.ClientIdent.ProcessId)) m_UnusedClientCount--;
           }
           else
           {
-            svcUser.UseDataFrom(client, req.ClientId);
-            LastAction = "Reconnect after client disconnect";
-            if (RemactDefault.Instance.IsProcessIdUsed (svcUser.ClientIdent.ProcessId)) m_UnusedClientCount--;
+              //TODO
+              svcUser.UseDataFrom(client, req.ClientId);
+              LastAction = "Reconnect after client disconnect";
+              if (RemactDefault.Instance.IsProcessIdUsed (svcUser.ClientIdent.ProcessId)) m_UnusedClientCount--;
           }
           m_ConnectedClientCount++;
         }
@@ -415,23 +418,32 @@ namespace Remact.Net.Internal
         int found = ServiceIdent.InputClientList.FindIndex (c => client.IsEqualTo (c));
         if (found < 0)
         {
-          svcUser = AddNewSvcUser (client, found, null);
-          LastAction = "Connect first time";
-          m_ConnectedClientCount++;
+            svcUser = AddNewSvcUser(client, found, svcUser);
+            LastAction = "Connect first time";
+            m_ConnectedClientCount++;
         }
         else
         {
-          svcUser = ServiceIdent.InputClientList[found].SvcUser;
-          if( svcUser.IsConnected )
-          {
-              LastAction = "Client is reconnecting";
-          }
-          else
-          {
-              LastAction = "Reconnect after client restart";
-              m_ConnectedClientCount++;
-          }
-          svcUser.UseDataFrom(client, found + m_FirstClientId);
+            if (svcUser != null)
+            {
+                // a new svcUser has been created, when connection has been opened
+                svcUser = AddNewSvcUser(client, found, svcUser);
+            }
+            else
+            {
+                svcUser = ServiceIdent.InputClientList[found].SvcUser; 
+                svcUser.UseDataFrom(client, found + m_FirstClientId);
+            }
+
+            if( svcUser.IsConnected )
+            {
+                LastAction = "Client is reconnecting";
+            }
+            else
+            {
+                LastAction = "Reconnect after client restart";
+                m_ConnectedClientCount++;
+            }
         }
       }
 
@@ -540,11 +552,11 @@ namespace Remact.Net.Internal
     ///          <para>!null if the response already has been generated by this class.</para></returns>
     internal object CheckBasicResponse(ActorMessage req, ref WcfBasicServiceUser svcUser)
     {
-      if (m_boCurrentlyCalled)
-      {
-        RaTrc.Error ("WcfBasicService", "called by multiple threads", ServiceIdent.Logger);
-      }
-      m_boCurrentlyCalled = true;
+        if (m_boCurrentlyCalled)
+        {
+            RaTrc.Error ("WcfBasicService", "called by multiple threads", ServiceIdent.Logger);
+        }
+        m_boCurrentlyCalled = true;
       
 #if BEFORE_NET40
       var m = req.Message as IExtensibleWcfMessage;
@@ -561,46 +573,46 @@ namespace Remact.Net.Internal
       if( m != null ) m.IsSent = true;
 #endif
       
-      req.Destination = ServiceIdent;
-      req.DestinationLambda = null;// make sure to call the DefaultHandler
-      object response = null;
-      ActorInfo cltReq = req.Payload as ActorInfo;
-      if (cltReq != null)
-      {
-        if (ServiceIdent.Uri == null)
-        {//first call after ServiceHost.Open(), WcfServiceAssistant will initialize the URI earlier.
-          UriBuilder uri = new UriBuilder (OperationContext.Current.Channel.LocalAddress.Uri);
-          uri.Host = ServiceIdent.HostName;
-          ServiceIdent.Uri = uri.Uri;
-        }
-
-        switch (cltReq.Usage)
+        req.Destination = ServiceIdent;
+        req.DestinationLambda = null;// make sure to call the DefaultHandler
+        object response = null;
+        ActorInfo cltReq;
+        if (req.TryConvertPayload(out cltReq))
         {
-        case ActorInfo.Use.ClientConnectRequest:    response = ConnectPartner    (cltReq, req, ref svcUser); break;
-        case ActorInfo.Use.ClientDisconnectRequest: response = DisconnectPartner (cltReq, req, ref svcUser); break;
-        default: break;// continue below
+            if (ServiceIdent.Uri == null)
+            {//first call after ServiceHost.Open(), WcfServiceAssistant will initialize the URI earlier.
+                UriBuilder uri = new UriBuilder(OperationContext.Current.Channel.LocalAddress.Uri);
+                uri.Host = ServiceIdent.HostName;
+                ServiceIdent.Uri = uri.Uri;
+            }
+
+            switch (cltReq.Usage)
+            {
+                case ActorInfo.Use.ClientConnectRequest:    response = ConnectPartner(cltReq, req, ref svcUser); break;
+                case ActorInfo.Use.ClientDisconnectRequest: response = DisconnectPartner(cltReq, req, ref svcUser); break;
+                default: break;// continue below
+            }
         }
-      }
       
-      if (response == null)
-      {
-        // no response generated yet (no WcfPartner-message or unknown Usage)
-        if (FindPartnerAndCheck (req, ref svcUser))
+        if (response == null)
         {
-          //req.CurrentSvcUser = svcUser;
-          LastAction = "ActorMessage";// response must be generated by service-application, request.ClientIdent has been set
+            // no response generated yet (no WcfPartner-message or unknown Usage)
+            if (FindPartnerAndCheck (req, ref svcUser))
+            {
+                //req.CurrentSvcUser = svcUser;
+                LastAction = "ActorMessage";// response must be generated by service-application, request.ClientIdent has been set
+            }
+            else
+            {
+                response = new ErrorMessage (ErrorMessage.Code.ClientIdNotFoundOnService, "Service cannot find client " + req.ClientId);
+                RaTrc.Error( req.SvcRcvId, (response as ErrorMessage).Message, ServiceIdent.Logger );
+                //response.SendId bleibt 0, da wir keine ClientInfo haben 
+                LastAction = "ActorMessage from unknown client";
+            }
         }
-        else
-        {
-          response = new ErrorMessage (ErrorMessage.Code.ClientIdNotFoundOnService, "Service cannot find client " + req.ClientId);
-          RaTrc.Error( req.SvcRcvId, (response as ErrorMessage).Message, ServiceIdent.Logger );
-          //response.SendId bleibt 0, da wir keine ClientInfo haben 
-          LastAction = "ActorMessage from unknown client";
-        }
-      }
 
-      m_boCurrentlyCalled = false;
-      return response;
+        m_boCurrentlyCalled = false;
+        return response;
     }// CheckBasicResponse
 
     #endregion
@@ -659,5 +671,5 @@ namespace Remact.Net.Internal
       
     
     #endregion
-  }// class WcfBasicService
-}// namespace
+  }
+}

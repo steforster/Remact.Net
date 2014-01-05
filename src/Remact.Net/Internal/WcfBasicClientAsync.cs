@@ -452,8 +452,9 @@ namespace Remact.Net.Internal
 
         ClientIdent.PickupSynchronizationContext();
         ClientIdent.m_Connected = true; // internal, from ActorOutput to WcfBasicClientAsync
-        ActorMessage id = new ActorMessage (ClientIdent, ClientIdent.OutputClientId, ++ClientIdent.LastRequestIdSent, null, null);
-        m_protocolClient.OpenAsync(id, this); 
+        ActorMessage msg = new ActorMessage (ClientIdent, ClientIdent.OutputClientId, ++ClientIdent.LastRequestIdSent, 
+                                             ServiceIdent, null, null, null);
+        m_protocolClient.OpenAsync(msg, this); 
         // Callback to OnOpenCompleted when channel has been opened locally (no TCP connection opened on mono).
     }// OpenConnectionToService
 
@@ -484,6 +485,7 @@ namespace Remact.Net.Internal
             {
                 string serviceAddr = GetSetServiceAddress();
                 request.Payload = new ActorInfo(ClientIdent, ActorInfo.Use.ClientConnectRequest);
+                request.DestinationMethod = typeof(ActorInfo).FullName;
   
                 if (ClientIdent.TraceConnect) {
                     if (m_boTemporaryRouterConn) RaTrc.Info(request.CltSndId, string.Concat("Temporary connecting .....: '", serviceAddr, "'"), ClientIdent.Logger);
@@ -907,7 +909,8 @@ namespace Remact.Net.Internal
     public ActorMessage SendOut(object request, AsyncResponseHandler asyncResponseHandler)
     {
       if (ClientIdent.LastRequestIdSent == int.MaxValue) ClientIdent.LastRequestIdSent = 10;
-      ActorMessage id = new ActorMessage (ClientIdent, ClientIdent.OutputClientId, ++ClientIdent.LastRequestIdSent, request, asyncResponseHandler);
+      ActorMessage id = new ActorMessage (ClientIdent, ClientIdent.OutputClientId, ++ClientIdent.LastRequestIdSent,
+                                          ServiceIdent, request.GetType().FullName, request, asyncResponseHandler);
       PostInput  (id);
       return id;
     }

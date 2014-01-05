@@ -376,7 +376,8 @@ namespace Remact.Net
     public void SendOut(object payload)
     {
       if (LastRequestIdSent == int.MaxValue) LastRequestIdSent = 10;
-      ActorMessage msg = new ActorMessage(this, OutputClientId, ++LastRequestIdSent, payload, null);
+      ActorMessage msg = new ActorMessage(this, OutputClientId, ++LastRequestIdSent, 
+                                          this, payload.GetType().FullName, payload, null);
       SendOut(msg);
     }
 
@@ -389,7 +390,8 @@ namespace Remact.Net
     public void SendOut(object payload, AsyncResponseHandler responseHandler)
     {
       if (LastRequestIdSent == int.MaxValue) LastRequestIdSent = 10;
-      ActorMessage msg = new ActorMessage(this, OutputClientId, ++LastRequestIdSent, payload, responseHandler);
+      ActorMessage msg = new ActorMessage(this, OutputClientId, ++LastRequestIdSent,
+                                          this, payload.GetType().FullName, payload, responseHandler);
       SendOut (msg);
     }
 

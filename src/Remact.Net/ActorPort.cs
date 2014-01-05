@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Runtime.Serialization;// DataContract
 using System.Net;                  // Dns, IpAddress
 using System.Threading;            // SynchronizationContext
 using Remact.Net.Internal;
@@ -85,8 +84,7 @@ namespace Remact.Net
     /// <para>To support networks without DNS server, the WcfRouter sends a list of all IP-Adresses of a host.</para>
     /// <para>May be null, when no info from WcfRouter has been received yet.</para>
     /// </summary>
-    [DataMember]
-    public List<IPAddress>  AddressList  {get; internal set;}
+    public List<string>  AddressList  {get; internal set;}
 
     /// <summary>
     /// After a service has no message received for TimeoutSeconds, it may render the connection to this client as disconnected.

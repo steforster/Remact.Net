@@ -78,15 +78,19 @@ namespace Remact.Net
         {
             Port = uri.Port,
             SubProtocols = new string[] { "wamp" },
+
+            // Do this for every new client connection:
             OnConnected = (userContext) =>
                 {
                     var svcUser = new WcfBasicServiceUser (service.ServiceIdent);
                     var handler = new InternalMultithreadedServiceNet40(service, svcUser);
                     var wampProxy = new WampClientProxy(svcUser.ClientIdent, service.ServiceIdent, handler, userContext);
                     svcUser.SetCallbackHandler(wampProxy);
+                    svcUser.SetConnected();
                 }
         };
 
+        // Listen for client connections:
         wsServer.Start();
         return wsServer; // IDisposable
     }
@@ -113,7 +117,7 @@ namespace Remact.Net
 
     #endregion
     //----------------------------------------------------------------------------------------------
-    #region == WCF Router configuration ==
+    #region == Remact.Catalog configuration ==
 
     /// <summary>
     /// The WcfRouter service listens on this port. The WcfRouter must be running on every host having services.
@@ -127,7 +131,7 @@ namespace Remact.Net
 
     #endregion
     //----------------------------------------------------------------------------------------------
-    #region == AsyncWcfLib partner identification ==
+    #region == Application identification ==
 
     /// <summary>
     /// The assembly that represents the application.

@@ -47,7 +47,7 @@ namespace Remact.Net.Internal
     /// Internally called to create a WcfBasicServiceUser object
     /// </summary>
     /// <param name="serviceIdent">client using this service</param>
-    internal WcfBasicServiceUser(ActorInput serviceIdent)
+    public WcfBasicServiceUser(ActorInput serviceIdent)
     {
         _serviceIdent = serviceIdent;
         ClientIdent = new ActorOutput()
@@ -64,7 +64,7 @@ namespace Remact.Net.Internal
         ClientIdent.PassResponsesTo(this);  // the service posts notifications to svcUser, we will pass it to the remote client
     }// CTOR
 
-    internal void SetCallbackHandler(IRemactProtocolDriverCallbacks protocolCallback)
+    public void SetCallbackHandler(IRemactProtocolDriverCallbacks protocolCallback)
     {
         _protocolCallback = protocolCallback;
     }
@@ -78,7 +78,7 @@ namespace Remact.Net.Internal
         ClientIdent.Uri = uri.Uri;
     }
 
-    internal void SetConnected()
+    public void SetConnected()
     {
         ClientIdent.SyncContext = _serviceIdent.SyncContext;
         ClientIdent.ManagedThreadId = _serviceIdent.ManagedThreadId;
@@ -136,7 +136,7 @@ namespace Remact.Net.Internal
     /// Internally called by DoPeriodicTasks(), notifies idle messages and disconnects the client connection in case of failure.
     /// </summary>
     /// <returns>True, when connection state has changed.</returns>
-    internal bool TestChannel (int i_nMillisecondsPassed)
+    public bool TestChannel(int i_nMillisecondsPassed)
     {
         if (_protocolCallback != null)
         {
@@ -208,7 +208,7 @@ namespace Remact.Net.Internal
             }
             else
             {
-                var message = new ActorMessage(null, 0, 0, notification, null);
+                var message = new ActorMessage(null, 0, 0, null, null, notification, null);
                 message.Type = ActorMessageType.Notification;
                 _protocolCallback.MessageFromService(message);
             }
@@ -231,13 +231,13 @@ namespace Remact.Net.Internal
 
     #endregion
     //----------------------------------------------------------------------------------------------
-    #region IWcfPartner implementation
+    #region IWcfBasicPartner implementation
 
     /// <summary>
     /// Dummy implementation. Client stub is always connected to the service.
     /// </summary>
     /// <returns>true</returns>
-    public bool TryConnect ()
+    bool IWcfBasicPartner.TryConnect()
     {
       return true;
     }
@@ -246,7 +246,7 @@ namespace Remact.Net.Internal
     /// Send a request to the service internally connected to this client-stub.
     /// </summary>
     /// <param name="msg">A <see cref="ActorMessage"/>the 'Source' property references the sending partner, where the response is expected.</param>
-    public void SendOut (ActorMessage msg)
+    void IWcfBasicPartner.SendOut(ActorMessage msg)
     {
         ClientIdent.SendOut(msg); // post to service input queue
     }

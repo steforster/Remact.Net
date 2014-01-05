@@ -73,7 +73,7 @@ namespace Remact.Net
     /// <summary>
     /// <para>To support networks without DNS server, the WcfRouter keeps a list of all IP-Adresses of a host.</para>
     /// </summary>
-    public List<IPAddress> AddressList;
+    public List<string> AddressList;
 
     /// <summary>
     /// After a service has no message received for TimeoutSeconds, it may render the connection to this client as disconnected.
@@ -244,6 +244,10 @@ namespace Remact.Net
       RouterHopCount     = p.RouterHopCount;
       ApplicationRunTime = p.ApplicationRunTime;
     }// CTOR2
+
+    private ActorInfo()
+    {
+    }// CTOR3 for Json deserialization
 
     /// <summary>
     /// Check if two communication partner objects represent the same partner
