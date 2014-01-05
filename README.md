@@ -2,11 +2,14 @@ Remote Actors for .NET
 ======================
 
 **Remact.Net** facilitates the development of [actors](http://en.wikipedia.org/wiki/Actor_model) in .NET languages.
+
 It is a class library written in C-Sharp.
+
 It runs in Microsoft .NET and Linux-Mono environements.
 
 **Project status**
 Remact.Net is work in progress. The first integration test is running.
+
 [AsyncWcfLib](http://sourceforge.net/projects/asyncwcflib/) is the predecessor of Remact.Net.
 Both are developed by the same author.
 
@@ -16,11 +19,15 @@ Both are developed by the same author.
 The following goals are intended to reach:
 
 [ ] Small and clean API like AsyncWcfLib
+
 [ ] Local actors (message passing between threads)
+
 [ ] Remote actors (message passing between hosts or processes)
+
 [ ] Unlike AsyncWcfLib, Remact will be based on open web standards (WebSockets).
     The motivation is better support for bidirectional communication and higher performance
     on Linux/Mono based environments.
+
 [ ] WebSockets and Json are used to link actors written in Java or JavaScript (browser based actors)
 
 
