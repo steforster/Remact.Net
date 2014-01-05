@@ -71,6 +71,12 @@ namespace Remact.Net
     public  Uri    Uri;
 
     /// <summary>
+    /// <para>Identifies the client on the remote service.</para>
+    /// <para>Id is created by remote service and transferred to client with this payload.</para>
+    /// </summary>
+    public int ClientId;
+
+    /// <summary>
     /// <para>To support networks without DNS server, the WcfRouter keeps a list of all IP-Adresses of a host.</para>
     /// </summary>
     public List<string> AddressList;
@@ -206,7 +212,7 @@ namespace Remact.Net
       HostName    = p.HostName;
       AddressList = p.AddressList;
       Uri         = p.Uri;
-      Usage       = usage;
+      Usage = usage;
       
       RouterHopCount = 0;
       ApplicationRunTime = DateTime.Now - ms_ApplicationStartTime;
@@ -240,6 +246,7 @@ namespace Remact.Net
       HostName         = p.HostName;
       AddressList      = p.AddressList;
       Uri              = p.Uri;
+      ClientId         = p.ClientId;
       Usage            = p.Usage;
       RouterHopCount     = p.RouterHopCount;
       ApplicationRunTime = p.ApplicationRunTime;

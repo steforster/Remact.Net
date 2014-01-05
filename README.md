@@ -5,6 +5,24 @@ Remote Actors for .NET
 It is a class library written in C-Sharp.
 It runs in Microsoft .NET and Linux-Mono environements.
 
+**Project status**
+Remact.Net is work in progress. The first integration test is running.
+[AsyncWcfLib](http://sourceforge.net/projects/asyncwcflib/) is the predecessor of Remact.Net.
+Both are developed by the same author.
+
+
+### Feature list
+
+The following goals are intended to reach:
+
+[ ] Small and clean API like AsyncWcfLib
+[ ] Local actors (message passing between threads)
+[ ] Remote actors (message passing between hosts or processes)
+[ ] Unlike AsyncWcfLib, Remact will be based on open web standards (WebSockets).
+    The motivation is better support for bidirectional communication and higher performance
+    on Linux/Mono based environments.
+[ ] WebSockets and Json are used to link actors written in Java or JavaScript (browser based actors)
+
 
 ### Related work
 
@@ -17,20 +35,7 @@ For other languages there are librarys to help programming remote actors:
 
 * [Java and Scala: The Akka library](http://akka.io/)
 * [C#: The Stact library](https://github.com/phatboyg/Stact)
-* [C#: AsyncWcfLib (a library developed by me)](http://sourceforge.net/projects/asyncwcflib/)
-
-
-### Feature list
-
-Remact is work in progress. The following goals are intended to reach:
-
-[ ] Small and clean API like AsyncWcfLib
-[ ] Local actors (message passing between threads)
-[ ] Remote actors (message passing between hosts or processes)
-[ ] Unlike AsyncWcfLib, Remact will be based on open web standards (WebSockets).
-    The motivation is better support for bidirectional communication and higher performance
-    on Linux/Mono based environments.
-[ ] WebSockets and Json are used to link actors written in Java or JavaScript (browser based actors)
+* [C#: AsyncWcfLib](http://sourceforge.net/projects/asyncwcflib/)
 
 
 Documentation
@@ -45,7 +50,7 @@ These definitions must be present on both sides of the communication channel.
 For actors not written in a .NET programming language (e.g. Java Script), the interface definition must be translated. 
 
 Receiving of WAMP messages is done in five steps:
-* Deserialization to a [Newtonsoft.Json.Linq.JObject](http://weblog.west-wind.com/posts/2012/Aug/30/Using-JSONNET-for-dynamic-JSON-parsing)
+* Deserialization to a [Newtonsoft.Json.Linq.JToken](http://weblog.west-wind.com/posts/2012/Aug/30/Using-JSONNET-for-dynamic-JSON-parsing)
 * Dispatching to the addressed actor 
 * Switching to the thread bound to the actor
 * Optional converting to a strongly typed object or to a [dynamic object](http://msdn.microsoft.com/en-us/library/dd264736%28v=vs.110%29.aspx)
@@ -54,17 +59,17 @@ Receiving of WAMP messages is done in five steps:
 
 Third party components and standards
 ------------------------------------
-Remact.Net is built on open standards and uses open components, namely
+Remact.Net is built on open standards and uses open software components, namely
 
 * [WebSocket](http://tools.ietf.org/html/rfc6455), the IETF standard RFC6455
 * [Alchemy-Websockets](https://github.com/Olivine-Labs/Alchemy-Websockets), a class library from Olivine-Labs
   I use [segor's fork](https://github.com/segor/Alchemy-Websockets), he has fixed some client side errors
 * [WAMP](http://wamp.ws/), the WebSocket Application Messaging Protocol
-* [Json class library from Newtonsoft](https://github.com/JamesNK/Newtonsoft.Json) 
+* [Newtonsoft.Json](https://github.com/JamesNK/Newtonsoft.Json), a class library for Json serialization
 * [Log4Net](http://logging.apache.org/log4net/), logging component from Apache
 * [NUnit](http://www.nunit.org/), unit testing infrastructure
 * [Nito.Async.ActionThread](http://nitoasync.codeplex.com/) is used for testing console applications
-* [WampSharp](https://github.com/darkl/WampSharp) is not used as a component, but I have lended many ideas from this WAMP implementation
+* [WampSharp](https://github.com/darkl/WampSharp) is not used as a component, but I have lent some ideas from this WAMP implementation
 
 
 License

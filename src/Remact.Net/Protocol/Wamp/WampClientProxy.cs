@@ -131,7 +131,7 @@ namespace Remact.Net.Protocol.Wamp
                 if (payload == null) payload = JToken.FromObject(notification.Payload);
             }
 
-            var wamp = new JArray(WampMessageType.v1Event, notification.DestinationMethod, payload);
+            var wamp = new JArray(WampMessageType.v1Event, notification.PayloadType, payload);
             _wsChannel.Send(wamp.ToString(Formatting.None));
         }
 
@@ -143,7 +143,7 @@ namespace Remact.Net.Protocol.Wamp
         // DataFrame.State == Handlers.WebSocket.DataFrame.DataState.Complete
         private void OnReceived(UserContext context)
         {
-            Console.WriteLine("Received Data From :" + context.ClientAddress);
+            //Console.WriteLine("Received Data From :" + context.ClientAddress);
             int id = 0;
             bool errorReceived = false; 
 

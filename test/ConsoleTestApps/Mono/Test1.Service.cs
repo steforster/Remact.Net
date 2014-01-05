@@ -77,12 +77,12 @@ namespace Test1.Service
     public void OnMessageReceived (ActorMessage req)
     {
         object response;
-        if (req.Payload is Test1.Messages.Test1CommandMessage)
+        Test1CommandMessage testMessage;
+        if (req.TryConvertPayload(out testMessage))
         {
             Console.WriteLine (String.Format("Thread={0} --> received command '{1}' from client[{2}] {3}",
                                Thread.CurrentThread.ManagedThreadId,
-                               (req.Payload as Test1.Messages.Test1CommandMessage).Command,
-                               req.ClientId, req.Source.Uri));
+                               testMessage.Command, req.ClientId, req.Source.Uri));
 
             response = new ReadyMessage();
         }

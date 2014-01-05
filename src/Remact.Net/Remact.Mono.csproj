@@ -101,4 +101,7 @@
       <Name>Alchemy</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Protocol\Wamp\WampNotes.md" />
+  </ItemGroup>
 </Project>

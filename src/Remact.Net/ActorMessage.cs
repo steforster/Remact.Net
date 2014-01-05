@@ -36,8 +36,8 @@ namespace Remact.Net
         {
             if (msg != null)
             {
-                T typedMsg = msg.Payload as T;
-                if (typedMsg == null)
+                T typedMsg;
+                if (!msg.TryConvertPayload (out typedMsg))
                 {
                     return msg; // call next On extension method
                 }
@@ -108,6 +108,11 @@ namespace Remact.Net
         public string DestinationMethod { get; internal set; }
 
         /// <summary>
+        /// The full qualified .net data type of Payload for requests and notifications.
+        /// </summary>
+        public string PayloadType { get; internal set; }
+
+        /// <summary>
         /// For local and remote requests the send operation may specify a lambda expression handling the response.
         /// </summary>
         internal AsyncResponseHandler   SourceLambda;      // delegate ActorMessage  AsyncResponseHandler (ActorMessage msg);
@@ -138,7 +143,7 @@ namespace Remact.Net
                 m.IsSent = true;
             }
 
-            DestinationMethod = destinationMethod;
+            PayloadType = destinationMethod;
             Payload = payload;
             SourceLambda = responseHandler;
         }// CTOR
@@ -149,7 +154,7 @@ namespace Remact.Net
         public bool TryConvertPayload<T>(out T result) where T : class
         {
             result = null;
-            if (typeof(T).FullName != DestinationMethod)
+            if (PayloadType != null && PayloadType != typeof(T).FullName)
             {
                 return false; // different type name or method name 
             }
@@ -172,6 +177,7 @@ namespace Remact.Net
                 try
                 {
                     result = jToken.ToObject<T>();
+                    Payload = result; // keep converted payload
                     return true;
                 }
                 catch { }

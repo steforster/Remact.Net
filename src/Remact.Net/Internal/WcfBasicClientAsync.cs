@@ -485,7 +485,7 @@ namespace Remact.Net.Internal
             {
                 string serviceAddr = GetSetServiceAddress();
                 request.Payload = new ActorInfo(ClientIdent, ActorInfo.Use.ClientConnectRequest);
-                request.DestinationMethod = typeof(ActorInfo).FullName;
+                request.PayloadType = typeof(ActorInfo).FullName;
   
                 if (ClientIdent.TraceConnect) {
                     if (m_boTemporaryRouterConn) RaTrc.Info(request.CltSndId, string.Concat("Temporary connecting .....: '", serviceAddr, "'"), ClientIdent.Logger);
@@ -568,11 +568,12 @@ namespace Remact.Net.Internal
                 }
                 if (m != null) m.IsSent = true;
 
-                if (message.IsResponse)
+                if (message.IsResponse && message.PayloadType == typeof(ActorInfo).FullName)
                 {
-                    ActorInfo rsp = message.Payload as ActorInfo;
+                    ActorInfo actorInfo;
 
-                    if (rsp != null && HandleActorMessage(message, rsp))
+                    if (message.TryConvertPayload(out actorInfo) 
+                     && HandleActorMessage(message, actorInfo))
                     {
                         return;
                     }
@@ -580,7 +581,7 @@ namespace Remact.Net.Internal
             }
 
             LastRequestIdReceived = message.RequestId;
-            if (ClientIdent.TraceReceive) RaTrc.Info(message.CltRcvId, message.ToString(), ClientIdent.Logger);
+            if (ClientIdent.TraceReceive) RaTrc.Info(message.CltRcvId, message.PayloadType, ClientIdent.Logger);
             ClientIdent.DispatchMessage(message);
         }
         catch (Exception ex)
@@ -602,7 +603,7 @@ namespace Remact.Net.Internal
         { // First message received from Service
           rsp.Uri = ServiceIdent.Uri; // keep the Uri used to request the message (maybe IP address instead of hostname used)
           ServiceIdent.UseDataFrom (rsp);
-          ClientIdent.OutputClientId = result.ClientId; // defined by server
+          ClientIdent.OutputClientId = rsp.ClientId; // defined by server
           OnConnectMessage (result);
         }
         else if (rsp.Usage == ActorInfo.Use.ServiceDisconnectResponse)
@@ -850,8 +851,6 @@ namespace Remact.Net.Internal
     public virtual void PostInput (ActorMessage request)
     {
         ErrorMessage err = null;
-        string callId = request.RequestId.ToString();
-
         if (!IsFaulted && ClientIdent.OutputClientId > 0) // Send() may be used during connection buildup as well
         {
             try

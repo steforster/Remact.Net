@@ -610,7 +610,8 @@ namespace Remact.Net
                 }
                 else
                 {
-                    RaTrc.Error( "WcfLib", "Unhandled response: " + id.Payload, Logger );
+                    //No trace for anonymous ActorOutput
+                    //RaTrc.Error( "WcfLib", "Unhandled response: " + id.Payload, Logger );
                 }
             }
 

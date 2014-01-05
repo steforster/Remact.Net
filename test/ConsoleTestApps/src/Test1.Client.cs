@@ -92,9 +92,11 @@ namespace Test1.Client
     // receive a message from main or from service
     static void OnMessageReceived (ActorMessage msg)
     {
-        Console.Write ("\n\r Thread="+Thread.CurrentThread.ManagedThreadId+", received: "+msg.Payload.ToString());
+        Console.Write ("\n\r Thread="+Thread.CurrentThread.ManagedThreadId+", received: "+msg.PayloadType);
 
-        if (msg.Payload is Test1CommandMessage)
+        Test1CommandMessage testMessage;
+        ErrorMessage errorMessage;
+        if (msg.IsRequest && msg.TryConvertPayload(out testMessage))
         {
             PortState s = Test.OutputState;
             if (s == PortState.Disconnected || s == PortState.Faulted)
@@ -108,21 +110,21 @@ namespace Test1.Client
             else
             {
                 int sendContextNumber = Test.LastRequestIdSent + 1000;
-                Test.SendOut (msg.Payload, rsp =>
-                rsp.On<ReadyMessage>(idle =>
+                Test.SendOut(testMessage, rsp =>
+                rsp.On<ReadyMessage>(rm =>
                 {
                     Console.Write ("\n\r Thread="+Thread.CurrentThread.ManagedThreadId);
                     Console.WriteLine (", received idle message in sending context #"+sendContextNumber);
                     Console.Write ("\n\r\n\rSend command > ");
                 }));
   
-                Console.Write (", sending context#"+sendContextNumber+"...");
+                Console.Write (", sending context #"+sendContextNumber+"...");
                 return;
             }
         }
-        else if (msg.Payload is ErrorMessage)
+        else if (msg.TryConvertPayload(out errorMessage))
         {
-            RaTrc.Error(msg.CltRcvId, msg.Payload + "\r\n" + (msg.Payload as ErrorMessage).StackTrace);
+            RaTrc.Error(msg.CltRcvId, errorMessage.ToString() + "\r\n" + errorMessage.StackTrace);
         }
         else
         {

@@ -455,8 +455,8 @@ namespace Remact.Net.Internal
       
       // reply ServiceIdent
       ActorInfo response = new ActorInfo (ServiceIdent, ActorInfo.Use.ServiceConnectResponse);
+      response.ClientId = svcUser.ClientIdent.OutputClientId;
       req.Source   = svcUser.ClientIdent;
-      req.ClientId = svcUser.ClientIdent.OutputClientId;
       return response;
     }// Connect
 

@@ -118,7 +118,7 @@ namespace Remact.Net.Protocol.Wamp
         {
             _outstandingRequests.Add(request.RequestId, request);
             string callId = request.RequestId.ToString();
-            string procUri = request.DestinationMethod;
+            string procUri = request.PayloadType;
 
             // eg. CALL message for RPC with no arguments: [2, "7DK6TdN4wLiUJgNM", "http://example.com/api#howdy"]
 
@@ -187,7 +187,7 @@ namespace Remact.Net.Protocol.Wamp
         // DataFrame.State == Handlers.WebSocket.DataFrame.DataState.Complete
         private void OnReceived(UserContext context)
         {
-            Console.WriteLine("Received Data From :" + context.ClientAddress);
+            //Console.WriteLine("Received Data From :" + context.ClientAddress);
             int id = 0;
             bool errorReceived = false;
 
@@ -218,8 +218,23 @@ namespace Remact.Net.Protocol.Wamp
                     id = int.Parse((string)wamp[1]);
                     var message = _outstandingRequests[id];
                     _outstandingRequests.Remove(id);
-                    message.Payload = wamp[2];
+                    JToken payload = wamp[2];
+                    message.Payload = payload;
+                    if (message.PayloadType != typeof(ActorInfo).FullName)
+                    {
+                        // TODO get from method definition !?
+                        // For ActorInfo-requests, we expect an ActorInfo as response.
+                        message.PayloadType = null;
+                        if (!payload.HasValues && payload.Type == JTokenType.Object)
+                        {
+                            // empty responses are probably ReadyMessages ! (TODO)
+                            message.Payload = new ReadyMessage();
+                            message.PayloadType = typeof(ReadyMessage).FullName;
+                        }
+                    }
                     message.Type = ActorMessageType.Response;
+                    message.DestinationLambda = message.SourceLambda;
+                    message.SourceLambda = null;
 
                     _callback.MessageFromService(message); // adds source and destination
                 }
