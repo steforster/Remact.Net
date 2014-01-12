@@ -77,6 +77,7 @@ namespace Remact.Net
         var wsServer = new MyWebSocketServer()
         {
             Port = uri.Port,
+            FlashAccessPolicyEnabled = false,
             SubProtocols = new string[] { "wamp" },
 
             // Do this for every new client connection:

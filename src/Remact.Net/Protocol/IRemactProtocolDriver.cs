@@ -18,14 +18,9 @@ namespace Remact.Net.Protocol
         Uri ServiceUri { get; }
 
         /// <summary>
-        /// Gets the connection ready state.
+        /// Gets the connection port state.
         /// </summary>
-        ReadyState ReadyState { get; }
-
-        /// <summary>
-        /// Gets the connection ready state as string.
-        /// </summary>
-        string     ReadyStateAsString { get; }
+        PortState PortState { get; }
 
         /// <summary>
         /// Opens the connection.
@@ -43,16 +38,6 @@ namespace Remact.Net.Protocol
         /// Closes connection and frees resources.
         /// </summary>
         void Dispose();
-    }
-
-    /// <summary>
-    /// The connection ready state.
-    /// </summary>
-    public enum ReadyState
-    {
-        Closed,
-        Connected,
-        Faulted
     }
 
     /// <summary>

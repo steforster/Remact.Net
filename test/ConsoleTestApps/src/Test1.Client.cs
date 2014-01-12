@@ -52,7 +52,7 @@ namespace Test1.Client
             string command = Console.ReadLine();
             if (command == null)
             {
-                Thread.Sleep (3000); // Mono debugging returns null and does not wait
+                Thread.Sleep (8000); // Mono debugging returns null and does not wait
                 command = "xyz";
             }
 
