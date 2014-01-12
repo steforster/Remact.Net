@@ -577,7 +577,8 @@ namespace Remact.Net.Internal
         req.DestinationLambda = null;// make sure to call the DefaultHandler
         object response = null;
         ActorInfo cltReq;
-        if (req.TryConvertPayload(out cltReq))
+        if (!string.IsNullOrEmpty(req.PayloadType)
+         && req.TryConvertPayload(out cltReq))
         {
             if (ServiceIdent.Uri == null)
             {//first call after ServiceHost.Open(), WcfServiceAssistant will initialize the URI earlier.

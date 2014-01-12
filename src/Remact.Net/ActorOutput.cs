@@ -377,7 +377,7 @@ namespace Remact.Net
     {
       if (LastRequestIdSent == int.MaxValue) LastRequestIdSent = 10;
       ActorMessage msg = new ActorMessage(this, OutputClientId, ++LastRequestIdSent, 
-                                          this, payload.GetType().FullName, payload, null);
+                                          this, null, payload);
       SendOut(msg);
     }
 
@@ -391,8 +391,34 @@ namespace Remact.Net
     {
       if (LastRequestIdSent == int.MaxValue) LastRequestIdSent = 10;
       ActorMessage msg = new ActorMessage(this, OutputClientId, ++LastRequestIdSent,
-                                          this, payload.GetType().FullName, payload, responseHandler);
+                                          this, null, payload, responseHandler);
       SendOut (msg);
+    }
+
+    /// <summary>
+    /// Send a request payload to the partner on the outgoing connection.
+    /// The responseHandler expects a response payload of a given type TRsp.
+    /// </summary>
+    /// <param name="payload">The message payload to send.</param>
+    /// <param name="responseHandler">A method or lambda expression handling the asynchronous response.</param>
+    /// <typeparam name="TRsp">The expected type of the response payload. Other types and errors are sent to the default message handler.</typeparam>
+    public void SendOut<TRsp>(object payload, Action<TRsp, ActorMessage> responseHandler) where TRsp : class
+    {
+        if (LastRequestIdSent == int.MaxValue) LastRequestIdSent = 10;
+        ActorMessage msg = new ActorMessage(this, OutputClientId, ++LastRequestIdSent,
+                                            this, null, payload, 
+                                            (rsp) =>
+                                                {
+                                                    TRsp response;
+                                                    if (rsp.Type == ActorMessageType.Response
+                                                     && rsp.TryConvertPayload(out response))
+                                                    {
+                                                        responseHandler(response, rsp);
+                                                        return null;
+                                                    }
+                                                    return rsp;
+                                                });
+        SendOut(msg);
     }
 
     #endregion
@@ -446,6 +472,33 @@ namespace Remact.Net
       private MessageHandler<TOC> m_defaultTocResponseHandler;
 
       /// <summary>
+      /// Send a request payload to the partner on the outgoing connection.
+      /// The responseHandler expects a response payload of a given type TRsp.
+      /// </summary>
+      /// <param name="payload">The message payload to send.</param>
+      /// <param name="responseHandler">A method or lambda expression handling the asynchronous response.</param>
+      /// <typeparam name="TRsp">The expected type of the response payload. Other types and errors are sent to the default message handler.</typeparam>
+      public void SendOut<TRsp>(object payload, Action<TRsp, ActorMessage, TOC> responseHandler) where TRsp : class
+      {
+          if (LastRequestIdSent == int.MaxValue) LastRequestIdSent = 10;
+          ActorMessage msg = new ActorMessage(this, OutputClientId, ++LastRequestIdSent,
+                                              this, null, payload,
+                                              (rsp) =>
+                                              {
+                                                  TRsp response;
+                                                  if (rsp.Type == ActorMessageType.Response
+                                                   && rsp.TryConvertPayload(out response))
+                                                  {
+                                                      responseHandler(response, rsp, m_outputCtx);
+                                                      return null;
+                                                  }
+                                                  return rsp;
+                                              });
+          SendOut(msg);
+      }
+
+      
+      /// <summary>
       /// Message is passed to users default handler.
       /// </summary>
       /// <param name="msg">ActorMessage containing Payload and Source.</param>
@@ -453,7 +506,7 @@ namespace Remact.Net
       {
           if (m_defaultTocResponseHandler != null)
           {
-              m_defaultTocResponseHandler(msg, OutputContext); // MessageHandlerC> delegate
+              m_defaultTocResponseHandler(msg, OutputContext); // MessageHandler<TOC> delegate
           }
           else
           {
@@ -461,6 +514,6 @@ namespace Remact.Net
           }
       }
 
-  }// class ActorOutput<TSC>
+  }// class ActorOutput<TOC>
   #endregion
 }

@@ -58,7 +58,8 @@ namespace Remact.Net.Internal
                     if (connectMsg != null) // no error and connected
                     {
                         var reqCopy = new ActorMessage(message.Source, message.ClientId, message.RequestId, 
-                                                       message.Destination, message.PayloadType, message.Payload, message.SourceLambda);
+                                                       message.Destination, message.DestinationMethod, message.Payload, 
+                                                       message.SourceLambda);
                         reqCopy.Response = reqCopy; // do not send a ReadyMessage
                         var task = DoRequestAsync( reqCopy ); // call event OnInputConnected or OnInputDisconnected on the correct thread.
                         if (connectMsg.Usage != ActorInfo.Use.ServiceDisconnectResponse)

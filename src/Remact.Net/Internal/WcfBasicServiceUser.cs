@@ -208,7 +208,7 @@ namespace Remact.Net.Internal
             }
             else
             {
-                var message = new ActorMessage(null, 0, 0, null, null, notification, null);
+                var message = new ActorMessage(null, 0, 0, null, null, notification);
                 message.Type = ActorMessageType.Notification;
                 _protocolCallback.MessageFromService(message);
             }
@@ -240,15 +240,6 @@ namespace Remact.Net.Internal
     bool IWcfBasicPartner.TryConnect()
     {
       return true;
-    }
-
-    /// <summary>
-    /// Send a request to the service internally connected to this client-stub.
-    /// </summary>
-    /// <param name="msg">A <see cref="ActorMessage"/>the 'Source' property references the sending partner, where the response is expected.</param>
-    void IWcfBasicPartner.SendOut(ActorMessage msg)
-    {
-        ClientIdent.SendOut(msg); // post to service input queue
     }
 
     /// <summary>

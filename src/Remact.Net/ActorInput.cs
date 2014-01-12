@@ -240,15 +240,6 @@ namespace Remact.Net
       base.Disconnect();
     }
 
-    /// <summary>
-    /// May not be called.
-    /// </summary>
-    /// <param name="msg">A <see cref="ActorMessage"/>the 'Source' property references the sending partner, where the response is expected.</param>
-    void IWcfBasicPartner.SendOut(ActorMessage msg)
-    {
-        throw new Exception("AsyncWcfLib: Destination '" + Name + "' cannot SendOut");
-    }
-
     // may be called on any thread
     internal virtual object GetNewSenderContext()
     {

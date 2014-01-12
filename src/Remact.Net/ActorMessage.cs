@@ -129,11 +129,15 @@ namespace Remact.Net
         /// <param name="destination">The receiving partner.</param>
         /// <param name="destinationMethod">The receiving method defines the payload type.</param>
         /// <param name="payload">The user payload to send.</param>
-        /// <param name="responseHandler">null or a lamda expression to be called, when a response is aynchronously received.</param>
-        internal ActorMessage(ActorPort source, int clientId, int requestId, ActorPort destination, string destinationMethod, object payload, AsyncResponseHandler responseHandler)
+        /// <param name="responseHandler">null or a lamda expression to be called, when a response is aynchronously received (valid on client side requests/responses).</param>
+        /// <param name="expectedResponseType"> null or the expected response payload type (valid on client side requests/responses).</param>
+        internal ActorMessage(ActorPort source, int clientId, int requestId, 
+            ActorPort destination, string destinationMethod, object payload, 
+            AsyncResponseHandler responseHandler = null)
         {
             Source = source;
             Destination = destination;
+            DestinationMethod = destinationMethod;
             ClientId = clientId;
             RequestId = requestId;
             var m = payload as IExtensibleWcfMessage;
@@ -143,8 +147,11 @@ namespace Remact.Net
                 m.IsSent = true;
             }
 
-            PayloadType = destinationMethod;
             Payload = payload;
+            if (payload != null)
+            {
+                PayloadType = payload.GetType().FullName;
+            }
             SourceLambda = responseHandler;
         }// CTOR
 
@@ -177,7 +184,6 @@ namespace Remact.Net
                 try
                 {
                     result = jToken.ToObject<T>();
-                    Payload = result; // keep converted payload
                     return true;
                 }
                 catch { }
@@ -234,7 +240,7 @@ namespace Remact.Net
             if (Type == ActorMessageType.Request && Response == null)
             {
                 Response = new ActorMessage(service, ClientId, RequestId, 
-                                            Source, payload.GetType().FullName, payload, responseHandler);
+                                            Source, null, payload, responseHandler);
                 Response.Type = ActorMessageType.Response;
                 Response.DestinationLambda = SourceLambda; // SourceLambda will be called later on for the first response only
                 SourceLambda = null;
@@ -244,7 +250,7 @@ namespace Remact.Net
             else
             {
                 var msg = new ActorMessage(service, ClientId, RequestId,
-                                           Source, payload.GetType().FullName, payload, responseHandler);
+                                           Source, null, payload, responseHandler);
                 msg.Type = ActorMessageType.Notification;
                 if (service.TraceSend) RaTrc.Info(msg.SvcSndId, msg.ToString(), service.Logger);
                 Source.PostInput(msg);
@@ -258,13 +264,17 @@ namespace Remact.Net
         /// <returns>The message in readable text form.</returns>
         public override string ToString ()
         {
-            if(Payload != null)
+            if (!string.IsNullOrEmpty(PayloadType))
             {
-                return Payload.ToString();
+                return PayloadType;
+            }
+            else if (Payload != null)
+            {
+                return Payload.GetType().FullName;
             }
             else
             {
-                return string.Format ("<null> message, ClientId={0}, RequestId={1}", ClientId, RequestId);
+                return string.Format ("<null> payload");
             }
         }
 

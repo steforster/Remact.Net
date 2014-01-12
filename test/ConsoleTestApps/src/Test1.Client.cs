@@ -110,13 +110,13 @@ namespace Test1.Client
             else
             {
                 int sendContextNumber = Test.LastRequestIdSent + 1000;
-                Test.SendOut(testMessage, rsp =>
-                rsp.On<ReadyMessage>(rm =>
-                {
-                    Console.Write ("\n\r Thread="+Thread.CurrentThread.ManagedThreadId);
-                    Console.WriteLine (", received idle message in sending context #"+sendContextNumber);
-                    Console.Write ("\n\r\n\rSend command > ");
-                }));
+                Test.SendOut(testMessage, 
+                        delegate (ReadyMessage response, ActorMessage rsp)
+                        {
+                            Console.Write ("\n\r Thread="+Thread.CurrentThread.ManagedThreadId);
+                            Console.WriteLine (", received idle message in sending context #"+sendContextNumber);
+                            Console.Write ("\n\r\n\rSend command > ");
+                        });
   
                 Console.Write (", sending context #"+sendContextNumber+"...");
                 return;

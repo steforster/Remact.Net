@@ -142,7 +142,7 @@ namespace Remact.Net.Protocol.Wamp
             }
 
             var error = new ErrorMessage(ErrorMessage.Code.RspNotDeserializableOnClient, errorDesc);
-            var message = new ActorMessage(null, 0, id, null, null, error, null);
+            var message = new ActorMessage(null, 0, id, null, null, error);
             ErrorFromClient(message);
         }
 
@@ -190,6 +190,7 @@ namespace Remact.Net.Protocol.Wamp
             //Console.WriteLine("Received Data From :" + context.ClientAddress);
             int id = 0;
             bool errorReceived = false;
+            ActorMessage message = null;
 
             try
             {
@@ -216,25 +217,25 @@ namespace Remact.Net.Protocol.Wamp
                 {
                     // eg. CALLRESULT message with 'null' result: [3, "CcDnuI2bl2oLGBzO", null]
                     id = int.Parse((string)wamp[1]);
-                    var message = _outstandingRequests[id];
-                    _outstandingRequests.Remove(id);
+                    message = GetResponseMessage(id);
+                    message.Type = ActorMessageType.Response;
                     JToken payload = wamp[2];
                     message.Payload = payload;
+
+                    // For ActorInfo-requests, we expect an ActorInfo as response.
                     if (message.PayloadType != typeof(ActorInfo).FullName)
                     {
-                        // TODO get from method definition !?
-                        // For ActorInfo-requests, we expect an ActorInfo as response.
-                        message.PayloadType = null;
                         if (!payload.HasValues && payload.Type == JTokenType.Object)
                         {
-                            // empty responses are probably ReadyMessages ! (TODO)
+                            // empty responses are ReadyMessages !
                             message.Payload = new ReadyMessage();
                             message.PayloadType = typeof(ReadyMessage).FullName;
                         }
+                        else
+                        {
+                            message.PayloadType = null; // other payloads will be converted in anonymous methods, when receiving.
+                        }
                     }
-                    message.Type = ActorMessageType.Response;
-                    message.DestinationLambda = message.SourceLambda;
-                    message.SourceLambda = null;
 
                     _callback.MessageFromService(message); // adds source and destination
                 }
@@ -242,12 +243,22 @@ namespace Remact.Net.Protocol.Wamp
                 {
                     // eg. CALLERROR message with generic error: [4, "gwbN3EDtFv6JvNV5", "http://autobahn.tavendo.de/error#generic", "math domain error"]
                     errorReceived = true;
-                    id = int.Parse((string)wamp[1]);
-                    string errorUri = (string)wamp[2];
+                    var requestId = (string)wamp[1];
+                    var errorUri = (string)wamp[2];
                     var code = (ErrorMessage.Code)Enum.Parse(typeof(ErrorMessage.Code), errorUri, false);
-                    string errorDesc = (string)wamp[3];
+                    var errorDesc = (string)wamp[3];
                     var error = new ErrorMessage(code, errorDesc);
-                    var message = new ActorMessage(null, 0, id, null, error.GetType().FullName, error, null);
+
+                    if (string.IsNullOrEmpty(requestId))
+                    {
+                        message = new ActorMessage(null, 0, id, null, null, error);
+                    }
+                    else 
+                    {
+                        id = int.Parse(requestId);
+                        message = GetResponseMessage(id);
+                    }
+
                     message.Type = ActorMessageType.Error;
                     //if (wamp.Count >= 4)
                     //{
@@ -260,8 +271,11 @@ namespace Remact.Net.Protocol.Wamp
                     // eg. EVENT message with 'null' as payload: [8, "http://example.com/simple", null]
 
                     object payload = payload = wamp[2];
-                    var message = new ActorMessage(null, 0, 0, null, (string)wamp[1], payload, null);
+                    string portName, methodName, payloadType;
+                    WampClientProxy.SplitProcUri((string)wamp[1], out portName, out methodName, out payloadType);
+                    message = new ActorMessage(null, 0, 0, null, methodName, payload);
                     message.Type = ActorMessageType.Notification;
+                    message.PayloadType = payloadType;
 
                     _callback.MessageFromService(message); // adds source and destination
                 }
@@ -272,11 +286,18 @@ namespace Remact.Net.Protocol.Wamp
             }
             catch (Exception ex)
             {
-                //var r = new Response { Type = ResponseType.Error, Data = new { e.Message } };
-                //context.Send(JsonConvert.SerializeObject(r));
-                //TODO full qualified name
                 if (!errorReceived) ResponseNotDeserializable(id, ex.Message);
             }
+        }
+
+        private ActorMessage GetResponseMessage(int id)
+        {
+            var message = _outstandingRequests[id];
+            _outstandingRequests.Remove(id);
+            message.Type = ActorMessageType.Response;
+            message.DestinationLambda = message.SourceLambda;
+            message.SourceLambda = null;
+            return message;
         }
 
         // Connect failure or disposing context 

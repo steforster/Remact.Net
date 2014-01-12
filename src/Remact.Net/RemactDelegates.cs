@@ -13,7 +13,7 @@ namespace Remact.Net
     /// A general handler for internal and external messages. Called on the correct thread (synchronization context).
     /// </summary>
     /// <param name="msg">the received request or response containing payload and sender.</param>
-    public delegate void MessageHandler( ActorMessage msg ); // TODO remove, legacy
+    public delegate void MessageHandler( ActorMessage msg );
 
     #if !BEFORE_NET45
     /// <summary>
@@ -29,7 +29,7 @@ namespace Remact.Net
     /// </summary>
     /// <param name="msg">the received request or response containing payload and sender.</param>
     /// <param name="senderContext">the local msg.Source.SenderContext object present when the request or response is recived.</param>
-    public delegate void MessageHandler<TSC>( ActorMessage msg, TSC senderContext ) where TSC : class; // TODO remove, legacy
+    public delegate void MessageHandler<TSC>( ActorMessage msg, TSC senderContext ) where TSC : class;
 
     #if !BEFORE_NET45
     /// <summary>

@@ -7,8 +7,6 @@ ActorOutputs send requests to an ActorInput and get the response to this request
 For a v1Call, Remact supports only ONE argument.
 This means, there are a maximum of 4 JTokens in the JArray of a v1Call-message.
 
-TODO: As there is no uri for a v1CallResult, we currently have no clue what c# type has been returned.
-
 Event notifications do not have to be subscribed. A server can send notifications to each connected client.
 This means, that an ActorInput will send a **v1Event** message to its connected ActorOutput.
 

@@ -5,9 +5,10 @@ using System;
 using System.Collections.Generic;  // List
 using System.Reflection;           // Assembly
 using System.Text;                 // StringBuilder
-using Remact.Net.Internal;
 using System.Threading;
 using System.Net;                  // IPAddress
+using Newtonsoft.Json;
+using Remact.Net.Internal;
 
 namespace Remact.Net
 {
@@ -33,8 +34,9 @@ namespace Remact.Net
     public  string    StackTrace;
 
     /// <summary>
-    /// Get or set the Error-Code, TODO: do not serialize
+    /// Get or set the Error-Code
     /// </summary>
+    [JsonIgnore]
     public Code Error 
     {
      get{if (z_error < 0 || z_error >= (int)Code.Last) return Code.Undef;

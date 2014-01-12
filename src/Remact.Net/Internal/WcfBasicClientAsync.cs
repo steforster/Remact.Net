@@ -453,7 +453,7 @@ namespace Remact.Net.Internal
         ClientIdent.PickupSynchronizationContext();
         ClientIdent.m_Connected = true; // internal, from ActorOutput to WcfBasicClientAsync
         ActorMessage msg = new ActorMessage (ClientIdent, ClientIdent.OutputClientId, ++ClientIdent.LastRequestIdSent, 
-                                             ServiceIdent, null, null, null);
+                                             ServiceIdent, null, null);
         m_protocolClient.OpenAsync(msg, this); 
         // Callback to OnOpenCompleted when channel has been opened locally (no TCP connection opened on mono).
     }// OpenConnectionToService
@@ -909,7 +909,7 @@ namespace Remact.Net.Internal
     {
       if (ClientIdent.LastRequestIdSent == int.MaxValue) ClientIdent.LastRequestIdSent = 10;
       ActorMessage id = new ActorMessage (ClientIdent, ClientIdent.OutputClientId, ++ClientIdent.LastRequestIdSent,
-                                          ServiceIdent, request.GetType().FullName, request, asyncResponseHandler);
+                                          ServiceIdent, null, request, asyncResponseHandler);
       PostInput  (id);
       return id;
     }

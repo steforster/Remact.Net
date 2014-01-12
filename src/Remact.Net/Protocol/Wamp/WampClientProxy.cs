@@ -67,7 +67,7 @@ namespace Remact.Net.Protocol.Wamp
         private void RequestNotDeserializable(int id, string errorDesc)
         {
             var error = new ErrorMessage(ErrorMessage.Code.ReqOrRspNotSerializableOnService, errorDesc);
-            var message = new ActorMessage(null, 0, id, null, null, error, null);
+            var message = new ActorMessage(null, 0, id, null, null, error);
             ErrorFromService(message);
         }
 
@@ -145,7 +145,7 @@ namespace Remact.Net.Protocol.Wamp
         {
             //Console.WriteLine("Received Data From :" + context.ClientAddress);
             int id = 0;
-            bool errorReceived = false; 
+            bool errorReceived = false;
 
             try
             {
@@ -168,8 +168,12 @@ namespace Remact.Net.Protocol.Wamp
                     {
                         payload = wamp[3];
                     }
+
+                    string portName, methodName, payloadType;
+                    SplitProcUri((string)wamp[2], out portName, out methodName, out payloadType);
                     var message = new ActorMessage(_clientIdent, _clientIdent.OutputClientId, id,
-                                                   _serviceIdent, (string)wamp[2], payload, null);
+                                                   _serviceIdent, methodName, payload);
+                    message.PayloadType = payloadType;
 
                     _requestHandler.MessageFromClient(message);
                 }
@@ -183,7 +187,7 @@ namespace Remact.Net.Protocol.Wamp
                     string errorDesc = (string)wamp[3];
                     var payload = new ErrorMessage(code, errorDesc);
                     var message = new ActorMessage(_clientIdent, _clientIdent.OutputClientId, id, 
-                                                   _serviceIdent, payload.GetType().FullName, payload, null);
+                                                   _serviceIdent, null, payload);
                     message.Type = ActorMessageType.Error;
                     //if (wamp.Count >= 4)
                     //{
@@ -196,9 +200,12 @@ namespace Remact.Net.Protocol.Wamp
                     // eg. EVENT message with 'null' as payload: [8, "http://example.com/simple", null]
 
                     JToken payload = wamp[2];
+                    string portName, methodName, payloadType;
+                    SplitProcUri((string)wamp[1], out portName, out methodName, out payloadType);
                     var message = new ActorMessage(_clientIdent, _clientIdent.OutputClientId, 0,
-                                                   _serviceIdent, (string)wamp[1], payload, null);
+                                                   _serviceIdent, methodName, payload);
                     message.Type = ActorMessageType.Notification;
+                    message.PayloadType = payloadType;
 
                     _requestHandler.MessageFromClient(message);
                 }
@@ -209,8 +216,6 @@ namespace Remact.Net.Protocol.Wamp
             }
             catch (Exception ex)
             {
-                //TODO full qualified name
-                //TODO: separate: Response not deserializable
                 if (!errorReceived) RequestNotDeserializable(id, ex.Message);
             }
         }
@@ -222,5 +227,50 @@ namespace Remact.Net.Protocol.Wamp
         }
 
         #endregion
+
+        internal static void SplitProcUri(string uri, out string portName, out string methodName, out string payloadType)
+        {
+            // <ActorPortName> / <MethodName> / <FullQualifiedPayloadType>
+            portName = null;
+            methodName = null;
+            payloadType = null;
+            if(string.IsNullOrEmpty(uri)) return;
+ 
+            int i = 0;
+            while (uri[i] == '/')
+            {
+                i++; // skip leading slashes
+                if (i >= uri.Length) return;
+            }
+
+            int j = uri.IndexOf('/', i);
+            if (j < 0)
+            {
+                payloadType = uri.Substring(i);
+                return;
+            }
+
+            string first = uri.Substring(i, j - i);
+            i = j + 1;
+            j = uri.IndexOf('/', i);
+            if (j < 0)
+            {
+                methodName = first;
+                payloadType = uri.Substring(i);
+                return;
+            }
+
+            portName = first;
+            methodName = uri.Substring(i, j - i);
+            i = j + 1;
+            j = uri.IndexOf('/', i);
+            if (j < 0)
+            {
+                payloadType = uri.Substring(i);
+                return;
+            }
+
+            payloadType = uri.Substring(i, j - i);
+        }
     }
 }

@@ -29,17 +29,6 @@ namespace Remact.Net.Internal
     void Disconnect();
 
     /// <summary>
-    /// Send a request message to the partner on the outgoing connection.
-    /// At least a ReadyMessage will asynchronously be received through 'PostInput', when the partner has processed the request.
-    /// ** Usage **
-    /// Internal:             Send a message to the connected partner running on another thread synchronization context.
-    /// ActorOutput (client): Send a request to the connected remote service.
-    /// Serviceside:          Source.SendOut() send a request from client-proxy to the internal service.
-    /// </summary>
-    /// <param name="msg">A <see cref="ActorMessage"/>the 'Source' property references the sending partner, where the response is expected.</param>
-    void SendOut(ActorMessage msg); // TODO is it needed anymore ????
-
-    /// <summary>
     /// Post a request or response message to the input of this partner.
     /// ** Usage **
     /// Internal:                                  Post a message into this partners input queue.
