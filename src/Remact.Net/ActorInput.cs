@@ -521,7 +521,7 @@ namespace Remact.Net
         } 
         else 
         {
-            RaTrc.Error("Remact", "Unhandled request: " + msg.Payload, Logger);
+            RaLog.Error("Remact", "Unhandled request: " + msg.Payload, Logger);
         }
     }
   }// class ActorInput<TSC>

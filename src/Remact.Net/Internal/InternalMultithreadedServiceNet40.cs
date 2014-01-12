@@ -79,7 +79,7 @@ namespace Remact.Net.Internal
             }
             catch( Exception ex )
             {
-                RaTrc.Exception(message.SvcRcvId, ex, _service.ServiceIdent.Logger);
+                RaLog.Exception(message.SvcRcvId, ex, _service.ServiceIdent.Logger);
                 response = new ErrorMessage( ErrorMessage.Code.UnhandledExceptionOnService, ex );
             }
             message.SendResponse(response);
@@ -122,7 +122,7 @@ namespace Remact.Net.Internal
                         }
                         catch( Exception ex )
                         {
-                            RaTrc.Exception( "ActorMessage to " + msg.Destination.Name + " cannot be handled by application", ex );
+                            RaLog.Exception( "ActorMessage to " + msg.Destination.Name + " cannot be handled by application", ex );
                             tcs.SetException( ex );
                         }
                     }, null )); // obj

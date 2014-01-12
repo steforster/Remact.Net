@@ -249,7 +249,7 @@ namespace Remact.Net
 
       if( !m_Connected )
       {
-          RaTrc.Warning( "Remact", "ActorPort '" + Name + "' is not connected. Cannot send message!", Logger );
+          RaLog.Warning( "Remact", "ActorPort '" + Name + "' is not connected. Cannot send message!", Logger );
           return;
       }
 
@@ -510,7 +510,7 @@ namespace Remact.Net
           }
           else
           {
-              RaTrc.Error("Remact", "Unhandled response: " + msg.Payload, Logger);
+              RaLog.Error("Remact", "Unhandled response: " + msg.Payload, Logger);
           }
       }
 

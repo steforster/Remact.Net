@@ -11,7 +11,7 @@ using System.Threading;     // Sleep
 
 namespace Remact.Net
 {
-public partial class RaTrc
+public partial class RaLog
 {
 	/// <summary>
   /// <para>The 'file' implementation of a ITracePlugin</para>
@@ -24,7 +24,7 @@ public partial class RaTrc
     //------------------------------------------------------------
     /// <summary>
     /// Write trace header and store 'ApplicationInstance'
-    /// You can easyly write a similar adapter class to redirect trace output to your own logging framework. See RaTrc.PluginConsole.
+    /// You can easyly write a similar adapter class to redirect trace output to your own logging framework. See RaLog.PluginConsole.
     /// </summary>
     /// <param name="appInstance">a number to identify the application instance, see RemactDefaults</param>
     public void Start (int appInstance)
@@ -407,5 +407,5 @@ public partial class RaTrc
     }// static TracingExeception
 
   }//class PluginFile
-}// partial class RaTrc
+}// partial class RaLog
 }// namespace

@@ -82,7 +82,7 @@ namespace Remact.Net.Internal
         }//-------------------------------
         else if (m_RouterClient.IsFaulted)
         {
-          if (m_nConnectTries < 0) RaTrc.Error("Remact", "Router client in Fault state !", RemactApplication.Logger);
+          if (m_nConnectTries < 0) RaLog.Error("Remact", "Router client in Fault state !", RemactApplication.Logger);
           m_RouterClient.AbortCommunication ();
           m_Timer.Change (15000, 1000); // 15 s warten und neu starten
         }//-------------------------------
@@ -121,14 +121,14 @@ namespace Remact.Net.Internal
                 svc.NextEnableMessage = DateTime.Now.AddSeconds(20);
                 svc.IsServiceRegistered = true;
                 ActorMessage id = m_RouterClient.SendOut (req);
-                RaTrc.Info( id.CltSndId, "send to Remact.Catalog: " + req.ToString(), RemactApplication.Logger );// msg.CltSndId is updated in Send()
+                RaLog.Info( id.CltSndId, "send to Remact.Catalog: " + req.ToString(), RemactApplication.Logger );// msg.CltSndId is updated in Send()
 
               }
               else if (m_ServiceList[m_nCurrentSvc].NextEnableMessage < DateTime.Now)
               {
                 m_ServiceList[m_nCurrentSvc].NextEnableMessage  = DateTime.Now.AddSeconds(20);
                 m_RouterClient.SendOut (req);
-                //RaTrc.Info (req.CltSndId, "Alive    "+req.ToString ()); // req.CltSndId is updated in Send()
+                //RaLog.Info (req.CltSndId, "Alive    "+req.ToString ()); // req.CltSndId is updated in Send()
               }
               m_nCurrentSvc++; // next Svc on next timer event
             }
@@ -139,7 +139,7 @@ namespace Remact.Net.Internal
       }
       catch (Exception ex)
       {
-          RaTrc.Exception( "during RouterClient timer", ex, RemactApplication.Logger );
+          RaLog.Exception( "during RouterClient timer", ex, RemactApplication.Logger );
       }
       m_Running = false;
     }// OnTimerTick
@@ -155,11 +155,11 @@ namespace Remact.Net.Internal
           if (err.Error == ErrorMessage.Code.ServiceNotRunning
            || err.Error == ErrorMessage.Code.RouterNotRunning)
           {
-              RaTrc.Warning( rsp.CltRcvId, "Remact catalog service not running at  '" + rsp.Source.Uri + "'", RemactApplication.Logger );
+              RaLog.Warning( rsp.CltRcvId, "Remact catalog service not running at  '" + rsp.Source.Uri + "'", RemactApplication.Logger );
           }
           else
           {
-              RaTrc.Warning( rsp.CltRcvId, err.ToString(), RemactApplication.Logger );
+              RaLog.Warning( rsp.CltRcvId, err.ToString(), RemactApplication.Logger );
           }
         }
       }
@@ -169,7 +169,7 @@ namespace Remact.Net.Internal
       }
       else
       {
-          RaTrc.Info( rsp.CltRcvId, rsp.ToString(), RemactApplication.Logger );
+          RaLog.Info( rsp.CltRcvId, rsp.ToString(), RemactApplication.Logger );
       }
     }// OnMessageReceived
     
@@ -246,7 +246,7 @@ namespace Remact.Net.Internal
             {
               m_RouterClient.Disconnect(); // send last messages, contrary to AbortCommunication();
               m_RouterClient = null;
-              RaTrc.Info("Remact", "Router client disconnected.", RemactApplication.Logger);
+              RaLog.Info("Remact", "Router client disconnected.", RemactApplication.Logger);
             }
             catch
             {
@@ -256,7 +256,7 @@ namespace Remact.Net.Internal
           if( m_RouterClient != null && !m_RouterClient.IsDisconnected )
           {
             m_RouterClient.AbortCommunication();
-            RaTrc.Error("Remact", "Router client aborted, outstanding responses = " + n, RemactApplication.Logger);
+            RaLog.Error("Remact", "Router client aborted, outstanding responses = " + n, RemactApplication.Logger);
           }
         }
         
@@ -302,7 +302,7 @@ namespace Remact.Net.Internal
           ActorInfo req = new ActorInfo (m_ServiceList[n].ServiceIdent, 
                                                          ActorInfo.Use.ServiceDisableRequest);
           ActorMessage id = m_RouterClient.SendOut (req);
-          RaTrc.Info( id.CltSndId, "Disable  " + req.ToString(), RemactApplication.Logger );
+          RaLog.Info( id.CltSndId, "Disable  " + req.ToString(), RemactApplication.Logger );
           m_ServiceList[n].IsServiceRegistered = false;
         }
         m_ServiceList.RemoveAt(n);

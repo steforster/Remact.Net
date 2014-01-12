@@ -8,7 +8,7 @@ using System.Reflection;    // Assembly, Attributes
 
 namespace Remact.Net
 {
-public partial class RaTrc
+public partial class RaLog
 {
 	/// <summary>
     /// <para>The default implementation of a ITracePlugin</para>
@@ -108,5 +108,5 @@ public partial class RaTrc
     }
     
   }//class PluginConsole
-}// partial class RaTrc
+}// partial class RaLog
 }// namespace

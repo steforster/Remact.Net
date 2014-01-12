@@ -264,7 +264,7 @@ namespace Remact.Net
         }
         catch (Exception ex)
         {
-            RaTrc.Exception("Svc: Error while closing all services and disconnecting all clients", ex, RemactApplication.Logger);
+            RaLog.Exception("Svc: Error while closing all services and disconnecting all clients", ex, RemactApplication.Logger);
         }
     }// DisconnectAll
 
@@ -334,8 +334,8 @@ namespace Remact.Net
 
     /// <summary>
     /// Set your logging object here (null by default).
-    /// It is passed to the logging methods of RaTrc.ITracePlugin.
-    /// You will use it when writing your own adapter class based on RaTrc.ITracePlugin.
+    /// It is passed to the logging methods of RaLog.ITracePlugin.
+    /// You will use it when writing your own adapter class based on RaLog.ITracePlugin.
     /// The adapter class is needed to redirect trace output to your own logging/tracing framework.
     /// </summary>
     public    object                 Logger       { get; set; }
@@ -390,12 +390,12 @@ namespace Remact.Net
             }
             else
             {
-                RaTrc.Error(msg.SvcSndId, err.ToString(), Logger);
+                RaLog.Error(msg.SvcSndId, err.ToString(), Logger);
             }
         }
         catch( Exception ex )
         {
-            RaTrc.Exception( "Cannot return dispatching error message", ex, Logger );
+            RaLog.Exception( "Cannot return dispatching error message", ex, Logger );
         }
     }
 
@@ -424,7 +424,7 @@ namespace Remact.Net
                 int threadId = Thread.CurrentThread.ManagedThreadId;
                 if (SyncContext != null && ManagedThreadId != threadId && m_Connected)
                 {
-                    RaTrc.Error( "Remact", "Thread connecting ActorPort '" + Name + "' has changed. Only one synchronization context is supported!", Logger );
+                    RaLog.Error( "Remact", "Thread connecting ActorPort '" + Name + "' has changed. Only one synchronization context is supported!", Logger );
                 }
                 ManagedThreadId = threadId;
                 SyncContext = currentThreadSyncContext;
@@ -551,13 +551,13 @@ namespace Remact.Net
     {
         if( !m_Connected )
         {
-            RaTrc.Warning( "Remact", "ActorPort '" + Name + "' is not connected. Cannot dispatch message!", Logger );
+            RaLog.Warning( "Remact", "ActorPort '" + Name + "' is not connected. Cannot dispatch message!", Logger );
             return;
         }
 
         if( m_CurrentReq != null )
         {
-            RaTrc.Error( "Remact", "Multithreading not allowed when dispatching a message in " + Name, Logger );
+            RaLog.Error( "Remact", "Multithreading not allowed when dispatching a message in " + Name, Logger );
             Thread.Sleep(0); // let the other thread finish - may be it helps..
         }
 
@@ -581,14 +581,14 @@ namespace Remact.Net
                 }
                 else if (TraceConnect && IsServiceName)
                 {
-                    RaTrc.Info(id.SvcRcvId, String.Format("{0} to Remact service './{1}'", connectMsg.Usage.ToString(), Name), Logger);
+                    RaLog.Info(id.SvcRcvId, String.Format("{0} to Remact service './{1}'", connectMsg.Usage.ToString(), Name), Logger);
                 }
             }
 
             if (TraceReceive && connectMsg == null)
             {
-                if( IsServiceName ) RaTrc.Info( id.SvcRcvId, id.ToString(), Logger );
-                               else RaTrc.Info( id.CltRcvId, id.ToString(), Logger );
+                if( IsServiceName ) RaLog.Info( id.SvcRcvId, id.ToString(), Logger );
+                               else RaLog.Info( id.CltRcvId, id.ToString(), Logger );
             }
             bool needsResponse = id.IsRequest;
 
@@ -611,7 +611,7 @@ namespace Remact.Net
                 else
                 {
                     //No trace for anonymous ActorOutput
-                    //RaTrc.Error( "Remact", "Unhandled response: " + id.Payload, Logger );
+                    //RaLog.Error( "Remact", "Unhandled response: " + id.Payload, Logger );
                 }
             }
 

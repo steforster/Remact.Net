@@ -244,7 +244,7 @@ namespace Remact.Net
                 Response.Type = ActorMessageType.Response;
                 Response.DestinationLambda = SourceLambda; // SourceLambda will be called later on for the first response only
                 SourceLambda = null;
-                if (service.TraceSend) RaTrc.Info(this.SvcSndId, Response.ToString(), service.Logger);
+                if (service.TraceSend) RaLog.Info(this.SvcSndId, Response.ToString(), service.Logger);
                 Source.PostInput(Response);
             }
             else
@@ -252,7 +252,7 @@ namespace Remact.Net
                 var msg = new ActorMessage(service, ClientId, RequestId,
                                            Source, null, payload, responseHandler);
                 msg.Type = ActorMessageType.Notification;
-                if (service.TraceSend) RaTrc.Info(msg.SvcSndId, msg.ToString(), service.Logger);
+                if (service.TraceSend) RaLog.Info(msg.SvcSndId, msg.ToString(), service.Logger);
                 Source.PostInput(msg);
             }
         }

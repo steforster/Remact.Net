@@ -173,7 +173,7 @@ namespace Remact.Net
     /// <summary>
     /// Library users may change here how to get an application instance id.
     /// </summary>
-    public virtual int     ApplicationInstance {get{return RaTrc.ApplicationInstance;}}
+    public virtual int     ApplicationInstance {get{return RaLog.ApplicationInstance;}}
 
     /// <summary>
     /// Library users may change here whether an application instance is unique in plant or on host.
@@ -238,7 +238,7 @@ namespace Remact.Net
     /// <param name="args">the commandline arguments passed to Main()</param>
     /// <param name="traceWriter">null or the plugin to write trace</param>
     /// <param name="installExitHandler">when true: install handlers for normal and exceptional application exit</param>
-    public static void ApplicationStart (string[] args, RaTrc.ITracePlugin traceWriter, bool installExitHandler)
+    public static void ApplicationStart (string[] args, RaLog.ITracePlugin traceWriter, bool installExitHandler)
     {
         int appInstance; // by default the first commandline argument
         if (args.Length == 0 || !int.TryParse(args[0], out appInstance))
@@ -246,10 +246,10 @@ namespace Remact.Net
             appInstance = 0; // use ProcessId
         }
 
-        RaTrc.UsePlugin (traceWriter);
-        RaTrc.Start (appInstance);
+        RaLog.UsePlugin (traceWriter);
+        RaLog.Start (appInstance);
         if (installExitHandler) RemactApplication.InstallExitHandler();
-        RaTrc.Run(); // open file and write first messages
+        RaLog.Run(); // open file and write first messages
     }
 
     private string m_TraceFolder = null;

@@ -268,7 +268,7 @@ namespace Remact.Net.Internal
       }
       catch (Exception ex)
       {
-          RaTrc.Exception("Cannot open Remact connection(2)", ex, ClientIdent.Logger);
+          RaLog.Exception("Cannot open Remact connection(2)", ex, ClientIdent.Logger);
           m_boTimeout = true; // enter 'faulted' state when eg. configuration is incorrect
       }
     }// TryConnectVia
@@ -348,7 +348,7 @@ namespace Remact.Net.Internal
       }
       catch (Exception ex)
       {
-          RaTrc.Exception("Cannot abort Remact connection", ex, ClientIdent.Logger);
+          RaLog.Exception("Cannot abort Remact connection", ex, ClientIdent.Logger);
       }
       
       m_protocolClient = null;
@@ -395,7 +395,7 @@ namespace Remact.Net.Internal
     {
       if (m_protocolClient != null)
       {
-        RaTrc.Info("RemactClt", "["+mark.PadRight(6)+"] "+ ClientIdent.Name+"["+ClientIdent.OutputClientId+"]"
+        RaLog.Info("RemactClt", "["+mark.PadRight(6)+"] "+ ClientIdent.Name+"["+ClientIdent.OutputClientId+"]"
                     +", ReadyState=" + m_protocolClient.ReadyStateAsString
                     , ClientIdent.Logger );
       }
@@ -456,8 +456,8 @@ namespace Remact.Net.Internal
                 request.PayloadType = typeof(ActorInfo).FullName;
   
                 if (ClientIdent.TraceConnect) {
-                    if (m_boTemporaryRouterConn) RaTrc.Info(request.CltSndId, string.Concat("Temporary connecting .....: '", serviceAddr, "'"), ClientIdent.Logger);
-                    else RaTrc.Info(request.CltSndId, string.Concat("Connecting svc: '", serviceAddr, "'"), ClientIdent.Logger);
+                    if (m_boTemporaryRouterConn) RaLog.Info(request.CltSndId, string.Concat("Temporary connecting .....: '", serviceAddr, "'"), ClientIdent.Logger);
+                    else RaLog.Info(request.CltSndId, string.Concat("Connecting svc: '", serviceAddr, "'"), ClientIdent.Logger);
                 }
 
                 // send first connection request on user thread --> response will be received on this thread also
@@ -549,12 +549,12 @@ namespace Remact.Net.Internal
             }
 
             LastRequestIdReceived = message.RequestId;
-            if (ClientIdent.TraceReceive) RaTrc.Info(message.CltRcvId, message.PayloadType, ClientIdent.Logger);
+            if (ClientIdent.TraceReceive) RaLog.Info(message.CltRcvId, message.PayloadType, ClientIdent.Logger);
             ClientIdent.DispatchMessage(message);
         }
         catch (Exception ex)
         {
-            RaTrc.Exception( "Message for " + ClientIdent.Name + " cannot be handled by application", ex, ClientIdent.Logger );
+            RaLog.Exception( "Message for " + ClientIdent.Name + " cannot be handled by application", ex, ClientIdent.Logger );
         }
     }// OnIncomingMessageOnActorThread
 
@@ -576,7 +576,7 @@ namespace Remact.Net.Internal
         }
         else if (rsp.Usage == ActorInfo.Use.ServiceDisconnectResponse)
         {
-            RaTrc.Info( result.CltRcvId, rsp.ToString(), ClientIdent.Logger );//"Disconnected svc",0));
+            RaLog.Info( result.CltRcvId, rsp.ToString(), ClientIdent.Logger );//"Disconnected svc",0));
             return true;
         }
         else if (rsp.Usage == ActorInfo.Use.ServiceAddressResponse
@@ -587,7 +587,7 @@ namespace Remact.Net.Internal
         }
         else
         {
-            RaTrc.Error( result.CltRcvId, "Unknown use of " + rsp.ToString(), ClientIdent.Logger );
+            RaLog.Error( result.CltRcvId, "Unknown use of " + rsp.ToString(), ClientIdent.Logger );
         }
 
         return false; // Message must be handled by application
@@ -605,7 +605,7 @@ namespace Remact.Net.Internal
             RemactCatalogClient.Instance ().AddClient (this);
             m_boFirstResponseReceived = true; // IsConnected --> true !
             m_boConnecting = false;
-            if( ClientIdent.TraceConnect ) RaTrc.Info( id.CltRcvId, ServiceIdent.ToString( "Connected  svc", 0 ), ClientIdent.Logger );
+            if( ClientIdent.TraceConnect ) RaLog.Info( id.CltRcvId, ServiceIdent.ToString( "Connected  svc", 0 ), ClientIdent.Logger );
             //TraceState("Opened");
         }
     }
@@ -617,7 +617,7 @@ namespace Remact.Net.Internal
         ActorInfo svcRsp = rsp.Payload as ActorInfo;
         if (svcRsp != null && svcRsp.Usage == ActorInfo.Use.ServiceConnectResponse)
         {
-            if( ClientIdent.TraceSend ) RaTrc.Info( rsp.CltRcvId, "Temporary connected router: '" + svcRsp.Name + "' on '" + svcRsp.HostName + "'", ClientIdent.Logger );
+            if( ClientIdent.TraceSend ) RaLog.Info( rsp.CltRcvId, "Temporary connected router: '" + svcRsp.Name + "' on '" + svcRsp.HostName + "'", ClientIdent.Logger );
             ActorPort lookup = new ActorPort();
             lookup.HostName = m_RouterHostToLookup;
             lookup.Name = m_ServiceNameToLookup;
@@ -640,7 +640,7 @@ namespace Remact.Net.Internal
                         delimiter = ", ";
                     }
                 }
-                RaTrc.Info( rsp.CltRcvId, "ServiceAddressResponse: " + svcRsp.Uri + s, ClientIdent.Logger );
+                RaLog.Info( rsp.CltRcvId, "ServiceAddressResponse: " + svcRsp.Uri + s, ClientIdent.Logger );
             }
             m_addressesTried = 0;
             OnConnectionResponseFromService( null ); // try first address
@@ -650,7 +650,7 @@ namespace Remact.Net.Internal
             ErrorMessage err = rsp.Payload as ErrorMessage;
             if (err != null)
             {
-                //RaTrc.Warning (rsp.CltRcvId, "Router "+rsp.ToString());
+                //RaLog.Warning (rsp.CltRcvId, "Router "+rsp.ToString());
                 if (err.Error == ErrorMessage.Code.ServiceNotRunning)
                 {
                     err.Error = ErrorMessage.Code.RouterNotRunning;
@@ -658,7 +658,7 @@ namespace Remact.Net.Internal
             }
             else
             {
-                RaTrc.Error( rsp.CltRcvId, "Receiving unexpected response from Remact.CatalogService: " + rsp.ToString(), ClientIdent.Logger );
+                RaLog.Error( rsp.CltRcvId, "Receiving unexpected response from Remact.CatalogService: " + rsp.ToString(), ClientIdent.Logger );
                 rsp.Payload = new ErrorMessage(ErrorMessage.Code.CouldNotConnectRouter,
                                                     "Unexpected response from Remact.CatalogService");
             }
@@ -719,7 +719,7 @@ namespace Remact.Net.Internal
         }
         catch( Exception ex )
         {
-            RaTrc.Exception( "Connect message to " + ClientIdent.Name + " cannot be handled by application", ex, ClientIdent.Logger );
+            RaLog.Exception( "Connect message to " + ClientIdent.Name + " cannot be handled by application", ex, ClientIdent.Logger );
         }
 
         if( m_boTimeout && m_boTemporaryRouterConn )
@@ -799,7 +799,7 @@ namespace Remact.Net.Internal
         }
         catch (Exception ex)
         {
-            RaTrc.Exception("Cannot open Remact connection(3)", ex, ClientIdent.Logger);
+            RaLog.Exception("Cannot open Remact connection(3)", ex, ClientIdent.Logger);
             m_boTimeout = true; // enter 'faulted' state when eg. configuration is incorrect
             return false;
         }
@@ -823,7 +823,7 @@ namespace Remact.Net.Internal
         {
             try
             {
-                if (ClientIdent.TraceSend) RaTrc.Info(request.CltSndId, request.ToString(), ClientIdent.Logger);
+                if (ClientIdent.TraceSend) RaLog.Info(request.CltSndId, request.ToString(), ClientIdent.Logger);
                 m_protocolClient.MessageFromClient(request);
             }
             catch (Exception ex)

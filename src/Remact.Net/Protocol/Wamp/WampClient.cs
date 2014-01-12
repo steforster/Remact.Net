@@ -92,7 +92,7 @@ namespace Remact.Net.Protocol.Wamp
             }
             else if (request.Source.SyncContext == null)
             {
-                RaTrc.Error("Remact", "No synchronization context to open " + request.Source.Name, request.Source.Logger);
+                RaLog.Error("Remact", "No synchronization context to open " + request.Source.Name, request.Source.Logger);
                 _callback.OnOpenCompleted(request);
             }
             else
@@ -311,7 +311,7 @@ namespace Remact.Net.Protocol.Wamp
 /*
         internal void HandleSendException(ReceivingState data, Exception ex)
         {
-            //RaTrc.Exception("Could not send to Remact service", ex);
+            //RaLog.Exception("Could not send to Remact service", ex);
             ErrorMessage.Code Code;
             bool onSvc = false;
 

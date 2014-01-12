@@ -72,13 +72,13 @@ namespace Remact.Catalog
             m_RemactService.Disconnect();
             m_RemactService.OnInputConnected    -= m_RouterService.OnClientConnectedOrDisconnected;
             m_RemactService.OnInputDisconnected -= m_RouterService.OnClientConnectedOrDisconnected;
-            RaTrc.Info("Remact", "Closed service " + m_RemactService.Uri);
+            RaLog.Info("Remact", "Closed service " + m_RemactService.Uri);
             m_RemactService = null;
         }
       }
       catch (Exception ex)
       {
-          RaTrc.Exception("Remact: Error while closing the service", ex);
+          RaLog.Exception("Remact: Error while closing the service", ex);
       }
     }
 
@@ -102,7 +102,7 @@ namespace Remact.Catalog
                 {
                     s.Usage = ActorInfo.Use.ServiceDisableRequest;
                     SvcRegisterChanged = true;
-                    RaTrc.Warning("   "+s.Name+"  ", "Timeout  "+s.ToString ());
+                    RaLog.Warning("   "+s.Name+"  ", "Timeout  "+s.ToString ());
                 }
             }
             
@@ -209,7 +209,7 @@ namespace Remact.Catalog
       if (svc.Usage != ActorInfo.Use.ServiceEnableRequest
        && svc.Usage != ActorInfo.Use.ServiceDisableRequest)
       {
-        RaTrc.Error (mark, "Got wrong status: "+svc.ToString ());
+        RaLog.Error (mark, "Got wrong status: "+svc.ToString ());
         svc.Usage = ActorInfo.Use.ServiceDisableRequest;
       }
 
@@ -217,7 +217,7 @@ namespace Remact.Catalog
       int found = SvcRegister.Item.FindIndex (s => s.IsEqualTo (svc));
       if (found < 0)
       {
-          RaTrc.Info( mark, "Register  " + svc.Uri.ToString() );
+          RaLog.Info( mark, "Register  " + svc.Uri.ToString() );
           SvcRegister.Item.Add (svc);
           Program.Router.SvcRegisterChanged = true;
           return true;
@@ -232,7 +232,7 @@ namespace Remact.Catalog
           if (registered.Usage == ActorInfo.Use.ServiceDisableRequest
                   && svc.Usage == ActorInfo.Use.ServiceEnableRequest)
           {
-              RaTrc.Info( mark, "Start new   " + svc.Uri.ToString() );
+              RaLog.Info( mark, "Start new   " + svc.Uri.ToString() );
               changed = true;
           }
           else if (registered.Usage == ActorInfo.Use.ServiceEnableRequest
@@ -240,12 +240,12 @@ namespace Remact.Catalog
           {
             if (registered.ApplicationRunTime < svc.ApplicationRunTime)
             {
-                RaTrc.Info( mark, "Switch to " + svc.Uri.ToString ());
+                RaLog.Info( mark, "Switch to " + svc.Uri.ToString ());
                 changed = true;
             }
             else //if (svc.RouterHopCount > 1)
             { // will be removed from all registers after some time
-                RaTrc.Info( mark, "Backup    " + svc.Uri.ToString() );
+                RaLog.Info( mark, "Backup    " + svc.Uri.ToString() );
             }
           }
         }
@@ -258,19 +258,19 @@ namespace Remact.Catalog
           else if( registered.Usage == ActorInfo.Use.ServiceDisableRequest
                        && svc.Usage == ActorInfo.Use.ServiceEnableRequest)
           {
-              RaTrc.Info( mark, "Restart   " + svc.Uri.ToString() );
+              RaLog.Info( mark, "Restart   " + svc.Uri.ToString() );
               changed = true;
           }
           else if (registered.Usage == ActorInfo.Use.ServiceEnableRequest
                        && svc.Usage == ActorInfo.Use.ServiceDisableRequest)
           {
-              RaTrc.Info( mark, "Stopped   " + svc.Uri.ToString() );
+              RaLog.Info( mark, "Stopped   " + svc.Uri.ToString() );
               changed = true;
           }
           else if (registered.Usage == ActorInfo.Use.ServiceEnableRequest
                        && svc.Usage == ActorInfo.Use.ServiceEnableRequest)
           {
-              RaTrc.Info( mark, "Alive     " + svc.Uri.ToString() );
+              RaLog.Info( mark, "Alive     " + svc.Uri.ToString() );
               SvcRegister.Item[found].TimeoutSeconds = svc.TimeoutSeconds;// Restart timeout
           }
         }
@@ -317,7 +317,7 @@ namespace Remact.Catalog
                 names += host+", ";
             }
         }
-        RaTrc.Info("Remact", "Opened clients for peer routers on " + PeerRouters.Count + " configured PeerHosts: " + names);
+        RaLog.Info("Remact", "Opened clients for peer routers on " + PeerRouters.Count + " configured PeerHosts: " + names);
     }// Open
 
 
@@ -340,20 +340,20 @@ namespace Remact.Catalog
       if (
        id.On<ActorInfo>(partner=>
       {
-        RaTrc.Info      (id.CltRcvId, "PeerRtr   "+partner.ToString ());
+        RaLog.Info      (id.CltRcvId, "PeerRtr   "+partner.ToString ());
       })
       .On<ErrorMessage>(err=>
       {
         if (err.Error == ErrorMessage.Code.ServiceNotRunning) {
-          RaTrc.Warning (id.CltRcvId, "PeerRtr   "+err.Error.ToString ()+" at '"+id.Source.Uri+"'");
+          RaLog.Warning (id.CltRcvId, "PeerRtr   "+err.Error.ToString ()+" at '"+id.Source.Uri+"'");
         }
         else {
-          RaTrc.Error   (id.CltRcvId, "PeerRtr   "+err.ToString ()+Environment.NewLine+"   partner uri = '"+id.Source.Uri+"'");
+          RaLog.Error   (id.CltRcvId, "PeerRtr   "+err.ToString ()+Environment.NewLine+"   partner uri = '"+id.Source.Uri+"'");
         }
       })
       .On<ActorInfoList>(list=>
       {
-          RaTrc.Info( id.CltRcvId, "PeerRtr responds with list containing " + list.Item.Count + " services." );
+          RaLog.Info( id.CltRcvId, "PeerRtr responds with list containing " + list.Item.Count + " services." );
           foreach( ActorInfo s in list.Item )
         {
           RegisterService (s, id.CltRcvId);
@@ -361,7 +361,7 @@ namespace Remact.Catalog
       }
       ) != null)
       {
-          RaTrc.Warning("Remact", "Received unexpected message from " + id.Source.Name + ": " + id.Payload.ToString());
+          RaLog.Warning("Remact", "Received unexpected message from " + id.Source.Name + ": " + id.Payload.ToString());
       }
     }
     

@@ -74,9 +74,9 @@
     <Compile Include="Internal\RemactService.cs" />
     <Compile Include="Internal\RemactServiceUser.cs" />
     <Compile Include="Internal\RemactCatalogClient.cs" />
-    <Compile Include="Util\RaTrc.cs" />
-    <Compile Include="Util\RaTrcPluginConsole.cs" />
-    <Compile Include="Util\RaTrcPluginFile.cs" />
+    <Compile Include="Util\RaLog.cs" />
+    <Compile Include="Util\RaLogPluginConsole.cs" />
+    <Compile Include="Util\RaLogPluginFile.cs" />
     <Compile Include="Util\RemactApplication.cs" />
     <Compile Include="ActorInput.cs" />
     <Compile Include="ActorOutput.cs" />

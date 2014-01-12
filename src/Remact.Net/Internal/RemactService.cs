@@ -260,12 +260,12 @@ namespace Remact.Net.Internal
             }
         
             // The service can now be accessed, but must be registered.
-            RaTrc.Info("Remact", "Opened service " + ServiceIdent.Uri, ServiceIdent.Logger);
+            RaLog.Info("Remact", "Opened service " + ServiceIdent.Uri, ServiceIdent.Logger);
             return true;
         }
         catch (Exception ex)
         {
-            RaTrc.Exception( "could not open " + ServiceIdent.Name, ex, ServiceIdent.Logger );
+            RaLog.Exception( "could not open " + ServiceIdent.Name, ex, ServiceIdent.Logger );
             LastAction = ex.Message;
         }
         return false;
@@ -302,12 +302,12 @@ namespace Remact.Net.Internal
         
             RemactCatalogClient.Instance().RemoveService (this); // send disable message to Remact.CatalogService
 
-            if (ServiceIdent.Uri != null) RaTrc.Info("Remact", "Closed service " + ServiceIdent.Uri, ServiceIdent.Logger);
-                                     else RaTrc.Info("Remact", "Closed service " + ServiceIdent.Name, ServiceIdent.Logger);
+            if (ServiceIdent.Uri != null) RaLog.Info("Remact", "Closed service " + ServiceIdent.Uri, ServiceIdent.Logger);
+                                     else RaLog.Info("Remact", "Closed service " + ServiceIdent.Name, ServiceIdent.Logger);
         }
         catch (Exception ex)
         {
-            RaTrc.Exception( "Svc: Error while closing the service", ex, ServiceIdent.Logger );
+            RaLog.Exception( "Svc: Error while closing the service", ex, ServiceIdent.Logger );
         }
     }// Disconnect
 
@@ -375,14 +375,14 @@ namespace Remact.Net.Internal
           }
           else if (!client.IsEqualTo (svcUser.ClientIdent))
           {
-              RaTrc.Warning( req.SvcRcvId, svcUser.ClientIdent.ToString( "ClientId already used", 0 ), ServiceIdent.Logger );
+              RaLog.Warning( req.SvcRcvId, svcUser.ClientIdent.ToString( "ClientId already used", 0 ), ServiceIdent.Logger );
               req.ClientId = 0; // eine neue ID vergeben, kann passieren, wenn Service, aber nicht alle Clients durchgestartet werden
               m_ConnectedClientCount -= 2; // wird sofort 2 mal inkrementiert
           }
           else if (svcUser.IsConnected)
           {
               LastAction = "Reconnect, no disconnect";
-              RaTrc.Warning( req.SvcRcvId, svcUser.ClientIdent.ToString( LastAction, 0 ), ServiceIdent.Logger );
+              RaLog.Warning( req.SvcRcvId, svcUser.ClientIdent.ToString( LastAction, 0 ), ServiceIdent.Logger );
               //TODO
               svcUser.UseDataFrom(client, req.ClientId);
               m_ConnectedClientCount--; // wird sofort wieder inkrementiert
@@ -390,7 +390,7 @@ namespace Remact.Net.Internal
           else if (svcUser.IsFaulted)
           {
               LastAction = "Reconnect after network failure";
-              RaTrc.Warning( req.SvcRcvId, svcUser.ClientIdent.ToString( LastAction, 0 ), ServiceIdent.Logger );
+              RaLog.Warning( req.SvcRcvId, svcUser.ClientIdent.ToString( LastAction, 0 ), ServiceIdent.Logger );
               //TODO
               svcUser.UseDataFrom(client, req.ClientId);
               if (RemactConfigDefault.Instance.IsProcessIdUsed (svcUser.ClientIdent.ProcessId)) m_UnusedClientCount--;
@@ -407,7 +407,7 @@ namespace Remact.Net.Internal
         else
         {
           ErrorMessage rsp = new ErrorMessage (ErrorMessage.Code.ClientIdNotFoundOnService, "Service cannot find client " + req.ClientId + " to connect");
-          RaTrc.Error( req.SvcRcvId, rsp.Message, ServiceIdent.Logger );
+          RaLog.Error( req.SvcRcvId, rsp.Message, ServiceIdent.Logger );
           LastAction = "ClientId mismatch while connecting";
           return rsp;
         }
@@ -492,13 +492,13 @@ namespace Remact.Net.Internal
         else
         {
           LastAction = "ClientId mismatch while disconnecting";
-          RaTrc.Error( req.SvcRcvId, LastAction + ": " + client.Uri, ServiceIdent.Logger );
+          RaLog.Error( req.SvcRcvId, LastAction + ": " + client.Uri, ServiceIdent.Logger );
         }
       }
       else
       {
         svcUser = null;
-        RaTrc.Error( req.SvcRcvId, "Cannot disconnect client" + req.ClientId, ServiceIdent.Logger );
+        RaLog.Error( req.SvcRcvId, "Cannot disconnect client" + req.ClientId, ServiceIdent.Logger );
         LastAction = "Disconnect unknown client";
       }
 
@@ -524,7 +524,7 @@ namespace Remact.Net.Internal
 
         if (!svcUser.IsConnected)
         {
-          RaTrc.Error( req.SvcRcvId, "Reconnect without ConnectRequest, RequestId = " + req.RequestId, ServiceIdent.Logger );
+          RaLog.Error( req.SvcRcvId, "Reconnect without ConnectRequest, RequestId = " + req.RequestId, ServiceIdent.Logger );
           svcUser.SetConnected();
           //svcUser.OpenNotificationChannel();
           if (RemactConfigDefault.Instance.IsProcessIdUsed (svcUser.ClientIdent.ProcessId)) m_UnusedClientCount--;
@@ -554,7 +554,7 @@ namespace Remact.Net.Internal
     {
         if (m_boCurrentlyCalled)
         {
-            RaTrc.Error ("RemactSvc", "called by multiple threads", ServiceIdent.Logger);
+            RaLog.Error ("RemactSvc", "called by multiple threads", ServiceIdent.Logger);
         }
         m_boCurrentlyCalled = true;
       
@@ -606,7 +606,7 @@ namespace Remact.Net.Internal
             else
             {
                 response = new ErrorMessage (ErrorMessage.Code.ClientIdNotFoundOnService, "Service cannot find client " + req.ClientId);
-                RaTrc.Error( req.SvcRcvId, (response as ErrorMessage).Message, ServiceIdent.Logger );
+                RaLog.Error( req.SvcRcvId, (response as ErrorMessage).Message, ServiceIdent.Logger );
                 //response.SendId bleibt 0, da wir keine ClientInfo haben 
                 LastAction = "ActorMessage from unknown client";
             }
@@ -645,7 +645,7 @@ namespace Remact.Net.Internal
           boChange = true;
           if (u.IsFaulted)
           {
-              RaTrc.Warning("Svc=" + ServiceIdent.Name, u.ClientIdent.ToString("Timeout=" + u.ClientIdent.TimeoutSeconds 
+              RaLog.Warning("Svc=" + ServiceIdent.Name, u.ClientIdent.ToString("Timeout=" + u.ClientIdent.TimeoutSeconds 
                   + " sec. no message from clt[" + u.ClientIdent.OutputClientId + "]", 0), ServiceIdent.Logger);
             if (RemactConfigDefault.Instance.IsProcessIdUsed(u.ClientIdent.ProcessId))
             {

@@ -51,7 +51,7 @@ namespace Remact.Catalog
 
         if (!ok)
         {
-            RaTrc.Warning(id.SvcRcvId, "Unknown request or no service: " + id.Payload.ToString());
+            RaLog.Warning(id.SvcRcvId, "Unknown request or no service: " + id.Payload.ToString());
             id.SendResponse(new ErrorMessage(ErrorMessage.Code.AppRequestNotAcceptedByService, "Remact.CatalogService"));
         }
     }
@@ -91,7 +91,7 @@ namespace Remact.Catalog
     // return our list as response, to synchronize the peer router
     private bool RegisterList (ActorInfoList list, ActorMessage id)
     {
-        RaTrc.Info( id.SvcRcvId, "PeerRtr sends list containing " + list.Item.Count + " services." );
+        RaLog.Info( id.SvcRcvId, "PeerRtr sends list containing " + list.Item.Count + " services." );
         foreach( ActorInfo s in list.Item )
         {
             Program.Router.RegisterService (s, id.SvcRcvId);

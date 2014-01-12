@@ -22,7 +22,7 @@ namespace Test1.Client
         // 0: Application instance id. Default = 0 --> process id is used.
         // 1: Hostname and TCP port for the service to connect to. Default: "localhost:40001" is used.
 
-        RemactConfigDefault.ApplicationStart(args, new RaTrc.PluginFile(), /*ExitHandler=*/true);
+        RemactConfigDefault.ApplicationStart(args, new RaLog.PluginFile(), /*ExitHandler=*/true);
         RemactApplication.ApplicationExit += ApplicationExitHandler;
 
         string host = "localhost:40001";
@@ -48,7 +48,7 @@ namespace Test1.Client
         Console.Write ("\n\r Thread="+Thread.CurrentThread.ManagedThreadId+", is reading commands from console...");
         while (true)
         {
-            RaTrc.Run();
+            RaLog.Run();
             string command = Console.ReadLine();
             if (command == null)
             {
@@ -69,7 +69,7 @@ namespace Test1.Client
     {
         //if (closeType == RemactApplication.CloseType.CtrlC) goExit = true; // test application cancellation
 
-        RaTrc.Info("ApplicationExitHandler", "handling " + closeType + ", terminating=" + goExit);
+        RaLog.Info("ApplicationExitHandler", "handling " + closeType + ", terminating=" + goExit);
         if (goExit)
         {
             Test.Disconnect();
@@ -124,7 +124,7 @@ namespace Test1.Client
         }
         else if (msg.TryConvertPayload(out errorMessage))
         {
-            RaTrc.Error(msg.CltRcvId, errorMessage.ToString() + "\r\n" + errorMessage.StackTrace);
+            RaLog.Error(msg.CltRcvId, errorMessage.ToString() + "\r\n" + errorMessage.StackTrace);
         }
         else
         {

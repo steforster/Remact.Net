@@ -26,11 +26,11 @@ namespace Remact.Catalog
         if (args.Length > 0) appInstance = Convert.ToInt32 (args[0]); // by default the first commandline argument
       }
       catch { }
-      RaTrc.UsePlugin (new RaTrc.PluginFile ());
-      RaTrc.Start (appInstance);
+      RaLog.UsePlugin (new RaLog.PluginFile ());
+      RaLog.Start (appInstance);
       RemactApplication.InstallExitHandler ();
-      RaTrc.Run (); // open file and write first messages
-      RaTrc.Info( "Router", "Start" );
+      RaLog.Run (); // open file and write first messages
+      RaLog.Info( "Router", "Start" );
       try
       {
         Router = new Router();
@@ -41,11 +41,11 @@ namespace Remact.Catalog
       }
       catch (Exception ex) // any Exception
       {
-        RaTrc.Exception("Router: Fatal error", ex);
+        RaLog.Exception("Router: Fatal error", ex);
         Router.Dispose();
       }
-      RaTrc.Info( "Router", "Stop" );
-      RaTrc.Stop();
+      RaLog.Info( "Router", "Stop" );
+      RaLog.Stop();
     }// Main
   }
 }

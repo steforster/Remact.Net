@@ -121,7 +121,7 @@ namespace Remact.Net.Internal
     {
         if (_protocolCallback != null)
         {
-            RaTrc.Info ("RemactSvc", "["+mark.PadRight (6)+"] "+ ClientMark
+            RaLog.Info ("RemactSvc", "["+mark.PadRight (6)+"] "+ ClientMark
                             + ", ClientAddress=" + _protocolCallback.ClientAddress
                             , ClientIdent.Logger );
         }
@@ -150,7 +150,7 @@ namespace Remact.Net.Internal
             }
             catch (Exception ex)
             {
-                RaTrc.Exception( "Cannot test '" + ClientMark + "' from service", ex, ClientIdent.Logger );
+                RaLog.Exception( "Cannot test '" + ClientMark + "' from service", ex, ClientIdent.Logger );
                 m_boTimeout = true;
                 return true; // changed
             }
@@ -188,7 +188,7 @@ namespace Remact.Net.Internal
         catch (Exception ex)
         {
             _protocolCallback = null;
-            RaTrc.Exception( "Cannot abort '" + ClientMark + "' from service", ex, ClientIdent.Logger );
+            RaLog.Exception( "Cannot abort '" + ClientMark + "' from service", ex, ClientIdent.Logger );
         }
     }
 
@@ -204,7 +204,7 @@ namespace Remact.Net.Internal
         {
             if (_protocolCallback == null)
             {
-                RaTrc.Error( "RemactSvc", "Closed notification channel to " + ClientMark, ClientIdent.Logger );
+                RaLog.Error( "RemactSvc", "Closed notification channel to " + ClientMark, ClientIdent.Logger );
             }
             else
             {
@@ -215,7 +215,7 @@ namespace Remact.Net.Internal
         }
         catch (Exception ex)
         {
-            RaTrc.Exception( "Cannot notify '" + ClientMark + "' from service", ex, ClientIdent.Logger );
+            RaLog.Exception( "Cannot notify '" + ClientMark + "' from service", ex, ClientIdent.Logger );
             m_boTimeout = true;
         }
     }// SendNotification
