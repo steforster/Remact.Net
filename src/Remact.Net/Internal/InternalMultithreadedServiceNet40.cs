@@ -29,10 +29,10 @@ namespace Remact.Net.Internal
     /// </summary>
     public class InternalMultithreadedServiceNet40 : IRemactProtocolDriverService
     {
-        private WcfBasicService _service;
-        private WcfBasicServiceUser _svcUser;
+        private RemactService _service;
+        private RemactServiceUser _svcUser;
 
-        public InternalMultithreadedServiceNet40(WcfBasicService service, WcfBasicServiceUser svcUser)
+        public InternalMultithreadedServiceNet40(RemactService service, RemactServiceUser svcUser)
         {
             _service = service;
             _svcUser = svcUser;

@@ -15,7 +15,7 @@ namespace Remact.Catalog
     public static Router Router { get; private set; }
 
     /// <summary>
-    /// The main entry point for the WcfRouter application.
+    /// The main entry point for the Remact.Catalog application.
     /// </summary>
     [STAThread]
     static void Main (string[] args)

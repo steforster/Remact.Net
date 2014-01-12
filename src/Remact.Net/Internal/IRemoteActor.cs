@@ -8,13 +8,13 @@ using Remact.Net;
 namespace Remact.Net.Internal
 {
   //----------------------------------------------------------------------------------------------
-  #region == interface IWcfBasicPartner ==
+  #region == interface IRemoteActor ==
 
   /// <summary>
-  /// WcfPartners, Services and Clients must implement this interface.
+  /// Services and Clients must implement this interface.
   /// It is used for library internal purposes mainly.
   /// </summary>
-  public interface IWcfBasicPartner
+  public interface IRemoteActor
   {
     /// <summary>
     /// Connect or reconnect output to the previously linked partner.

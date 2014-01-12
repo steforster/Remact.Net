@@ -9,10 +9,10 @@ using System.Collections.Generic;
 namespace Remact.Net.Internal
 {
   /// <summary>
-  /// <para>Class used on WCF service side, base of WcfServiceAssistant.</para>
+  /// <para>Class used on service side.</para>
   /// <para>Handles and stores all connected clients.</para>
   /// </summary>
-  public class WcfBasicService
+  public class RemactService
   {
     //----------------------------------------------------------------------------------------------
     #region Properties
@@ -38,12 +38,12 @@ namespace Remact.Net.Internal
     public   string    LastAction;
     
     /// <summary>
-    /// Default = false. When set to true: Disable router client, no service in this application will be published to the WcfRouter.
+    /// Default = false. When set to true: Disable router client, no service in this application will be published to the Remact.Catalog.
     /// </summary>
     public static bool DisableRouterClient
     {
-      get { return WcfRouterClient.Instance ().DisableRouterClient; }
-      set { WcfRouterClient.Instance ().DisableRouterClient = value; }
+      get { return RemactCatalogClient.Instance ().DisableRouterClient; }
+      set { RemactCatalogClient.Instance ().DisableRouterClient = value; }
     }
 
     /// <summary>
@@ -57,7 +57,7 @@ namespace Remact.Net.Internal
     internal  bool                     IsServiceRegistered;
     
     /// <summary>
-    /// Internally used for periodic message to WcfRouterService
+    /// Internally used for periodic message to Remact.CatalogService
     /// </summary>
     internal DateTime                  NextEnableMessage;
 
@@ -78,7 +78,7 @@ namespace Remact.Net.Internal
     private static int    ms_nSharedTcpPort;
     private static int    ms_nSharedTcpPortCount;
     private static object ms_Lock = new Object();
-    private static Dictionary<Uri, WcfBasicService> ms_serviceMap = new Dictionary<Uri, WcfBasicService>(20);
+    private static Dictionary<Uri, RemactService> ms_serviceMap = new Dictionary<Uri, RemactService>(20);
 
     /// <summary>
     /// Returns true, when service is ready to receive requests.
@@ -116,14 +116,14 @@ namespace Remact.Net.Internal
     #region Constructors / shutdown
 
     /// <summary>
-    /// <para>Initializes a new instance of the WcfBascService class.</para>
+    /// <para>Initializes a new instance of the RemactService class.</para>
     /// <para>The service is uniquely identified by the service name.</para>
     /// </summary>
     /// <param name="serviceIdent">This ActorInput is linked to network.</param>
     /// <param name="tcpPort">The TCP port for the service or 0, when automatic port allocation may be used.</param>
     /// <param name="publishToRouter">True(=default): The servicename will be published to the Remact.Catalog on localhost.</param>
     /// <param name="serviceConfig">Plugin your own service configuration instead of RemactDefaults.ServiceConfiguration.</param>
-    internal WcfBasicService (ActorInput serviceIdent, int tcpPort = 0, bool publishToRouter = true,
+    internal RemactService (ActorInput serviceIdent, int tcpPort = 0, bool publishToRouter = true,
                               IActorInputConfiguration serviceConfig = null )
         : this (serviceIdent, /*firstClient=*/1, /*maxClients=*/20)
     {
@@ -132,18 +132,18 @@ namespace Remact.Net.Internal
         _serviceConfig = serviceConfig;
         if( _serviceConfig == null )
         {
-            _serviceConfig = RemactDefault.Instance;
+            _serviceConfig = RemactConfigDefault.Instance;
         }
     }// CTOR
     
 
     /// <summary>
-    /// Create a WcfBasicService object
+    /// Create a RemactService object
     /// </summary>
     /// <param name="serviceIdent">a ActorInput having a unique name for the service.</param>
     /// <param name="firstClientId">client Id's start with this number, normally = 1.</param>
     /// <param name="maxClients">initial capacity of the User List.</param>
-    private WcfBasicService (ActorInput serviceIdent, int firstClientId, int maxClients)
+    private RemactService (ActorInput serviceIdent, int firstClientId, int maxClients)
     {
       ServiceIdent = serviceIdent;
       ServiceIdent.IsServiceName = true;
@@ -154,13 +154,13 @@ namespace Remact.Net.Internal
 
 
     /// <summary>
-    /// Create a WcfBasicService object, used by AsyncWcfRouter (only).
+    /// Create a RemactService object, used by AsyncRemact.Catalog (only).
     /// </summary>
     /// <param name="serviceName">a unique service name.</param>
     /// <param name="serviceUri">the Uri for the service.</param>
     /// <param name="firstClientId">client Id's start with this number, normally = 1.</param>
     /// <param name="maxClients">initial capacity of the User List.</param>
-    internal WcfBasicService(string serviceName, Uri serviceUri, int firstClientId, int maxClients)
+    internal RemactService(string serviceName, Uri serviceUri, int firstClientId, int maxClients)
     {
       ServiceIdent = new ActorInput (serviceName);
       ServiceIdent.Uri = serviceUri;
@@ -173,13 +173,13 @@ namespace Remact.Net.Internal
 
     /// <summary>
     /// <para>** IsMultithreaded==FALSE **  = default on ActorPort</para>
-    /// <para>Create and open a ServiceHost running a threadsafe IWcfBasicContractSync-singleton service.</para>
+    /// <para>Create and open a Service running a threadsafe singleton service.</para>
     /// <para>These services must be very fast and may only access memory. No file- or database-access and no other synchronous calls are allowed.</para>
     /// <para>Calls to the message handler are made from the same thread (synchronization context) that is used now to open the service.</para>
     /// <para>An exception is thrown, when your opening thread has no message queue.</para>
     /// <para></para>
     /// <para>** IsMultithreaded==TRUE **</para>
-    /// <para>Create and open a ServiceHost running a IWcfBasicContractSync instance for each session in parallel.</para>
+    /// <para>Create and open a Service.</para>
     /// <para>These services may be relativly slow, when accessing files, databases or doing other synchronous calls.</para>
     /// <para>Calls to the message handler are made from different threads, several clients may run in parallel</para>
     /// <para>but only one thread at a time is accessing the client and user context.</para>
@@ -187,9 +187,9 @@ namespace Remact.Net.Internal
     /// <para></para>
     /// <para>When there exists no [service name="ConcreteTypeOfServiceInstance"] entry in the App.config file,</para>
     /// <para>or the entry has no endpoint (apart from a possible "mex" endpoint),</para>
-    /// <para>the WcfServiceAssistant creates a standard service URI containig the next free TCP port and the service name.</para>
-    /// <para>E.g. "http://host:1234/AsyncWcfLib/ServiceName"</para>
-    /// <para>It registeres the service with WcfRouterService, so clients can find the dynamically generated TCP port.</para>
+    /// <para>the RemactService creates a standard service URI containig the next free TCP port and the service name.</para>
+    /// <para>E.g. "http://host:1234/Remact/ServiceName"</para>
+    /// <para>It registeres the service with Remact.CatalogService, so clients can find the dynamically generated TCP port.</para>
     /// </summary>
     /// <returns>true if successfully open</returns>
     internal bool OpenService()
@@ -225,12 +225,12 @@ namespace Remact.Net.Internal
             #endif
                 }
 */
-                // Set URI before the first request arrives (as in WcfBaseService). 
-                // The URI will be sent to WcfRouter for registration.
+            // Set URI before the first request arrives (as in RemactService). 
+                // The URI will be sent to Remact.Catalog for registration.
                 Uri uri = new Uri ("ws://"
                     + ServiceIdent.HostName     // initialized with Dns.GetHostName()
                     +":"+_tcpPort
-                    +"/"+RemactDefault.WsNamespace+"/"+ServiceIdent.Name);// ServiceName, not the ServiceType
+                    +"/"+RemactConfigDefault.WsNamespace+"/"+ServiceIdent.Name);// ServiceName, not the ServiceType
 
                 // Open the ServiceHost to start listening for messages.
                 // Add the dynamically created endpoint. And let the library user add binding and security credentials.
@@ -240,8 +240,8 @@ namespace Remact.Net.Internal
             //}
             //else
             //{
-            //    // Set configured URI so it can be sent to WcfRouter for registration.
-            //    // TODO: ServiceIdent.Name is used as identification in WcfRouter - should it be changed now ???
+            //    // Set configured URI so it can be sent to Remact.Catalog for registration.
+            //    // TODO: ServiceIdent.Name is used as identification in Remact.Catalog - should it be changed now ???
             //    //       or should the Uri be changed / created from different fields ???
             //    UriBuilder uri = new UriBuilder (m_ServiceHost.Description.Endpoints[0].ListenUri);
             //    uri.Host = base.ServiceIdent.HostName; // initialized with Dns.GetHostName(), replaces "localhost"
@@ -255,12 +255,12 @@ namespace Remact.Net.Internal
 
             if (_publishToRouter)
             {
-                // Start registering on WcfRouter
-                WcfRouterClient.Instance().AddService(this);
+                // Start registering on Remact.Catalog
+                RemactCatalogClient.Instance().AddService(this);
             }
         
             // The service can now be accessed, but must be registered.
-            RaTrc.Info( "Wcf", "Opened service " + ServiceIdent.Uri, ServiceIdent.Logger );
+            RaTrc.Info("Remact", "Opened service " + ServiceIdent.Uri, ServiceIdent.Logger);
             return true;
         }
         catch (Exception ex)
@@ -300,10 +300,10 @@ namespace Remact.Net.Internal
                 _protocolDriver = null;
             }
         
-            WcfRouterClient.Instance().RemoveService (this); // send disable message to WcfRouterService
+            RemactCatalogClient.Instance().RemoveService (this); // send disable message to Remact.CatalogService
 
-            if( ServiceIdent.Uri != null ) RaTrc.Info( "Wcf", "Closed service " + ServiceIdent.Uri, ServiceIdent.Logger );
-                                      else RaTrc.Info( "Wcf", "Closed service " + ServiceIdent.Name, ServiceIdent.Logger );
+            if (ServiceIdent.Uri != null) RaTrc.Info("Remact", "Closed service " + ServiceIdent.Uri, ServiceIdent.Logger);
+                                     else RaTrc.Info("Remact", "Closed service " + ServiceIdent.Name, ServiceIdent.Logger);
         }
         catch (Exception ex)
         {
@@ -331,7 +331,7 @@ namespace Remact.Net.Internal
 
 
     // Internally called to create an ActorOutput as client stub.
-    internal virtual WcfBasicServiceUser AddNewSvcUser (ActorInfo receivedClientMsg, int index, WcfBasicServiceUser svcUser)
+    internal virtual RemactServiceUser AddNewSvcUser (ActorInfo receivedClientMsg, int index, RemactServiceUser svcUser)
     {
       if (index < 0) // add a new element
       {
@@ -341,7 +341,7 @@ namespace Remact.Net.Internal
 
       if (svcUser == null)
       {
-          svcUser = new WcfBasicServiceUser(ServiceIdent); // svcUser not created, when connection has been opened
+          svcUser = new RemactServiceUser(ServiceIdent); // svcUser not created, when connection has been opened
       }
 
       svcUser.UseDataFrom (receivedClientMsg, index + m_FirstClientId);
@@ -357,7 +357,7 @@ namespace Remact.Net.Internal
     /// <param name="req">the ActorMessage to be used for responses.</param>
     /// <param name="svcUser">Output the user object containing a "ClientIdent.UserContext" object for free application use</param>
     /// <returns>Service info as response</returns>
-    private object ConnectPartner(ActorInfo client, ActorMessage req, ref WcfBasicServiceUser svcUser)
+    private object ConnectPartner(ActorInfo client, ActorMessage req, ref RemactServiceUser svcUser)
     {
       if (req.ClientId != 0)
       {// Client war schon mal verbunden
@@ -393,14 +393,14 @@ namespace Remact.Net.Internal
               RaTrc.Warning( req.SvcRcvId, svcUser.ClientIdent.ToString( LastAction, 0 ), ServiceIdent.Logger );
               //TODO
               svcUser.UseDataFrom(client, req.ClientId);
-              if (RemactDefault.Instance.IsProcessIdUsed (svcUser.ClientIdent.ProcessId)) m_UnusedClientCount--;
+              if (RemactConfigDefault.Instance.IsProcessIdUsed (svcUser.ClientIdent.ProcessId)) m_UnusedClientCount--;
           }
           else
           {
               //TODO
               svcUser.UseDataFrom(client, req.ClientId);
               LastAction = "Reconnect after client disconnect";
-              if (RemactDefault.Instance.IsProcessIdUsed (svcUser.ClientIdent.ProcessId)) m_UnusedClientCount--;
+              if (RemactConfigDefault.Instance.IsProcessIdUsed (svcUser.ClientIdent.ProcessId)) m_UnusedClientCount--;
           }
           m_ConnectedClientCount++;
         }
@@ -468,7 +468,7 @@ namespace Remact.Net.Internal
     /// <param name="req">the ActorMessage to be used for responses.</param>
     /// <param name="svcUser">Output the user object containing a "ClientIdent.UserContext" object for free application use</param>
     /// <returns>Service info as response</returns>
-    private object DisconnectPartner(ActorInfo client, ActorMessage req, ref WcfBasicServiceUser svcUser)
+    private object DisconnectPartner(ActorInfo client, ActorMessage req, ref RemactServiceUser svcUser)
     {
       int i = req.ClientId - m_FirstClientId;
       if (i >= 0 && i < ServiceIdent.InputClientList.Count)
@@ -482,7 +482,7 @@ namespace Remact.Net.Internal
         {
           svcUser.Disconnect();
           LastAction = "Disconnect";
-          if (RemactDefault.Instance.IsProcessIdUsed (svcUser.ClientIdent.ProcessId))
+          if (RemactConfigDefault.Instance.IsProcessIdUsed (svcUser.ClientIdent.ProcessId))
           {
             m_UnusedClientCount++;
             ServiceIdent.InputClientList[i] = null; // will never be used again, the client has been shutdown
@@ -513,7 +513,7 @@ namespace Remact.Net.Internal
     /// <param name="req">ActorMessage message</param>
     /// <param name="svcUser">Output the user object containing a "ClientIdent.UserContext" object for free application use.</param>
     /// <returns>True, when the client has been found. False, when no client has been found and an error message must be generated.</returns>
-    internal bool FindPartnerAndCheck (ActorMessage req, ref WcfBasicServiceUser svcUser)
+    internal bool FindPartnerAndCheck (ActorMessage req, ref RemactServiceUser svcUser)
     {
       int i = req.ClientId - m_FirstClientId;
       if (i >= 0 && i < ServiceIdent.InputClientList.Count)
@@ -527,7 +527,7 @@ namespace Remact.Net.Internal
           RaTrc.Error( req.SvcRcvId, "Reconnect without ConnectRequest, RequestId = " + req.RequestId, ServiceIdent.Logger );
           svcUser.SetConnected();
           //svcUser.OpenNotificationChannel();
-          if (RemactDefault.Instance.IsProcessIdUsed (svcUser.ClientIdent.ProcessId)) m_UnusedClientCount--;
+          if (RemactConfigDefault.Instance.IsProcessIdUsed (svcUser.ClientIdent.ProcessId)) m_UnusedClientCount--;
           m_ConnectedClientCount++;
           HasConnectionStateChanged = true;
         }
@@ -544,28 +544,28 @@ namespace Remact.Net.Internal
     /// </summary>
     /// <param name="req">The ActorMessage contains the request. It is used for the response also.</param>
     /// <param name="svcUser">
-    /// input: null --> create a new WcfBasicServiceUser as protocol independant client proxy
-    ///        not null --> use this WcfBasicServiceUser as protocol independant client proxy
+    /// input: null --> create a new RemactServiceUser as protocol independant client proxy
+    ///        not null --> use this RemactServiceUser as protocol independant client proxy
     /// output: the user object contains the "ClientIdent.SenderContext" object for free application use
     /// </param>
     /// <returns><para> null when the response has to be generated by the application.</para>
     ///          <para>!null if the response already has been generated by this class.</para></returns>
-    internal object CheckBasicResponse(ActorMessage req, ref WcfBasicServiceUser svcUser)
+    internal object CheckBasicResponse(ActorMessage req, ref RemactServiceUser svcUser)
     {
         if (m_boCurrentlyCalled)
         {
-            RaTrc.Error ("WcfBasicService", "called by multiple threads", ServiceIdent.Logger);
+            RaTrc.Error ("RemactSvc", "called by multiple threads", ServiceIdent.Logger);
         }
         m_boCurrentlyCalled = true;
       
 #if BEFORE_NET40
-      var m = req.Message as IExtensibleWcfMessage;
+      var m = req.Message as IExtensibleActorMessage;
       if (!ServiceIdent.IsMultithreaded)
       {
         int thread = Thread.CurrentThread.ManagedThreadId;
         if (thread != m_nLastThreadId && m_nLastThreadId != 0)
         {
-          WcfTrc.Warning ("WcfBasicService", "calling thread changed from "+m_nLastThreadId+" to "+thread, ServiceIdent.Logger);
+          RaTrc.Warning ("RemactSvc", "calling thread changed from "+m_nLastThreadId+" to "+thread, ServiceIdent.Logger);
         } 
         m_nLastThreadId = thread;
         if( m != null ) m.BoundSyncContext = SynchronizationContext.Current;
@@ -581,7 +581,7 @@ namespace Remact.Net.Internal
          && req.TryConvertPayload(out cltReq))
         {
             if (ServiceIdent.Uri == null)
-            {//first call after ServiceHost.Open(), WcfServiceAssistant will initialize the URI earlier.
+            {
                 UriBuilder uri = new UriBuilder(OperationContext.Current.Channel.LocalAddress.Uri);
                 uri.Host = ServiceIdent.HostName;
                 ServiceIdent.Uri = uri.Uri;
@@ -597,7 +597,7 @@ namespace Remact.Net.Internal
       
         if (response == null)
         {
-            // no response generated yet (no WcfPartner-message or unknown Usage)
+            // no response generated yet (no ActorInfo-message or unknown Usage)
             if (FindPartnerAndCheck (req, ref svcUser))
             {
                 //req.CurrentSvcUser = svcUser;
@@ -637,7 +637,7 @@ namespace Remact.Net.Internal
 
       for (int i=0; i<ServiceIdent.InputClientList.Count; i++)
       {
-        WcfBasicServiceUser u = ServiceIdent.InputClientList[i].SvcUser;
+        RemactServiceUser u = ServiceIdent.InputClientList[i].SvcUser;
         if (u == null) continue;
 
         if (u.TestChannel (deltaT))
@@ -647,7 +647,7 @@ namespace Remact.Net.Internal
           {
               RaTrc.Warning("Svc=" + ServiceIdent.Name, u.ClientIdent.ToString("Timeout=" + u.ClientIdent.TimeoutSeconds 
                   + " sec. no message from clt[" + u.ClientIdent.OutputClientId + "]", 0), ServiceIdent.Logger);
-            if (RemactDefault.Instance.IsProcessIdUsed(u.ClientIdent.ProcessId))
+            if (RemactConfigDefault.Instance.IsProcessIdUsed(u.ClientIdent.ProcessId))
             {
               m_UnusedClientCount++;
               ServiceIdent.InputClientList[i] = null;// will never be used again, the client has been shutdown
@@ -659,7 +659,7 @@ namespace Remact.Net.Internal
         
         if (u.IsConnected) {
           nConnected++;
-        } else if (RemactDefault.Instance.IsProcessIdUsed(u.ClientIdent.ProcessId)) {
+        } else if (RemactConfigDefault.Instance.IsProcessIdUsed(u.ClientIdent.ProcessId)) {
           nUnused++;
         } 
       }

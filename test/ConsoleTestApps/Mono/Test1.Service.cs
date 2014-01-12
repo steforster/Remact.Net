@@ -17,7 +17,7 @@ namespace Test1.Service
         // 0: Application instance id. Default = 0 --> process id is used.
         // 1: TCP port number for this service (on localhost). Default = 40001.
 
-        RemactDefault.ApplicationStart (args, new RaTrc.PluginFile(), /*ExitHandler=*/true);
+        RemactConfigDefault.ApplicationStart (args, new RaTrc.PluginFile(), /*ExitHandler=*/true);
         RemactApplication.ApplicationExit += ApplicationExitHandler;
 
         int tcpPort; // the second commandline argument
@@ -27,14 +27,14 @@ namespace Test1.Service
         }
 
         ActorInput.DisableRouterClient = true; // Test1.Client does not use Remact.Catalog.exe, but we publish this service anyway.
-        Console.WriteLine ("Commandline arguments:   ServiceInstance="+RemactDefault.Instance.ApplicationInstance
+        Console.WriteLine ("Commandline arguments:   ServiceInstance="+RemactConfigDefault.Instance.ApplicationInstance
                         +"   ServiceTcpPort="+tcpPort+"\r\n");
 
         Test1Service  test = new Test1Service();
         ActorInput service = new ActorInput("Test1.Service", test.OnMessageReceived);
         service.IsMultithreaded = true; // we have no message queue in a console application
 
-        // The clients may connect without WcfRouter. They know our TCP port. 
+        // The clients may connect without Remact.Catalog. They know our TCP port. 
         service.LinkInputToNetwork(null, tcpPort);
         Console.Title = service.AppIdentification;
         if (service.TryConnect())
@@ -61,7 +61,7 @@ namespace Test1.Service
     // called for all normal and exceptional close types
     static void ApplicationExitHandler (RemactApplication.CloseType closeType, ref bool goExit)
     {
-        //if (closeType == WcfApplication.CloseType.CtrlC) goExit = true; // test application cancellation
+        //if (closeType == RemactApplication.CloseType.CtrlC) goExit = true; // test application cancellation
         if (goExit)
         {
             ActorPort.DisconnectAll ();

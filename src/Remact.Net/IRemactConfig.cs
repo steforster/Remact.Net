@@ -15,25 +15,25 @@ namespace Remact.Net
   /// Common definitions for all interacting actors.
   /// Library users may plug in their own implementation of this class to RemactDefaults.Instance.
   /// </summary>
-  public interface IRemactDefault : IActorInputConfiguration, IActorOutputConfiguration
+  public interface IRemactConfig : IActorInputConfiguration, IActorOutputConfiguration
   {
     //----------------------------------------------------------------------------------------------
-    #region == WCF Router configuration ==
+    #region == Remact.Catalog configuration ==
 
     /// <summary>
-    /// The WcfRouter service listens on this port. The WcfRouter must be running on every host having services.
+    /// The Remact.Catalog service listens on this port. The Remact.Catalog must be running on every host having services.
     /// </summary>
     int      RouterPort {get;}
     
     /// <summary>
-    /// The WcfRouter service listens on this name.
+    /// The Remact.Catalog service listens on this name.
     /// </summary>
     string   RouterServiceName {get;}
     
 
     #endregion
     //----------------------------------------------------------------------------------------------
-    #region == AsyncWcfLib partner identification ==
+    #region == Remact partner identification ==
     
     /// <summary>
     /// the name of this application is used for tracing and for identifying an ActorOutput

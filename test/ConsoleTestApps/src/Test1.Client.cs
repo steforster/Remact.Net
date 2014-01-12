@@ -22,7 +22,7 @@ namespace Test1.Client
         // 0: Application instance id. Default = 0 --> process id is used.
         // 1: Hostname and TCP port for the service to connect to. Default: "localhost:40001" is used.
 
-        RemactDefault.ApplicationStart(args, new RaTrc.PluginFile(), /*ExitHandler=*/true);
+        RemactConfigDefault.ApplicationStart(args, new RaTrc.PluginFile(), /*ExitHandler=*/true);
         RemactApplication.ApplicationExit += ApplicationExitHandler;
 
         string host = "localhost:40001";
@@ -36,7 +36,7 @@ namespace Test1.Client
         ActionThread actionThread = new ActionThread();
 
         Console.Title = Test.AppIdentification;
-        Console.WriteLine ("Commandline arguments:   ClientInstance="+RemactDefault.Instance.ApplicationInstance
+        Console.WriteLine ("Commandline arguments:   ClientInstance="+RemactConfigDefault.Instance.ApplicationInstance
                         +"   ServiceHostname:Port='"+host+"'\r\n");
         Console.WriteLine ("Starting client '"+Test.Name+"' for service '"+Test.OutputSidePartner.Uri+"'\r\n");
         Console.WriteLine ("Press 'q' to quit.");
@@ -67,7 +67,7 @@ namespace Test1.Client
     // called for all normal and exceptional close types
     static void ApplicationExitHandler(RemactApplication.CloseType closeType, ref bool goExit)
     {
-        //if (closeType == WcfApplication.CloseType.CtrlC) goExit = true; // test application cancellation
+        //if (closeType == RemactApplication.CloseType.CtrlC) goExit = true; // test application cancellation
 
         RaTrc.Info("ApplicationExitHandler", "handling " + closeType + ", terminating=" + goExit);
         if (goExit)

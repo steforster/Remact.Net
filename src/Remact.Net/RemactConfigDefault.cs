@@ -16,22 +16,22 @@ namespace Remact.Net
   /// Common definitions for all interacting actors.
   /// Library users may plug in their own implementation of this class to RemactDefault.Instance.
   /// </summary>
-  public class RemactDefault : IRemactDefault
+  public class RemactConfigDefault : IRemactConfig
   {
     //----------------------------------------------------------------------------------------------
     #region == Instance and plugin ==
 
-    private static IRemactDefault m_instance;
+    private static IRemactConfig m_instance;
 
     /// <summary>
     /// Library users may plug in their own implementation of IRemactDefault to RemactDefault.Instance.
     /// </summary>
-    public static IRemactDefault Instance
+    public static IRemactConfig Instance
     {
         get{
             if( m_instance == null )
             {
-                m_instance = new RemactDefault ();
+                m_instance = new RemactConfigDefault ();
             }
             return m_instance;
         }
@@ -45,7 +45,7 @@ namespace Remact.Net
     /// <summary>
     /// When the Library users does not plug in its own implementation of IRemactDefaults, RemactDefaults will be used.
     /// </summary>
-    protected RemactDefault() // constructor
+    protected RemactConfigDefault() // constructor
     {
         m_appAssembly = Assembly.GetEntryAssembly();// exe Application
         if (m_appAssembly == null)
@@ -70,9 +70,9 @@ namespace Remact.Net
     /// </summary>
     /// <param name="service">The server.</param>
     /// <param name="uri">The dynamically generated URI for this service.</param>
-    /// <param name="isRouter">true if used for WcfRouter service.</param>
+    /// <param name="isRouter">true if used for Remact.Catalog service.</param>
     /// <returns>The protocol driver (for dispose).</returns>
-    public IDisposable DoServiceConfiguration(WcfBasicService service, ref Uri uri, bool isRouter)
+    public IDisposable DoServiceConfiguration(RemactService service, ref Uri uri, bool isRouter)
     {
         var wsServer = new MyWebSocketServer()
         {
@@ -82,7 +82,7 @@ namespace Remact.Net
             // Do this for every new client connection:
             OnConnected = (userContext) =>
                 {
-                    var svcUser = new WcfBasicServiceUser (service.ServiceIdent);
+                    var svcUser = new RemactServiceUser (service.ServiceIdent);
                     var handler = new InternalMultithreadedServiceNet40(service, svcUser);
                     var wampProxy = new WampClientProxy(svcUser.ClientIdent, service.ServiceIdent, handler, userContext);
                     svcUser.SetCallbackHandler(wampProxy);
@@ -109,7 +109,7 @@ namespace Remact.Net
     /// </summary>
     /// <param name="clientBase">The ClientBase object to modify the endpoint and security credentials.</param>
     /// <param name="uri">The endpoint URI to connect.</param>
-    /// <param name="forRouter">true if used for WcfRouter service.</param>
+    /// <param name="forRouter">true if used for Remact.Catalog service.</param>
     public virtual void DoClientConfiguration (object clientBase, ref Uri uri, bool forRouter)
     {
         // TODO !
@@ -120,12 +120,12 @@ namespace Remact.Net
     #region == Remact.Catalog configuration ==
 
     /// <summary>
-    /// The WcfRouter service listens on this port. The WcfRouter must be running on every host having services.
+    /// The Remact.Catalog service listens on this port. The Remact.Catalog must be running on every host having services.
     /// </summary>
     public virtual int      RouterPort {get{ return 40000;}}
     
     /// <summary>
-    /// The WcfRouter service listens on this name.
+    /// The Remact.Catalog service listens on this name.
     /// </summary>
     public virtual string   RouterServiceName {get{ return "RouterService";}}
 

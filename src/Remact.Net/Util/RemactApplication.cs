@@ -65,7 +65,7 @@ namespace Remact.Net
         RaTrc.Exception( errorMsg, e.Exception, Logger );
         RaTrc.Run ();
         result = MessageBox.Show (errorMsg+ "\n\n" + e.Exception.Message + "\n\nStack Trace:\n" + e.Exception.StackTrace,
-                     "Windows Forms Error in "+RemactDefault.Instance.AppIdentification,
+                     "Windows Forms Error in "+RemactConfigDefault.Instance.AppIdentification,
                       MessageBoxButtons.AbortRetryIgnore, MessageBoxIcon.Stop);
       }
       catch
@@ -127,7 +127,7 @@ namespace Remact.Net
         MessageBoxButtons buttons = MessageBoxButtons.AbortRetryIgnore;
         if (e.IsTerminating) buttons = MessageBoxButtons.OK;
         result = MessageBox.Show (errorMsg + "\n\n" + ex.Message + "\n\nStack Trace:\n" + ex.StackTrace,
-                        "Error in "+RemactDefault.Instance.AppIdentification,
+                        "Error in "+RemactConfigDefault.Instance.AppIdentification,
                         buttons, MessageBoxIcon.Error);
       }
       catch

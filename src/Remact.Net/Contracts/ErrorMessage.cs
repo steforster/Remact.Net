@@ -62,7 +62,7 @@ namespace Remact.Net
       /// </summary>
       Ok,
       
-      // -------------------- Errorcodes for free use, not used by AsyncWcfLib ------------------
+      // -------------------- Errorcodes for free use, not used by Remact ------------------
       /// <summary>
       /// An exception occured while executing the request in the service-application.
       /// Set by library user.
@@ -92,7 +92,7 @@ namespace Remact.Net
       /// </summary>
       LastAppCode,
 
-      // -------------------- Errorcodes used by AsyncWcfLib ------------------
+      // -------------------- Errorcodes used by Remact ------------------
       /// <summary>
       /// Cannot send as the client is not (yet) connected.
       /// </summary>
@@ -124,7 +124,7 @@ namespace Remact.Net
       CouldNotConnect,
 
       /// <summary>
-      /// Wrong response from WCF router, when trying to connect.
+      /// Wrong response from Remact.Catalog, when trying to connect.
       /// </summary>
       CouldNotConnectRouter,
       
@@ -257,7 +257,7 @@ namespace Remact.Net
     public override string ToString ()
     {
       StringBuilder err = new StringBuilder (1000);
-      err.Append("WcfError ");
+      err.Append("RemactError ");
       if (Error == Code.Undef) {err.Append("code="); err.Append(z_error);}
                           else {err.Append(Error.ToString());}
       err.Append (". ");

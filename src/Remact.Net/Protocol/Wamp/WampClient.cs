@@ -92,7 +92,7 @@ namespace Remact.Net.Protocol.Wamp
             }
             else if (request.Source.SyncContext == null)
             {
-                RaTrc.Error("AsyncWcfLib", "No synchronization context to open " + request.Source.Name, request.Source.Logger);
+                RaTrc.Error("Remact", "No synchronization context to open " + request.Source.Name, request.Source.Logger);
                 _callback.OnOpenCompleted(request);
             }
             else
@@ -308,3 +308,55 @@ namespace Remact.Net.Protocol.Wamp
         #endregion
     }
 }
+/*
+        internal void HandleSendException(ReceivingState data, Exception ex)
+        {
+            //RaTrc.Exception("Could not send to Remact service", ex);
+            ErrorMessage.Code Code;
+            bool onSvc = false;
+
+            if (ex is System.Reflection.TargetInvocationException)
+            {
+                ex = (ex as System.Reflection.TargetInvocationException).InnerException;
+                onSvc = true;
+            }
+
+            if (ex is TimeoutException)
+            {
+                if (onSvc) Code = ErrorMessage.Code.TimeoutOnService;
+                else Code = ErrorMessage.Code.TimeoutOnClient;
+                data.timeout = true;
+            }
+            else if (ex is ProtocolException)
+            {
+                Code = ErrorMessage.Code.RequestTypeUnknownOnService;
+            }
+            else if (ex is FaultException)
+            { // including FaultException<TDetail>
+                Code = ErrorMessage.Code.ReqOrRspNotSerializableOnService;
+                onSvc = true;
+                data.timeout = true; // stop sending, enter Faulted state
+            }
+            else if (ex is CommunicationException)
+            {
+                if (!m_boFirstResponseReceived) Code = ErrorMessage.Code.CouldNotConnect;
+                else Code = ErrorMessage.Code.ReqOrRspNotSerializableOnService; // ???
+                data.timeout = true; // stop sending, enter Faulted state
+            }
+            else if (ex is ObjectDisposedException && !onSvc)
+            {
+                Code = ErrorMessage.Code.CouldNotSend;
+                data.timeout = true;
+                data.disposed = true;
+            }
+            else
+            {
+                if (onSvc) Code = ErrorMessage.Code.ClientDetectedUnhandledExceptionOnService;
+                else Code = ErrorMessage.Code.CouldNotSend;
+                data.timeout = true; // stop sending, enter Faulted state
+            }
+            m_boFirstResponseReceived = true;
+            data.idSnd.Message = null; // Send and Receive normally point to the same id
+            data.idRcv.Message = new ErrorMessage(Code, ex);
+        }
+*/

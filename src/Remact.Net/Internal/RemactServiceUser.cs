@@ -11,12 +11,12 @@ using Remact.Net.Protocol.Wamp;
 namespace Remact.Net.Internal
 {
   /// <summary>
-  /// <para>Class used on WCF service side.</para>
+  /// <para>Class used on service side.</para>
   /// <para>Represents a connected client.</para>
   /// <para>Has the possibility to store and forward notifications that are not expected by the client.</para>
   /// <para>This could also be handled by the more cumbersome 'DualHttpBinding'.</para>
   /// </summary>
-  public class WcfBasicServiceUser : IWcfBasicPartner
+  public class RemactServiceUser : IRemoteActor
   {
     //----------------------------------------------------------------------------------------------
     #region Properties
@@ -44,10 +44,10 @@ namespace Remact.Net.Internal
     #region Constructor + Methods
 
     /// <summary>
-    /// Internally called to create a WcfBasicServiceUser object
+    /// Internally called to create a RemactServiceUser object
     /// </summary>
     /// <param name="serviceIdent">client using this service</param>
-    public WcfBasicServiceUser(ActorInput serviceIdent)
+    public RemactServiceUser(ActorInput serviceIdent)
     {
         _serviceIdent = serviceIdent;
         ClientIdent = new ActorOutput()
@@ -121,7 +121,7 @@ namespace Remact.Net.Internal
     {
         if (_protocolCallback != null)
         {
-            RaTrc.Info ("WcfSvc", "["+mark.PadRight (6)+"] "+ ClientMark
+            RaTrc.Info ("RemactSvc", "["+mark.PadRight (6)+"] "+ ClientMark
                             + ", ClientAddress=" + _protocolCallback.ClientAddress
                             , ClientIdent.Logger );
         }
@@ -204,7 +204,7 @@ namespace Remact.Net.Internal
         {
             if (_protocolCallback == null)
             {
-                RaTrc.Error( "WcfSvc", "Closed notification channel to " + ClientMark, ClientIdent.Logger );
+                RaTrc.Error( "RemactSvc", "Closed notification channel to " + ClientMark, ClientIdent.Logger );
             }
             else
             {
@@ -231,13 +231,13 @@ namespace Remact.Net.Internal
 
     #endregion
     //----------------------------------------------------------------------------------------------
-    #region IWcfBasicPartner implementation
+    #region IRemoteActor implementation
 
     /// <summary>
     /// Dummy implementation. Client stub is always connected to the service.
     /// </summary>
     /// <returns>true</returns>
-    bool IWcfBasicPartner.TryConnect()
+    bool IRemoteActor.TryConnect()
     {
       return true;
     }

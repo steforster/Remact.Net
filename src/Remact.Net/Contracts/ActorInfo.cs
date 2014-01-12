@@ -30,7 +30,7 @@ namespace Remact.Net
     public string  Name;
     
     /// <summary>
-    /// Unique name of an application or service in the users WcfContract.Namespace.
+    /// Unique name of an application or service in the users Contract.Namespace.
     /// </summary>
     public string  AppName;
     
@@ -66,7 +66,7 @@ namespace Remact.Net
     
     /// <summary>
     /// <para>Universal resource identifier to reach the input of the service or client.</para>
-    /// <para>E.g. RouterService: http://localhost:40000/AsyncWcfLib/RouterService</para>
+    /// <para>E.g. RouterService: http://localhost:40000/Remact/RouterService</para>
     /// </summary>
     public  Uri    Uri;
 
@@ -77,7 +77,7 @@ namespace Remact.Net
     public int ClientId;
 
     /// <summary>
-    /// <para>To support networks without DNS server, the WcfRouter keeps a list of all IP-Adresses of a host.</para>
+    /// <para>To support networks without DNS server, the Remact.Catalog keeps a list of all IP-Adresses of a host.</para>
     /// </summary>
     public List<string> AddressList;
 
@@ -90,7 +90,7 @@ namespace Remact.Net
     public int TimeoutSeconds;
 
     /// <summary>
-    /// The message from the original service has RouterHopCount=0. The same message sent from the WcfRouter on the local host has RouterHopCount=1.
+    /// The message from the original service has RouterHopCount=0. The same message sent from the Remact.Catalog on the local host has RouterHopCount=1.
     /// Each router increments the hopcount on reception of a message.
     /// A router accepts new data only if the receiving hop count is smaller than the stored.
     /// </summary>
@@ -118,7 +118,7 @@ namespace Remact.Net
     }
 
     /// <summary>
-    /// Usage of WcfPartnerMessage triggers functionality on service oder client side while connecting/disconnecting.
+    /// Usage of ActorInfo triggers functionality on service oder client side while connecting/disconnecting.
     /// Use is set to ServiceEnableRequest when a Service is opened or ClientConnectRequest when a client is connected. 
     /// Use is set to another state when a Service is closed or a client is disconnected or a timeout has occured. 
     /// </summary>
@@ -153,29 +153,29 @@ namespace Remact.Net
       ServiceDisconnectResponse,
 
       /// <summary>
-      /// The identified service has sent a register request to WcfRouter.
+      /// The identified service has sent a register request to Remact.Catalog.
       /// </summary>
       ServiceEnableRequest,
       /// <summary>
-      /// The identified service has been registered in WcfRouter.
+      /// The identified service has been registered in Remact.Catalog.
       /// </summary>
       ServiceEnableResponse,
 
       /// <summary>
-      /// The identified service is going to be closed, it has informed WcfRouter about it.
+      /// The identified service is going to be closed, it has informed Remact.Catalog about it.
       /// </summary>
       ServiceDisableRequest,
       /// <summary>
-      /// The identified service is marked as closed in WcfRouter.
+      /// The identified service is marked as closed in Remact.Catalog.
       /// </summary>
       ServiceDisableResponse,
 
       /// <summary>
-      /// The service name is going to be looked up in WcfRouter.
+      /// The service name is going to be looked up in Remact.Catalog.
       /// </summary>
       ServiceAddressRequest,
       /// <summary>
-      /// The complete, matching service identification has been found in WcfRouter registry.
+      /// The complete, matching service identification has been found in Remact.Catalog registry.
       /// </summary>
       ServiceAddressResponse,
 
@@ -229,7 +229,7 @@ namespace Remact.Net
 
     
     /// <summary>
-    /// <para>Copy a WcfPartnerMessage.</para>
+    /// <para>Copy a ActorInfo.</para>
     /// </summary>
     /// <param name="p">Copy data from partner p.</param>
     public ActorInfo (ActorInfo p)
@@ -269,7 +269,7 @@ namespace Remact.Net
       {
         return Name.Equals (p.Name); // a service may be moved to another host or another application
       }
-      else if (RemactDefault.Instance.IsAppIdUniqueInPlant (AppInstance))
+      else if (RemactConfigDefault.Instance.IsAppIdUniqueInPlant (AppInstance))
       { // plant unique client
         return AppInstance == p.AppInstance
             && Name.Equals (p.Name)
@@ -278,7 +278,7 @@ namespace Remact.Net
       else
       { // host unique client
         return AppInstance ==  p.AppInstance
-            &&(!RemactDefault.Instance.IsProcessIdUsed (AppInstance) || ProcessId == p.ProcessId) // process id is valid for a running client only
+            &&(!RemactConfigDefault.Instance.IsProcessIdUsed (AppInstance) || ProcessId == p.ProcessId) // process id is valid for a running client only
             && HostName.Equals (p.HostName)
             && Name.Equals (p.Name)
             && AppName.Equals (p.AppName);  // these clients may not be moved
@@ -298,7 +298,7 @@ namespace Remact.Net
       {
         return Name.Equals (p.Name); // a service may be moved to another host or another application
       }
-      else if (RemactDefault.Instance.IsAppIdUniqueInPlant (AppInstance))
+      else if (RemactConfigDefault.Instance.IsAppIdUniqueInPlant (AppInstance))
       { // plant unique client
         return AppInstance == p.AppInstance
             && Name.Equals (p.Name)
@@ -307,7 +307,7 @@ namespace Remact.Net
       else
       { // host unique client
         return AppInstance ==  p.AppInstance
-            &&(!RemactDefault.Instance.IsProcessIdUsed (AppInstance) || ProcessId == p.ProcessId) // process id is valid for a running client only
+            &&(!RemactConfigDefault.Instance.IsProcessIdUsed (AppInstance) || ProcessId == p.ProcessId) // process id is valid for a running client only
             && HostName.Equals (p.HostName)
             && Name.Equals (p.Name)
             && AppName.Equals (p.AppName);  // these clients may not be moved
@@ -316,7 +316,7 @@ namespace Remact.Net
 
 
     /// <summary>
-    /// Creates string representation of WcfPartnerMessage.
+    /// Creates string representation of ActorInfo.
     /// </summary>
     /// <returns>String representation of this message.</returns>
     public override string ToString ()
@@ -333,7 +333,7 @@ namespace Remact.Net
       }
       else
       {
-          name = RemactDefault.Instance.GetAppIdentification(AppName, AppInstance, HostName, ProcessId) + "/" + Name;
+          name = RemactConfigDefault.Instance.GetAppIdentification(AppName, AppInstance, HostName, ProcessId) + "/" + Name;
       }
 
       switch (Usage)
@@ -347,5 +347,26 @@ namespace Remact.Net
               return String.Format ("{0} from '{1}'", Usage.ToString(), name);
       };
     }
+  }
+
+  //----------------------------------------------------------------------------------------------
+  /// <summary>
+  /// <para>This message payload contains a list of ActorInfo payloads.</para>
+  /// <para>It is used by the routers to exchange informations.</para>
+  /// </summary>
+  public class ActorInfoList
+  {
+      /// <summary>
+      /// List of services in a plant.
+      /// </summary>
+      public List<ActorInfo> Item;
+
+      /// <summary>
+      /// Create a ActorInfoList.
+      /// </summary>
+      public ActorInfoList()
+      {
+          Item = new List<ActorInfo>(20);
+      }
   }
 }

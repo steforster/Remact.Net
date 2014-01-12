@@ -17,7 +17,7 @@ namespace Remact.Net
   #region == enum PortState ==
 
   /// <summary>
-  /// Communication state for WcfPartners
+  /// Communication state for ActorPorts
   /// </summary>
   public enum PortState
   {
@@ -32,7 +32,7 @@ namespace Remact.Net
     Ok,
 
     /// <summary>
-    /// AsyncWcfLib is trying to establish a connection.
+    /// Remact is trying to establish a connection.
     /// </summary>
     Connecting,
 
@@ -110,13 +110,13 @@ namespace Remact.Net
     
     /// <summary>
     /// <para>Universal resource identifier for the service or client.</para>
-    /// <para>E.g. RouterService: http://localhost:40000/AsyncWcfLib/RouterService</para>
+    /// <para>E.g. RouterService: http://localhost:40000/Remact/RouterService</para>
     /// </summary>
     Uri     Uri {get;}   // EndpointAddress is not serializable, URI is set before first send operation
 
     /// <summary>
-    /// <para>To support networks without DNS server, the WcfRouter sends a list of all IP-Adresses of a host.</para>
-    /// <para>May be null, as long as no info from WcfRouter has been received.</para>
+    /// <para>To support networks without DNS server, the Remact.Catalog sends a list of all IP-Adresses of a host.</para>
+    /// <para>May be null, as long as no info from Remact.Catalog has been received.</para>
     /// </summary>
     List<string> AddressList { get; }
 
@@ -173,9 +173,9 @@ namespace Remact.Net
       /// </summary>
       /// <param name="service">The server.</param>
       /// <param name="uri">The dynamically generated URI for this service.</param>
-      /// <param name="isRouter">true if used for WcfRouter service.</param>
+      /// <param name="isRouter">true if used for Remact.Catalog service.</param>
       /// <returns>The protocol driver (for dispose).</returns>
-      IDisposable DoServiceConfiguration(WcfBasicService service, ref Uri uri, bool isRouter);
+      IDisposable DoServiceConfiguration(RemactService service, ref Uri uri, bool isRouter);
   }
 
   #endregion
@@ -192,7 +192,7 @@ namespace Remact.Net
       /// </summary>
       /// <param name="clientBase">The ClientBase object to modify the endpoint and security credentials. TODO public interface!</param>
       /// <param name="uri">The endpoint URI to connect.</param>
-      /// <param name="forRouter">true if used for WcfRouter service.</param>
+      /// <param name="forRouter">true if used for Remact.Catalog service.</param>
       void DoClientConfiguration( object clientBase, ref Uri uri, bool forRouter );
   }
 
@@ -207,11 +207,11 @@ namespace Remact.Net
   public interface IActorInput: IActorPort
   {
     /// <summary>
-    /// Add a WCF service und publish Uri to WcfRouter.
+    /// Add a service und publish Uri to Remact.Catalog.
     /// </summary>
     /// <param name="serviceName">The unique name of the service or null, when this partners name is equal to the servicename. </param>
     /// <param name="tcpPort">The TCP port for the service or 0, when automatic port allocation will be used.</param>
-    /// <param name="publishToRouter">True(=default): The servicename will be published to the WcfRouter on localhost.</param>
+    /// <param name="publishToRouter">True(=default): The servicename will be published to the Remact.Catalog on localhost.</param>
     /// <param name="serviceConfig">Plugin your own service configuration instead of RemactDefaults.DoServiceConfiguration.</param>
     void LinkInputToNetwork( string serviceName = null, int tcpPort = 0, bool publishToRouter = true, 
                              IActorInputConfiguration serviceConfig = null );
@@ -242,7 +242,7 @@ namespace Remact.Net
     /// <para>May be called from any thread.</para>
     /// <para>Setting InputStateFromNetwork to PortState.Ok or PortState.Connecting reconnects a previously disconnected link.</para>
     /// <para>These states may be set only after an initial call to TryConnect from the active services internal thread.</para>
-    /// <para>Setting other states will disconnect the WCF service from network.</para>
+    /// <para>Setting other states will disconnect the service from network.</para>
     /// </summary>
     /// <returns>A <see cref="PortState"/></returns>
     PortState InputStateFromNetwork {get; set;}
@@ -265,23 +265,23 @@ namespace Remact.Net
     void LinkOutputTo (IActorInput output);
 
     /// <summary>
-    /// Add a WcfClientAsync and lookup the service Uri at WcfRouter.
-    /// WcfRouter may have synchronized its service register with peer routers on other hosts.
+    /// Add a RemactClient and lookup the service Uri at Remact.Catalog.
+    /// Remact.Catalog may have synchronized its service register with peer routers on other hosts.
     /// </summary>
     /// <param name="serviceName">The unique service name to connect to.</param>
     /// <param name="clientConfig">Plugin your own client configuration instead of RemactDefaults.DoClientConfiguration.</param>
     void LinkOutputToRemoteService( string serviceName, IActorOutputConfiguration clientConfig = null );
 
     /// <summary>
-    /// Add a WcfClientAsync and lookup the service Uri at WcfRouter.
+    /// Add a RemactClient and lookup the service Uri at Remact.Catalog.
     /// </summary>
-    /// <param name="routerHost">The hostname, where the WcfRouter runs.</param>
+    /// <param name="routerHost">The hostname, where the Remact.Catalog runs.</param>
     /// <param name="serviceName">The unique service name to connect to.</param>
     /// <param name="clientConfig">Plugin your own client configuration instead of RemactDefaults.DoClientConfiguration.</param>
     void LinkOutputToRemoteService( string routerHost, string serviceName, IActorOutputConfiguration clientConfig = null );
 
     /// <summary>
-    /// Add a WcfBasicClientAsync. No lookup at WcfRouter is needed as we know the TCP portnumber.
+    /// Add a RemactClient. No lookup at Remact.Catalog is needed as we know the TCP portnumber.
     /// </summary>
     /// <param name="serviceUri">The uri of the remote service.</param>
     /// <param name="clientConfig">Plugin your own client configuration instead of RemactDefaults.DoClientConfiguration.</param>
@@ -317,7 +317,7 @@ namespace Remact.Net
     /// <para>May be called from any thread.</para>
     /// <para>Setting OutputState to PortState.Ok or PortState.Connecting reconnects a previously disconnected link.</para>
     /// <para>These states may be set only after an initial call to TryConnect from the active services internal thread.</para>
-    /// <para>Setting other states will disconnect the WCF client from network.</para>
+    /// <para>Setting other states will disconnect the client from network.</para>
     /// </summary>
     /// <returns>A <see cref="PortState"/></returns>
     PortState OutputState {get; set;}

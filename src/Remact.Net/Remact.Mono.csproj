@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug.Mono</Configuration>
@@ -62,20 +62,18 @@
     <Compile Include="Contracts\IRemactCatalog.cs" />
     <Compile Include="Contracts\ErrorMessage.cs" />
     <Compile Include="Internal\InternalMultithreadedServiceNet40.cs" />
-    <Compile Include="IRemactDefault.cs" />
+    <Compile Include="IRemactConfig.cs" />
     <Compile Include="Protocol\IRemactProtocolDriver.cs" />
     <Compile Include="Protocol\Wamp\WampClient.cs" />
     <Compile Include="Protocol\Wamp\WampClientProxy.cs" />
     <Compile Include="Protocol\Wamp\WampRpcV1.cs" />
-    <Compile Include="RemactDefault.cs" />
+    <Compile Include="RemactConfigDefault.cs" />
     <Compile Include="RemactDelegates.cs" />
-    <Compile Include="Internal\IWcfBasicPartner.cs" />
-    <Compile Include="Internal\WcfBasicClientAsync.cs" />
-    <None Include="Internal\WcfBasicClientGenerated.cs" />
-    <Compile Include="Internal\WcfBasicMessages.cs" />
-    <Compile Include="Internal\WcfBasicService.cs" />
-    <Compile Include="Internal\WcfBasicServiceUser.cs" />
-    <Compile Include="Internal\WcfRouterClient.cs" />
+    <Compile Include="Internal\IRemoteActor.cs" />
+    <Compile Include="Internal\RemactClient.cs" />
+    <Compile Include="Internal\RemactService.cs" />
+    <Compile Include="Internal\RemactServiceUser.cs" />
+    <Compile Include="Internal\RemactCatalogClient.cs" />
     <Compile Include="Util\RaTrc.cs" />
     <Compile Include="Util\RaTrcPluginConsole.cs" />
     <Compile Include="Util\RaTrcPluginFile.cs" />

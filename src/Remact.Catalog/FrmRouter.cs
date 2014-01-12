@@ -28,7 +28,7 @@ namespace Remact.Catalog
     public FrmRouter()
     {
       InitializeComponent();
-      this.Text = "AsyncWcfLib.Router on "+Dns.GetHostName ();
+      this.Text = "Remact.Router on "+Dns.GetHostName ();
     }
 
     #endregion

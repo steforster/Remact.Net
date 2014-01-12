@@ -56,7 +56,7 @@ namespace Remact.Net.Protocol
     }
 
     /// <summary>
-    /// Interface for WcfBasicClientAsync (client side, higher level).
+    /// Interface for RemactClient (client side, higher level).
     /// and also interface for client proxies (server side, lower protocol level).
     /// </summary>
     public interface IRemactProtocolDriverCallbacks

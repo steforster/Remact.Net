@@ -21,7 +21,7 @@ namespace Remact.Net
     /// </summary>
     /// <param name="id">the received request or response containing message and sender.</param>
     /// <param name="dummy">unused parameter to make signature non ambiguous (temporary for VisualStudio 11).</param>
-    public delegate Task WcfMessageHandlerAsync( WcfReqIdent id, bool dummy ); // bool dummy to make signature non ambiguous
+    public delegate Task MessageHandlerAsync( ActorMessage id, bool dummy ); // bool dummy to make signature non ambiguous
     #endif
 
     /// <summary>
@@ -38,12 +38,12 @@ namespace Remact.Net
     /// <param name="id">the received request or response containing message and sender.</param>
     /// <param name="senderContext">the local id.Sender.SenderContext object present when the request or response is recived.</param>
     /// <param name="dummy">unused parameter to make signature non ambiguous (temporary for VisualStudio 11).</param>
-    public delegate Task WcfMessageHandlerAsync<TSC>( WcfReqIdent id, TSC senderContext, bool dummy ) where TSC : class;
+    public delegate Task MessageHandlerAsync<TSC>( ActorMessage id, TSC senderContext, bool dummy ) where TSC : class;
     #endif
 
     /// <summary>
     /// Extension method On implements this delegate for handling messages directly in a Send context.
-    /// <see cref="ActorMessageExtensions.On&lt;T>(ActorMessage,Action&lt;T>)"/>, <see cref="ActorOutput.SendOut(IWcfMessage, AsyncResponseHandler)"/>
+    /// <see cref="ActorMessageExtensions.On&lt;T>(ActorMessage,Action&lt;T>)"/>, <see cref="ActorOutput.SendOut(object, AsyncResponseHandler)"/>
     /// </summary>
     /// <param name="msg">the received response or errormessage from the connected service</param>
     public delegate ActorMessage AsyncResponseHandler (ActorMessage msg);

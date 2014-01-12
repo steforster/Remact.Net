@@ -12,7 +12,7 @@ namespace Remact.Net
     #region == class ActorMessageExtensions ==
 
     /// <summary>
-    /// Contains extension methods for AsyncWcfLib.
+    /// Contains extension methods for ActorMessages.
     /// To use extension methods you need to reference assembly 'System.Core'
     /// </summary>
     public static class ActorMessageExtensions
@@ -62,7 +62,7 @@ namespace Remact.Net
     #region == class ActorMessage ==
 
     /// <summary>
-    /// <para>All data for a message sent through AsyncWcfLib.</para>
+    /// <para>All data for a message sent through Remact.</para>
     /// <para>Contains the Payload itself as well as some request identification and a reference to the sending ActorPort.</para>
     /// <para>The class may be used to send a response to the sender and to trace unique message identification.</para>
     /// </summary>
@@ -82,7 +82,7 @@ namespace Remact.Net
         public int ClientId;
     
         /// <summary>
-        /// <para>RequestId is incremented by WcfAsyncClient for remote connections only. Remote service returns the same number.</para>
+        /// <para>RequestId is incremented by RemactClient for remote connections only. Remote service returns the same number.</para>
         /// <para>0=Notification, 11...=remote requests</para>
         /// It is used to detect programming errors.
         /// </summary>
@@ -140,7 +140,7 @@ namespace Remact.Net
             DestinationMethod = destinationMethod;
             ClientId = clientId;
             RequestId = requestId;
-            var m = payload as IExtensibleWcfMessage;
+            var m = payload as IExtensibleActorMessage;
             if (m != null)
             {
                 m.BoundSyncContext = null;
@@ -215,9 +215,9 @@ namespace Remact.Net
 
 
         /// <summary>
-        /// Respond to a request. SendResponse may be called several times on one request. The responses are added into a WcfNotificationMessage.
+        /// Respond to a request. SendResponse may be called several times on one request. The following 'responses' are sent as notifications.
         /// The individual messages are received on client side.
-        /// If SendResponse is not called on a request, AsyncWcfLib automatically returns a ReadyMessage to the client.
+        /// If SendResponse is not called on a request, Remact automatically returns a ReadyMessage to the client.
         /// </summary>
         /// <param name="payload">The message to send as response.</param>
         public void SendResponse(object payload)
@@ -229,11 +229,11 @@ namespace Remact.Net
         // Return a response to the sender.
         internal void SendResponseFrom(ActorPort service, object payload, AsyncResponseHandler responseHandler)
         {
-            var m = payload as IExtensibleWcfMessage;
+            var m = payload as IExtensibleActorMessage;
             if (m != null && m.BoundSyncContext != null && m.BoundSyncContext != SynchronizationContext.Current)
             {
                 string name = service == null ? "null" : service.Name;
-                throw new Exception("AsyncWcfLib: wrong thread synchronization context when responding from '" + name + "'");
+                throw new Exception("Remact: wrong thread synchronization context when responding from '" + name + "'");
             }
 
             // return same request ID for first call to SendResponse

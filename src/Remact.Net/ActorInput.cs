@@ -20,7 +20,7 @@ namespace Remact.Net
   /// <para>This class represents a communication partner (service).</para>
   /// <para>It is the destination of a request message and the source of a response message.</para>
   /// </summary>
-  public class ActorInput: ActorPort, IActorInput, IWcfBasicPartner
+  public class ActorInput: ActorPort, IActorInput, IRemoteActor
   {
     #region Constructor
 
@@ -51,7 +51,7 @@ namespace Remact.Net
     /// </summary>
     /// <param name="name">The unique name of this service.</param>
     /// <param name="requestHandlerAsync">The awaitable method to be called when a request is received.</param>
-    public ActorInput( string name, WcfMessageHandlerAsync requestHandlerAsync )
+    public ActorInput( string name, ActorMessageHandlerAsync requestHandlerAsync )
         : base(name, requestHandlerAsync)
     {
         IsServiceName = true;
@@ -74,7 +74,7 @@ namespace Remact.Net
     #region Destination linking, service creation
 
     private ActorOutput          m_Anonymous; // each input may have one anonymous partner carrying one TSC (sender context)
-    private WcfBasicService      m_MyInputService;
+    private RemactService      m_MyInputService;
 
     // prepare for tracing of connect-process
     internal void PrepareServiceName (string routerHost, string serviceName)
@@ -82,7 +82,7 @@ namespace Remact.Net
       IsServiceName = true;
       HostName = routerHost;
       Name = serviceName;
-      Uri = new Uri("routed://" + routerHost + "/" + RemactDefault.WsNamespace + "/" + serviceName);
+      Uri = new Uri("routed://" + routerHost + "/" + RemactConfigDefault.WsNamespace + "/" + serviceName);
     }
 
     // prepare for tracing of connect-process
@@ -95,12 +95,12 @@ namespace Remact.Net
     }
 
     /// <summary>
-    /// Default = false. When set to true: Disable router client, no input of this application will publish its service name to the WcfRouter.
+    /// Default = false. When set to true: Disable router client, no input of this application will publish its service name to the Remact.Catalog.
     /// </summary>
     public static bool DisableRouterClient
     {
-      get { return WcfRouterClient.Instance ().DisableRouterClient; }
-      set { WcfRouterClient.Instance ().DisableRouterClient = value; }
+      get { return RemactCatalogClient.Instance ().DisableRouterClient; }
+      set { RemactCatalogClient.Instance ().DisableRouterClient = value; }
     }
 
     /// <summary>
@@ -109,7 +109,7 @@ namespace Remact.Net
     /// </summary>
     /// <param name="serviceName">The unique name of the service or null, when this partners name is equal to the servicename. </param>
     /// <param name="tcpPort">The TCP port for the service or 0, when automatic port allocation will be used.</param>
-    /// <param name="publishToRouter">True(=default): The servicename will be published to the WcfRouter on localhost.</param>
+    /// <param name="publishToRouter">True(=default): The servicename will be published to the Remact.Catalog on localhost.</param>
     /// <param name="serviceConfig">Plugin your own service configuration instead of RemactDefaults.ServiceConfiguration.</param>
     public void LinkInputToNetwork( string serviceName = null, int tcpPort = 0, bool publishToRouter = true,
                                     IActorInputConfiguration serviceConfig = null )
@@ -133,13 +133,13 @@ namespace Remact.Net
           catch { }
       }
 
-      m_MyInputService = new WcfBasicService( this, tcpPort, publishToRouter, serviceConfig ); // sets this.Uri. SenderContext is set into client stubs on connecting.
+      m_MyInputService = new RemactService( this, tcpPort, publishToRouter, serviceConfig ); // sets this.Uri. SenderContext is set into client stubs on connecting.
     }
 
     /// <summary>
-    /// When the input is linked to network, BasicService provides some informations about the WCF service.
+    /// When the input is linked to network, BasicService provides some informations about the RemactService.
     /// </summary>
-    public WcfBasicService BasicService { get { return m_MyInputService; } }
+    public RemactService BasicService { get { return m_MyInputService; } }
 
     /// <summary>
     /// When true: TryConnect() must be called (will open the service host)
@@ -152,7 +152,7 @@ namespace Remact.Net
     /// <para>May be called from any thread.</para>
     /// <para>Setting InputStateFromNetwork to PortState.Ok or PortState.Connecting reconnects a previously disconnected link.</para>
     /// <para>These states may be set only after an initial call to TryConnect from the actors internal thread.</para>
-    /// <para>Setting other states will disconnect the WCF service from network.</para>
+    /// <para>Setting other states will disconnect the RemactService from network.</para>
     /// </summary>
     /// <returns>A <see cref="PortState"/></returns>
     public PortState InputStateFromNetwork 
@@ -189,28 +189,28 @@ namespace Remact.Net
 
     /// <summary>
     /// The event is risen, when a client is connected to this service.
-    /// The response to the ActorMessage is sent by AsyncWcfLib. No further response is required. 
+    /// The response to the ActorMessage is sent by the subsystem. No further response is required. 
     /// </summary>
     public event MessageHandler OnInputConnected;
     
     /// <summary>
     /// The event is risen, when a client is disconnected from this service.
-    /// The response to the ActorMessage is sent by AsyncWcfLib. No further response is required. 
+    /// The response to the ActorMessage is sent by the subsystem. No further response is required. 
     /// </summary>
     public event MessageHandler OnInputDisconnected;
 
 
     #endregion
     //----------------------------------------------------------------------------------------------
-    #region IWcfBasicPartner implementation
+    #region IRemoteActor implementation
 
     /// <summary>
     /// Opens the service for incomming connections (same as TryConnect).
     /// The method is accessible only by the owner of this ActorInput object. No interface exposes the method.
-    /// - Incoming connections from network: Opens a WCF service.
+    /// - Incoming connections from network: Opens a RemactService.
     /// Open picks up the synchronization context and must be called on the receiving thread only!
-    /// A WcfPartnerMessage is received, when the connection is established.
-    /// The connect-process runs asynchronous and does involve an address registration at the WcfRouter (when RouterClient is not disabled).
+    /// A ActorInfo message is received, when the connection is established.
+    /// The connect-process runs asynchronous and does involve an address registration at the Remact.Catalog (when CatalogClient is not disabled).
     /// </summary>
     public void Open()
     {
@@ -263,14 +263,14 @@ namespace Remact.Net
     /// <summary>
     /// VS2012 Version:
     /// Switch to the actors thread of this input and process the request there.
-    /// At least a WcfIdleMessage will asynchronously be passed to the Task-return value.
+    /// At least a ReadyMessage will asynchronously be passed to the Task-return value.
     /// </summary>
     /// <param name="id">The request to send.</param>
     /// <returns>The asynchronous response</returns>
-    public Task<WcfReqIdent> SendReceiveAsync( WcfReqIdent id )
+    public Task<ActorMessage> SendReceiveAsync( ActorMessage id )
     {
         // see  TA.docx: Workloads : IO bound
-        var tcs = new TaskCompletionSource<WcfReqIdent>();
+        var tcs = new TaskCompletionSource<ActorMessage>();
         id.SourceLambda = ( rsp ) =>
             {
                 tcs.TrySetResult( rsp ); // response has been received
@@ -325,7 +325,7 @@ namespace Remact.Net
         sender = GetAnonymousPartner();
         if (responseHandler != null)
         {
-          throw new Exception ("AsyncWcfLib: No response supported when sending from anonymous partner");
+          throw new Exception ("Remact: No response supported when sending from anonymous partner");
         }
       }
       else
@@ -338,7 +338,7 @@ namespace Remact.Net
         }
         else if (sender.ManagedThreadId != threadId)
         {
-          throw new Exception ("AsyncWcfLib: wrong thread synchronization context when posting from '"+sender.Name+"'");
+          throw new Exception ("Remact: wrong thread synchronization context when posting from '"+sender.Name+"'");
         }
       }
 
@@ -376,14 +376,14 @@ namespace Remact.Net
     //----------------------------------------------------------------------------------------------
     #region InputClientList
 
-    // used in WcfBasicService (TODO move it)
+    // used in RemactService (TODO move it)
     internal List<ActorOutput> InputClientList;
     private  object            m_inputClientLock = new Object();
 
     /// <summary>
     /// Add a local or remote ActorPort
     /// </summary>
-    /// <param name="clt">the local WcfBasicClientAsync</param>
+    /// <param name="clt">the local ActorOutput</param>
     internal void AddInputClient (ActorOutput clt)
     {
       lock (m_inputClientLock)
@@ -391,13 +391,13 @@ namespace Remact.Net
         if (InputClientList == null) InputClientList = new List<ActorOutput>(10);
         InputClientList.Add (clt);
       }
-    }// AddClient
+    }
 
 
     /// <summary>
     /// Remove a local or remote ActorPort while Disconnecting.
     /// </summary>
-    /// <param name="clt">the local WcfBasicClientAsync</param>
+    /// <param name="clt">the local ActorOutput</param>
     internal void RemoveInputClient (ActorOutput clt)
     {
       lock (m_inputClientLock)
@@ -407,7 +407,7 @@ namespace Remact.Net
         if (n < 0) return; // already removed
         InputClientList.RemoveAt (n);
       }
-    }// RemoveClient
+    }
 
     #endregion
   }// class ActorInput
@@ -426,14 +426,14 @@ namespace Remact.Net
   {
     /// <summary>
     /// The event is risen, when a client is connected to this service.
-    /// The response to the ActorMessage is sent by AsyncWcfLib. No further response is required. 
+    /// The response to the ActorMessage is sent the subsystem. No further response is required. 
     /// </summary>
     public new event MessageHandler<TSC> OnInputConnected;
 
 
     /// <summary>
     /// The event is risen, when a client is disconnected from this service.
-    /// The response to the ActorMessage is sent by AsyncWcfLib. No further response is required. 
+    /// The response to the ActorMessage is sent by the subsystem. No further response is required. 
     /// </summary>
     public new event MessageHandler<TSC> OnInputDisconnected;
 
@@ -490,8 +490,8 @@ namespace Remact.Net
     internal static TSC GetSenderContext (ActorMessage msg)
     {
         // We are peer   : SendingP is an ActorOutput. It has only one Output and therefore only one (our) SenderContext. 
-        // We are service: SendingP is the client  proxy (WcfBasicServiceUser). It has our SenderContext.
-        // We NEVER are client : SendingP is ServiceIdent of WcfBasicClientAsync. It's SenderContext is the same as its ClientIdent.SenderContext. 
+        // We are service: SendingP is the client  proxy (RemactServiceUser). It has our SenderContext.
+        // We NEVER are client : SendingP is ServiceIdent of RemactClient. It's SenderContext is the same as its ClientIdent.SenderContext. 
         TSC senderCtx = null;
         var sender = msg.Source as ActorOutput;
         if (sender != null)
@@ -521,7 +521,7 @@ namespace Remact.Net
         } 
         else 
         {
-            RaTrc.Error("AsyncWcfLib", "Unhandled request: " + msg.Payload, Logger);
+            RaTrc.Error("Remact", "Unhandled request: " + msg.Payload, Logger);
         }
     }
   }// class ActorInput<TSC>

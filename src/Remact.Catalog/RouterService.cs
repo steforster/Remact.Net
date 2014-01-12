@@ -42,7 +42,7 @@ namespace Remact.Catalog
             }
         }
 
-        WcfPartnerListMessage list = id.Payload as WcfPartnerListMessage;
+        ActorInfoList list = id.Payload as ActorInfoList;
         if (list != null)
         {
             ok = RegisterList(list, id);
@@ -52,7 +52,7 @@ namespace Remact.Catalog
         if (!ok)
         {
             RaTrc.Warning(id.SvcRcvId, "Unknown request or no service: " + id.Payload.ToString());
-            id.SendResponse(new ErrorMessage(ErrorMessage.Code.AppRequestNotAcceptedByService, "WcfRouterService"));
+            id.SendResponse(new ErrorMessage(ErrorMessage.Code.AppRequestNotAcceptedByService, "Remact.CatalogService"));
         }
     }
 
@@ -89,7 +89,7 @@ namespace Remact.Catalog
 
     // A list of service entries is beeing enabled, disabled or updated
     // return our list as response, to synchronize the peer router
-    private bool RegisterList (WcfPartnerListMessage list, ActorMessage id)
+    private bool RegisterList (ActorInfoList list, ActorMessage id)
     {
         RaTrc.Info( id.SvcRcvId, "PeerRtr sends list containing " + list.Item.Count + " services." );
         foreach( ActorInfo s in list.Item )

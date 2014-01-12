@@ -11,25 +11,25 @@ namespace Remact.Net.Internal
   
   
   /// <summary>
-  /// A internally used singleton object for all WcfServiceAssistants and WcfClientAsync to register/lookup a service with WcfRouter
+  /// A internally used singleton object for all RemactServices and RemactClientAsync to register/lookup a service with Remact.Catalog
   /// </summary>
-  internal class WcfRouterClient
+  internal class RemactCatalogClient
   {
     //----------------------------------------------------------------------------------------------
     #region Fields
 
-    private static WcfRouterClient           ms_Instance;
+    private static RemactCatalogClient           ms_Instance;
     private static object                    ms_Lock = new Object();
     private static bool                      ms_DisableRouterClient;
 
 #if !BEFORE_NET45
-    private WcfBasicClientAsyncAwait         m_RouterClient;
+    private RemactClientAsync         m_RouterClient;
 #else
-    private WcfBasicClientAsync              m_RouterClient;
+    private RemactClient              m_RouterClient;
 #endif
 
-    private        List<WcfBasicClientAsync> m_ClientList;
-    private        List<WcfBasicService>     m_ServiceList;
+    private        List<RemactClient> m_ClientList;
+    private        List<RemactService>     m_ServiceList;
     private        int                       m_nCurrentSvc;
     private        Timer                     m_Timer;
     private        bool                      m_Running;
@@ -68,7 +68,7 @@ namespace Remact.Net.Internal
             {
               while (m_ServiceList.Count > 0)
               {
-                m_ServiceList[0].Disconnect(); // shutdown all services and send ServiceDisable messages to WcfRouterService when overloaded in WcfClientAsync
+                m_ServiceList[0].Disconnect(); // shutdown all services and send ServiceDisable messages to Remact.CatalogService when overloaded in RemactClientAsync
               }
               
               while (m_ClientList.Count > 0)
@@ -82,7 +82,7 @@ namespace Remact.Net.Internal
         }//-------------------------------
         else if (m_RouterClient.IsFaulted)
         {
-          if (m_nConnectTries < 0) RaTrc.Error ("Wcf", "Router client in Fault state !", RemactApplication.Logger );
+          if (m_nConnectTries < 0) RaTrc.Error("Remact", "Router client in Fault state !", RemactApplication.Logger);
           m_RouterClient.AbortCommunication ();
           m_Timer.Change (15000, 1000); // 15 s warten und neu starten
         }//-------------------------------
@@ -92,12 +92,12 @@ namespace Remact.Net.Internal
           {
             //m_nSendingThreadId = Thread.CurrentThread.ManagedThreadId;
             if (++m_nConnectTries >= 10) m_nConnectTries = 1;
-            var uri = new Uri("ws://localhost:" + RemactDefault.Instance.RouterPort + "/" + RemactDefault.WsNamespace + "/" + RemactDefault.Instance.RouterServiceName);
-            m_RouterClient.TryConnectVia( uri, OnWcfMessageReceived, toRouter:true );
+            var uri = new Uri("ws://localhost:" + RemactConfigDefault.Instance.RouterPort + "/" + RemactConfigDefault.WsNamespace + "/" + RemactConfigDefault.Instance.RouterServiceName);
+            m_RouterClient.TryConnectVia( uri, OnMessageReceived, toRouter:true );
           }
           lock (ms_Lock)
           { // ev. wurde der RouterService neu gestartet
-            foreach (WcfBasicService s in m_ServiceList)
+            foreach (RemactService s in m_ServiceList)
             {
               s.IsServiceRegistered = false; // Status zurücksetzen, so dass er wieder gemeldet wird
             }
@@ -115,13 +115,13 @@ namespace Remact.Net.Internal
             lock (ms_Lock)
             {
               ActorInfo req = new ActorInfo (m_ServiceList[m_nCurrentSvc].ServiceIdent, ActorInfo.Use.ServiceEnableRequest);
-              WcfBasicService svc = m_ServiceList[m_nCurrentSvc];
+              RemactService svc = m_ServiceList[m_nCurrentSvc];
               if (!svc.IsServiceRegistered)
               {
                 svc.NextEnableMessage = DateTime.Now.AddSeconds(20);
                 svc.IsServiceRegistered = true;
                 ActorMessage id = m_RouterClient.SendOut (req);
-                RaTrc.Info( id.CltSndId, "send to WcfRouter: " + req.ToString(), RemactApplication.Logger );// msg.CltSndId is updated in Send()
+                RaTrc.Info( id.CltSndId, "send to Remact.Catalog: " + req.ToString(), RemactApplication.Logger );// msg.CltSndId is updated in Send()
 
               }
               else if (m_ServiceList[m_nCurrentSvc].NextEnableMessage < DateTime.Now)
@@ -145,8 +145,8 @@ namespace Remact.Net.Internal
     }// OnTimerTick
 
     
-    // Response callback from WcfRouterService
-    private void OnWcfMessageReceived (ActorMessage rsp)
+    // Response callback from Remact.CatalogService
+    private void OnMessageReceived (ActorMessage rsp)
     {
       if (rsp.Payload is ErrorMessage)
       {
@@ -155,7 +155,7 @@ namespace Remact.Net.Internal
           if (err.Error == ErrorMessage.Code.ServiceNotRunning
            || err.Error == ErrorMessage.Code.RouterNotRunning)
           {
-              RaTrc.Warning( rsp.CltRcvId, "WCF router service not running at  '" + rsp.Source.Uri + "'", RemactApplication.Logger );
+              RaTrc.Warning( rsp.CltRcvId, "Remact catalog service not running at  '" + rsp.Source.Uri + "'", RemactApplication.Logger );
           }
           else
           {
@@ -171,7 +171,7 @@ namespace Remact.Net.Internal
       {
           RaTrc.Info( rsp.CltRcvId, rsp.ToString(), RemactApplication.Logger );
       }
-    }// OnWcfMessageReceived
+    }// OnMessageReceived
     
 
     #endregion
@@ -179,30 +179,30 @@ namespace Remact.Net.Internal
     #region Constructors
 
     /// <summary>
-    /// (static) Get or Create the WcfRouterClient singleton 
+    /// (static) Get or Create the Remact.CatalogClient singleton 
     /// </summary>
     /// <returns>singleton instance</returns>
-    internal static WcfRouterClient Instance ()
+    internal static RemactCatalogClient Instance ()
     {
       if (ms_Instance == null)
       {
-        ms_Instance = new WcfRouterClient ();
+        ms_Instance = new RemactCatalogClient ();
       }
       return ms_Instance;
     }
 
 
     /// <summary>
-    /// Initializes a new instance of the WcfRouterClient class.
+    /// Initializes a new instance of the Remact.CatalogClient class.
     /// </summary>
-    internal WcfRouterClient ()
+    internal RemactCatalogClient ()
     {
-      m_ServiceList  = new List<WcfBasicService> (20);
-      m_ClientList   = new List<WcfBasicClientAsync> (20);
+      m_ServiceList  = new List<RemactService> (20);
+      m_ClientList   = new List<RemactClient> (20);
 #if !BEFORE_NET45
-      m_RouterClient = new WcfBasicClientAsyncAwait("WcfRouterClt", OnWcfMessageReceived);
+      m_RouterClient = new RemactClientAsync("Remact.CatalogClt", OnMessageReceived);
 #else
-      m_RouterClient = new WcfBasicClientAsync("WcfRouterClt", OnWcfMessageReceived);
+      m_RouterClient = new RemactClient("Remact.CatalogClt", OnMessageReceived);
 #endif
       m_RouterClient.ClientIdent.IsMultithreaded = true;
       m_RouterClient.ClientIdent.TraceConnect = false;
@@ -211,7 +211,7 @@ namespace Remact.Net.Internal
 
 
     /// <summary>
-    /// (static) Close all incoming network connections and send a ServiceDisable messages to WcfRouterService.
+    /// (static) Close all incoming network connections and send a ServiceDisable messages to Remact.CatalogService.
     ///          Disconnects all outgoing network connections and send ClientDisconnectRequest to connected services.
     /// </summary>
     internal static void DisconnectAll ()
@@ -226,11 +226,11 @@ namespace Remact.Net.Internal
         int n = 0;
         while (ms_Instance != null && n < 500) {Thread.Sleep (20); n += 20;}
       }
-    }// WcfRouterClient.DisconnectAll
+    }// Remact.CatalogClient.DisconnectAll
 
 
     /// <summary>
-    /// Shutdown the RouterClient, send disconnect message to WcfRouterService if possible
+    /// Shutdown the RouterClient, send disconnect message to Remact.CatalogService if possible
     /// </summary>
     internal void Disconnect ()
     {
@@ -246,7 +246,7 @@ namespace Remact.Net.Internal
             {
               m_RouterClient.Disconnect(); // send last messages, contrary to AbortCommunication();
               m_RouterClient = null;
-              RaTrc.Info( "Wcf", "Router client disconnected.", RemactApplication.Logger );
+              RaTrc.Info("Remact", "Router client disconnected.", RemactApplication.Logger);
             }
             catch
             {
@@ -256,7 +256,7 @@ namespace Remact.Net.Internal
           if( m_RouterClient != null && !m_RouterClient.IsDisconnected )
           {
             m_RouterClient.AbortCommunication();
-            RaTrc.Error( "Wcf", "Router client aborted, outstanding responses = " + n, RemactApplication.Logger );
+            RaTrc.Error("Remact", "Router client aborted, outstanding responses = " + n, RemactApplication.Logger);
           }
         }
         
@@ -274,10 +274,10 @@ namespace Remact.Net.Internal
     #region Public Methods
 
     /// <summary>
-    /// Add a local WcfServiceAssistant for registration with WcfRouterService
+    /// Add a local RemactService for registration with Remact.CatalogService
     /// </summary>
-    /// <param name="svc">the local WcfServiceAssistant</param>
-    internal void AddService (WcfBasicService svc)
+    /// <param name="svc">the local RemactService</param>
+    internal void AddService (RemactService svc)
     {
       lock (ms_Lock)
       {
@@ -288,10 +288,10 @@ namespace Remact.Net.Internal
 
     
     /// <summary>
-    /// Remove a local WcfServiceAssistant, send disable-message to WcfRouterService
+    /// Remove a local RemactService, send disable-message to Remact.CatalogService
     /// </summary>
-    /// <param name="svc">the local WcfServiceAssistant</param>
-    internal void RemoveService (WcfBasicService svc)
+    /// <param name="svc">the local RemactService</param>
+    internal void RemoveService (RemactService svc)
     {
       lock (ms_Lock)
       {
@@ -307,28 +307,28 @@ namespace Remact.Net.Internal
         }
         m_ServiceList.RemoveAt(n);
       }
-    }// RemoveService
+    }
 
 
     /// <summary>
-    /// Add a local WcfBasicClientAsync for handling in DisconnectAll
+    /// Add a local RemactClient for handling in DisconnectAll
     /// </summary>
-    /// <param name="clt">the local WcfBasicClientAsync</param>
-    internal void AddClient (WcfBasicClientAsync clt)
+    /// <param name="clt">the local RemactClient</param>
+    internal void AddClient (RemactClient clt)
     {
       if (clt == m_RouterClient) return; // do not add the RouterClient itself
       lock (ms_Lock)
       {
         m_ClientList.Add (clt);
       }
-    }// AddClient
+    }
 
 
     /// <summary>
-    /// Remove a local WcfBasicClientAsync while Disconnecting.
+    /// Remove a local RemactClient while Disconnecting.
     /// </summary>
-    /// <param name="clt">the local WcfBasicClientAsync</param>
-    internal void RemoveClient (WcfBasicClientAsync clt)
+    /// <param name="clt">the local RemactClient</param>
+    internal void RemoveClient (RemactClient clt)
     {
       lock (ms_Lock)
       {
@@ -336,9 +336,9 @@ namespace Remact.Net.Internal
         if (n < 0) return; // already removed
         m_ClientList.RemoveAt (n);
       }
-    }// RemoveClient
+    }
 
     #endregion
 
-  }//class WcfRouterClient
+  }//class Remact.CatalogClient
 }//namespace

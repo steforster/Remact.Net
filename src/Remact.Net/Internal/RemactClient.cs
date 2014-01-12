@@ -16,16 +16,16 @@ using Remact.Net.Protocol.Wamp;
 namespace Remact.Net.Internal
 {
   /// <summary>
-  /// <para>Base class of WcfClientAsync to connect to a WCF service.</para>
+  /// <para>Base class of RemactClientAsync to connect to a service.</para>
   /// <para>Requests are sent asynchronious.</para>
   /// <para>Responses are asynchroniously received on the same thread as the request was sent</para>
   /// <para>(only when sent from a thread with message queue (as WinForms), but not when sent from a threadpool-thread).</para>
-  /// <para>This class uses a auto-generated service reference 'WcfBasicClient'.</para>
+  /// <para>This class uses a auto-generated service reference 'RemactClient'.</para>
   /// <para>TSC is the TypeofUserContext in ClientIdent and ServiceIdent.</para>
   /// <para>We accept only reference types as TSC. This allows to modify user context when receiving a message.</para>
-  /// <para>Specify WcfBasicClientAsync&lt;object>, when you do not need the user context.</para>
+  /// <para>Specify RemactClient&lt;object>, when you do not need the user context.</para>
   /// </summary>
-    internal class WcfBasicClientAsync : IWcfBasicPartner, IRemactProtocolDriverCallbacks
+  internal class RemactClient : IRemoteActor, IRemactProtocolDriverCallbacks
   {
     //----------------------------------------------------------------------------------------------
     #region Properties
@@ -69,7 +69,7 @@ namespace Remact.Net.Internal
     /// <summary>
     /// The plugin provided by the library user or RemactDefaults.ClientConfiguration
     /// </summary>
-    protected IActorOutputConfiguration m_WcfClientConfig;
+    protected IActorOutputConfiguration m_ClientConfig;
 
     /// <summary>
     /// True, when connecting or connected to router, not to the original service.
@@ -107,9 +107,9 @@ namespace Remact.Net.Internal
     protected string m_RouterHostToLookup;
 
     /// <summary>
-    /// The TCP port of the router.
+    /// The TCP port of the catalog.
     /// </summary>
-    protected int m_WcfRouterPort;
+    protected int m_RemactCatalogPort;
     
     /// <summary>
     /// True, when traces of the connect process to the target service should be written.
@@ -125,7 +125,7 @@ namespace Remact.Net.Internal
     /// </summary>
     /// <param name="clientName">Unique identification of the client inside an application.</param>
     /// <param name="defaultResponseHandler">The method to be called for responses that have not otherwise been handled.</param>
-    internal WcfBasicClientAsync (string clientName, MessageHandler defaultResponseHandler)
+    internal RemactClient (string clientName, MessageHandler defaultResponseHandler)
     {
       m_DefaultInputHandlerForApplication = defaultResponseHandler;
       ClientIdent = new ActorOutput(clientName, defaultResponseHandler);
@@ -139,7 +139,7 @@ namespace Remact.Net.Internal
     /// Create the proxy for a remote service.
     /// </summary>
     /// <param name="clientIdent">Link this ActorOutput to the remote service.</param>
-    internal WcfBasicClientAsync (ActorOutput clientIdent)
+    internal RemactClient (ActorOutput clientIdent)
     {
       m_DefaultInputHandlerForApplication = clientIdent.DefaultInputHandler;
       ClientIdent = clientIdent;
@@ -150,7 +150,7 @@ namespace Remact.Net.Internal
 
 
     /// <summary>
-    /// Link this ClientIdent to a remote service. No lookup at WcfRouter is needed as we know the TCP portnumber.
+    /// Link this ClientIdent to a remote service. No lookup at Remact.Catalog is needed as we know the TCP portnumber.
     /// </summary>
     /// <param name="websocketUri">The uri of the remote service.</param>
     /// <param name="clientConfig">Plugin your own client configuration instead of RemactDefaults.ClientConfiguration.</param>
@@ -192,28 +192,28 @@ namespace Remact.Net.Internal
     /// Accept the binding configuration provided when linking the ActorOutput or set in RemactDefaults.ClientConfiguration.
     /// </summary>
     /// <param name="serviceUri">The URI to connect to. Parts of the URI may be changed depending on the binding configuration.</param>
-    /// <param name="forRouter">True, when the connection is to a WcfRouter.</param>
+    /// <param name="forRouter">True, when the connection is to a Remact.Catalog.</param>
     protected internal void DoClientConfiguration( ref Uri serviceUri, bool forRouter )
     {
-        if( m_WcfClientConfig == null )
+        if( m_ClientConfig == null )
         {
-            m_WcfClientConfig = RemactDefault.Instance;
+            m_ClientConfig = RemactConfigDefault.Instance;
         }
-        m_WcfClientConfig.DoClientConfiguration( m_protocolClient, ref serviceUri, forRouter );
+        m_ClientConfig.DoClientConfiguration( m_protocolClient, ref serviceUri, forRouter );
     }
 
 
     /// <summary>
     /// <para>Connect this Client to a service identified by the serviceName parameter.</para>
-    /// <para>The correct serviceHost and TCP port will be looked up at a WcfRouterService identified by parameter routerHost.</para>
+    /// <para>The correct serviceHost and TCP port will be looked up at a Remact.CatalogService identified by parameter routerHost.</para>
     /// </summary>
-    /// <param name="routerHost">The HostName, where the WcfRouterService is running. This may be the 'localhost'.
-    ///    <para>By default TCP port 40000 is used for WcfRouterService, but you can specify another TCP port for the router eg. "host:3333"</para></param>
-    /// <param name="serviceName">A unique name of the service. This service may run on any host that has been registered at the WcfRouterService.</param>
+    /// <param name="routerHost">The HostName, where the Remact.CatalogService is running. This may be the 'localhost'.
+    ///    <para>By default TCP port 40000 is used for Remact.CatalogService, but you can specify another TCP port for the router eg. "host:3333"</para></param>
+    /// <param name="serviceName">A unique name of the service. This service may run on any host that has been registered at the Remact.CatalogService.</param>
     /// <param name="clientConfig">Plugin your own client configuration instead of RemactDefaults.ClientConfiguration.</param>
     internal void LinkToService(string routerHost, string serviceName, IActorOutputConfiguration clientConfig = null)
     {
-        m_WcfRouterPort = RemactDefault.Instance.RouterPort;
+        m_RemactCatalogPort = RemactConfigDefault.Instance.RouterPort;
         m_RouterHostToLookup = routerHost;
         try
         {
@@ -221,7 +221,7 @@ namespace Remact.Net.Internal
             if (i > 0)
             {
                 m_RouterHostToLookup = routerHost.Substring(0, i);
-                m_WcfRouterPort = Convert.ToInt32(routerHost.Substring(i + 1));
+                m_RemactCatalogPort = Convert.ToInt32(routerHost.Substring(i + 1));
             }
         }
         catch
@@ -231,38 +231,6 @@ namespace Remact.Net.Internal
         m_ServiceNameToLookup = serviceName;
         ServiceIdent.PrepareServiceName(m_RouterHostToLookup, m_ServiceNameToLookup);
     }// LinkToService (RouterService lookup)
-
-
-    //--------------------
-    /// <summary>
-    /// <para>Connect this client to a service, using the ClientName for endpoint name entry in App.config file </para>
-    /// <para>as in:</para>
-    /// <para>(system.serviceModel></para>
-    /// <para>  (client></para>
-    /// <para>    (endpoint address="http://localhost:40000/AsyncWcfLib/RouterService/"</para>
-    /// <para>      binding="basicHttpBinding" bindingConfiguration="" contract="AsyncWcfLib.ClientContract"</para>
-    /// <para>      name="RouterClient"></para>
-    /// <para>    (/endpoint></para>
-    /// <para>  (/client></para>
-    /// <para>(/system.serviceModel></para>
-    /// </summary>
-    //internal void TryConnectConfiguredEndpoint()
-    //{
-    //  if (!IsDisconnected) Disconnect ();
-    //  try
-    //  {
-    //    m_RouterHostToLookup = null;
-    //    m_protocolClient = new WcfBasicClient(ClientIdent.Name, this); // config-name
-    //    m_RequestedServiceUri = NormalizeHostName( m_protocolClient.Endpoint.Address.Uri );
-    //    m_boTemporaryRouterConn = false;
-    //    OpenConnectionToService();
-    //  }
-    //  catch (Exception ex)
-    //  {
-    //      RaTrc.Exception( "Cannot open Wcf connection(1)", ex, ClientIdent.Logger );
-    //      m_boTimeout = true; // enter 'faulted' state when eg. configuration is incorrect
-    //  }
-    //}// TryConnectConfiguredEndpoint
 
 
     /// <summary>
@@ -300,7 +268,7 @@ namespace Remact.Net.Internal
       }
       catch (Exception ex)
       {
-          RaTrc.Exception( "Cannot open Wcf connection(2)", ex, ClientIdent.Logger );
+          RaTrc.Exception("Cannot open Remact connection(2)", ex, ClientIdent.Logger);
           m_boTimeout = true; // enter 'faulted' state when eg. configuration is incorrect
       }
     }// TryConnectVia
@@ -362,7 +330,7 @@ namespace Remact.Net.Internal
         {
           try
           {
-            WcfRouterClient.Instance().RemoveClient(this);
+            RemactCatalogClient.Instance().RemoveClient(this);
             SendDisconnectMessage();
             m_protocolClient.Dispose();
             m_protocolClient = null;
@@ -374,13 +342,13 @@ namespace Remact.Net.Internal
         
         if (m_protocolClient != null) 
         {
-          WcfRouterClient.Instance ().RemoveClient (this);
+          RemactCatalogClient.Instance ().RemoveClient (this);
           //TraceState("Abortd");
         }
       }
       catch (Exception ex)
       {
-          RaTrc.Exception( "Cannot abort Wcf connection", ex, ClientIdent.Logger );
+          RaTrc.Exception("Cannot abort Remact connection", ex, ClientIdent.Logger);
       }
       
       m_protocolClient = null;
@@ -389,7 +357,7 @@ namespace Remact.Net.Internal
       m_boTimeout = false;
       m_boTemporaryRouterConn  = false;
       ServiceIdent.m_Connected = false; // internal, from ServiceIdent to ClientIdent
-      ClientIdent.m_Connected  = false; // internal, from ActorOutput to WcfBasicClientAsync
+      ClientIdent.m_Connected = false; // internal, from ActorOutput to RemactClient
 
     }// Disconnect
 
@@ -427,7 +395,7 @@ namespace Remact.Net.Internal
     {
       if (m_protocolClient != null)
       {
-        RaTrc.Info("WcfClt", "["+mark.PadRight(6)+"] "+ ClientIdent.Name+"["+ClientIdent.OutputClientId+"]"
+        RaTrc.Info("RemactClt", "["+mark.PadRight(6)+"] "+ ClientIdent.Name+"["+ClientIdent.OutputClientId+"]"
                     +", ReadyState=" + m_protocolClient.ReadyStateAsString
                     , ClientIdent.Logger );
       }
@@ -451,7 +419,7 @@ namespace Remact.Net.Internal
         ServiceIdent.TryConnect(); // internal, from ServiceIdent to ClientIdent
 
         ClientIdent.PickupSynchronizationContext();
-        ClientIdent.m_Connected = true; // internal, from ActorOutput to WcfBasicClientAsync
+        ClientIdent.m_Connected = true; // internal, from ActorOutput to RemactClient
         ActorMessage msg = new ActorMessage (ClientIdent, ClientIdent.OutputClientId, ++ClientIdent.LastRequestIdSent, 
                                              ServiceIdent, null, null);
         m_protocolClient.OpenAsync(msg, this); 
@@ -517,7 +485,7 @@ namespace Remact.Net.Internal
         EndpointAddress address = m_ServiceReference.InnerChannel.LocalAddress;
         if (address.IsAnonymous)
         { // basicHttpBinding
-          //  ClientIdent.Uri = new Uri ("http://"+ClientIdent.HostName+"/"+WcfDefault.WsNamespace
+          //  ClientIdent.Uri = new Uri ("http://"+ClientIdent.HostName+"/"+RemactConfig.WsNamespace
           //                              +string.Format ("/{0}/{1}", ClientIdent.AppIdentification, ClientIdent.Name));
         }
         else
@@ -561,7 +529,7 @@ namespace Remact.Net.Internal
 
             if (!m_boTimeout)
             {
-                var m = message.Payload as IExtensibleWcfMessage;
+                var m = message.Payload as IExtensibleActorMessage;
                 if (!ClientIdent.IsMultithreaded)
                 {
                     if (m != null) m.BoundSyncContext = SynchronizationContext.Current;
@@ -626,15 +594,15 @@ namespace Remact.Net.Internal
     }
 
 
-    // Implements the connect message handling for WcfClientAsync.
-    // 1. call from WcfRouterService
+    // Implements the connect message handling for RemactClientAsync.
+    // 1. call from Remact.CatalogService
     // 2. call from looked up service
-    // the same message will be sent to OnWcfResponseFromRouterService or to application later on.
+    // the same message will be sent to OnResponseFromCatalogService or to application later on.
     internal void OnConnectMessage(ActorMessage id)
     {
         if (m_RouterHostToLookup == null || ServiceIdent.Name == m_ServiceNameToLookup)
         {
-            WcfRouterClient.Instance ().AddClient (this);
+            RemactCatalogClient.Instance ().AddClient (this);
             m_boFirstResponseReceived = true; // IsConnected --> true !
             m_boConnecting = false;
             if( ClientIdent.TraceConnect ) RaTrc.Info( id.CltRcvId, ServiceIdent.ToString( "Connected  svc", 0 ), ClientIdent.Logger );
@@ -643,8 +611,8 @@ namespace Remact.Net.Internal
     }
 
 
-    // Response callback from WcfRouterService
-    private void OnWcfResponseFromRouterService(ActorMessage rsp)
+    // Response callback from Remact.CatalogService
+    private void OnResponseFromCatalogService(ActorMessage rsp)
     {
         ActorInfo svcRsp = rsp.Payload as ActorInfo;
         if (svcRsp != null && svcRsp.Usage == ActorInfo.Use.ServiceConnectResponse)
@@ -690,13 +658,13 @@ namespace Remact.Net.Internal
             }
             else
             {
-                RaTrc.Error( rsp.CltRcvId, "Receiving unexpected response from WcfRouterService: " + rsp.ToString(), ClientIdent.Logger );
+                RaTrc.Error( rsp.CltRcvId, "Receiving unexpected response from Remact.CatalogService: " + rsp.ToString(), ClientIdent.Logger );
                 rsp.Payload = new ErrorMessage(ErrorMessage.Code.CouldNotConnectRouter,
-                                                    "Unexpected response from WcfRouterService");
+                                                    "Unexpected response from Remact.CatalogService");
             }
             EndOfConnectionTries( rsp ); // failed at router
         }
-    }// OnWcfResponseFromRouterService
+    }// OnResponseFromCatalogService
 
 
     // Response callback from real service
@@ -764,7 +732,7 @@ namespace Remact.Net.Internal
 
     #endregion
     //----------------------------------------------------------------------------------------------
-    #region IWcfBasicPartner implementation
+    #region IRemoteActor implementation
 
     /// <summary>
     /// Gets or sets the state of the outgoing connection. May be called on any thread.
@@ -789,7 +757,7 @@ namespace Remact.Net.Internal
           }
           else
           {
-            throw new Exception("AsyncWcfLib: TryConnect of '"+ClientIdent.Name+"' has not been called to pick up the synchronization context.");
+            throw new Exception("Remact: TryConnect of '"+ClientIdent.Name+"' has not been called to pick up the synchronization context.");
           }
         }
         else if (value == PortState.Faulted)
@@ -816,8 +784,8 @@ namespace Remact.Net.Internal
             if (m_RouterHostToLookup != null)
             {
                 // connect to router first
-                var uri = new Uri("http://" + m_RouterHostToLookup + ':' + m_WcfRouterPort + "/" + RemactDefault.WsNamespace + "/" + RemactDefault.Instance.RouterServiceName);
-                TryConnectVia (uri, OnWcfResponseFromRouterService, toRouter:true );
+                var uri = new Uri("http://" + m_RouterHostToLookup + ':' + m_RemactCatalogPort + "/" + RemactConfigDefault.WsNamespace + "/" + RemactConfigDefault.Instance.RouterServiceName);
+                TryConnectVia (uri, OnResponseFromCatalogService, toRouter:true );
                 return true;
             }
             else
@@ -831,7 +799,7 @@ namespace Remact.Net.Internal
         }
         catch (Exception ex)
         {
-            RaTrc.Exception( "Cannot open Wcf connection(3)", ex, ClientIdent.Logger );
+            RaTrc.Exception("Cannot open Remact connection(3)", ex, ClientIdent.Logger);
             m_boTimeout = true; // enter 'faulted' state when eg. configuration is incorrect
             return false;
         }
@@ -885,7 +853,7 @@ namespace Remact.Net.Internal
 
     /// <summary>
     /// <para>Send a message to the service. Do not wait here for the response.</para>
-    /// <para>The OnWcfMessageReceivedDelegate is called on the same thread,</para>
+    /// <para>The AsyncResponseHandler is called on the same thread,</para>
     /// <para>when a response or errormessage arrives or a timeout has passed.</para>
     /// </summary>
     /// <param name="request">The message to send.</param>
@@ -898,7 +866,7 @@ namespace Remact.Net.Internal
     /// <para>Send a message to the service. Do not wait here for the response.</para>
     /// <para>The response is asynchronously passed to the extension method "On", normally used as asyncResponseHandler.</para>
     /// <para>If the sending thread has a message queue, the response is executed by the same thread as the send operation was.</para>
-    /// <para>If the response could not be handled by the On-extension methods, the default OnWcfMessageReceivedDelegate passed to TryConnect() is called.</para>
+    /// <para>If the response could not be handled by the On-extension methods, the default MessageHandler passed to TryConnect() is called.</para>
     /// <para>Example:</para>
     /// <para>Send (request, rsp => rsp.On&lt;ReadyMessage>(idle => {do something with idle message 'idle'})</para>
     /// <para>.On&lt;ErrorMessage>(err => {do something with error message 'err'}));</para>

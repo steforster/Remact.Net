@@ -34,7 +34,7 @@ namespace Remact.Catalog
     //----------------------------------------------------------------------------------------------
     #region Fields
     
-    private ActorInput    m_WcfService;
+    private ActorInput    m_RemactService;
     private RouterService m_RouterService;
     private int           m_knownServiceCount;
 
@@ -42,8 +42,8 @@ namespace Remact.Catalog
     //----------------------------------------------------------------------------------------------
     #region Properties
 
-    public  IActorPort             Service { get{ return m_WcfService;} }
-    public  WcfPartnerListMessage    SvcRegister;
+    public  IActorPort             Service { get{ return m_RemactService;} }
+    public  ActorInfoList    SvcRegister;
     public  bool                     SvcRegisterChanged = true;
     public  List<ActorOutput<SvcDat>> PeerRouters;
 
@@ -56,7 +56,7 @@ namespace Remact.Catalog
     /// </summary>
     public Router()
     {
-      SvcRegister = new WcfPartnerListMessage();
+      SvcRegister = new ActorInfoList();
       PeerRouters = new List<ActorOutput<SvcDat>>(Properties.Settings.Default.PeerHosts.Count);
     }
 
@@ -67,18 +67,18 @@ namespace Remact.Catalog
     {
       try
       {
-        if (m_WcfService != null)
+        if (m_RemactService != null)
         {
-            m_WcfService.Disconnect();
-            m_WcfService.OnInputConnected    -= m_RouterService.OnClientConnectedOrDisconnected;
-            m_WcfService.OnInputDisconnected -= m_RouterService.OnClientConnectedOrDisconnected;
-            RaTrc.Info( "Wcf", "Closed service " + m_WcfService.Uri );
-            m_WcfService = null;
+            m_RemactService.Disconnect();
+            m_RemactService.OnInputConnected    -= m_RouterService.OnClientConnectedOrDisconnected;
+            m_RemactService.OnInputDisconnected -= m_RouterService.OnClientConnectedOrDisconnected;
+            RaTrc.Info("Remact", "Closed service " + m_RemactService.Uri);
+            m_RemactService = null;
         }
       }
       catch (Exception ex)
       {
-        RaTrc.Exception ("Wcf: Error while closing the service", ex);
+          RaTrc.Exception("Remact: Error while closing the service", ex);
       }
     }
 
@@ -112,28 +112,28 @@ namespace Remact.Catalog
             }
         }
 
-        if (m_WcfService.MustOpenInput) SvcRegisterChanged = true;
+        if (m_RemactService.MustOpenInput) SvcRegisterChanged = true;
 
-        if (m_WcfService.BasicService.DoPeriodicTasks ()) SvcRegisterChanged = true;
+        if (m_RemactService.BasicService.DoPeriodicTasks ()) SvcRegisterChanged = true;
 
         if (SvcRegisterChanged && tbStatus != null)
         {
             SvcRegisterChanged = false;
             StringBuilder sb = new StringBuilder();
 
-            if (!m_WcfService.MustOpenInput)
+            if (!m_RemactService.MustOpenInput)
             {
-                sb.Append("RouterService listening on '" + m_WcfService.Uri + "'");
+                sb.Append("RouterService listening on '" + m_RemactService.Uri + "'");
             }
             else
             {
-                sb.Append(m_WcfService.InputStateFromNetwork + " RouterService '" + m_WcfService.Uri + "'");
+                sb.Append(m_RemactService.InputStateFromNetwork + " RouterService '" + m_RemactService.Uri + "'");
             }
 
             sb.AppendLine();
-            sb.Append( SvcRegister.Item.Count+" registered WCF services (");
-            sb.Append( servicesFromPeerRouters+" from remote routers). " );
-            sb.Append( m_WcfService.BasicService.ConnectedClientCount+" clients. ");
+            sb.Append( SvcRegister.Item.Count+" registered Remact services (");
+            sb.Append( servicesFromPeerRouters+" from remote catalogs). " );
+            sb.Append( m_RemactService.BasicService.ConnectedClientCount+" clients. ");
             sb.Append( connectedPeerRouters + "/" + PeerRouters.Count );
             sb.Append(" configured remote routers.");
             sb.AppendLine();
@@ -154,7 +154,7 @@ namespace Remact.Catalog
                                                                       else sb.Append ("--");
                 sb.Append (s.Uri);
                 sb.Append (" in ");
-                sb.Append (RemactDefault.Instance.GetAppIdentification (s.AppName, s.AppInstance, s.HostName, s.ProcessId));
+                sb.Append (RemactConfigDefault.Instance.GetAppIdentification (s.AppName, s.AppInstance, s.HostName, s.ProcessId));
                 sb.Append (" (V");
                 sb.Append (s.AppVersion.ToString (versionCount));
                 sb.Append (")");
@@ -295,12 +295,12 @@ namespace Remact.Catalog
         m_RouterService = new RouterService();
 
         // Open the service
-        m_WcfService = new ActorInput(RemactDefault.Instance.RouterServiceName, m_RouterService.OnRequest);
-        m_WcfService.OnInputConnected    += m_RouterService.OnClientConnectedOrDisconnected;
-        m_WcfService.OnInputDisconnected += m_RouterService.OnClientConnectedOrDisconnected;
-        m_WcfService.LinkInputToNetwork( null, RemactDefault.Instance.RouterPort, publishToRouter: false, serviceConfig: this ); // calls our DoServiceConfiguration
-        m_WcfService.TraceConnect = false;
-        m_WcfService.TryConnect();
+        m_RemactService = new ActorInput(RemactConfigDefault.Instance.RouterServiceName, m_RouterService.OnRequest);
+        m_RemactService.OnInputConnected    += m_RouterService.OnClientConnectedOrDisconnected;
+        m_RemactService.OnInputDisconnected += m_RouterService.OnClientConnectedOrDisconnected;
+        m_RemactService.LinkInputToNetwork( null, RemactConfigDefault.Instance.RouterPort, publishToRouter: false, serviceConfig: this ); // calls our DoServiceConfiguration
+        m_RemactService.TraceConnect = false;
+        m_RemactService.TryConnect();
       
         string names = string.Empty;
         foreach (string host in Properties.Settings.Default.PeerHosts)
@@ -308,8 +308,8 @@ namespace Remact.Catalog
             if (host != null && host.Trim().Length > 0)
             {
                 var output = new ActorOutput<SvcDat>("Clt>"+host, OnResponseFromPeerRouter);
-                output.LinkOutputToRemoteService(new Uri("http://" + host + ':' + RemactDefault.Instance.RouterPort
-                                 + "/" + RemactDefault.WsNamespace + "/" + RemactDefault.Instance.RouterServiceName),// no router lookup as uri is given.
+                output.LinkOutputToRemoteService(new Uri("http://" + host + ':' + RemactConfigDefault.Instance.RouterPort
+                                 + "/" + RemactConfigDefault.WsNamespace + "/" + RemactConfigDefault.Instance.RouterServiceName),// no router lookup as uri is given.
                                  this ); // calls our DoClientConfiguration
                 output.OutputContext = new SvcDat();
                 output.TryConnect();
@@ -317,21 +317,21 @@ namespace Remact.Catalog
                 names += host+", ";
             }
         }
-        RaTrc.Info( "Wcf", "Opened clients for peer routers on " + PeerRouters.Count + " configured PeerHosts: " + names );
+        RaTrc.Info("Remact", "Opened clients for peer routers on " + PeerRouters.Count + " configured PeerHosts: " + names);
     }// Open
 
 
     // implement IActorInputConfiguration
-    public IDisposable DoServiceConfiguration(WcfBasicService service, ref Uri uri, bool isRouter)
+    public IDisposable DoServiceConfiguration(RemactService service, ref Uri uri, bool isRouter)
     {
-        return RemactDefault.Instance.DoServiceConfiguration(service, ref uri, /*isRouter=*/ true);
+        return RemactConfigDefault.Instance.DoServiceConfiguration(service, ref uri, /*isRouter=*/ true);
     }
 
 
     // implement IActorOutputConfiguration
     public void DoClientConfiguration( object clientBase, ref Uri uri, bool forRouter )
     {
-        RemactDefault.Instance.DoClientConfiguration( clientBase, ref uri, /*forRouter=*/ true );
+        RemactConfigDefault.Instance.DoClientConfiguration( clientBase, ref uri, /*forRouter=*/ true );
     }
     
 
@@ -351,7 +351,7 @@ namespace Remact.Catalog
           RaTrc.Error   (id.CltRcvId, "PeerRtr   "+err.ToString ()+Environment.NewLine+"   partner uri = '"+id.Source.Uri+"'");
         }
       })
-      .On<WcfPartnerListMessage>(list=>
+      .On<ActorInfoList>(list=>
       {
           RaTrc.Info( id.CltRcvId, "PeerRtr responds with list containing " + list.Item.Count + " services." );
           foreach( ActorInfo s in list.Item )
@@ -361,7 +361,7 @@ namespace Remact.Catalog
       }
       ) != null)
       {
-        RaTrc.Warning ("Wcf", "Received unexpected message from "+id.Source.Name+": "+id.Payload.ToString());
+          RaTrc.Warning("Remact", "Received unexpected message from " + id.Source.Name + ": " + id.Payload.ToString());
       }
     }
     
