@@ -191,7 +191,7 @@ namespace Remact.Catalog
                 p.OutputContext.WaitSecondsForUpdate -= seconds;
                 if( p.OutputContext.WaitSecondsForUpdate <= 0 || changed )
                 {
-                    p.SendOut( SvcRegister );
+                    p.Notify("RegisterList", SvcRegister);
                     p.OutputContext.WaitSecondsForUpdate = 30;
                 }
             }

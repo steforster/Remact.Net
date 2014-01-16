@@ -110,7 +110,8 @@ namespace Test1.Client
             else
             {
                 int sendContextNumber = Test.LastRequestIdSent + 1000;
-                Test.SendOut(testMessage, 
+                Test.Ask("OnMessageReceived", testMessage, 
+
                         delegate (ReadyMessage response, ActorMessage rsp)
                         {
                             Console.Write ("\n\r Thread="+Thread.CurrentThread.ManagedThreadId);
