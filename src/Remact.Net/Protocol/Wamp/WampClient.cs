@@ -21,6 +21,7 @@ namespace Remact.Net.Protocol.Wamp
         private Dictionary<int, ActorMessage> _outstandingRequests;
         private IRemactProtocolDriverCallbacks _callback;
         private int _lowLevelErrorCount;
+        private bool _faulted;
 
         public WampClient(Uri websocketUri)
         {
@@ -41,22 +42,29 @@ namespace Remact.Net.Protocol.Wamp
 
         public Uri ServiceUri { get; private set; }
 
-        public ReadyState ReadyState 
+        public PortState PortState 
         { 
             get 
             {
-                switch (_wsClient.ReadyState)
+                if (_faulted)
                 {
-                    case WebSocketClient.ReadyStates.OPEN: return ReadyState.Connected;
-                        //TODO Faulted
-                    default: return ReadyState.Closed;
+                    return PortState.Faulted;
+                }
+                else if (_wsClient.ReadyState == WebSocketClient.ReadyStates.CONNECTING)
+                {
+                    return PortState.Connecting;
+                }
+                else if (_wsClient.ReadyState == WebSocketClient.ReadyStates.OPEN)
+                {
+                    return PortState.Ok;
+                }
+                else
+                {
+                    return PortState.Disconnected;
                 }
             } 
         }
 
-        public string ReadyStateAsString {get {return _wsClient.ReadyState.ToString(); }}
-
-        
         // Asynchronous open the connection
         public void OpenAsync(ActorMessage request, IRemactProtocolDriverCallbacks callback)
         {
@@ -74,6 +82,7 @@ namespace Remact.Net.Protocol.Wamp
                 request.Payload = null; // null = ok
                 if (_wsClient.ReadyState != WebSocketClient.ReadyStates.OPEN)
                 {
+                    _faulted = true;
                     request.Payload = new ErrorMessage(ErrorMessage.Code.CouldNotOpen, "WebSocketClient not connected");
                 }
             }
@@ -83,6 +92,7 @@ namespace Remact.Net.Protocol.Wamp
             //}
             catch (Exception ex)
             {
+                _faulted = true;
                 request.Payload = new ErrorMessage(ErrorMessage.Code.CouldNotOpen, ex);
             }
 
@@ -114,19 +124,20 @@ namespace Remact.Net.Protocol.Wamp
         #region IRemactProtocolDriverService proxy implementation
 
 
-        public void MessageFromClient(ActorMessage request)
+        public void MessageFromClient(ActorMessage msg)
         {
-            _outstandingRequests.Add(request.RequestId, request);
-            string callId = request.RequestId.ToString();
-            string procUri = request.PayloadType;
+            _outstandingRequests.Add(msg.RequestId, msg);
+            string callId = msg.RequestId.ToString();
+            string procUri = string.Concat(/*msg.Destination.Name, '/',*/ msg.DestinationMethod, '/', msg.PayloadType);
+
 
             // eg. CALL message for RPC with no arguments: [2, "7DK6TdN4wLiUJgNM", "http://example.com/api#howdy"]
 
             var wamp = new JArray(WampMessageType.v1Call, callId, procUri);
-            if (request.Payload != null)
+            if (msg.Payload != null)
             {
-                var jToken = request.Payload as JToken;
-                if (jToken == null) jToken = JToken.FromObject(request.Payload);
+                var jToken = msg.Payload as JToken;
+                if (jToken == null) jToken = JToken.FromObject(msg.Payload);
 
                 wamp.Add(jToken);
             }
@@ -257,6 +268,8 @@ namespace Remact.Net.Protocol.Wamp
                     {
                         id = int.Parse(requestId);
                         message = GetResponseMessage(id);
+                        message.Payload = error;
+                        message.PayloadType = error.GetType().FullName;
                     }
 
                     message.Type = ActorMessageType.Error;
@@ -303,6 +316,18 @@ namespace Remact.Net.Protocol.Wamp
         // Connect failure or disposing context 
         private void OnDisconnect(UserContext context)
         {
+            _faulted = true;
+            var copy = _outstandingRequests;
+            _outstandingRequests = new Dictionary<int, ActorMessage>();
+            foreach(var msg in copy.Values)
+            {
+                msg.Type = ActorMessageType.Error;
+                msg.DestinationLambda = msg.SourceLambda;
+                msg.SourceLambda = null;
+                msg.Payload = new ErrorMessage(ErrorMessage.Code.CouldNotSend, "web socket disconnected");
+                msg.PayloadType = msg.Payload.GetType().FullName;
+                _callback.MessageFromService(msg); // adds source and destination
+            }
         }
 
         #endregion

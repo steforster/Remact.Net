@@ -133,8 +133,7 @@ namespace Remact.Net.Internal
 
         void       IRemactProtocolDriverService.OpenAsync(ActorMessage message, IRemactProtocolDriverCallbacks callback) { }
         Uri        IRemactProtocolDriverService.ServiceUri { get { return null; } }
-        ReadyState IRemactProtocolDriverService.ReadyState { get { return ReadyState.Connected; } }
-        string     IRemactProtocolDriverService.ReadyStateAsString { get { return ReadyState.Connected.ToString(); } }
+        PortState  IRemactProtocolDriverService.PortState { get { return PortState.Ok; } }
         void       IRemactProtocolDriverService.Dispose() { }
 
     }//class InternalMultithreadedServiceNet40

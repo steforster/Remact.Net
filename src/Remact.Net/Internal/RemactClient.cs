@@ -280,7 +280,7 @@ namespace Remact.Net.Internal
     public bool IsConnected    { get { return m_protocolClient != null 
                                            && m_boFirstResponseReceived
                                            && !m_boTimeout
-                                           && m_protocolClient.ReadyState == ReadyState.Connected; }}
+                                           && m_protocolClient.PortState == PortState.Ok; }}
 
     /// <summary>
     /// A client is disconnected after construction, after a call to Disconnect() or AbortCommunication()
@@ -293,7 +293,7 @@ namespace Remact.Net.Internal
     /// </summary>
     public bool IsFaulted      { get { return m_boTimeout
                                        ||    (m_protocolClient != null
-                                           && m_protocolClient.ReadyState == ReadyState.Faulted);
+                                           && m_protocolClient.PortState == PortState.Faulted);
     }
     }
 
@@ -396,7 +396,7 @@ namespace Remact.Net.Internal
       if (m_protocolClient != null)
       {
         RaLog.Info("RemactClt", "["+mark.PadRight(6)+"] "+ ClientIdent.Name+"["+ClientIdent.OutputClientId+"]"
-                    +", ReadyState=" + m_protocolClient.ReadyStateAsString
+                    +", PortState=" + m_protocolClient.PortState.ToString()
                     , ClientIdent.Logger );
       }
     }// TraceState
@@ -431,7 +431,7 @@ namespace Remact.Net.Internal
     void IRemactProtocolDriverCallbacks.OnOpenCompleted(object obj)
     {
         ActorMessage request = obj as ActorMessage;
-        request.DestinationLambda = null; // our call has been reached.
+        request.DestinationLambda = null;
         request.SourceLambda = null;
       
         try

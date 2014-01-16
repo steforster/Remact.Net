@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug.Mono</Configuration>
@@ -50,9 +50,6 @@
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>..\..\lib\Newtonsoft.Json\Newtonsoft.Json.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ActorMessage.cs" />
@@ -98,6 +95,10 @@
     <ProjectReference Include="..\..\..\Alchemy-Websockets\src\Alchemy\Alchemy.csproj">
       <Project>{45486CDE-86A3-4769-952F-E0821BF79493}</Project>
       <Name>Alchemy</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\Newtonsoft.Json\Src\Newtonsoft.Json\Newtonsoft.Json.Mono.csproj">
+      <Project>{959F7F85-C98B-4876-971A-9036224578E4}</Project>
+      <Name>Newtonsoft.Json.Mono</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
