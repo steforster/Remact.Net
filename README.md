@@ -3,13 +3,11 @@ Remote Actors for .NET
 
 **Remact.Net** facilitates the development of [actors](http://en.wikipedia.org/wiki/Actor_model) in .NET languages.
 
-It is a class library written in C-Sharp.
+It is a class library written in C-Sharp.  
+It runs in Microsoft .NET and Linux-Mono environements.  
 
-It runs in Microsoft .NET and Linux-Mono environements.
-
-**Project status**
-Remact.Net is work in progress. The first integration test is running.
-
+**Project status**  
+Remact.Net is work in progress. The first integration test is running.  
 [AsyncWcfLib](http://sourceforge.net/projects/asyncwcflib/) is the predecessor of Remact.Net.
 Both are developed by the same author.
 
@@ -18,17 +16,13 @@ Both are developed by the same author.
 
 The following goals are intended to reach:
 
-[] Small and clean API like AsyncWcfLib
-
-[] Local actors (message passing between threads)
-
-[] Remote actors (message passing between hosts or processes)
-
-[] Unlike AsyncWcfLib, Remact will be based on open web standards (WebSockets).
+- [ ] Small and clean API like AsyncWcfLib
+- [ ] Local actors (message passing between threads)
+- [ ] Remote actors (message passing between hosts or processes)
+- [ ] Unlike AsyncWcfLib, Remact will be based on open web standards (WebSockets).  
    The motivation is better support for bidirectional communication and higher performance
    on Linux/Mono based environments.
-
-[] WebSockets and Json are used to link actors written in Java or JavaScript (browser based actors)
+- [ ] WebSockets and Json are used to link actors written in Java or JavaScript (browser based actors)
 
 
 ### Related work
@@ -43,6 +37,7 @@ For other languages there are librarys to help programming remote actors:
 * [Java and Scala: The Akka library](http://akka.io/)
 * [C#: The Stact library](https://github.com/phatboyg/Stact)
 * [C#: AsyncWcfLib](http://sourceforge.net/projects/asyncwcflib/)
+
 
 
 Documentation
@@ -64,6 +59,7 @@ Receiving of WAMP messages is done in five steps:
 * Optional dispatching to a method having the matching parameter type
 
 
+
 Third party components and standards
 ------------------------------------
 Remact.Net is built on open standards and uses open software components, namely
@@ -79,20 +75,21 @@ Remact.Net is built on open standards and uses open software components, namely
 * [WampSharp](https://github.com/darkl/WampSharp) is not used as a component, but I have lent some ideas from this WAMP implementation
 
 
+
 How to build
 ------------
-Currently, the Remact.Mono solution is used from VisualStudio 2012 and from MonoDevelop 2.8.6.3.
-Currently source projects of other git repositories are referenced from Remact.Mono.sln.
+Currently, the Remact.Mono solution is used from VisualStudio 2012 and from MonoDevelop 2.8.6.3.  
+Currently source projects of other git repositories are referenced from Remact.Mono.sln.  
 You have to clone all these (small) repos to be able to build Remact:
 
-   $ git clone https://github.com/steforster/Remact.Net.git
-   $ git clone https://github.com/steforster/Alchemy-Websockets.git
-   $ git clone https://github.com/JamesNK/Newtonsoft.Json.git
+      $ git clone https://github.com/steforster/Remact.Net.git  
+      $ git clone https://github.com/steforster/Alchemy-Websockets.git  
+      $ git clone https://github.com/JamesNK/Newtonsoft.Json.git  
 
 Afterwards your project folder should look like this:
 
-   $ ls
-   Alchemy-Websockets  Newtonsoft.Json  Remact.Net  ...
+      $ ls  
+      Alchemy-Websockets  Newtonsoft.Json  Remact.Net  ...  
 
 
 License
