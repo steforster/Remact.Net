@@ -1,5 +1,5 @@
 ﻿
-Remact uses only the following [Wamp](http://wamp.ws/) message types:  
+Remact uses only the following [Wamp](http://wamp.ws/) message types:
 v1Call, v1CallResult, v1CallError, v1Event.
 
 The normal client server pattern is supported by **v1Call** and **v1CallResult**:
