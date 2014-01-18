@@ -20,7 +20,7 @@ namespace Remact.Net.Internal
     /// <summary>
     /// Detailed information about this service
     /// </summary>
-    public ActorInput ServiceIdent {get; private set;}
+    public ActorInput  ServiceIdent {get; private set;}
     
     /// <summary>
     /// The count of known clients of this service (connected or disconnected)
@@ -70,10 +70,10 @@ namespace Remact.Net.Internal
     private  int                       m_nLastThreadId = 0;      // to check calls from different synchronization contexts
 #endif
 
-    private int                      _tcpPort;
-    private bool                     _publishToRouter;
-    private IActorInputConfiguration _serviceConfig;
-    private IDisposable              _protocolDriver;
+    private int                        _tcpPort;
+    private bool                       _publishToRouter;
+    private IActorInputConfiguration   _serviceConfig;
+    private IDisposable                _protocolDriver;
 
     private static int    ms_nSharedTcpPort;
     private static int    ms_nSharedTcpPortCount;
@@ -515,27 +515,42 @@ namespace Remact.Net.Internal
     /// <returns>True, when the client has been found. False, when no client has been found and an error message must be generated.</returns>
     internal bool FindPartnerAndCheck (ActorMessage req, ref RemactServiceUser svcUser)
     {
-      int i = req.ClientId - m_FirstClientId;
-      if (i >= 0 && i < ServiceIdent.InputClientList.Count)
+      if (svcUser == null)
       {
-        svcUser = ServiceIdent.InputClientList[i].SvcUser;
-        svcUser.ChannelTestTimer = 0;
-        req.Source = svcUser.ClientIdent;
-
-        if (!svcUser.IsConnected)
+          int i = req.ClientId - m_FirstClientId;
+          if (i >= 0 && i < ServiceIdent.InputClientList.Count)
+          {
+            svcUser = ServiceIdent.InputClientList[i].SvcUser;
+          }
+          else
+          {
+            return false;
+          }
+      } 
+            
+      svcUser.ChannelTestTimer = 0;
+      req.Source = svcUser.ClientIdent;
+    
+      if (!svcUser.IsConnected)
+      {
+        if (req.ClientId > 0)
         {
           RaLog.Error( req.SvcRcvId, "Reconnect without ConnectRequest, RequestId = " + req.RequestId, ServiceIdent.Logger );
-          svcUser.SetConnected();
-          //svcUser.OpenNotificationChannel();
-          if (RemactConfigDefault.Instance.IsProcessIdUsed (svcUser.ClientIdent.ProcessId)) m_UnusedClientCount--;
-          m_ConnectedClientCount++;
-          HasConnectionStateChanged = true;
         }
-        return true;
-      }
+        else
+        {
+          RaLog.Info( req.SvcRcvId, "Connect anonymous client, RequestId = " + req.RequestId, ServiceIdent.Logger );
+        }
 
-      svcUser = null;
-      return false;
+        svcUser.SetConnected();
+        if (RemactConfigDefault.Instance.IsProcessIdUsed (svcUser.ClientIdent.ProcessId)) 
+        {
+            m_UnusedClientCount--;
+        }
+        m_ConnectedClientCount++;
+        HasConnectionStateChanged = true;
+      }
+      return true;
     }// FindPartnerAndCheck
 
 
@@ -582,6 +597,7 @@ namespace Remact.Net.Internal
         {
             if (ServiceIdent.Uri == null)
             {
+                // TODO
                 UriBuilder uri = new UriBuilder(OperationContext.Current.Channel.LocalAddress.Uri);
                 uri.Host = ServiceIdent.HostName;
                 ServiceIdent.Uri = uri.Uri;

@@ -103,7 +103,7 @@ namespace Remact.Net.Internal
     public bool IsConnected
     {
       get {
-          return !m_boDisconnectReq && !m_boTimeout && _protocolCallback != null;
+          return ClientIdent.m_Connected && !m_boDisconnectReq && !m_boTimeout && _protocolCallback != null;
       }
     }
 

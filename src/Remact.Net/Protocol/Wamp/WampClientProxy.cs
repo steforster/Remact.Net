@@ -19,7 +19,7 @@ namespace Remact.Net.Protocol.Wamp
     {
         private UserContext _wsChannel;
         private IRemactProtocolDriverService _requestHandler;
-        public ActorOutput _clientIdent;
+        private ActorOutput _clientIdent;
         private ActorInput _serviceIdent;
 
         public WampClientProxy(ActorOutput clientIdent, ActorInput serviceIdent, IRemactProtocolDriverService requestHandler, UserContext websocketChannel)
@@ -90,18 +90,15 @@ namespace Remact.Net.Protocol.Wamp
         private void ErrorFromService(ActorMessage message)
         {
             string callId = message.RequestId.ToString();
-            if (callId == null)
-            {
-                callId = string.Empty;
-            }
-
             string errorUri = string.Empty;
             string errorDesc = string.Empty;
-            var error = message.Payload as ErrorMessage;
-            if (error != null)
+            if (message.Payload != null)
             {
-                errorUri = error.Error.ToString();
-                errorDesc = error.Message;
+                errorUri = message.Payload.GetType().FullName;
+            }
+            else
+            {
+                errorUri = "ErrorFromService";
             }
 
             // eg. CALLERROR message with generic error: [4, "gwbN3EDtFv6JvNV5", "http://autobahn.tavendo.de/error#generic", "math domain error"]

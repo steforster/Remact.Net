@@ -19,6 +19,13 @@ namespace Remact.Net
   public class ErrorMessage
   {
     /// <summary>
+    /// For version tolerance, error is streamed as int.
+    /// Application internally, the enum 'Error' is used.
+    /// </summary>
+    [JsonProperty]
+    private int error;
+    
+    /// <summary>
     /// Get the exception information.
     /// </summary>
     public  string    Message;
@@ -39,12 +46,15 @@ namespace Remact.Net
     [JsonIgnore]
     public Code Error 
     {
-     get{if (z_error < 0 || z_error >= (int)Code.Last) return Code.Undef;
-         else if (z_error >= (int)Code.LastAppCode
-               && z_error <  (int)Code.NotConnected)   return Code.Undef;
-                                                  else return(Code) z_error;
-        }
-     set{z_error = (int) value;}
+     get
+     {
+         if (error <= 0 || error >= (int)Code.Last) 
+              {return Code.Undef;}
+         else if (error > (int)Code.LastAppCode && error < (int)Code.NotConnected)   
+              {return Code.Undef;}
+         else {return(Code) error;}
+     }
+     set {error = (int)value;}
     }
     
     /// <summary>
@@ -190,16 +200,9 @@ namespace Remact.Net
     }
     
     /// <summary>
-    /// z_error is public but used internally only! Use 'Error' instead!
-    /// Reason: http://msdn.microsoft.com/en-us/library/bb924412%28v=VS.100%29.aspx
-    /// Error is stramed as int in order to make it reverse compatible to older communication partners
-    /// </summary>
-    public int z_error = 0;
-    
-    /// <summary>
     /// Create an empty error message
     /// </summary>
-    public ErrorMessage (){}
+    public ErrorMessage () {Message = String.Empty;}
     
     /// <summary>
     /// Create a error message.
@@ -210,8 +213,6 @@ namespace Remact.Net
     {
       Error        = err;
       Message      = text;
-      InnerMessage = String.Empty;
-      StackTrace   = String.Empty;
     }// CTOR 1
     
     /// <summary>
@@ -225,15 +226,11 @@ namespace Remact.Net
       if (ex == null)
       {
         Message      = String.Empty;
-        InnerMessage = String.Empty;
-        StackTrace   = String.Empty;
       }
       else
       {
         Message      = string.Concat (ex.GetType().Name, ": ", ex.Message);
         string mainText = ex.Message;
-        InnerMessage = String.Empty;
-        StackTrace   = ex.StackTrace;
         ex = ex.InnerException;
         while (ex != null)
         {
@@ -258,7 +255,7 @@ namespace Remact.Net
     {
       StringBuilder err = new StringBuilder (1000);
       err.Append("RemactError ");
-      if (Error == Code.Undef) {err.Append("code="); err.Append(z_error);}
+      if (Error == Code.Undef) {err.Append("error="); err.Append(error);}
                           else {err.Append(Error.ToString());}
       err.Append (". ");
       err.Append (Message); 

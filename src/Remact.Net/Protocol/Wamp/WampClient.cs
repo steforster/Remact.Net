@@ -160,18 +160,15 @@ namespace Remact.Net.Protocol.Wamp
         public void ErrorFromClient(ActorMessage message)
         {
             string callId = message.RequestId.ToString();
-            if (callId == null)
-            {
-                callId = string.Empty;
-            }
-
-            string errorUri = string.Empty;
+            string errorUri;
             string errorDesc = string.Empty;
-            var error = message.Payload as ErrorMessage;
-            if (error != null)
+            if (message.Payload != null)
             {
-                errorUri = error.Error.ToString();
-                errorDesc = error.Message;
+                errorUri = message.Payload.GetType().FullName;
+            }
+            else
+            {
+                errorUri = "ErrorFromService";
             }
 
             // eg. CALLERROR message with generic error: [4, "gwbN3EDtFv6JvNV5", "http://autobahn.tavendo.de/error#generic", "math domain error"]
@@ -283,7 +280,7 @@ namespace Remact.Net.Protocol.Wamp
                 {
                     // eg. EVENT message with 'null' as payload: [8, "http://example.com/simple", null]
 
-                    object payload = payload = wamp[2];
+                    object payload = wamp[2];
                     string portName, methodName, payloadType;
                     WampClientProxy.SplitProcUri((string)wamp[1], out portName, out methodName, out payloadType);
                     message = new ActorMessage(null, 0, 0, null, methodName, payload);

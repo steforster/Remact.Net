@@ -87,7 +87,6 @@ namespace Remact.Net
                     var handler = new InternalMultithreadedServiceNet40(service, svcUser);
                     var wampProxy = new WampClientProxy(svcUser.ClientIdent, service.ServiceIdent, handler, userContext);
                     svcUser.SetCallbackHandler(wampProxy);
-                    svcUser.SetConnected();
                 }
         };
 

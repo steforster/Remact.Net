@@ -149,7 +149,7 @@ Global
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
 		StartupItems = $0
-		$0.Item = test\ConsoleTestApps\Mono\Test1.Client.Mono.csproj
+		$0.Item = test\ConsoleTestApps\Mono\Test1.Service.Mono.csproj
 		Policies = $1
 		$1.DotNetNamingPolicy = $2
 		$2.DirectoryNamespaceAssociation = None
@@ -163,6 +163,7 @@ Global
 		$4.scope = text/x-csharp
 		$1.TextStylePolicy = $5
 		$5.FileWidth = 120
+		$5.NoTabsAfterNonTabs = True
 		$5.EolMarker = Windows
 		$5.inheritsSet = VisualStudio
 		$5.inheritsScope = text/plain
@@ -192,6 +193,9 @@ Global
 		$1.StandardHeader = $13
 		$13.Text = @\n// Copyright (c) 2014, github.com/steforster/Remact.Net\r\n\n
 		$13.IncludeInNewFiles = True
+		$1.TextStylePolicy = $14
+		$14.inheritsSet = null
+		$14.scope = text/x-markdown
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

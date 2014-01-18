@@ -9,11 +9,11 @@
 *.rtf	diff=astextplain
 *.RTF	diff=astextplain
 
-*.jpg  	binary
+*.jpg   binary
 *.png 	binary
 *.gif 	binary
 
-*.cs text diff=csharp 
+*.cs text eol=crlf diff=csharp 
 *.vb text
 *.c text
 *.cpp text
@@ -43,8 +43,9 @@
 *.hs text
 *.ps1 text
 *.psm1 text
+*.md text eol=crlf
 
-*.csproj text merge=union 
+*.csproj text eol=crlf merge=union
 *.vbproj text merge=union 
 *.fsproj text merge=union 
 *.dbproj text merge=union 

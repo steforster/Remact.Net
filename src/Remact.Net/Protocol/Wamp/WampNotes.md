@@ -65,3 +65,7 @@ Example uri's:
 
 	"///" or "":			On the receiving actor (without TCP-portsharing), 
 	                        a method with first argument of type "JToken" is called.
+
+
+TODO WS uri's like 'ws://localhost:40001/Remact/Test1.Service' are interpreted like 'ws://localhost:40001' - ok ?
+TODO MethodUri's are too much for a browser client

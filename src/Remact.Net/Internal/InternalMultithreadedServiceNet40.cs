@@ -31,11 +31,13 @@ namespace Remact.Net.Internal
     {
         private RemactService _service;
         private RemactServiceUser _svcUser;
+        private object _lock;
 
         public InternalMultithreadedServiceNet40(RemactService service, RemactServiceUser svcUser)
         {
             _service = service;
             _svcUser = svcUser;
+            _lock = new object();
         }
 
         /// <summary>
@@ -47,9 +49,10 @@ namespace Remact.Net.Internal
             try
             {
                 // unlike WCF, a channel oriented protocol has the _svcUser before the first ActorInfo message
-                // TODO CheckBasicResponse should not return another svcUser
-                var tempSvcUser = _svcUser;
-                response = _service.CheckBasicResponse(message, ref tempSvcUser);
+                lock(_lock)
+                {
+                    response = _service.CheckBasicResponse(message, ref _svcUser);
+                }
 
                 // multithreaded access, several requests may run in parallel. They are scheduled for execution on the right synchronization context.
                 if( response != null )

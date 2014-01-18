@@ -18,17 +18,17 @@ Both are developed by the same author.
 
 The following goals are intended to reach:
 
-[ ] Small and clean API like AsyncWcfLib
+[] Small and clean API like AsyncWcfLib
 
-[ ] Local actors (message passing between threads)
+[] Local actors (message passing between threads)
 
-[ ] Remote actors (message passing between hosts or processes)
+[] Remote actors (message passing between hosts or processes)
 
-[ ] Unlike AsyncWcfLib, Remact will be based on open web standards (WebSockets).
-    The motivation is better support for bidirectional communication and higher performance
-    on Linux/Mono based environments.
+[] Unlike AsyncWcfLib, Remact will be based on open web standards (WebSockets).
+   The motivation is better support for bidirectional communication and higher performance
+   on Linux/Mono based environments.
 
-[ ] WebSockets and Json are used to link actors written in Java or JavaScript (browser based actors)
+[] WebSockets and Json are used to link actors written in Java or JavaScript (browser based actors)
 
 
 ### Related work
@@ -70,14 +70,29 @@ Remact.Net is built on open standards and uses open software components, namely
 
 * [WebSocket](http://tools.ietf.org/html/rfc6455), the IETF standard RFC6455
 * [Alchemy-Websockets](https://github.com/Olivine-Labs/Alchemy-Websockets), a class library from Olivine-Labs.
-  I use [segor's fork](https://github.com/segor/Alchemy-Websockets), he has fixed some client side errors.
-  Additionally I had to improve method WebSocketClient.Disconnect() for not connected sockets.
+  I had to improve the c# client side part. Therefore, I created another [fork](https://github.com/steforster/Alchemy-Websockets.git) of this project.
 * [WAMP](http://wamp.ws/), the WebSocket Application Messaging Protocol
 * [Newtonsoft.Json](https://github.com/JamesNK/Newtonsoft.Json), a class library for Json serialization
 * [Log4Net](http://logging.apache.org/log4net/), logging component from Apache
 * [NUnit](http://www.nunit.org/), unit testing infrastructure
 * [Nito.Async.ActionThread](http://nitoasync.codeplex.com/) is used for testing console applications
 * [WampSharp](https://github.com/darkl/WampSharp) is not used as a component, but I have lent some ideas from this WAMP implementation
+
+
+How to build
+------------
+Currently, the Remact.Mono solution is used from VisualStudio 2012 and from MonoDevelop 2.8.6.3.
+Currently source projects of other git repositories are referenced from Remact.Mono.sln.
+You have to clone all these (small) repos to be able to build Remact:
+
+   $ git clone https://github.com/steforster/Remact.Net.git
+   $ git clone https://github.com/steforster/Alchemy-Websockets.git
+   $ git clone https://github.com/JamesNK/Newtonsoft.Json.git
+
+Afterwards your project folder should look like this:
+
+   $ ls
+   Alchemy-Websockets  Newtonsoft.Json  Remact.Net  ...
 
 
 License

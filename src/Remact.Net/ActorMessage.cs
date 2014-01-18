@@ -432,7 +432,7 @@ namespace Remact.Net
             Payload = payload;
         }*/
 
-        public T Payload { get; internal set; }
+        public new T Payload { get; internal set; }
 
         public object RawPayload { get { return base.Payload; } }
     }

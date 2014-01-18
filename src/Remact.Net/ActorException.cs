@@ -19,7 +19,7 @@ namespace Remact.Net
             ActorMessage = actorMsg;
         }
 
-        public ActorMessage ActorMessage { get; private set; }
+        public ActorMessage ActorMessage { get; protected set; }
     }
 
     #endregion
@@ -38,7 +38,11 @@ namespace Remact.Net
             ActorMessage = actorMsg;
         }
 
-        public ActorMessage<T> ActorMessage { get; private set; }
+        public new ActorMessage<T> ActorMessage 
+        { 
+            get {return (ActorMessage<T>)base.ActorMessage; }
+            protected set {base.ActorMessage = value; }
+        }
     }
 
     #endregion
