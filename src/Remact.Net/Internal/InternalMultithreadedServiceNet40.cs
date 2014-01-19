@@ -7,9 +7,8 @@ using System.Text;
 using System.Net;         // IPEndPoint
 using System.Net.Sockets; // Socket
 using System.Threading;   // SynchronizationContext
-#if !BEFORE_NET40
-    using System.Threading.Tasks;
-#endif
+using System.Threading.Tasks;
+
 using Alchemy;
 using Alchemy.Classes;
 using Remact.Net.Protocol;
@@ -19,11 +18,6 @@ using Remact.Net.Protocol.Wamp;
 
 namespace Remact.Net.Internal
 {
-    //----------------------------------------------------------------------------------------------
-    #region == Internal multithreaded service class for .NET framework 4.0 and Mono ==
-
-
-    #if !BEFORE_NET40
     /// <summary>
     /// This is the Service Entrypoint. It dispatches requests and returns a response.
     /// </summary>
@@ -31,13 +25,11 @@ namespace Remact.Net.Internal
     {
         private RemactService _service;
         private RemactServiceUser _svcUser;
-        private object _lock;
 
         public InternalMultithreadedServiceNet40(RemactService service, RemactServiceUser svcUser)
         {
             _service = service;
             _svcUser = svcUser;
-            _lock = new object();
         }
 
         /// <summary>
@@ -48,13 +40,14 @@ namespace Remact.Net.Internal
             object response = null;
             try
             {
-                // unlike WCF, a channel oriented protocol has the _svcUser before the first ActorInfo message
-                lock(_lock)
+                // We are instantiated for each connected client, we know the _svcUser (other stacks do not).
+                // Several threads may access the common RemactService. TODO: is the lock really needed ?
+                lock (_service)
                 {
                     response = _service.CheckBasicResponse(message, ref _svcUser);
                 }
 
-                // multithreaded access, several requests may run in parallel. They are scheduled for execution on the right synchronization context.
+                // multithreaded access, several requests may run in parallel. They will be scheduled for execution on the right synchronization context.
                 if( response != null )
                 {
                     var connectMsg = response as ActorInfo;
@@ -138,10 +131,5 @@ namespace Remact.Net.Internal
         Uri        IRemactProtocolDriverService.ServiceUri { get { return null; } }
         PortState  IRemactProtocolDriverService.PortState { get { return PortState.Ok; } }
         void       IRemactProtocolDriverService.Dispose() { }
-
-    }//class InternalMultithreadedServiceNet40
-    #endif // !BEFORE_NET40
-
-    #endregion
-    //----------------------------------------------------------------------------------------------
+    }
 }

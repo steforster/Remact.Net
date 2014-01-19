@@ -6,7 +6,7 @@ namespace Remact.Net.Contracts
     /// <summary>
     /// Common, remotly callable methods provided by all Remact ActorInputs (services).
     /// <para>
-    /// Note: Method calls returning void are not awaitable for a reply on the client side. These are 'one way' requests.
+    /// Note: Method calls returning void are not awaitable for a reply on the client side. These are 'one way' notifications.
     /// Use 'ReadyMessage' as return value to be able to await a reply on client side.
     /// </para>
     /// </summary>
@@ -17,13 +17,13 @@ namespace Remact.Net.Contracts
         /// </summary>
         /// <param name="actorOutput">The <see cref="ActorInfo"/> of the client.</param>
         /// <returns>The <see cref="ActorInfo"/> of the service (ActorInput).</returns>
-        ActorInfo ConnectOutput(ActorInfo actorOutput);
+        ActorInfo ConnectClient(ActorInfo actorOutput);
 
         /// <summary>
         /// Called when a client gracefully disconnects from a service.
         /// </summary>
         /// <param name="actorOutput">The <see cref="ActorInfo"/> of the client.</param>
         /// <returns>The <see cref="ActorInfo"/> of the service (ActorInput).</returns>
-        ActorInfo DisconnectOutput(ActorInfo actorOutput);
+        ActorInfo DisconnectClient(ActorInfo actorOutput);
     }
 }

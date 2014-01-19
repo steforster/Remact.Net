@@ -39,15 +39,5 @@ namespace Remact.Net.Protocol.Wamp
         v2Metaevent = 128 + 1,
         v2PublishAck = 128 + 2,
     }
-
-    /// <summary>
-    /// The full quailified name of these enums is the 'errorUri' of errors, detected on the wamp protocol level.
-    /// </summary>
-    public enum WampError
-    {
-        ClientCannotDeserializeWampMessage, // errorUri = "Remact.Net.Contracts.WampError.ClientCannotDeserializeWampMessage"
-        ClientCannotProcessMessage,
-        ServiceCannotDeserializeWampMessage
-    }
 #pragma warning restore 1591
 }

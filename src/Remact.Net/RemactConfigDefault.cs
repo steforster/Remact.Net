@@ -9,6 +9,7 @@ using Remact.Net.Internal;
 using Remact.Net.Protocol;
 using Remact.Net.Protocol.Wamp;
 using Alchemy;
+using Alchemy.Classes;
 
 namespace Remact.Net
 {
@@ -74,34 +75,37 @@ namespace Remact.Net
     /// <returns>The protocol driver (for dispose).</returns>
     public IDisposable DoServiceConfiguration(RemactService service, ref Uri uri, bool isRouter)
     {
-        var wsServer = new MyWebSocketServer()
+        var dispatcher = WebSocketDispatcher.GetWebSocketDispatcher(uri.Port);
+
+        if (dispatcher.WebSocketServer == null)
         {
-            Port = uri.Port,
-            FlashAccessPolicyEnabled = false,
-            SubProtocols = new string[] { "wamp" },
-
-            // Do this for every new client connection:
-            OnConnected = (userContext) =>
+            dispatcher.WebSocketServer = new WebSocketServer()
                 {
-                    var svcUser = new RemactServiceUser (service.ServiceIdent);
-                    var handler = new InternalMultithreadedServiceNet40(service, svcUser);
-                    var wampProxy = new WampClientProxy(svcUser.ClientIdent, service.ServiceIdent, handler, userContext);
-                    svcUser.SetCallbackHandler(wampProxy);
-                }
-        };
+                    Port = uri.Port,
+                    FlashAccessPolicyEnabled = false,
+                    SubProtocols = new string[] { "wamp" },
 
-        // Listen for client connections:
-        wsServer.Start();
-        return wsServer; // IDisposable
+                    OnConnected = (userContext) => OnClientConnected(dispatcher, userContext)
+                };
+        }
+
+        dispatcher.RegisterService(uri.AbsolutePath, service);
+        dispatcher.WebSocketServer.Start(); // Listen for client connections
+        return dispatcher; // IDisposable TODO only when last service removed !!
     }
 
-    private class MyWebSocketServer : WebSocketServer, IDisposable
+    // Do this for every new client connection on the specified TCP port:
+    private void OnClientConnected(WebSocketDispatcher dispatcher, UserContext userContext)
     {
-        public new void Dispose()
+        RemactService service;
+        if (dispatcher.TryGetService(userContext.RequestPath, out service))
         {
-            Stop();
-            base.Dispose();
+            var svcUser = new RemactServiceUser(service.ServiceIdent);
+            var handler = new InternalMultithreadedServiceNet40(service, svcUser);
+            var wampProxy = new WampClientProxy(svcUser.ClientIdent, service.ServiceIdent, handler, userContext);
+            svcUser.SetCallbackHandler(wampProxy);
         }
+        //TODO else
     }
 
     /// <summary>

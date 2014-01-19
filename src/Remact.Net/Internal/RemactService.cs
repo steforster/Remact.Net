@@ -66,9 +66,6 @@ namespace Remact.Net.Internal
     private  int                       m_ConnectedClientCount = 0;
     private  int                       m_millisPeriodicTask = 0; // systemstart = 0
     private  bool                      m_boCurrentlyCalled;      // to check concurrent calls
-#if BEFORE_NET40
-    private  int                       m_nLastThreadId = 0;      // to check calls from different synchronization contexts
-#endif
 
     private int                        _tcpPort;
     private bool                       _publishToRouter;
@@ -572,21 +569,6 @@ namespace Remact.Net.Internal
             RaLog.Error ("RemactSvc", "called by multiple threads", ServiceIdent.Logger);
         }
         m_boCurrentlyCalled = true;
-      
-#if BEFORE_NET40
-      var m = req.Message as IExtensibleActorMessage;
-      if (!ServiceIdent.IsMultithreaded)
-      {
-        int thread = Thread.CurrentThread.ManagedThreadId;
-        if (thread != m_nLastThreadId && m_nLastThreadId != 0)
-        {
-          RaTrc.Warning ("RemactSvc", "calling thread changed from "+m_nLastThreadId+" to "+thread, ServiceIdent.Logger);
-        } 
-        m_nLastThreadId = thread;
-        if( m != null ) m.BoundSyncContext = SynchronizationContext.Current;
-      }
-      if( m != null ) m.IsSent = true;
-#endif
       
         req.Destination = ServiceIdent;
         req.DestinationLambda = null;// make sure to call the DefaultHandler
