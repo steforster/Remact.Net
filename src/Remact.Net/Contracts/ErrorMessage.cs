@@ -2,13 +2,8 @@
 // Copyright (c) 2014, github.com/steforster/Remact.Net
 
 using System;
-using System.Collections.Generic;  // List
-using System.Reflection;           // Assembly
 using System.Text;                 // StringBuilder
-using System.Threading;
-using System.Net;                  // IPAddress
 using Newtonsoft.Json;
-using Remact.Net.Internal;
 
 namespace Remact.Net
 {
@@ -31,12 +26,12 @@ namespace Remact.Net
     public  string    Message;
 
     /// <summary>
-    /// Get the exception information.
+    /// Get the exception information (may be null).
     /// </summary>
     public  string    InnerMessage;
 
     /// <summary>
-    /// Get the exception information.
+    /// Get the exception information (may be null).
     /// </summary>
     public  string    StackTrace;
 
@@ -225,17 +220,16 @@ namespace Remact.Net
       Error = err;
       if (ex == null)
       {
-        Message      = String.Empty;
+        Message = String.Empty;
       }
       else
       {
-        Message      = string.Concat (ex.GetType().Name, ": ", ex.Message);
+        Message = string.Concat (ex.GetType().Name, ": ", ex.Message);
         string mainText = ex.Message;
         ex = ex.InnerException;
         while (ex != null)
         {
-        //InnerMessage += " Inner exception: ";
-        //InnerMessage += ex.Payload;
+          if (InnerMessage == null) InnerMessage = string.Empty;
           if (mainText == ex.Message) {
             InnerMessage += " ...";
           }
@@ -258,8 +252,8 @@ namespace Remact.Net
       if (Error == Code.Undef) {err.Append("error="); err.Append(error);}
                           else {err.Append(Error.ToString());}
       err.Append (". ");
-      err.Append (Message); 
-      if (InnerMessage.Length > 0)
+      err.Append (Message);
+      if (InnerMessage != null && InnerMessage.Length > 0)
       {
         err.Append (Environment.NewLine);
         err.Append ("  ");

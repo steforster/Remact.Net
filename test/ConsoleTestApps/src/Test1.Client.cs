@@ -59,7 +59,7 @@ namespace Test1.Client
             if (command.ToLower() == "q") break; // from while
             TestInput.PostInput(new Test1CommandMessage(command));
         }
-      
+
         RemactApplication.Exit (0);
     }// Main
 

@@ -226,6 +226,12 @@ namespace Remact.Net.Protocol.Wamp
                     // eg. CALLRESULT message with 'null' result: [3, "CcDnuI2bl2oLGBzO", null]
                     id = int.Parse((string)wamp[1]);
                     message = GetResponseMessage(id);
+                    if (message == null)
+                    {
+                        RaLog.Error("Clt", "Received response to unknown request id " + id + " from " + ServiceUri);
+                        return;
+                    }
+
                     message.Type = ActorMessageType.Response;
                     JToken payload = wamp[2];
                     message.Payload = payload;
@@ -252,28 +258,32 @@ namespace Remact.Net.Protocol.Wamp
                     // eg. CALLERROR message with generic error: [4, "gwbN3EDtFv6JvNV5", "http://autobahn.tavendo.de/error#generic", "math domain error"]
                     errorReceived = true;
                     var requestId = (string)wamp[1];
-                    var errorUri = (string)wamp[2];
-                    var code = (ErrorMessage.Code)Enum.Parse(typeof(ErrorMessage.Code), errorUri, false);
+                    var errorUri  = (string)wamp[2];
                     var errorDesc = (string)wamp[3];
-                    var error = new ErrorMessage(code, errorDesc);
 
-                    if (string.IsNullOrEmpty(requestId))
-                    {
-                        message = new ActorMessage(null, 0, id, null, null, error);
-                    }
-                    else 
+                    if (!string.IsNullOrEmpty(requestId))
                     {
                         id = int.Parse(requestId);
                         message = GetResponseMessage(id);
-                        message.Payload = error;
-                        message.PayloadType = error.GetType().FullName;
+                    }
+
+                    if (message == null)
+                    {
+                        message = new ActorMessage(null, 0, 0, null, null, null);
+                    }
+
+                    if (wamp.Count > 4)
+                    {
+                        message.Payload = wamp[4];
+                        message.PayloadType = errorUri;
+                    }
+                    else
+                    {
+                        message.Payload = new ErrorMessage(ErrorMessage.Code.Undef, errorUri + ": " + errorDesc); // Errormessage from service
+                        message.PayloadType = typeof(ErrorMessage).FullName;
                     }
 
                     message.Type = ActorMessageType.Error;
-                    //if (wamp.Count >= 4)
-                    //{
-                    //    message. (object)wamp[4]); TODO
-                    //}
                     _callback.MessageFromService(message); // adds source and destination
                 }
                 else if (wampType == (int)WampMessageType.v1Event)
@@ -284,9 +294,9 @@ namespace Remact.Net.Protocol.Wamp
                     string portName, methodName, payloadType;
                     WampClientProxy.SplitProcUri((string)wamp[1], out portName, out methodName, out payloadType);
                     message = new ActorMessage(null, 0, 0, null, methodName, payload);
-                    message.Type = ActorMessageType.Notification;
                     message.PayloadType = payloadType;
 
+                    message.Type = ActorMessageType.Notification;
                     _callback.MessageFromService(message); // adds source and destination
                 }
                 else
@@ -302,7 +312,11 @@ namespace Remact.Net.Protocol.Wamp
 
         private ActorMessage GetResponseMessage(int id)
         {
-            var message = _outstandingRequests[id];
+            ActorMessage message;
+            if(!_outstandingRequests.TryGetValue(id, out message))
+            {
+                return null;
+            }
             _outstandingRequests.Remove(id);
             message.Type = ActorMessageType.Response;
             message.DestinationLambda = message.SourceLambda;

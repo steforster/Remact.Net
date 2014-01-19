@@ -322,7 +322,7 @@ namespace Remact.Catalog
 
 
     // implement IActorInputConfiguration
-    public IDisposable DoServiceConfiguration(RemactService service, ref Uri uri, bool isRouter)
+    public WebSocketPortManager DoServiceConfiguration(RemactService service, ref Uri uri, bool isRouter)
     {
         return RemactConfigDefault.Instance.DoServiceConfiguration(service, ref uri, /*isRouter=*/ true);
     }

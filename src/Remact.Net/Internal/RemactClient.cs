@@ -503,7 +503,7 @@ namespace Remact.Net.Internal
 #endif
     }
 
-    string IRemactProtocolDriverCallbacks.ClientAddress { get { return string.Empty; } }
+    Uri IRemactProtocolDriverCallbacks.ClientUri { get { return ClientIdent.Uri; } }
 
     // sent from m_protocolClient
     void IRemactProtocolDriverCallbacks.MessageFromService(ActorMessage message)

@@ -38,7 +38,7 @@ namespace Remact.Net.Protocol.Wamp
 
         public bool Connected { get; private set; }
 
-        public string ClientAddress { get { return _wsChannel.ClientAddress.ToString(); } }
+        public Uri ClientUri { get { return new Uri("ws://"+_wsChannel.ClientAddress.ToString()); } }
 
 
         public void Dispose()
@@ -178,18 +178,29 @@ namespace Remact.Net.Protocol.Wamp
                 {
                     // eg. CALLERROR message with generic error: [4, "gwbN3EDtFv6JvNV5", "http://autobahn.tavendo.de/error#generic", "math domain error"]
                     errorReceived = true;
-                    id = int.Parse((string)wamp[1]);
-                    string errorUri = (string)wamp[2];
-                    var code = (ErrorMessage.Code)Enum.Parse(typeof(ErrorMessage.Code), errorUri, false);
-                    string errorDesc = (string)wamp[3];
-                    var payload = new ErrorMessage(code, errorDesc);
-                    var message = new ActorMessage(_clientIdent, _clientIdent.OutputClientId, id, 
-                                                   _serviceIdent, null, payload);
+                    var requestId = (string)wamp[1];
+                    var errorUri  = (string)wamp[2];
+                    var errorDesc = (string)wamp[3];
+
+                    if (!string.IsNullOrEmpty(requestId))
+                    {
+                        id = int.Parse(requestId);
+                    }
+
+                    var message = new ActorMessage(_clientIdent, _clientIdent.OutputClientId, id,
+                                                   _serviceIdent, null, null);
+                    if (wamp.Count > 4)
+                    {
+                        message.Payload = wamp[4];
+                        message.PayloadType = errorUri;
+                    }
+                    else
+                    {
+                        message.Payload = new ErrorMessage(ErrorMessage.Code.Undef, errorUri + ": " + errorDesc); // Errormessage from client
+                        message.PayloadType = typeof(ErrorMessage).FullName;
+                    }
+
                     message.Type = ActorMessageType.Error;
-                    //if (wamp.Count >= 4)
-                    //{
-                    //    message.wamp[4]); TODO
-                    //}
                     _requestHandler.MessageFromClient(message);
                 }
                 else if (wampType == (int)WampMessageType.v1Event)
@@ -201,9 +212,9 @@ namespace Remact.Net.Protocol.Wamp
                     SplitProcUri((string)wamp[1], out portName, out methodName, out payloadType);
                     var message = new ActorMessage(_clientIdent, _clientIdent.OutputClientId, 0,
                                                    _serviceIdent, methodName, payload);
-                    message.Type = ActorMessageType.Notification;
                     message.PayloadType = payloadType;
 
+                    message.Type = ActorMessageType.Notification;
                     _requestHandler.MessageFromClient(message);
                 }
                 else

@@ -36,12 +36,12 @@
 				var val = input.value;
 				input.value = "";
 				ws.send(val);
-                inc.innerHTML += '<-' + val + '<br/>';
+                inc.innerHTML += '<- ' + val + '<br/>';
 			});
             
             // when data is comming from the server, this metod is called
             ws.onmessage = function (evt) {
-                inc.innerHTML += '->' + evt.data + '<br/>';
+                inc.innerHTML += '-> ' + evt.data + '<br/>';
             };
         }
 

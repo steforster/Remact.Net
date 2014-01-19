@@ -5,6 +5,7 @@ using System;
 using System.Threading;
 using System.ServiceModel;         // OperationContext
 using System.Collections.Generic;
+using Remact.Net.Protocol;
 
 namespace Remact.Net.Internal
 {
@@ -70,17 +71,15 @@ namespace Remact.Net.Internal
     private int                        _tcpPort;
     private bool                       _publishToRouter;
     private IActorInputConfiguration   _serviceConfig;
-    private IDisposable                _protocolDriver;
+    private WebSocketPortManager       _networkPortManager;
 
-    private static int    ms_nSharedTcpPort;
-    private static int    ms_nSharedTcpPortCount;
-    private static object ms_Lock = new Object();
-    private static Dictionary<Uri, RemactService> ms_serviceMap = new Dictionary<Uri, RemactService>(20);
+    private static int                 ms_nSharedTcpPort;
+    private static int                 ms_nSharedTcpPortCount;
 
     /// <summary>
     /// Returns true, when service is ready to receive requests.
     /// </summary>
-    public bool IsOpen { get { return _protocolDriver != null; } }
+    public bool IsOpen { get { return _networkPortManager != null; } }
 
 
     /// <summary>
@@ -91,7 +90,7 @@ namespace Remact.Net.Internal
     {
         get
         {
-            if (_protocolDriver == null) return PortState.Disconnected;
+            if (_networkPortManager == null) return PortState.Disconnected;
             return PortState.Ok;
         }
 
@@ -193,7 +192,7 @@ namespace Remact.Net.Internal
     {
         try
         {
-            if (_protocolDriver != null) Disconnect();
+            if (_networkPortManager != null) Disconnect();
 /*
             // Do we have to add a dynamically generated endpoint ?
             if (m_ServiceHost.Description.Endpoints.Count == 0
@@ -232,7 +231,7 @@ namespace Remact.Net.Internal
                 // Open the ServiceHost to start listening for messages.
                 // Add the dynamically created endpoint. And let the library user add binding and security credentials.
                 // By default RemactDefaults.DoServiceConfiguration is called.
-                _protocolDriver = _serviceConfig.DoServiceConfiguration(this, ref uri, /*isRouter=*/false);
+                _networkPortManager = _serviceConfig.DoServiceConfiguration(this, ref uri, /*isRouter=*/false);
                 ServiceIdent.Uri = uri;
             //}
             //else
@@ -245,11 +244,6 @@ namespace Remact.Net.Internal
             //    base.ServiceIdent.Uri = uri.Uri;
             //}
         
-            lock (ms_Lock)
-            {
-                ms_serviceMap [ServiceIdent.Uri] = this; // adds new key if not present yet
-            }
-
             if (_publishToRouter)
             {
                 // Start registering on Remact.Catalog
@@ -277,7 +271,7 @@ namespace Remact.Net.Internal
     {
         try
         {
-            if (_protocolDriver != null)
+            if (_networkPortManager != null)
             {
                 AbortUserNotificationChannels();
                 try
@@ -288,13 +282,13 @@ namespace Remact.Net.Internal
                         _tcpPort = 0;
                     }
 
-                    _protocolDriver.Dispose();
+                    _networkPortManager.RemoveService(ServiceIdent.Uri.AbsolutePath);
                 }
                 catch
                 {
                 }
 
-                _protocolDriver = null;
+                _networkPortManager = null;
             }
         
             RemactCatalogClient.Instance().RemoveService (this); // send disable message to Remact.CatalogService
@@ -530,16 +524,21 @@ namespace Remact.Net.Internal
     
       if (!svcUser.IsConnected)
       {
+        svcUser.SetConnected();
         if (req.ClientId > 0)
         {
-          RaLog.Error( req.SvcRcvId, "Reconnect without ConnectRequest, RequestId = " + req.RequestId, ServiceIdent.Logger );
+            RaLog.Error(req.SvcRcvId, "Reconnect without ConnectRequest, RequestId = " + req.RequestId, ServiceIdent.Logger);
+            LastAction = "Reconnect without ConnectRequest";
         }
         else
         {
-          RaLog.Info( req.SvcRcvId, "Connect anonymous client, RequestId = " + req.RequestId, ServiceIdent.Logger );
+            LastAction = "Client '" + svcUser.ClientIdent.Uri.ToString() + "' connected";
+            if (ServiceIdent.TraceConnect)
+            {
+                RaLog.Info(req.SvcRcvId, String.Format("{0} to Remact service './{0}'", LastAction, ServiceIdent.Name), ServiceIdent.Logger);
+            }
         }
 
-        svcUser.SetConnected();
         if (RemactConfigDefault.Instance.IsProcessIdUsed (svcUser.ClientIdent.ProcessId)) 
         {
             m_UnusedClientCount--;
@@ -577,6 +576,7 @@ namespace Remact.Net.Internal
         if (!string.IsNullOrEmpty(req.PayloadType)
          && req.TryConvertPayload(out cltReq))
         {
+            req.Payload = cltReq; // use converted payload later on
             if (ServiceIdent.Uri == null)
             {
                 // TODO
@@ -598,14 +598,12 @@ namespace Remact.Net.Internal
             // no response generated yet (no ActorInfo-message or unknown Usage)
             if (FindPartnerAndCheck (req, ref svcUser))
             {
-                //req.CurrentSvcUser = svcUser;
                 LastAction = "ActorMessage";// response must be generated by service-application, request.ClientIdent has been set
             }
             else
             {
                 response = new ErrorMessage (ErrorMessage.Code.ClientIdNotFoundOnService, "Service cannot find client " + req.ClientId);
                 RaLog.Error( req.SvcRcvId, (response as ErrorMessage).Message, ServiceIdent.Logger );
-                //response.SendId bleibt 0, da wir keine ClientInfo haben 
                 LastAction = "ActorMessage from unknown client";
             }
         }
