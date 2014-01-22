@@ -85,6 +85,11 @@ namespace Remact.Net.Internal
         ClientIdent.m_Connected = true;
         m_boDisconnectReq = false; 
         m_boTimeout = false;
+        if (ClientIdent.Uri == null && _protocolCallback != null)
+        {
+            ClientIdent.Uri = _protocolCallback.ClientUri;
+            ClientIdent.Name = "anonymous";
+        }
     }
 
     /// <summary>
@@ -122,7 +127,7 @@ namespace Remact.Net.Internal
         if (_protocolCallback != null)
         {
             RaLog.Info ("RemactSvc", "["+mark.PadRight (6)+"] "+ ClientMark
-                            + ", ClientAddress=" + _protocolCallback.ClientAddress
+                            + ", ClientAddress=" + _protocolCallback.ClientUri.ToString()
                             , ClientIdent.Logger );
         }
     }

@@ -55,7 +55,7 @@ namespace Remact.Net.Protocol
         /// <summary>
         /// Gets the endpoint uri of the client
         /// </summary>
-        string ClientAddress { get; }
+        Uri ClientUri { get; }
 
         /// <summary>
         /// Occurs when a call result is returned from service, when the service sends a notification or an error message.

@@ -9,6 +9,7 @@ using Remact.Net.Internal;
 using Remact.Net.Protocol;
 using Remact.Net.Protocol.Wamp;
 using Alchemy;
+using Alchemy.Classes;
 
 namespace Remact.Net
 {
@@ -66,41 +67,58 @@ namespace Remact.Net
     public const string  WsNamespace = "Remact";
 
     /// <summary>
-    /// Sets the default service configuration, when no endpoint in app.config is found.
+    /// Configures and sets up a new service for a remotly accessible ActorInput.
+    /// Feel free to overwrite this default implementation.
+    /// Here we set up a WAMP WebSocket with TCP portsharing.
+    /// The 'path' part of the uri addresses the ActorInput.
     /// </summary>
-    /// <param name="service">The server.</param>
+    /// <param name="service">The new service for an ActorInput.</param>
     /// <param name="uri">The dynamically generated URI for this service.</param>
     /// <param name="isRouter">true if used for Remact.Catalog service.</param>
-    /// <returns>The protocol driver (for dispose).</returns>
-    public IDisposable DoServiceConfiguration(RemactService service, ref Uri uri, bool isRouter)
+    /// <returns>The network port manager. It must be called, when the ActorInput is disconnected from network.</returns>
+    public WebSocketPortManager DoServiceConfiguration(RemactService service, ref Uri uri, bool isRouter)
     {
-        var wsServer = new MyWebSocketServer()
+        var portManager = WebSocketPortManager.GetWebSocketPortManager(uri.Port);
+
+        if (portManager.WebSocketServer == null)
         {
-            Port = uri.Port,
-            FlashAccessPolicyEnabled = false,
-            SubProtocols = new string[] { "wamp" },
-
-            // Do this for every new client connection:
-            OnConnected = (userContext) =>
+            // this TCP port has to be opened
+            portManager.WebSocketServer = new WebSocketServer()
                 {
-                    var svcUser = new RemactServiceUser (service.ServiceIdent);
-                    var handler = new InternalMultithreadedServiceNet40(service, svcUser);
-                    var wampProxy = new WampClientProxy(svcUser.ClientIdent, service.ServiceIdent, handler, userContext);
-                    svcUser.SetCallbackHandler(wampProxy);
-                }
-        };
+                    Port = uri.Port,
+                    FlashAccessPolicyEnabled = false,
+                    SubProtocols = new string[] { "wamp" },
 
-        // Listen for client connections:
-        wsServer.Start();
-        return wsServer; // IDisposable
+                    OnConnected = (userContext) => OnClientConnected(portManager, userContext)
+                };
+        }
+
+        portManager.RegisterService(uri.AbsolutePath, service);
+        portManager.WebSocketServer.Start(); // Listen for client connections
+        return portManager; // will be called, when this ActorInput is disconnected.
     }
 
-    private class MyWebSocketServer : WebSocketServer, IDisposable
+    // Do this for every new client connecting to a WebSocketPort:
+    private void OnClientConnected(WebSocketPortManager portManager, UserContext userContext)
     {
-        public new void Dispose()
+        RemactService service;
+        var absolutePath = userContext.RequestPath;
+        if (!absolutePath.StartsWith("/"))
         {
-            Stop();
-            base.Dispose();
+            absolutePath = string.Concat('/', absolutePath); // uri.AbsolutPath contains a leading slash.
+        }
+
+        if (portManager.TryGetService(absolutePath, out service))
+        {
+            var svcUser = new RemactServiceUser(service.ServiceIdent);
+            var handler = new InternalMultithreadedServiceNet40(service, svcUser);
+            // in future, the new WampClientProxy will handle the OnReceive and OnDisconnect events for this connection
+            var wampProxy = new WampClientProxy(svcUser.ClientIdent, service.ServiceIdent, handler, userContext);
+            svcUser.SetCallbackHandler(wampProxy);
+        }
+        else
+        {
+            RaLog.Error("Svc:", "No service found on '" + absolutePath + "' to connect client " + userContext.ClientAddress);
         }
     }
 

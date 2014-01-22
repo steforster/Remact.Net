@@ -7,9 +7,6 @@ using System.Net;                  // Dns, IpAddress
 using System.Threading;            // SynchronizationContext
 using System.Threading.Tasks;
 using Remact.Net.Internal;
-#if !BEFORE_NET45
-    using System.Threading.Tasks;
-#endif
 
 namespace Remact.Net
 {
@@ -419,7 +416,6 @@ namespace Remact.Net
     /// </summary>
     /// <param name="method">The name of the method to be called.</param>
     /// <param name="payload">The message payload to send. It must be of a type acceptable for the called method.</param>
-    /// <param name="responseHandler">A method or lambda expression handling the asynchronous response.</param>
     /// <typeparam name="TRsp">The expected type of the response payload. 
     ///    When receiving a payload of OtherType, an ActorException{OtherType} will be thrown.</typeparam>
     /// <returns>A Task to track the asynchronous completion of the request.</returns>
@@ -496,7 +492,7 @@ namespace Remact.Net
     /// <summary>
     /// Incoming messages are directly redirected to this partner (used library intern)
     /// </summary>
-    internal protected IRemoteActor m_RedirectIncoming;
+    internal protected IRemoteActor  m_RedirectIncoming;
 
     /// <summary>
     /// False when not connected or disconnected. Prevents message passing during shutdown.

@@ -503,7 +503,7 @@ namespace Remact.Net.Internal
 #endif
     }
 
-    string IRemactProtocolDriverCallbacks.ClientAddress { get { return string.Empty; } }
+    Uri IRemactProtocolDriverCallbacks.ClientUri { get { return ClientIdent.Uri; } }
 
     // sent from m_protocolClient
     void IRemactProtocolDriverCallbacks.MessageFromService(ActorMessage message)
@@ -872,7 +872,7 @@ namespace Remact.Net.Internal
     /// <para>.On&lt;ErrorMessage>(err => {do something with error message 'err'}));</para>
     /// </summary>
     /// <param name="request">The message to send.</param>
-    /// <param name="asyncResponseHandler"><see cref="ActorMessageExtensions.On&lt;T>(WcRequestction&lt;T>)"/></param>
+    /// <param name="asyncResponseHandler"><see cref="ActorMessageExtensions.On{T}(ActorMessage, Action{T})"/></param>
     public ActorMessage SendOut(object request, AsyncResponseHandler asyncResponseHandler)
     {
       if (ClientIdent.LastRequestIdSent == int.MaxValue) ClientIdent.LastRequestIdSent = 10;

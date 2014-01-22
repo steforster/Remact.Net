@@ -6,7 +6,7 @@ namespace Remact.Net.Contracts
     /// <summary>
     /// Remotly callable methods provided by the Remact.Catalog.exe application.
     /// <para>
-    /// Note: Method calls returning void are not awaitable for a reply on the client side. These are 'one way' requests.
+    /// Note: Method calls returning void are not awaitable for a reply on the client side. These are 'one way' notifications.
     /// Use 'ReadyMessage' as return value to be able to await a reply on client side.
     /// </para>
     /// </summary>
