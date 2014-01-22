@@ -123,30 +123,15 @@ namespace Remact.Net.Internal
     /// <summary>
     /// Create the proxy for a remote service.
     /// </summary>
-    /// <param name="clientName">Unique identification of the client inside an application.</param>
-    /// <param name="defaultResponseHandler">The method to be called for responses that have not otherwise been handled.</param>
-    internal RemactClient (string clientName, MessageHandler defaultResponseHandler)
-    {
-      m_DefaultInputHandlerForApplication = defaultResponseHandler;
-      ClientIdent = new ActorOutput(clientName, defaultResponseHandler);
-      ServiceIdent = new ActorInput(); // not yet defined
-      ServiceIdent.IsServiceName = true;
-      ServiceIdent.PassResponsesTo (ClientIdent); // ServiceIdent.PostInput will send to our client
-    }// CTOR1
-
-
-    /// <summary>
-    /// Create the proxy for a remote service.
-    /// </summary>
     /// <param name="clientIdent">Link this ActorOutput to the remote service.</param>
     internal RemactClient (ActorOutput clientIdent)
     {
       m_DefaultInputHandlerForApplication = clientIdent.DefaultInputHandler;
       ClientIdent = clientIdent;
-      ServiceIdent           = new ActorInput(); // not yet defined
+      ServiceIdent = new ActorInput(); // not yet defined
       ServiceIdent.IsServiceName = true;
       ServiceIdent.PassResponsesTo (ClientIdent); // ServiceIdent.PostInput will send to our client
-    }// CTOR 2
+    }
 
 
     /// <summary>
@@ -293,9 +278,7 @@ namespace Remact.Net.Internal
     /// </summary>
     public bool IsFaulted      { get { return m_boTimeout
                                        ||    (m_protocolClient != null
-                                           && m_protocolClient.PortState == PortState.Faulted);
-    }
-    }
+                                           && m_protocolClient.PortState == PortState.Faulted);}}
 
     /// <summary>
     /// Returns the number of requests that have not received a response by the service.
@@ -324,40 +307,39 @@ namespace Remact.Net.Internal
     /// </summary>
     public void Disconnect()
     {
-      try
-      {
-        if (IsConnected)
+        try
         {
-          try
-          {
-            RemactCatalogClient.Instance().RemoveClient(this);
-            SendDisconnectMessage();
-            m_protocolClient.Dispose();
-            m_protocolClient = null;
-          }
-          catch
-          {
-          }
-        }
+            if (IsConnected)
+            {
+                try
+                {
+                    RemactCatalogClient.Instance().RemoveClient(this);
+                    SendDisconnectMessage();
+                }
+                catch
+                {
+                }
+            }
         
-        if (m_protocolClient != null) 
-        {
-          RemactCatalogClient.Instance ().RemoveClient (this);
-          //TraceState("Abortd");
+            if (m_protocolClient != null) 
+            {
+                m_protocolClient.Dispose();
+                RemactCatalogClient.Instance().RemoveClient (this);
+                //TraceState("Abortd");
+            }
         }
-      }
-      catch (Exception ex)
-      {
-          RaLog.Exception("Cannot abort Remact connection", ex, ClientIdent.Logger);
-      }
+        catch (Exception ex)
+        {
+            RaLog.Exception("Cannot abort Remact connection", ex, ClientIdent.Logger);
+        }
       
-      m_protocolClient = null;
-      m_boConnecting = false;
-      m_boFirstResponseReceived = false;
-      m_boTimeout = false;
-      m_boTemporaryRouterConn  = false;
-      ServiceIdent.m_Connected = false; // internal, from ServiceIdent to ClientIdent
-      ClientIdent.m_Connected = false; // internal, from ActorOutput to RemactClient
+        m_protocolClient = null;
+        m_boConnecting = false;
+        m_boFirstResponseReceived = false;
+        m_boTimeout = false;
+        m_boTemporaryRouterConn  = false;
+        ServiceIdent.m_Connected = false; // internal, from ServiceIdent to ClientIdent
+        ClientIdent.m_Connected = false; // internal, from ActorOutput to RemactClient
 
     }// Disconnect
 
@@ -712,6 +694,7 @@ namespace Remact.Net.Internal
         {
             ClientIdent.TraceConnect = m_TraceConnectBefore;
         }
+
         ClientIdent.DefaultInputHandler = m_DefaultInputHandlerForApplication;
         try
         {

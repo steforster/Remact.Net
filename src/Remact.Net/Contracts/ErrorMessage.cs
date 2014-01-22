@@ -204,10 +204,15 @@ namespace Remact.Net
     /// </summary>
     /// <param name="err">general reason.</param>
     /// <param name="text">unique information where te error occured.</param>
-    public ErrorMessage (Code err, string text)
+    public ErrorMessage (Code err, string text = null)
     {
       Error        = err;
       Message      = text;
+      if (Message == null)
+      {
+          Message = String.Empty;
+      }
+
     }// CTOR 1
     
     /// <summary>

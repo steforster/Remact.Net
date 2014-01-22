@@ -53,6 +53,9 @@ namespace Remact.Net
         {
             m_appAssembly = Assembly.GetCallingAssembly(); // UnitTests
         }
+
+        // static configuration
+        Alchemy.Handlers.Handler.FastDirectSendingMode = true;
     }
 
     #endregion
