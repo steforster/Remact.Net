@@ -197,12 +197,14 @@ namespace Remact.Net.Internal
     /// </summary>
     internal RemactCatalogClient ()
     {
-      m_ServiceList  = new List<RemactService> (20);
-      m_ClientList   = new List<RemactClient> (20);
+      m_ServiceList   = new List<RemactService> (20);
+      m_ClientList    = new List<RemactClient> (20);
+      var clientIdent = new ActorOutput("Remact.CatalogClt", OnMessageReceived);
+
 #if !BEFORE_NET45
-      m_RouterClient = new RemactClientAsync("Remact.CatalogClt", OnMessageReceived);
+      m_RouterClient = new RemactClientAsync(clientIdent);
 #else
-      m_RouterClient = new RemactClient("Remact.CatalogClt", OnMessageReceived);
+      m_RouterClient = new RemactClient(clientIdent);
 #endif
       m_RouterClient.ClientIdent.IsMultithreaded = true;
       m_RouterClient.ClientIdent.TraceConnect = false;

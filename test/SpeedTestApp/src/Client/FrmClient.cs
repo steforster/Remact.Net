@@ -65,7 +65,7 @@ namespace Test2.Client
       Client1 = new ActorOutput("Client1", OnMessageFromService);
       Client1.TraceSend = true;
       Log1 = new StringBuilder(11000);
-      lbClient.Text = Client1.ToString("Client  new", 20);
+      lbClient.Text = Client1.ToString("Client ", 20);
       this.Text     = Client1.AppIdentification;
     }
 
@@ -145,7 +145,7 @@ namespace Test2.Client
           if (Client1.OutputState == PortState.Faulted)
           {
             cbService1.Checked = false;
-            lbState1.Text += " -FAULT-";
+            lbState1.Text = "-FAULT-";
           }
           else if (Client1.OutputState == PortState.Disconnected || Client1.OutputState == PortState.Unlinked)
           {

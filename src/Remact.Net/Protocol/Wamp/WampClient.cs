@@ -22,6 +22,7 @@ namespace Remact.Net.Protocol.Wamp
         private IRemactProtocolDriverCallbacks _callback;
         private int _lowLevelErrorCount;
         private bool _faulted;
+        private bool _disposed;
 
         public WampClient(Uri websocketUri)
         {
@@ -96,6 +97,11 @@ namespace Remact.Net.Protocol.Wamp
                 request.Payload = new ErrorMessage(ErrorMessage.Code.CouldNotOpen, ex);
             }
 
+            if (_disposed)
+            {
+                return;
+            }
+
             if (request.Source.IsMultithreaded)
             {
                 _callback.OnOpenCompleted(request); // Test1.ClientNoSync, RouterClient
@@ -114,11 +120,13 @@ namespace Remact.Net.Protocol.Wamp
 
         public void Dispose()
         {
-            if (_wsClient.ReadyState == WebSocketClient.ReadyStates.OPEN)
+            try
             {
+                _disposed = true;
                 _wsClient.Disconnect();
+                // do not dispose, this sets the global cancellation token: _wsClient.Dispose();
             }
-            _wsClient.Dispose();
+            catch { }
         }
 
         #region IRemactProtocolDriverService proxy implementation
@@ -196,6 +204,11 @@ namespace Remact.Net.Protocol.Wamp
         private void OnReceived(UserContext context)
         {
             //Console.WriteLine("Received Data From :" + context.ClientAddress);
+            if (_disposed)
+            {
+                return;
+            }
+
             int id = 0;
             bool errorReceived = false;
             ActorMessage message = null;
@@ -328,9 +341,14 @@ namespace Remact.Net.Protocol.Wamp
         private void OnDisconnect(UserContext context)
         {
             _faulted = true;
+            if (_disposed)
+            {
+                return;
+            }
+
             var copy = _outstandingRequests;
             _outstandingRequests = new Dictionary<int, ActorMessage>();
-            foreach(var msg in copy.Values)
+            foreach (var msg in copy.Values)
             {
                 msg.Type = ActorMessageType.Error;
                 msg.DestinationLambda = msg.SourceLambda;
