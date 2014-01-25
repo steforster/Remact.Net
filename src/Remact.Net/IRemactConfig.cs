@@ -91,6 +91,15 @@ namespace Remact.Net
     string TraceFolder  {get;}
 
     #endregion
+    //----------------------------------------------------------------------------------------------
+    #region == Remact shutdown ==
+
+    /// <summary>
+    /// Has to be called by the user, when the application is shutting down.
+    /// </summary>
+    void Shutdown();
+
+    #endregion
   }
 }
 

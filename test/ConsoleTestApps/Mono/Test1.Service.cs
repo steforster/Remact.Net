@@ -17,7 +17,7 @@ namespace Test1.Service
         // 0: Application instance id. Default = 0 --> process id is used.
         // 1: TCP port number for this service (on localhost). Default = 40001.
 
-        RemactConfigDefault.ApplicationStart (args, new RaLog.PluginFile(), /*ExitHandler=*/true);
+        RemactConfigDefault.ApplicationStart (args, new RaLog.PluginFile());
         RemactApplication.ApplicationExit += ApplicationExitHandler;
 
         int tcpPort; // the second commandline argument
@@ -64,7 +64,7 @@ namespace Test1.Service
         //if (closeType == RemactApplication.CloseType.CtrlC) goExit = true; // test application cancellation
         if (goExit)
         {
-            ActorPort.DisconnectAll ();
+            RemactConfigDefault.Instance.Shutdown();
             if (RemactApplication.IsRunningWithMono) Console.WriteLine(Environment.NewLine + "---application ended---"); // helpful, when started from MonoDevelop
         }
     }

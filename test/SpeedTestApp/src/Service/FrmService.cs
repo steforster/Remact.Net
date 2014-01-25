@@ -26,7 +26,7 @@ namespace Test2.Service
     {
       Application.EnableVisualStyles ();
       Application.SetCompatibleTextRenderingDefault (false);
-      RemactConfigDefault.ApplicationStart(args, new RaLog.PluginFile(), /*ExitHandler=*/true);
+      RemactConfigDefault.ApplicationStart(args, new RaLog.PluginFile());
       RaLog.Info( "Svc1", "Start" );
       try
       {
@@ -36,6 +36,7 @@ namespace Test2.Service
       {
         RaLog.Exception ("Svc1: Fatal error", ex);
       }
+      RemactConfigDefault.Instance.Shutdown();
       RaLog.Info( "Svc1", "Stop" );
       RaLog.Stop ();
     }

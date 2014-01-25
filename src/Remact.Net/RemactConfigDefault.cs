@@ -79,7 +79,7 @@ namespace Remact.Net
     /// <param name="uri">The dynamically generated URI for this service.</param>
     /// <param name="isRouter">true if used for Remact.Catalog service.</param>
     /// <returns>The network port manager. It must be called, when the ActorInput is disconnected from network.</returns>
-    public WebSocketPortManager DoServiceConfiguration(RemactService service, ref Uri uri, bool isRouter)
+    public virtual WebSocketPortManager DoServiceConfiguration(RemactService service, ref Uri uri, bool isRouter)
     {
         var portManager = WebSocketPortManager.GetWebSocketPortManager(uri.Port);
 
@@ -102,7 +102,7 @@ namespace Remact.Net
     }
 
     // Do this for every new client connecting to a WebSocketPort:
-    private void OnClientConnected(WebSocketPortManager portManager, UserContext userContext)
+    protected virtual void OnClientConnected(WebSocketPortManager portManager, UserContext userContext)
     {
         RemactService service;
         var absolutePath = userContext.RequestPath;
@@ -205,7 +205,7 @@ namespace Remact.Net
     /// <summary>
     /// When ApplicationInstance remains 0, the operating system process id is used as a application instance payload for communication and trace.
     /// </summary>
-    public bool            IsProcessIdUsed      (int appId) {return appId == 0;}
+    public virtual bool    IsProcessIdUsed      (int appId) {return appId == 0;}
 
     /// <summary>
     /// Operating system process id of this application.
@@ -259,7 +259,7 @@ namespace Remact.Net
     /// <param name="args">the commandline arguments passed to Main()</param>
     /// <param name="traceWriter">null or the plugin to write trace</param>
     /// <param name="installExitHandler">when true: install handlers for normal and exceptional application exit</param>
-    public static void ApplicationStart (string[] args, RaLog.ITracePlugin traceWriter, bool installExitHandler)
+    public static void ApplicationStart (string[] args, RaLog.ITracePlugin traceWriter)
     {
         int appInstance; // by default the first commandline argument
         if (args.Length == 0 || !int.TryParse(args[0], out appInstance))
@@ -269,11 +269,11 @@ namespace Remact.Net
 
         RaLog.UsePlugin (traceWriter);
         RaLog.Start (appInstance);
-        if (installExitHandler) RemactApplication.InstallExitHandler();
+        RemactApplication.InstallExitHandler();
         RaLog.Run(); // open file and write first messages
     }
 
-    private string m_TraceFolder = null;
+    protected string m_TraceFolder = null;
 
     /// <summary>
     /// Get the folder name where tracefiles may be stored. 
@@ -301,6 +301,20 @@ namespace Remact.Net
       set{
         m_TraceFolder = value;
       }
+    }
+
+    #endregion
+    //----------------------------------------------------------------------------------------------
+    #region == Default application shutdown ==
+
+    /// <summary>
+    /// Has to be called by the user, when the application is shutting down.
+    /// </summary>
+    public virtual void Shutdown()
+    {
+        ActorPort.DisconnectAll();
+        Alchemy.WebSocketClient.Shutdown();
+        Alchemy.WebSocketServer.Shutdown();
     }
 
     #endregion

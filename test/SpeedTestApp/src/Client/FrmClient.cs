@@ -30,7 +30,7 @@ namespace Test2.Client
       {
         Application.EnableVisualStyles ();
         Application.SetCompatibleTextRenderingDefault (false);
-        RemactConfigDefault.ApplicationStart (args, new RaLog.PluginFile(), /*ExitHandler=*/true);
+        RemactConfigDefault.ApplicationStart (args, new RaLog.PluginFile());
         RaLog.Info( "Clt1", "Start" );
 
         Application.Run(new FrmClient());
@@ -39,6 +39,7 @@ namespace Test2.Client
       {
         RaLog.Exception ("Clt1: Fatal error", ex);
       }
+      RemactConfigDefault.Instance.Shutdown();
       RaLog.Info( "Clt1", "Stop" );
       RaLog.Stop ();
     }
@@ -204,5 +205,5 @@ namespace Test2.Client
     }
     #endregion
 
-  }// class FrmClient
-}// namespace
+  }
+}

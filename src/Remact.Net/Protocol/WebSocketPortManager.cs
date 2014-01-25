@@ -118,7 +118,6 @@ namespace Remact.Net.Protocol
             if (_wsServer != null)
             {
                 _wsServer.Stop();
-                _wsServer.Dispose();
                 _wsServer = null;
             }
         }
