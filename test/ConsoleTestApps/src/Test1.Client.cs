@@ -22,7 +22,7 @@ namespace Test1.Client
         // 0: Application instance id. Default = 0 --> process id is used.
         // 1: Hostname and TCP port for the service to connect to. Default: "localhost:40001" is used.
 
-        RemactConfigDefault.ApplicationStart(args, new RaLog.PluginFile(), /*ExitHandler=*/true);
+        RemactConfigDefault.ApplicationStart(args, new RaLog.PluginFile());
         RemactApplication.ApplicationExit += ApplicationExitHandler;
 
         string host = "localhost:40001";
@@ -72,7 +72,7 @@ namespace Test1.Client
         RaLog.Info("ApplicationExitHandler", "handling " + closeType + ", terminating=" + goExit);
         if (goExit)
         {
-            Test.Disconnect();
+            RemactConfigDefault.Instance.Shutdown();
             if (RemactApplication.IsRunningWithMono) Console.WriteLine("\n\r---application ended---"); // helpful, when started from MonoDevelop
         }
     }
