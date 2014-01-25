@@ -313,8 +313,8 @@ namespace Remact.Net
     public virtual void Shutdown()
     {
         ActorPort.DisconnectAll();
-        Alchemy.WebSocketClient.Dispose();
-        Alchemy.WebSocketServer.Dispose();
+        Alchemy.WebSocketClient.Shutdown();
+        Alchemy.WebSocketServer.Shutdown();
     }
 
     #endregion
