@@ -197,7 +197,7 @@ Global
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
 		StartupItems = $0
-		$0.Item = test\SpeedTestApp\Mono\Test2.Client.Mono.csproj
+		$0.Item = test\SpeedTestApp\Mono\Test2.Service.Mono.csproj
 		Policies = $1
 		$1.DotNetNamingPolicy = $2
 		$2.DirectoryNamespaceAssociation = None

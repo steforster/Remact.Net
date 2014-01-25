@@ -146,11 +146,6 @@ namespace Remact.Net.Internal
       m_RouterHostToLookup = null;
       websocketUri = NormalizeHostName(websocketUri);
       m_RequestedServiceUri = websocketUri;
-      m_protocolClient = new WampClient(websocketUri);
-      // Let now the library user change binding and security credentials.
-      // By default RemactDefaults.OnClientConfiguration is called.
-      DoClientConfiguration(ref websocketUri, /*forRouter=*/false);
-      ServiceIdent.PrepareServiceName(websocketUri);
     }
 
     private Uri NormalizeHostName( Uri uri )
@@ -531,7 +526,6 @@ namespace Remact.Net.Internal
             }
 
             LastRequestIdReceived = message.RequestId;
-            if (ClientIdent.TraceReceive) RaLog.Info(message.CltRcvId, message.PayloadType, ClientIdent.Logger);
             ClientIdent.DispatchMessage(message);
         }
         catch (Exception ex)
@@ -775,6 +769,12 @@ namespace Remact.Net.Internal
             {
                 // do not connect to router
                 LinkToService( m_RequestedServiceUri );
+                m_protocolClient = new WampClient(m_RequestedServiceUri);
+                // Let now the library user change binding and security credentials.
+                // By default RemactDefaults.OnClientConfiguration is called.
+                var websocketUri = m_RequestedServiceUri;
+                DoClientConfiguration(ref websocketUri, /*forRouter=*/false);
+                ServiceIdent.PrepareServiceName(websocketUri);
                 ClientIdent.PickupSynchronizationContext();
                 OpenConnectionToService();
                 return true; // Connecting now

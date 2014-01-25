@@ -493,6 +493,8 @@ namespace Remact.Net.Internal
         LastAction = "Disconnect unknown client";
       }
 
+      // Note: This response will not really be sent to the client. The connection is already disconnected.
+      //       See ActorPort.PostInput
       ActorInfo response = new ActorInfo (ServiceIdent, ActorInfo.Use.ServiceDisconnectResponse);
       return response;
     }// Disconnect

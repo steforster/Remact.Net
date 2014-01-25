@@ -416,6 +416,7 @@ namespace Remact.Net
         }
       });
 
+      signal_thread.Name = "RemactApplication.SignalThread";
       signal_thread.IsBackground = true;
       signal_thread.Start();
       Thread.Sleep(10);

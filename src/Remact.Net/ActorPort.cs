@@ -204,7 +204,7 @@ namespace Remact.Net
                       else  prefix = "Remact Client ";//+Usage.ToString();
       }
 
-      if (intendCnt==0) intend = ", ";
+      if (intendCnt==0) intend = " ";
                    else intend = Environment.NewLine.PadRight(intendCnt);
 
       if (Uri == null)  uri    = HostName;
@@ -227,10 +227,20 @@ namespace Remact.Net
       }
       else
       {
-        return String.Format ("{0}: '{1}' in application '{2}' (V{3}){4}using {5} (V{6}){7}uri = '{8}'",
-                              prefix, Name, AppIdentification, AppVersion.ToString (versionCount), // ACHTUNG ToString(3) kann Exception geben, falls nur 2 Felder spezifiziert sind !
-                       /*4*/intend, CifComponentName, CifVersion.ToString (versionCount),
-                       /*7*/intend, uri);
+//        return String.Format ("{0}: '{1}' in application '{2}' (V{3}){4}using {5} (V{6}){7}uri = '{8}'",
+//                              prefix, Name, AppIdentification, AppVersion.ToString (versionCount), // ACHTUNG ToString(3) kann Exception geben, falls nur 2 Felder spezifiziert sind !
+//                       /*4*/intend, CifComponentName, CifVersion.ToString (versionCount),
+//                       /*7*/intend, uri);
+          if (IsServiceName)
+          {       
+              return String.Format ("{0}: '{1}'{2}in application '{3}' V {4}",
+                     prefix, uri, intend, AppIdentification, AppVersion.ToString (versionCount));
+          }
+          else
+          {
+              return String.Format ("{0}: '{1}' in application '{2}' V {3}",
+                     prefix, Name, AppIdentification, AppVersion.ToString (versionCount));
+          }
       }
     }// ToString
 
@@ -279,7 +289,11 @@ namespace Remact.Net
     {
         if( !m_Connected )
         {
-            DispatchingError(msg, new ErrorMessage(ErrorMessage.Code.NotConnected, "Cannot post message"));
+            var disconnectMsg = msg.Payload as ActorInfo;
+            if (disconnectMsg == null || disconnectMsg.Usage != ActorInfo.Use.ServiceDisconnectResponse)
+            {
+                DispatchingError(msg, new ErrorMessage(ErrorMessage.Code.NotConnected, "Cannot post message"));
+            }
         }
         else if (m_RedirectIncoming != null)
         {

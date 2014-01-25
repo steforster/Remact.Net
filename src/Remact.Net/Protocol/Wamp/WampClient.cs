@@ -31,11 +31,7 @@ namespace Remact.Net.Protocol.Wamp
             _wsClient = new WebSocketClient(websocketUri.ToString())
             {
                 //OnSend = OnSend,// Message has been dequeued and passed to the socket buffer
-                OnReceive = OnReceived,
                 //OnConnect = OnConnect,// TCP socket is connected to the server
-                //OnConnected = OnConnected,// WebSocket connection has been built and authenticated
-                OnDisconnect = OnDisconnect,
-                ConnectTimeout = new TimeSpan(0, 0, 50), // 50 sec
                 SubProtocols = new string[]{"wamp"} // null: take all subprotocols
                 //TODO Origin = see rfc6455
             };
@@ -70,7 +66,57 @@ namespace Remact.Net.Protocol.Wamp
         public void OpenAsync(ActorMessage request, IRemactProtocolDriverCallbacks callback)
         {
             _callback = callback;
-            ThreadPool.UnsafeQueueUserWorkItem(OpenOnThreadpool, request);
+            _wsClient.OnConnected = OnConnected;
+            _wsClient.OnDisconnect = OnConnectFailure;
+            _wsClient.BeginConnect(request);
+        }
+
+        private void OnConnected(UserContext context)
+        {
+            var request = (ActorMessage)context.Data;
+            request.Payload = null; // null = ok
+            if (_wsClient.ReadyState != WebSocketClient.ReadyStates.OPEN)
+            {
+                _faulted = true;
+                request.Payload = new ErrorMessage(ErrorMessage.Code.CouldNotOpen, "WebSocketClient not connected");
+            }
+            else
+            {
+                context.SetOnReceive(OnReceived);
+                context.SetOnDisconnect(OnDisconnect);
+            }
+
+            ConnectCallback(request);
+        }
+
+        private void OnConnectFailure(UserContext context)
+        {
+            _faulted = true;
+            var request = (ActorMessage)context.Data;
+            request.Payload = new ErrorMessage(ErrorMessage.Code.CouldNotOpen, context.LatestException);
+            ConnectCallback(request);
+        }
+
+        private void ConnectCallback(ActorMessage request)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            if (request.Source.IsMultithreaded)
+            {
+                _callback.OnOpenCompleted(request); // Test1.ClientNoSync, RouterClient
+            }
+            else if (request.Source.SyncContext == null)
+            {
+                RaLog.Error("Remact", "No synchronization context to open " + request.Source.Name, request.Source.Logger);
+                _callback.OnOpenCompleted(request);
+            }
+            else
+            {
+                request.Source.SyncContext.Post(_callback.OnOpenCompleted, request);
+            }
         }
 
         private void OpenOnThreadpool(object obj)
