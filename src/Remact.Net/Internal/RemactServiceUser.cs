@@ -36,7 +36,6 @@ namespace Remact.Net.Internal
     internal object                    ClientAccessLock   = new Object();
 
     private IRemactProtocolDriverCallbacks _protocolCallback;
-    private bool                       m_boDisconnectReq;
     private bool                       m_boTimeout;
 
     #endregion
@@ -83,7 +82,6 @@ namespace Remact.Net.Internal
         ClientIdent.SyncContext = _serviceIdent.SyncContext;
         ClientIdent.ManagedThreadId = _serviceIdent.ManagedThreadId;
         ClientIdent.m_Connected = true;
-        m_boDisconnectReq = false; 
         m_boTimeout = false;
         if (ClientIdent.Uri == null && _protocolCallback != null)
         {
@@ -98,8 +96,6 @@ namespace Remact.Net.Internal
     public void Disconnect ()
     {
         ClientIdent.Disconnect();
-        m_boDisconnectReq = true;
-        // communication continues with last message
     }
 
     /// <summary>
@@ -108,7 +104,7 @@ namespace Remact.Net.Internal
     public bool IsConnected
     {
       get {
-          return ClientIdent.m_Connected && !m_boDisconnectReq && !m_boTimeout && _protocolCallback != null;
+          return ClientIdent.m_Connected && !m_boTimeout && _protocolCallback != null;
       }
     }
 

@@ -65,8 +65,9 @@ namespace Test2.Client
 
       Client1 = new ActorOutput("Client1", OnMessageFromService);
       Client1.TraceSend = true;
+      Client1.TraceReceive = false;
       Log1 = new StringBuilder(11000);
-      lbClient.Text = Client1.ToString("Client ", 20);
+      lbClient.Text = Client1.ToString("Client", 20);
       this.Text     = Client1.AppIdentification;
     }
 
@@ -101,7 +102,6 @@ namespace Test2.Client
           Test2Rsp t2r;
           if (msg.TryConvertPayload(out t2r))
           {
-              RaLog.Info(msg.CltRcvId, "Test2Rsp = " + t2r.ToString());
               string s = string.Empty;
               foreach (var item in t2r.Items)
               {
@@ -125,8 +125,8 @@ namespace Test2.Client
 
         if (lbService1.Text.Length == 0)
         {
-          lbClient.Text   = Client1.ToString ("Client  new", 20);
-          lbService1.Text = Client1.OutputSidePartner.ToString("Service new", 20);
+          lbClient.Text   = Client1.ToString ("Client", 20);
+          lbService1.Text = Client1.OutputSidePartner.ToString("Service", 20);
         }
       }
     }
@@ -168,8 +168,8 @@ namespace Test2.Client
               if (m_Seconds % 10 == 0)
               {
                 lbState1.Text   = "CltReq="+Client1.LastRequestIdSent;
-                lbClient.Text   = Client1.ToString  ("Client  new", 20);
-                lbService1.Text = Client1.OutputSidePartner.ToString ("Service new", 20);
+                lbClient.Text   = Client1.ToString  ("Client", 20);
+                lbService1.Text = Client1.OutputSidePartner.ToString ("Service", 20);
                 tbService1.Text = ((float)m_nResponses1 / 10.0).ToString ()+" Responses / sec";
                 m_nResponses1   = 0;
                 //this.Refresh ();
