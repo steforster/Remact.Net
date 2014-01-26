@@ -165,14 +165,21 @@ namespace Test2.Client
           {
             if (m_boSpeedTest)
             {
-              if (m_Seconds % 10 == 0)
+              if (m_Seconds % 3 == 0)
               {
                 lbState1.Text   = "CltReq="+Client1.LastRequestIdSent;
                 lbClient.Text   = Client1.ToString  ("Client", 20);
                 lbService1.Text = Client1.OutputSidePartner.ToString ("Service", 20);
-                tbService1.Text = ((float)m_nResponses1 / 10.0).ToString ()+" Responses / sec";
-                m_nResponses1   = 0;
-                //this.Refresh ();
+                tbService1.Text = ((float)m_nResponses1 / 3.0).ToString ()+" Responses / sec";
+                if (m_nResponses1 > 150)
+                {
+                    tbService1.Text = (m_nResponses1 / 3).ToString() + " Requests / sec";
+                }
+                else
+                {
+                    tbService1.Text = Math.Round((float)m_nResponses1 / 3.0, 1).ToString() + " Requests / sec";
+                }
+                m_nResponses1 = 0;
               }
             }
             else
@@ -203,7 +210,7 @@ namespace Test2.Client
     {
       Client1.Disconnect();
     }
-    #endregion
 
+    #endregion
   }
 }

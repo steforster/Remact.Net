@@ -233,12 +233,12 @@ namespace Remact.Net
 //                       /*7*/intend, uri);
           if (IsServiceName)
           {       
-              return String.Format ("{0}: '{1}'{2}in application '{3}' V {4}",
+              return String.Format ("{0}: '{1}'{2}in application {3} V {4}",
                      prefix, uri, intend, AppIdentification, AppVersion.ToString (versionCount));
           }
           else
           {
-              return String.Format ("{0}: '{1}' in application '{2}' V {3}",
+              return String.Format ("{0}: '{1}' in application {2} V {3}",
                      prefix, Name, AppIdentification, AppVersion.ToString (versionCount));
           }
       }
@@ -403,8 +403,7 @@ namespace Remact.Net
     /// <typeparam name="TRsp">The expected type of the response payload. When receiving other types, the message will be passed to the default message handler.</typeparam>
     public void Ask<TRsp>(string method, object payload, Action<TRsp, ActorMessage> responseHandler) where TRsp : class
     {
-        if (LastRequestIdSent == int.MaxValue) LastRequestIdSent = 10;
-        ActorMessage msg = new ActorMessage(this, OutputClientId, ++LastRequestIdSent,
+        ActorMessage msg = new ActorMessage(this, OutputClientId, NextRequestId,
                                             this, method, payload,
 
                                             delegate(ActorMessage rsp)
@@ -437,8 +436,7 @@ namespace Remact.Net
     {
         var tcs = new TaskCompletionSource<ActorMessage<TRsp>>();
 
-        if (LastRequestIdSent == int.MaxValue) LastRequestIdSent = 10;
-        ActorMessage msg = new ActorMessage(this, OutputClientId, ++LastRequestIdSent,
+        ActorMessage msg = new ActorMessage(this, OutputClientId, NextRequestId,
                                             this, method, payload,
 
                                             delegate (ActorMessage rsp)
@@ -496,6 +494,18 @@ namespace Remact.Net
     /// The same id is returned in the response from the service.
     /// </summary>
     public    int                    LastRequestIdSent  {get; internal set;}
+
+    /// <summary>
+    /// Increment the LastRequestIdSent.
+    /// </summary>
+    internal  int                    NextRequestId
+    {
+        get
+        {
+            if (LastRequestIdSent >= 999999) LastRequestIdSent = 9;
+            return ++LastRequestIdSent;
+        }
+    }
 
     /// <summary>
     /// Multithreaded partners do not use a message input queue. All threads may directly call InputHandler delegates.

@@ -92,10 +92,17 @@ namespace Test2.Service
       {
         m_Service.DoPeriodicTasks ();
 
-        if (m_Seconds % 10 == 0)
+        if (m_Seconds % 3 == 0)
         {
           tbStatus.Text  = "listening on '"+m_Service.Input.Uri;
-          tbStatus.Text += "'\r\n"+((float) m_Service.Requests / 10.0).ToString ()+" Requests / sec";
+          if (m_Service.Requests > 150)
+          {
+              tbStatus.Text += "'\r\n" + (m_Service.Requests / 3).ToString() + " Requests / sec";
+          }
+          else
+          {
+              tbStatus.Text += "'\r\n" + Math.Round((float)m_Service.Requests / 3.0, 1).ToString() + " Requests / sec";
+          }
           m_Service.Requests = 0;
         }
       }
@@ -108,6 +115,5 @@ namespace Test2.Service
     }
 
     #endregion
-
   }
 }

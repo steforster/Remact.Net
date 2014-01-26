@@ -77,9 +77,9 @@ namespace Remact.Net
     /// </summary>
     /// <param name="service">The new service for an ActorInput.</param>
     /// <param name="uri">The dynamically generated URI for this service.</param>
-    /// <param name="isRouter">true if used for Remact.Catalog service.</param>
+    /// <param name="isCatalog">true if used for Remact.Catalog service.</param>
     /// <returns>The network port manager. It must be called, when the ActorInput is disconnected from network.</returns>
-    public virtual WebSocketPortManager DoServiceConfiguration(RemactService service, ref Uri uri, bool isRouter)
+    public virtual WebSocketPortManager DoServiceConfiguration(RemactService service, ref Uri uri, bool isCatalog)
     {
         var portManager = WebSocketPortManager.GetWebSocketPortManager(uri.Port);
 
@@ -143,12 +143,12 @@ namespace Remact.Net
     /// <summary>
     /// The Remact.Catalog service listens on this port. The Remact.Catalog must be running on every host having services.
     /// </summary>
-    public virtual int      RouterPort {get{ return 40000;}}
+    public virtual int      CatalogPort {get{ return 40000;}}
     
     /// <summary>
     /// The Remact.Catalog service listens on this name.
     /// </summary>
-    public virtual string   RouterServiceName {get{ return "RouterService";}}
+    public virtual string   CatalogServiceName {get{ return "CatalogService";}}
 
     #endregion
     //----------------------------------------------------------------------------------------------
@@ -241,11 +241,11 @@ namespace Remact.Net
         }
         else if (!IsProcessIdUsed (appInstance))
         {
-            return string.Format ("{0}.{1}-{2:0#}", appName, hostName, appInstance);
+            return string.Format ("{0}-{1:0#} ({2})", appName, appInstance, hostName);
         }
         else
         {
-            return string.Format ("{0}.{1}({2})", appName, hostName, processId);
+            return string.Format ("{0} ({1}-{2})", appName, hostName, processId);
         }
     }
 

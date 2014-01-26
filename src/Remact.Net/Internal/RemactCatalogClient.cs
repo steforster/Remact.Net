@@ -92,7 +92,7 @@ namespace Remact.Net.Internal
           {
             //m_nSendingThreadId = Thread.CurrentThread.ManagedThreadId;
             if (++m_nConnectTries >= 10) m_nConnectTries = 1;
-            var uri = new Uri("ws://localhost:" + RemactConfigDefault.Instance.RouterPort + "/" + RemactConfigDefault.WsNamespace + "/" + RemactConfigDefault.Instance.RouterServiceName);
+            var uri = new Uri("ws://localhost:" + RemactConfigDefault.Instance.CatalogPort + "/" + RemactConfigDefault.WsNamespace + "/" + RemactConfigDefault.Instance.CatalogServiceName);
             m_RouterClient.TryConnectVia( uri, OnMessageReceived, toRouter:true );
           }
           lock (ms_Lock)

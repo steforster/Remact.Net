@@ -193,7 +193,7 @@ namespace Remact.Net.Internal
     /// <param name="clientConfig">Plugin your own client configuration instead of RemactDefaults.ClientConfiguration.</param>
     internal void LinkToService(string routerHost, string serviceName, IActorOutputConfiguration clientConfig = null)
     {
-        m_RemactCatalogPort = RemactConfigDefault.Instance.RouterPort;
+        m_RemactCatalogPort = RemactConfigDefault.Instance.CatalogPort;
         m_RouterHostToLookup = routerHost;
         try
         {
@@ -385,9 +385,9 @@ namespace Remact.Net.Internal
     //  Running on the user thread
     private void OpenConnectionToService()
     {
-        ClientIdent.OutputClientId    =  0;
-        ClientIdent.LastRequestIdSent = 10;
-        LastRequestIdReceived  = 10;
+        ClientIdent.OutputClientId = 0;
+        ClientIdent.LastRequestIdSent = 9;
+        LastRequestIdReceived = 9;
         m_boFirstResponseReceived = false;
         m_boTimeout = false;
         m_boConnecting = true;
@@ -397,7 +397,7 @@ namespace Remact.Net.Internal
 
         ClientIdent.PickupSynchronizationContext();
         ClientIdent.m_Connected = true; // internal, from ActorOutput to RemactClient
-        ActorMessage msg = new ActorMessage (ClientIdent, ClientIdent.OutputClientId, ++ClientIdent.LastRequestIdSent, 
+        ActorMessage msg = new ActorMessage(ClientIdent, ClientIdent.OutputClientId, ClientIdent.NextRequestId, 
                                              ServiceIdent, null, null);
         m_protocolClient.OpenAsync(msg, this); 
         // Callback to OnOpenCompleted when channel has been opened locally (no TCP connection opened on mono).
@@ -761,7 +761,7 @@ namespace Remact.Net.Internal
             if (m_RouterHostToLookup != null)
             {
                 // connect to router first
-                var uri = new Uri("http://" + m_RouterHostToLookup + ':' + m_RemactCatalogPort + "/" + RemactConfigDefault.WsNamespace + "/" + RemactConfigDefault.Instance.RouterServiceName);
+                var uri = new Uri("http://" + m_RouterHostToLookup + ':' + m_RemactCatalogPort + "/" + RemactConfigDefault.WsNamespace + "/" + RemactConfigDefault.Instance.CatalogServiceName);
                 TryConnectVia (uri, OnResponseFromCatalogService, toRouter:true );
                 return true;
             }
@@ -858,11 +858,10 @@ namespace Remact.Net.Internal
     /// <param name="asyncResponseHandler"><see cref="ActorMessageExtensions.On{T}(ActorMessage, Action{T})"/></param>
     public ActorMessage SendOut(object request, AsyncResponseHandler asyncResponseHandler)
     {
-      if (ClientIdent.LastRequestIdSent == int.MaxValue) ClientIdent.LastRequestIdSent = 10;
-      ActorMessage id = new ActorMessage (ClientIdent, ClientIdent.OutputClientId, ++ClientIdent.LastRequestIdSent,
-                                          ServiceIdent, null, request, asyncResponseHandler);
-      PostInput  (id);
-      return id;
+        ActorMessage id = new ActorMessage(ClientIdent, ClientIdent.OutputClientId, ClientIdent.NextRequestId,
+                                           ServiceIdent, null, request, asyncResponseHandler);
+        PostInput  (id);
+        return id;
     }
 
     /// <summary>

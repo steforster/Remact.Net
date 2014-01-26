@@ -173,7 +173,7 @@ namespace Remact.Net
       /// </summary>
       /// <param name="service">The server.</param>
       /// <param name="uri">The dynamically generated URI for this service.</param>
-      /// <param name="isRouter">true if used for Remact.Catalog service.</param>
+      /// <param name="isCatalog">true if used for Remact.Catalog service.</param>
       /// <returns>The network port manger (for disconnect).</returns>
       WebSocketPortManager DoServiceConfiguration(RemactService service, ref Uri uri, bool isRouter);
   }

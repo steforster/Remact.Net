@@ -360,8 +360,7 @@ namespace Remact.Net
       /// <typeparam name="TRsp">The expected type of the response payload. Other types and errors are sent to the default message handler.</typeparam>
       public void SendOut<TRsp>(object payload, Action<TRsp, ActorMessage, TOC> responseHandler) where TRsp : class
       {
-          if (LastRequestIdSent == int.MaxValue) LastRequestIdSent = 10;
-          ActorMessage msg = new ActorMessage(this, OutputClientId, ++LastRequestIdSent,
+          ActorMessage msg = new ActorMessage(this, OutputClientId, NextRequestId,
                                               this, null, payload,
                                               (rsp) =>
                                               {

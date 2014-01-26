@@ -23,12 +23,12 @@ namespace Remact.Net
     /// <summary>
     /// The Remact.Catalog service listens on this port. The Remact.Catalog must be running on every host having services.
     /// </summary>
-    int      RouterPort {get;}
+    int      CatalogPort {get;}
     
     /// <summary>
     /// The Remact.Catalog service listens on this name.
     /// </summary>
-    string   RouterServiceName {get;}
+    string   CatalogServiceName {get;}
     
 
     #endregion

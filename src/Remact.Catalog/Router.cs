@@ -295,10 +295,10 @@ namespace Remact.Catalog
         m_RouterService = new RouterService();
 
         // Open the service
-        m_RemactService = new ActorInput(RemactConfigDefault.Instance.RouterServiceName, m_RouterService.OnRequest);
+        m_RemactService = new ActorInput(RemactConfigDefault.Instance.CatalogServiceName, m_RouterService.OnRequest);
         m_RemactService.OnInputConnected    += m_RouterService.OnClientConnectedOrDisconnected;
         m_RemactService.OnInputDisconnected += m_RouterService.OnClientConnectedOrDisconnected;
-        m_RemactService.LinkInputToNetwork( null, RemactConfigDefault.Instance.RouterPort, publishToRouter: false, serviceConfig: this ); // calls our DoServiceConfiguration
+        m_RemactService.LinkInputToNetwork( null, RemactConfigDefault.Instance.CatalogPort, publishToRouter: false, serviceConfig: this ); // calls our DoServiceConfiguration
         m_RemactService.TraceConnect = false;
         m_RemactService.TryConnect();
       
@@ -308,8 +308,8 @@ namespace Remact.Catalog
             if (host != null && host.Trim().Length > 0)
             {
                 var output = new ActorOutput<SvcDat>("Clt>"+host, OnResponseFromPeerRouter);
-                output.LinkOutputToRemoteService(new Uri("http://" + host + ':' + RemactConfigDefault.Instance.RouterPort
-                                 + "/" + RemactConfigDefault.WsNamespace + "/" + RemactConfigDefault.Instance.RouterServiceName),// no router lookup as uri is given.
+                output.LinkOutputToRemoteService(new Uri("http://" + host + ':' + RemactConfigDefault.Instance.CatalogPort
+                                 + "/" + RemactConfigDefault.WsNamespace + "/" + RemactConfigDefault.Instance.CatalogServiceName),// no router lookup as uri is given.
                                  this ); // calls our DoClientConfiguration
                 output.OutputContext = new SvcDat();
                 output.TryConnect();
@@ -324,7 +324,7 @@ namespace Remact.Catalog
     // implement IActorInputConfiguration
     public WebSocketPortManager DoServiceConfiguration(RemactService service, ref Uri uri, bool isRouter)
     {
-        return RemactConfigDefault.Instance.DoServiceConfiguration(service, ref uri, /*isRouter=*/ true);
+        return RemactConfigDefault.Instance.DoServiceConfiguration(service, ref uri, /*isCatalog=*/ true);
     }
 
 

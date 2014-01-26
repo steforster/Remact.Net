@@ -342,8 +342,7 @@ namespace Remact.Net
         }
       }
 
-      if (sender.LastRequestIdSent == int.MaxValue) sender.LastRequestIdSent = 10;
-      ActorMessage msg = new ActorMessage(sender, 0, ++sender.LastRequestIdSent, 
+      ActorMessage msg = new ActorMessage(sender, 0, sender.NextRequestId,
                                           this, payload.GetType().FullName, payload, responseHandler);
       base.PostInput (msg); // Message is posted into the message queue
     }

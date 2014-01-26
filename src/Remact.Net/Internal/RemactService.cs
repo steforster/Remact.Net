@@ -231,7 +231,7 @@ namespace Remact.Net.Internal
                 // Open the ServiceHost to start listening for messages.
                 // Add the dynamically created endpoint. And let the library user add binding and security credentials.
                 // By default RemactDefaults.DoServiceConfiguration is called.
-                _networkPortManager = _serviceConfig.DoServiceConfiguration(this, ref uri, /*isRouter=*/false);
+                _networkPortManager = _serviceConfig.DoServiceConfiguration(this, ref uri, /*isCatalog=*/false);
                 ServiceIdent.Uri = uri;
             //}
             //else
