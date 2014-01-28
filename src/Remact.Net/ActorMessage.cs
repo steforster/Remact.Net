@@ -271,12 +271,12 @@ namespace Remact.Net
                 Response.Type = ActorMessageType.Response;
                 Response.DestinationLambda = SourceLambda; // SourceLambda will be called later on for the first response only
                 SourceLambda = null;
-                if (service.TraceSend) RaLog.Info(this.SvcSndId, Response.ToString(), service.Logger);
+                if (service.TraceSend) RaLog.Info(Response.SvcSndId, Response.ToString(), service.Logger);
                 Source.PostInput(Response);
             }
             else
             {
-                var msg = new ActorMessage(service, ClientId, RequestId,
+                var msg = new ActorMessage(service, ClientId, 0,
                                            Source, null, payload, responseHandler);
                 msg.Type = ActorMessageType.Notification;
                 if (service.TraceSend) RaLog.Info(msg.SvcSndId, msg.ToString(), service.Logger);
@@ -309,85 +309,85 @@ namespace Remact.Net
         /// <summary>
         /// Generates part of a standardised mark for trace output on client side.
         /// </summary>
-        internal string ClientMark
+        internal string DestMark(bool full)
         {
-            get 
-            {
             if (Destination == null || Destination.Name == null)
             {
                 return string.Format("C[{0:0#}]", ClientId);
+            }
+            else if (full)
+            {
+                return string.Format ("{0}/{1}[{2:0#}]", Destination.AppIdentification, Destination.Name, ClientId);
             }
             else
             {
                 return string.Format("{0}[{1:0#}]", Destination.Name, ClientId);
             }
-            }
-        }// ClientMark
-
+        }
 
         /// <summary>
         /// Generates part of a standardised mark for trace output on service side.
         /// </summary>
-        internal string SenderMark
+        internal string SourceMark(bool full)
         {
-            get
+            if (Source == null || Source.Name == null || Source.HostName == null)
             {
-                if (Source == null || Source.Name == null || Source.HostName == null)
-                {
-                    return string.Format("C[{0:0#}]", ClientId);
-                }
-                else
-                {
-                    return string.Format ("{0}/{1}[{2:0#}]", Source.AppIdentification, Source.Name, ClientId);
-                }
+                return string.Format("C[{0:0#}]", ClientId);
             }
-        }// SenderMark
+            else if (full)
+            {
+                return string.Format ("{0}/{1}[{2:0#}]", Source.AppIdentification, Source.Name, ClientId);
+            }
+            else
+            {
+                return string.Format("{0}[{1:0#}]", Source.Name, ClientId);
+            }
+        }
 
 
         /// <summary>
         /// Generates part of a standardised mark for trace output.
         /// </summary>
-        private string ReqMarkRcv
-        {
-            get
-            {
-                if (RequestId == 0) return "<<"; // Notification from Service
-                                else return (RequestId % 100).ToString("0#");
-            }
-        }// ReqMarkRcv
-
         /// <summary>
         /// Generates part of a standardised mark for trace output.
         /// </summary>
-        private string ReqMarkSnd
+        private string ReqMark
         {
             get
             {
                 if (RequestId == 0) return ">>"; // Notification to Client
-                                else return (RequestId % 100).ToString ("0#");
+                               else return (RequestId % 100).ToString ("0#");
             }
-        }// ReqMarkSnd
+        }
+
+        private string RspMark
+        {
+            get
+            {
+                if (RequestId == 0) return "<<"; // Notification from Service
+                               else return (RequestId % 100).ToString("0#");
+            }
+        }
 
         /// <summary>
         /// Client sending request: Standardised mark for trace output.
         /// </summary>
-        public string CltSndId { get { return string.Concat( ClientMark, ReqMarkSnd, "-->"); } }
-
-        /// <summary>
-        /// Client receiving response: Standardised mark for trace output.
-        /// </summary>
-        public string CltRcvId { get { return string.Concat( ClientMark, ReqMarkRcv, "<--"); } }
+        public string CltSndId { get { return string.Concat( SourceMark(false), ReqMark, "-->"); } }
 
         /// <summary>
         /// Service receiving request: Standardised mark for trace output.
         /// </summary>
-        public string SvcRcvId { get { return string.Concat( SenderMark, ReqMarkRcv, "~~>"); } }
+        public string SvcRcvId { get { return string.Concat( SourceMark(true),  ReqMark, "~~>"); } }
 
         /// <summary>
         /// Service sending response: Standardised mark for trace output.
         /// </summary>
-        public string SvcSndId { get { return string.Concat( SenderMark, ReqMarkSnd, "<~~" ); } }
+        public string SvcSndId { get { return string.Concat( DestMark(true),    RspMark, "<~~" ); } }
 
+        /// <summary>
+        /// Client receiving response: Standardised mark for trace output.
+        /// </summary>
+        public string CltRcvId { get { return string.Concat( DestMark(false),   RspMark, "<--"); } }
     };
 
     #endregion

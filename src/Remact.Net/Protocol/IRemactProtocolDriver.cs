@@ -23,6 +23,11 @@ namespace Remact.Net.Protocol
         PortState PortState { get; }
 
         /// <summary>
+        /// Gets the number of requests waiting for a response.
+        /// </summary>
+        int OutstandingResponsesCount { get; }
+
+        /// <summary>
         /// Opens the connection.
         /// </summary>
         /// <param name="message">A request message to return error info.</param>

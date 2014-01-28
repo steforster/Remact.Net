@@ -3,7 +3,7 @@
 
 using System;
 using System.Threading;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using Alchemy;
 using Alchemy.Classes;
 using Newtonsoft.Json;
@@ -18,7 +18,7 @@ namespace Remact.Net.Protocol.Wamp
     public class WampClient : IRemactProtocolDriverService
     {
         private WebSocketClient _wsClient;
-        private Dictionary<int, ActorMessage> _outstandingRequests;
+        private ConcurrentDictionary<int, ActorMessage> _outstandingRequests;
         private IRemactProtocolDriverCallbacks _callback;
         private int _lowLevelErrorCount;
         private bool _faulted;
@@ -27,7 +27,7 @@ namespace Remact.Net.Protocol.Wamp
         public WampClient(Uri websocketUri)
         {
             ServiceUri = websocketUri;
-            _outstandingRequests = new Dictionary<int, ActorMessage>(); 
+            _outstandingRequests = new ConcurrentDictionary<int, ActorMessage>();
             _wsClient = new WebSocketClient(websocketUri.ToString())
             {
                 //OnSend = OnSend,// Message has been dequeued and passed to the socket buffer
@@ -36,6 +36,11 @@ namespace Remact.Net.Protocol.Wamp
                 //TODO Origin = see rfc6455
             };
         }
+
+        #region IRemactProtocolDriverService proxy implementation
+
+
+        public int OutstandingResponsesCount { get { return _outstandingRequests.Count; }}
 
         public Uri ServiceUri { get; private set; }
 
@@ -119,50 +124,6 @@ namespace Remact.Net.Protocol.Wamp
             }
         }
 
-        private void OpenOnThreadpool(object obj)
-        {
-            ActorMessage request = obj as ActorMessage;
-            try
-            {
-                _wsClient.Connect();
-
-                request.Payload = null; // null = ok
-                if (_wsClient.ReadyState != WebSocketClient.ReadyStates.OPEN)
-                {
-                    _faulted = true;
-                    request.Payload = new ErrorMessage(ErrorMessage.Code.CouldNotOpen, "WebSocketClient not connected");
-                }
-            }
-            //catch (EndpointNotFoundException ex)
-            //{
-            //    request.Payload = new ErrorMessage(ErrorMessage.Code.ServiceNotRunning, ex);
-            //}
-            catch (Exception ex)
-            {
-                _faulted = true;
-                request.Payload = new ErrorMessage(ErrorMessage.Code.CouldNotOpen, ex);
-            }
-
-            if (_disposed)
-            {
-                return;
-            }
-
-            if (request.Source.IsMultithreaded)
-            {
-                _callback.OnOpenCompleted(request); // Test1.ClientNoSync, RouterClient
-            }
-            else if (request.Source.SyncContext == null)
-            {
-                RaLog.Error("Remact", "No synchronization context to open " + request.Source.Name, request.Source.Logger);
-                _callback.OnOpenCompleted(request);
-            }
-            else
-            {
-                request.Source.SyncContext.Post(_callback.OnOpenCompleted, request);
-            }
-        }// OpenOnThreadpool
-
 
         public void Dispose()
         {
@@ -175,19 +136,15 @@ namespace Remact.Net.Protocol.Wamp
             catch { }
         }
 
-        #region IRemactProtocolDriverService proxy implementation
-
 
         public void MessageFromClient(ActorMessage msg)
         {
-            _outstandingRequests.Add(msg.RequestId, msg);
             string callId = msg.RequestId.ToString();
             string procUri = string.Concat(/*msg.Destination.Name, '/',*/ msg.DestinationMethod, '/', msg.PayloadType);
 
-
             // eg. CALL message for RPC with no arguments: [2, "7DK6TdN4wLiUJgNM", "http://example.com/api#howdy"]
-
             var wamp = new JArray(WampMessageType.v1Call, callId, procUri);
+
             if (msg.Payload != null)
             {
                 var jToken = msg.Payload as JToken;
@@ -196,6 +153,14 @@ namespace Remact.Net.Protocol.Wamp
                 wamp.Add(jToken);
             }
 
+            // TODO check + trace
+            if (!_outstandingRequests.TryAdd(msg.RequestId, msg))
+            {
+                ActorMessage lost;
+                _outstandingRequests.TryRemove (msg.RequestId, out lost);
+                RaLog.Error(lost.CltSndId, "response was never received");
+                _outstandingRequests.TryAdd(msg.RequestId, msg);
+            }
             _wsClient.Send(wamp.ToString(Formatting.None));
         }
 
@@ -372,11 +337,10 @@ namespace Remact.Net.Protocol.Wamp
         private ActorMessage GetResponseMessage(int id)
         {
             ActorMessage message;
-            if(!_outstandingRequests.TryGetValue(id, out message))
+            if (!_outstandingRequests.TryRemove(id, out message))
             {
                 return null;
             }
-            _outstandingRequests.Remove(id);
             message.Type = ActorMessageType.Response;
             message.DestinationLambda = message.SourceLambda;
             message.SourceLambda = null;
@@ -393,7 +357,8 @@ namespace Remact.Net.Protocol.Wamp
             }
 
             var copy = _outstandingRequests;
-            _outstandingRequests = new Dictionary<int, ActorMessage>();
+            _outstandingRequests = new ConcurrentDictionary<int, ActorMessage>();
+
             foreach (var msg in copy.Values)
             {
                 msg.Type = ActorMessageType.Error;

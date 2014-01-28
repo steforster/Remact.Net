@@ -280,9 +280,9 @@ namespace Remact.Net.Internal
     /// </summary>
     public int  OutstandingResponsesCount
     { get {
-        if (ClientIdent.LastRequestIdSent >= LastRequestIdReceived){
-           return (int)(ClientIdent.LastRequestIdSent - LastRequestIdReceived);
-        }else{ return 1;} 
+        if (m_protocolClient != null){
+           return m_protocolClient.OutstandingResponsesCount;
+        }else{ return 0;}
     }}
 
 
@@ -493,6 +493,7 @@ namespace Remact.Net.Internal
         {
             message.Source = ServiceIdent;
             message.Destination = ClientIdent;
+            message.ClientId = ClientIdent.OutputClientId;
             ClientIdent.SyncContext.Post(OnIncomingMessageOnActorThread, message);
         }
     }
@@ -513,19 +514,21 @@ namespace Remact.Net.Internal
                 }
                 if (m != null) m.IsSent = true;
 
-                if (message.IsResponse && message.PayloadType == typeof(ActorInfo).FullName)
+                if (message.IsResponse)
                 {
-                    ActorInfo actorInfo;
-
-                    if (message.TryConvertPayload(out actorInfo) 
-                     && HandleActorMessage(message, actorInfo))
+                    LastRequestIdReceived = message.RequestId;
+                    if (message.PayloadType == typeof(ActorInfo).FullName)
                     {
-                        return;
+                        ActorInfo actorInfo;
+                        if (message.TryConvertPayload(out actorInfo)
+                         && HandleActorMessage(message, actorInfo))
+                        {
+                            return;
+                        }
                     }
                 }
             }
 
-            LastRequestIdReceived = message.RequestId;
             ClientIdent.DispatchMessage(message);
         }
         catch (Exception ex)

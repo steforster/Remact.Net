@@ -35,6 +35,7 @@ namespace Test2.Service
       m_Input = new ActorInput ("NEW", OnRequest);
       m_Input.OnInputConnected += OnConnectDisconnect;
       m_Input.OnInputDisconnected += OnConnectDisconnect;
+      //m_Input.TraceSend = true;
     }
 
     #endregion
@@ -68,8 +69,6 @@ namespace Test2.Service
         RaLog.Info (msg.SvcRcvId, string.Format ("{0}, thd={1}",
                     msg.ToString(), Thread.CurrentThread.ManagedThreadId.ToString()));
 
-        msg.SendResponse (new ReadyMessage ()); // an additional notification
-
         if (msg.DestinationMethod == "ReadyMessage")
         {
           var rsp = new Test2Rsp();
@@ -87,7 +86,9 @@ namespace Test2.Service
         }
       }
 
-      msg.SendResponse (response);
+      msg.SendResponse (response); // an additional notification
+
+      msg.SendResponse (new ReadyMessage ());
 
     }// OnRequest
 

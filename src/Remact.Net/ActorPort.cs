@@ -409,7 +409,8 @@ namespace Remact.Net
                                             delegate(ActorMessage rsp)
                                             {
                                                 TRsp response;
-                                                if (rsp.Type == ActorMessageType.Response
+                                                if (responseHandler != null
+                                                 && rsp.Type == ActorMessageType.Response
                                                  && rsp.TryConvertPayload(out response))
                                                 {
                                                     responseHandler(response, rsp);

@@ -46,7 +46,7 @@ namespace Remact.Net.Protocol.Wamp
             _wsChannel = null; // TODO .Dispose();
         }
 
-        #region IWampRpcV1ClientCallbacks proxy implementation
+        #region IRemactProtocolDriverCallbacks implementation
 
 
         public void OnOpenCompleted(object response)
