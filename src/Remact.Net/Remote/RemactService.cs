@@ -7,7 +7,7 @@ using System.ServiceModel;         // OperationContext
 using System.Collections.Generic;
 using Remact.Net.Protocol;
 
-namespace Remact.Net.Internal
+namespace Remact.Net.Remote
 {
   /// <summary>
   /// <para>Class used on service side.</para>
@@ -39,12 +39,12 @@ namespace Remact.Net.Internal
     public   string    LastAction;
     
     /// <summary>
-    /// Default = false. When set to true: Disable router client, no service in this application will be published to the Remact.Catalog.
+    /// Default = false. When set to true: Disable catalog client, no service in this application will be published to the Remact.Catalog.
     /// </summary>
-    public static bool DisableRouterClient
+    public static bool DisableCatalogClient
     {
-      get { return RemactCatalogClient.Instance ().DisableRouterClient; }
-      set { RemactCatalogClient.Instance ().DisableRouterClient = value; }
+      get { return RemactCatalogClient.Instance ().DisableCatalogClient; }
+      set { RemactCatalogClient.Instance ().DisableCatalogClient = value; }
     }
 
     /// <summary>
@@ -53,7 +53,7 @@ namespace Remact.Net.Internal
     internal bool                      HasConnectionStateChanged = true;
 
     /// <summary>
-    /// Internally used by RouterClient
+    /// Internally used by CatalogClient
     /// </summary>
     internal  bool                     IsServiceRegistered;
     
@@ -69,7 +69,7 @@ namespace Remact.Net.Internal
     private  bool                      m_boCurrentlyCalled;      // to check concurrent calls
 
     private int                        _tcpPort;
-    private bool                       _publishToRouter;
+    private bool                       _publishToCatalog;
     private IActorInputConfiguration   _serviceConfig;
     private WebSocketPortManager       _networkPortManager;
 
@@ -117,14 +117,14 @@ namespace Remact.Net.Internal
     /// </summary>
     /// <param name="serviceIdent">This ActorInput is linked to network.</param>
     /// <param name="tcpPort">The TCP port for the service or 0, when automatic port allocation may be used.</param>
-    /// <param name="publishToRouter">True(=default): The servicename will be published to the Remact.Catalog on localhost.</param>
+    /// <param name="publishToCatalog">True(=default): The servicename will be published to the Remact.Catalog on localhost.</param>
     /// <param name="serviceConfig">Plugin your own service configuration instead of RemactDefaults.ServiceConfiguration.</param>
-    internal RemactService (ActorInput serviceIdent, int tcpPort = 0, bool publishToRouter = true,
+    internal RemactService(ActorInput serviceIdent, int tcpPort = 0, bool publishToCatalog = true,
                               IActorInputConfiguration serviceConfig = null )
         : this (serviceIdent, /*firstClient=*/1, /*maxClients=*/20)
     {
         _tcpPort = tcpPort;
-        _publishToRouter = publishToRouter;
+        _publishToCatalog = publishToCatalog;
         _serviceConfig = serviceConfig;
         if( _serviceConfig == null )
         {
@@ -244,7 +244,7 @@ namespace Remact.Net.Internal
             //    base.ServiceIdent.Uri = uri.Uri;
             //}
         
-            if (_publishToRouter)
+            if (_publishToCatalog)
             {
                 // Start registering on Remact.Catalog
                 RemactCatalogClient.Instance().AddService(this);

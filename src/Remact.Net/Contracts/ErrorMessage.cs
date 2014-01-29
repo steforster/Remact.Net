@@ -114,9 +114,9 @@ namespace Remact.Net
       ServiceNotRunning,
 
       /// <summary>
-      /// Cannot open the router connection (refused by target).
+      /// Cannot open the catalog service connection (refused by target).
       /// </summary>
-      RouterNotRunning,
+      CatalogServiceNotRunning,
 
       /// <summary>
       /// Exception while sending (serializing) the first connect message.
@@ -131,7 +131,7 @@ namespace Remact.Net
       /// <summary>
       /// Wrong response from Remact.Catalog, when trying to connect.
       /// </summary>
-      CouldNotConnectRouter,
+      CouldNotConnectCatalog,
       
       /// <summary>
       /// Exception while sending (serializing) a message.

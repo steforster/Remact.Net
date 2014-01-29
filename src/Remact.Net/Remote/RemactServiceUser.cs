@@ -8,7 +8,7 @@ using Newtonsoft.Json.Linq;
 using Remact.Net.Protocol;
 using Remact.Net.Protocol.Wamp;
 
-namespace Remact.Net.Internal
+namespace Remact.Net.Remote
 {
   /// <summary>
   /// <para>Class used on service side.</para>

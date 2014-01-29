@@ -6,7 +6,7 @@ using System.Runtime.Serialization;// DataContract
 using System.Collections.Generic;  // List
 using System.Reflection;           // Assembly
 using System.Text;                 // StringBuilder
-using Remact.Net.Internal;
+using Remact.Net.Remote;
 using System.Threading;
 using System.Net;                  // IPAddress
 

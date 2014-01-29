@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 using Remact.Net;              // Copyright (c) 2014, <http://github.com/steforster/Remact.Net>
-using Remact.Net.Internal;
+using Remact.Net.Remote;
 using Test1.Messages;
 
 namespace Test1.Service
@@ -26,7 +26,7 @@ namespace Test1.Service
             tcpPort = 40001;
         }
 
-        ActorInput.DisableRouterClient = true; // Test1.Client does not use Remact.Catalog.exe, but we publish this service anyway.
+        ActorInput.DisableCatalogClient = true; // Test1.Client does not use Remact.Catalog.exe, but we publish this service anyway.
         Console.WriteLine ("Commandline arguments:   ServiceInstance="+RemactConfigDefault.Instance.ApplicationInstance
                         +"   ServiceTcpPort="+tcpPort+"\r\n");
 

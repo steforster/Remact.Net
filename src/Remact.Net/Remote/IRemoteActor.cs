@@ -5,7 +5,7 @@ using System;
 using System.Net;                  // Dns
 using Remact.Net;
 
-namespace Remact.Net.Internal
+namespace Remact.Net.Remote
 {
   //----------------------------------------------------------------------------------------------
   #region == interface IRemoteActor ==
@@ -31,7 +31,7 @@ namespace Remact.Net.Internal
     /// <summary>
     /// Post a request or response message to the input of this partner.
     /// ** Usage **
-    /// Internal:                                  Post a message into this partners input queue.
+    /// Remote:                                  Post a message into this partners input queue.
     /// ActorOutput (client):                      Post a response into this clients input queue.
     /// ActorOutput.m_OutputClient (server-proxy): Send a request to the connected remote service.
     /// Serviceside:                               Source.PostInput() sends a response from client-stub to the remote client.

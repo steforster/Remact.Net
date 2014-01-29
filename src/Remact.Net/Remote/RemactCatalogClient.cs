@@ -6,7 +6,7 @@ using System.ServiceModel; // EndpointAddress
 using System.Collections.Generic;
 using System.Threading;    // Timer
 
-namespace Remact.Net.Internal
+namespace Remact.Net.Remote
 {
   
   
@@ -18,30 +18,25 @@ namespace Remact.Net.Internal
     //----------------------------------------------------------------------------------------------
     #region Fields
 
-    private static RemactCatalogClient           ms_Instance;
-    private static object                    ms_Lock = new Object();
-    private static bool                      ms_DisableRouterClient;
+    private static RemactCatalogClient  ms_Instance;
+    private static object               ms_Lock = new Object();
+    private static bool                 ms_DisableCatalogClient;
 
-#if !BEFORE_NET45
-    private RemactClientAsync         m_RouterClient;
-#else
-    private RemactClient              m_RouterClient;
-#endif
-
-    private        List<RemactClient> m_ClientList;
-    private        List<RemactService>     m_ServiceList;
-    private        int                       m_nCurrentSvc;
-    private        Timer                     m_Timer;
-    private        bool                      m_Running;
-    private        int                       m_nConnectTries;
+    private        RemactClient         m_CatalogClient;
+    private        List<RemactClient>   m_ClientList;
+    private        List<RemactService>  m_ServiceList;
+    private        int                  m_nCurrentSvc;
+    private        Timer                m_Timer;
+    private        bool                 m_Running;
+    private        int                  m_nConnectTries;
 
 
-    internal bool DisableRouterClient
+    internal bool DisableCatalogClient
     {
-      get { return ms_DisableRouterClient; }
+      get { return ms_DisableCatalogClient; }
       set {
-        ms_DisableRouterClient = value;
-        if (!ms_DisableRouterClient)
+        ms_DisableCatalogClient = value;
+        if (!ms_DisableCatalogClient)
         {
           ms_Instance.m_Timer.Change (0, 1000);// connect in Timer thread
         }
@@ -77,33 +72,33 @@ namespace Remact.Net.Internal
               }
             }
             if (nServices > 0) Thread.Sleep (20 + (nServices*10));  // let the communication end
-            Disconnect ();                                          // shutdown the RouterClient itself
+            Disconnect ();                                          // shutdown the CatalogClient itself
           }
         }//-------------------------------
-        else if (m_RouterClient.IsFaulted)
+        else if (m_CatalogClient.IsFaulted)
         {
-          if (m_nConnectTries < 0) RaLog.Error("Remact", "Router client in Fault state !", RemactApplication.Logger);
-          m_RouterClient.AbortCommunication ();
+          if (m_nConnectTries < 0) RaLog.Error("Remact", "Catalog client in fault state !", RemactApplication.Logger);
+          m_CatalogClient.AbortCommunication ();
           m_Timer.Change (15000, 1000); // 15 s warten und neu starten
         }//-------------------------------
-        else if (m_RouterClient.IsDisconnected)
+        else if (m_CatalogClient.IsDisconnected)
         {
-          if (!ms_DisableRouterClient)
+          if (!ms_DisableCatalogClient)
           {
             //m_nSendingThreadId = Thread.CurrentThread.ManagedThreadId;
             if (++m_nConnectTries >= 10) m_nConnectTries = 1;
             var uri = new Uri("ws://localhost:" + RemactConfigDefault.Instance.CatalogPort + "/" + RemactConfigDefault.WsNamespace + "/" + RemactConfigDefault.Instance.CatalogServiceName);
-            m_RouterClient.TryConnectVia( uri, OnMessageReceived, toRouter:true );
+            m_CatalogClient.TryConnectVia( uri, OnMessageReceived, toCatalog:true );
           }
           lock (ms_Lock)
-          { // ev. wurde der RouterService neu gestartet
+          { // ev. wurde der CatalogService neu gestartet
             foreach (RemactService s in m_ServiceList)
             {
               s.IsServiceRegistered = false; // Status zurücksetzen, so dass er wieder gemeldet wird
             }
           }
         }//-------------------------------
-        else if (m_RouterClient.IsConnected)
+        else if (m_CatalogClient.IsConnected)
         {
           m_nConnectTries = -1;
           if (m_ServiceList.Count <= m_nCurrentSvc)
@@ -120,14 +115,14 @@ namespace Remact.Net.Internal
               {
                 svc.NextEnableMessage = DateTime.Now.AddSeconds(20);
                 svc.IsServiceRegistered = true;
-                ActorMessage id = m_RouterClient.SendOut (req);
+                ActorMessage id = m_CatalogClient.SendOut (req);
                 RaLog.Info( id.CltSndId, "send to Remact.Catalog: " + req.ToString(), RemactApplication.Logger );// msg.CltSndId is updated in Send()
 
               }
               else if (m_ServiceList[m_nCurrentSvc].NextEnableMessage < DateTime.Now)
               {
                 m_ServiceList[m_nCurrentSvc].NextEnableMessage  = DateTime.Now.AddSeconds(20);
-                m_RouterClient.SendOut (req);
+                m_CatalogClient.SendOut (req);
                 //RaLog.Info (req.CltSndId, "Alive    "+req.ToString ()); // req.CltSndId is updated in Send()
               }
               m_nCurrentSvc++; // next Svc on next timer event
@@ -135,11 +130,11 @@ namespace Remact.Net.Internal
           }
         }//connected
 
-        if (ms_DisableRouterClient && m_Timer != null) m_Timer.Change (Timeout.Infinite, 1000); // stop the timer
+        if (ms_DisableCatalogClient && m_Timer != null) m_Timer.Change (Timeout.Infinite, 1000); // stop the timer
       }
       catch (Exception ex)
       {
-          RaLog.Exception( "during RouterClient timer", ex, RemactApplication.Logger );
+          RaLog.Exception( "during CatalogClient timer", ex, RemactApplication.Logger );
       }
       m_Running = false;
     }// OnTimerTick
@@ -153,7 +148,7 @@ namespace Remact.Net.Internal
         if (m_nConnectTries % 20 == 1) {
           ErrorMessage err = rsp.Payload as ErrorMessage;
           if (err.Error == ErrorMessage.Code.ServiceNotRunning
-           || err.Error == ErrorMessage.Code.RouterNotRunning)
+           || err.Error == ErrorMessage.Code.CatalogServiceNotRunning)
           {
               RaLog.Warning( rsp.CltRcvId, "Remact catalog service not running at  '" + rsp.Source.Uri + "'", RemactApplication.Logger );
           }
@@ -201,13 +196,9 @@ namespace Remact.Net.Internal
       m_ClientList    = new List<RemactClient> (20);
       var clientIdent = new ActorOutput("Remact.CatalogClt", OnMessageReceived);
 
-#if !BEFORE_NET45
-      m_RouterClient = new RemactClientAsync(clientIdent);
-#else
-      m_RouterClient = new RemactClient(clientIdent);
-#endif
-      m_RouterClient.ClientIdent.IsMultithreaded = true;
-      m_RouterClient.ClientIdent.TraceConnect = false;
+      m_CatalogClient = new RemactClient(clientIdent);
+      m_CatalogClient.ClientIdent.IsMultithreaded = true;
+      m_CatalogClient.ClientIdent.TraceConnect = false;
       m_Timer        = new Timer (OnTimerTick, this, 1000, 1000); // startet in 1s, Periode=1s
     }// CTOR
 
@@ -232,38 +223,38 @@ namespace Remact.Net.Internal
 
 
     /// <summary>
-    /// Shutdown the RouterClient, send disconnect message to Remact.CatalogService if possible
+    /// Shutdown the CatalogClient, send disconnect message to Remact.CatalogService if possible
     /// </summary>
     internal void Disconnect ()
     {
       if (m_Timer != null)
       {
         m_Timer.Dispose();
-        int n = m_RouterClient.OutstandingResponsesCount;
-        if (!ms_DisableRouterClient || n != 0 || !m_RouterClient.IsDisconnected)
+        int n = m_CatalogClient.OutstandingResponsesCount;
+        if (!ms_DisableCatalogClient || n != 0 || !m_CatalogClient.IsDisconnected)
         {
-          if (m_RouterClient.IsConnected)
+          if (m_CatalogClient.IsConnected)
           {
             try
             {
-              m_RouterClient.Disconnect(); // send last messages, contrary to AbortCommunication();
-              m_RouterClient = null;
-              RaLog.Info("Remact", "Router client disconnected.", RemactApplication.Logger);
+              m_CatalogClient.Disconnect(); // send last messages, contrary to AbortCommunication();
+              m_CatalogClient = null;
+              RaLog.Info("Remact", "Catalog client disconnected.", RemactApplication.Logger);
             }
             catch
             {
             }
           }
 
-          if( m_RouterClient != null && !m_RouterClient.IsDisconnected )
+          if( m_CatalogClient != null && !m_CatalogClient.IsDisconnected )
           {
-            m_RouterClient.AbortCommunication();
-            RaLog.Error("Remact", "Router client aborted, outstanding responses = " + n, RemactApplication.Logger);
+            m_CatalogClient.AbortCommunication();
+            RaLog.Error("Remact", "Catalog client aborted, outstanding responses = " + n, RemactApplication.Logger);
           }
         }
         
         m_Timer = null;
-        m_RouterClient = null;
+        m_CatalogClient = null;
         m_ServiceList.Clear();
         m_ServiceList = null;
         ms_Instance = null;
@@ -299,11 +290,11 @@ namespace Remact.Net.Internal
       {
         int n = m_ServiceList.IndexOf (svc);
         if (n < 0) return; // already removed
-        if (m_RouterClient != null && m_RouterClient.IsConnected)
+        if (m_CatalogClient != null && m_CatalogClient.IsConnected)
         {
           ActorInfo req = new ActorInfo (m_ServiceList[n].ServiceIdent, 
                                                          ActorInfo.Use.ServiceDisableRequest);
-          ActorMessage id = m_RouterClient.SendOut (req);
+          ActorMessage id = m_CatalogClient.SendOut (req);
           RaLog.Info( id.CltSndId, "Disable  " + req.ToString(), RemactApplication.Logger );
           m_ServiceList[n].IsServiceRegistered = false;
         }
@@ -318,11 +309,11 @@ namespace Remact.Net.Internal
     /// <param name="clt">the local RemactClient</param>
     internal void AddClient (RemactClient clt)
     {
-      if (clt == m_RouterClient) return; // do not add the RouterClient itself
-      lock (ms_Lock)
-      {
-        m_ClientList.Add (clt);
-      }
+        if (clt == m_CatalogClient) return; // do not add the CatalogClient itself
+        lock (ms_Lock)
+        {
+            m_ClientList.Add (clt);
+        }
     }
 
 

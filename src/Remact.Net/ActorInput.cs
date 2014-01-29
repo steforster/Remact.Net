@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Runtime.Serialization;// DataContract
 using System.Net;                  // Dns
 using System.Threading;            // SynchronizationContext
-using Remact.Net.Internal;
+using Remact.Net.Remote;
 #if !BEFORE_NET45
     using System.Threading.Tasks;
 #endif
@@ -73,16 +73,16 @@ namespace Remact.Net
     //----------------------------------------------------------------------------------------------
     #region Destination linking, service creation
 
-    private ActorOutput          m_Anonymous; // each input may have one anonymous partner carrying one TSC (sender context)
+    private ActorOutput        m_Anonymous; // each input may have one anonymous partner carrying one TSC (sender context)
     private RemactService      m_MyInputService;
 
     // prepare for tracing of connect-process
-    internal void PrepareServiceName (string routerHost, string serviceName)
+    internal void PrepareServiceName(string catalogHost, string serviceName)
     {
       IsServiceName = true;
-      HostName = routerHost;
+      HostName = catalogHost;
       Name = serviceName;
-      Uri = new Uri("routed://" + routerHost + "/" + RemactConfigDefault.WsNamespace + "/" + serviceName);
+      Uri = new Uri("routed://" + catalogHost + "/" + RemactConfigDefault.WsNamespace + "/" + serviceName);
     }
 
     // prepare for tracing of connect-process
@@ -95,12 +95,12 @@ namespace Remact.Net
     }
 
     /// <summary>
-    /// Default = false. When set to true: Disable router client, no input of this application will publish its service name to the Remact.Catalog.
+    /// Default = false. When set to true: Disable catalog client, no input of this application will publish its service name to the Remact.Catalog.
     /// </summary>
-    public static bool DisableRouterClient
+    public static bool DisableCatalogClient
     {
-      get { return RemactCatalogClient.Instance ().DisableRouterClient; }
-      set { RemactCatalogClient.Instance ().DisableRouterClient = value; }
+      get { return RemactCatalogClient.Instance().DisableCatalogClient; }
+      set { RemactCatalogClient.Instance().DisableCatalogClient = value; }
     }
 
     /// <summary>
@@ -109,14 +109,14 @@ namespace Remact.Net
     /// </summary>
     /// <param name="serviceName">The unique name of the service or null, when this partners name is equal to the servicename. </param>
     /// <param name="tcpPort">The TCP port for the service or 0, when automatic port allocation will be used.</param>
-    /// <param name="publishToRouter">True(=default): The servicename will be published to the Remact.Catalog on localhost.</param>
+    /// <param name="publishToCatalog">True(=default): The servicename will be published to the Remact.Catalog on localhost.</param>
     /// <param name="serviceConfig">Plugin your own service configuration instead of RemactDefaults.ServiceConfiguration.</param>
-    public void LinkInputToNetwork( string serviceName = null, int tcpPort = 0, bool publishToRouter = true,
+    public void LinkInputToNetwork( string serviceName = null, int tcpPort = 0, bool publishToCatalog = true,
                                     IActorInputConfiguration serviceConfig = null )
     {
       if (serviceName != null) this.Name = serviceName;
       this.IsServiceName = true;
-      if( publishToRouter )
+      if( publishToCatalog )
       {
           try
           {
@@ -133,7 +133,7 @@ namespace Remact.Net
           catch { }
       }
 
-      m_MyInputService = new RemactService( this, tcpPort, publishToRouter, serviceConfig ); // sets this.Uri. SenderContext is set into client stubs on connecting.
+      m_MyInputService = new RemactService( this, tcpPort, publishToCatalog, serviceConfig ); // sets this.Uri. SenderContext is set into client stubs on connecting.
     }
 
     /// <summary>

@@ -8,7 +8,7 @@ using System.Text;                 // StringBuilder
 using System.Threading;
 using System.Net;                  // IPAddress
 using Newtonsoft.Json;
-using Remact.Net.Internal;
+using Remact.Net.Remote;
 
 namespace Remact.Net
 {
@@ -66,7 +66,7 @@ namespace Remact.Net
     
     /// <summary>
     /// <para>Universal resource identifier to reach the input of the service or client.</para>
-    /// <para>E.g. RouterService: http://localhost:40000/Remact/RouterService</para>
+    /// <para>E.g. CatalogService: http://localhost:40000/Remact/CatalogService</para>
     /// </summary>
     public  Uri    Uri;
 
@@ -90,11 +90,11 @@ namespace Remact.Net
     public int TimeoutSeconds;
 
     /// <summary>
-    /// The message from the original service has RouterHopCount=0. The same message sent from the Remact.Catalog on the local host has RouterHopCount=1.
-    /// Each router increments the hopcount on reception of a message.
-    /// A router accepts new data only if the receiving hop count is smaller than the stored.
+    /// The message from the original service has CatalogHopCount=0. The same message sent from the Remact.Catalog on the local host has CatalogHopCount=1.
+    /// Each catalog service increments the hopcount on reception of a message.
+    /// A catalog service accepts new data only if the receiving hop count is smaller than the stored.
     /// </summary>
-    public int RouterHopCount;
+    public int CatalogHopCount;
 
     /// <summary>
     /// A service having a longer ApplicationRunTime wins the competition when two services with same name are running.
@@ -214,7 +214,7 @@ namespace Remact.Net
       Uri         = p.Uri;
       Usage = usage;
       
-      RouterHopCount = 0;
+      CatalogHopCount = 0;
       ApplicationRunTime = DateTime.Now - ms_ApplicationStartTime;
       if (ApplicationRunTime < TimeSpan.FromDays(20))
       {
@@ -248,7 +248,7 @@ namespace Remact.Net
       Uri              = p.Uri;
       ClientId         = p.ClientId;
       Usage            = p.Usage;
-      RouterHopCount     = p.RouterHopCount;
+      CatalogHopCount     = p.CatalogHopCount;
       ApplicationRunTime = p.ApplicationRunTime;
     }// CTOR2
 
@@ -352,7 +352,7 @@ namespace Remact.Net
   //----------------------------------------------------------------------------------------------
   /// <summary>
   /// <para>This message payload contains a list of ActorInfo payloads.</para>
-  /// <para>It is used by the routers to exchange informations.</para>
+  /// <para>It is used by the catalogs to exchange informations.</para>
   /// </summary>
   public class ActorInfoList
   {

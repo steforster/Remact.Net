@@ -156,7 +156,7 @@ namespace Test2.Client
               lbState1.Text   = "connecting ...";
               //Client1.LinkOutputToRemoteService (tbCatalogHost.Text, "Test2.Service");
               Client1.LinkOutputToRemoteService(new Uri("ws://"+tbCatalogHost.Text+"/Remact/Test2.Service"));
-              ActorInput.DisableRouterClient = true;
+              ActorInput.DisableCatalogClient = true;
               Client1.TryConnect();
               m_nResponses1 = 0;
               m_boSpeedTest = cbSpeedTest1.Checked;
@@ -170,7 +170,6 @@ namespace Test2.Client
                 lbState1.Text   = "CltReq="+Client1.LastRequestIdSent;
                 lbClient.Text   = Client1.ToString  ("Client", 20);
                 lbService1.Text = Client1.OutputSidePartner.ToString ("Service", 20);
-                tbService1.Text = ((float)m_nResponses1 / 3.0).ToString ()+" Responses / sec";
                 if (m_nResponses1 > 150)
                 {
                     tbService1.Text = (m_nResponses1 / 3).ToString() + " Requests / sec";

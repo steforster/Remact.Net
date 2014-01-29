@@ -12,7 +12,7 @@ namespace Remact.Catalog
 {
   static class Program
   {
-    public static Router Router { get; private set; }
+    public static Catalog Catalog { get; private set; }
 
     /// <summary>
     /// The main entry point for the Remact.Catalog application.
@@ -30,21 +30,21 @@ namespace Remact.Catalog
       RaLog.Start (appInstance);
       RemactApplication.InstallExitHandler ();
       RaLog.Run (); // open file and write first messages
-      RaLog.Info( "Router", "Start" );
+      RaLog.Info( "Catalog", "Start" );
       try
       {
-        Router = new Router();
+        Catalog = new Catalog();
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault (false);
-        Application.Run (new FrmRouter());
-        Router.Dispose();
+        Application.Run (new FrmCatalog());
+        Catalog.Dispose();
       }
       catch (Exception ex) // any Exception
       {
-        RaLog.Exception("Router: Fatal error", ex);
-        Router.Dispose();
+        RaLog.Exception("Catalog: Fatal error", ex);
+        Catalog.Dispose();
       }
-      RaLog.Info( "Router", "Stop" );
+      RaLog.Info( "Catalog", "Stop" );
       RaLog.Stop();
     }// Main
   }

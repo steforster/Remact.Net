@@ -8,15 +8,15 @@ using System.Text;
 using System.ServiceModel; 
 using System.Threading;
 using Remact.Net;
-using Remact.Net.Internal;
+using Remact.Net.Remote;
 
 namespace Remact.Catalog
 {
   /// <summary>
-  /// This is the RouterService Entrypoint.
+  /// This is the CatalogService Entrypoint.
   /// It dispatches requests and returns a response.
   /// </summary>
-  class RouterService
+  class CatalogService
   {
     //----------------------------------------------------------------------------------------------
     #region Public Methods
@@ -24,7 +24,7 @@ namespace Remact.Catalog
 
     public void OnClientConnectedOrDisconnected (ActorMessage id)
     {
-        Program.Router.SvcRegisterChanged = true;
+        Program.Catalog.SvcRegisterChanged = true;
     }
 
     public void OnRequest (ActorMessage id)
@@ -66,7 +66,7 @@ namespace Remact.Catalog
     private bool RegisterService (ActorInfo req, ActorMessage id)
     {
       ActorInfo response = req;
-      if (Program.Router.RegisterService (req, id.SvcRcvId))
+      if (Program.Catalog.RegisterService (req, id.SvcRcvId))
       {
         // req is used in the SvcRegister now. We have to create a copy
         response = new ActorInfo(req);
@@ -88,15 +88,15 @@ namespace Remact.Catalog
 
 
     // A list of service entries is beeing enabled, disabled or updated
-    // return our list as response, to synchronize the peer router
+    // return our list as response, to synchronize the peer catalog
     private bool RegisterList (ActorInfoList list, ActorMessage id)
     {
         RaLog.Info( id.SvcRcvId, "PeerRtr sends list containing " + list.Item.Count + " services." );
         foreach( ActorInfo s in list.Item )
         {
-            Program.Router.RegisterService (s, id.SvcRcvId);
+            Program.Catalog.RegisterService (s, id.SvcRcvId);
         }
-        id.SendResponse (Program.Router.SvcRegister);
+        id.SendResponse (Program.Catalog.SvcRegister);
         return true;
     }
     
@@ -105,7 +105,7 @@ namespace Remact.Catalog
     private bool GetAddress (ActorInfo search, ActorMessage id)
     {
       bool found = false;
-      foreach (ActorInfo s in Program.Router.SvcRegister.Item)
+      foreach (ActorInfo s in Program.Catalog.SvcRegister.Item)
       {
         if (s.Name == search.Name
          && s.IsServiceName == search.IsServiceName)
@@ -120,7 +120,7 @@ namespace Remact.Catalog
       if (!found)
       {
         id.SendResponse (new ErrorMessage (ErrorMessage.Code.AppDataNotAvailableInService,
-          "Service name = '" + search.Name + "' not registered in '" + Program.Router.Service.Uri + "'"));
+          "Service name = '" + search.Name + "' not registered in '" + Program.Catalog.Service.Uri + "'"));
       }
       else
       {
@@ -131,5 +131,5 @@ namespace Remact.Catalog
 
     #endregion
 
-  }// class RouterService
+  }// class CatalogService
 }// namespace

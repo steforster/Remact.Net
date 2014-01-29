@@ -16,17 +16,17 @@ using Remact.Net.Protocol.Wamp;
 
 
 
-namespace Remact.Net.Internal
+namespace Remact.Net.Remote
 {
     /// <summary>
     /// This is the Service Entrypoint. It dispatches requests and returns a response.
     /// </summary>
-    public class InternalMultithreadedServiceNet40 : IRemactProtocolDriverService
+    public class MultithreadedServiceNet40 : IRemactProtocolDriverService
     {
         private RemactService _service;
         private RemactServiceUser _svcUser;
 
-        public InternalMultithreadedServiceNet40(RemactService service, RemactServiceUser svcUser)
+        public MultithreadedServiceNet40(RemactService service, RemactServiceUser svcUser)
         {
             _service = service;
             _svcUser = svcUser;

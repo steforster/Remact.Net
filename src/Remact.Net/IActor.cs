@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;                  // Dns
 using System.Threading;            // SynchronizationContext
-using Remact.Net.Internal;
+using Remact.Net.Remote;
 using Remact.Net.Protocol;
 #if !BEFORE_NET45
     using System.Threading.Tasks;
@@ -110,7 +110,7 @@ namespace Remact.Net
     
     /// <summary>
     /// <para>Universal resource identifier for the service or client.</para>
-    /// <para>E.g. RouterService: http://localhost:40000/Remact/RouterService</para>
+    /// <para>E.g. CatalogService: http://localhost:40000/Remact/CatalogService</para>
     /// </summary>
     Uri     Uri {get;}   // EndpointAddress is not serializable, URI is set before first send operation
 
@@ -175,7 +175,7 @@ namespace Remact.Net
       /// <param name="uri">The dynamically generated URI for this service.</param>
       /// <param name="isCatalog">true if used for Remact.Catalog service.</param>
       /// <returns>The network port manger (for disconnect).</returns>
-      WebSocketPortManager DoServiceConfiguration(RemactService service, ref Uri uri, bool isRouter);
+      WebSocketPortManager DoServiceConfiguration(RemactService service, ref Uri uri, bool isCatalog);
   }
 
   #endregion
@@ -192,8 +192,8 @@ namespace Remact.Net
       /// </summary>
       /// <param name="clientBase">The ClientBase object to modify the endpoint and security credentials. TODO public interface!</param>
       /// <param name="uri">The endpoint URI to connect.</param>
-      /// <param name="forRouter">true if used for Remact.Catalog service.</param>
-      void DoClientConfiguration( object clientBase, ref Uri uri, bool forRouter );
+      /// <param name="forCatalog">true if used for Remact.Catalog service.</param>
+      void DoClientConfiguration( object clientBase, ref Uri uri, bool forCatalog );
   }
 
   #endregion
@@ -211,9 +211,9 @@ namespace Remact.Net
     /// </summary>
     /// <param name="serviceName">The unique name of the service or null, when this partners name is equal to the servicename. </param>
     /// <param name="tcpPort">The TCP port for the service or 0, when automatic port allocation will be used.</param>
-    /// <param name="publishToRouter">True(=default): The servicename will be published to the Remact.Catalog on localhost.</param>
+    /// <param name="publishToCatalog">True(=default): The servicename will be published to the Remact.Catalog on localhost.</param>
     /// <param name="serviceConfig">Plugin your own service configuration instead of RemactDefaults.DoServiceConfiguration.</param>
-    void LinkInputToNetwork( string serviceName = null, int tcpPort = 0, bool publishToRouter = true, 
+    void LinkInputToNetwork(string serviceName = null, int tcpPort = 0, bool publishToCatalog = true, 
                              IActorInputConfiguration serviceConfig = null );
 
     /// <summary>
@@ -266,7 +266,7 @@ namespace Remact.Net
 
     /// <summary>
     /// Add a RemactClient and lookup the service Uri at Remact.Catalog.
-    /// Remact.Catalog may have synchronized its service register with peer routers on other hosts.
+    /// Remact.Catalog may have synchronized its service register with peer catalogs on other hosts.
     /// </summary>
     /// <param name="serviceName">The unique service name to connect to.</param>
     /// <param name="clientConfig">Plugin your own client configuration instead of RemactDefaults.DoClientConfiguration.</param>
@@ -275,10 +275,10 @@ namespace Remact.Net
     /// <summary>
     /// Add a RemactClient and lookup the service Uri at Remact.Catalog.
     /// </summary>
-    /// <param name="routerHost">The hostname, where the Remact.Catalog runs.</param>
+    /// <param name="catalogHost">The hostname, where the Remact.Catalog runs.</param>
     /// <param name="serviceName">The unique service name to connect to.</param>
     /// <param name="clientConfig">Plugin your own client configuration instead of RemactDefaults.DoClientConfiguration.</param>
-    void LinkOutputToRemoteService( string routerHost, string serviceName, IActorOutputConfiguration clientConfig = null );
+    void LinkOutputToRemoteService(string catalogHost, string serviceName, IActorOutputConfiguration clientConfig = null);
 
     /// <summary>
     /// Add a RemactClient. No lookup at Remact.Catalog is needed as we know the TCP portnumber.
@@ -323,7 +323,7 @@ namespace Remact.Net
     PortState OutputState {get; set;}
 
     /// <summary>
-    /// Trace switch: Traces connect/disconnect messages (not to the router), default = true.
+    /// Trace switch: Traces connect/disconnect messages (not to the catalog service), default = true.
     /// </summary>
     bool TraceConnect { get; set; }
   };

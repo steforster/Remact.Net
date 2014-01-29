@@ -59,7 +59,6 @@
     <Compile Include="Contracts\IRemactCatalog.cs" />
     <Compile Include="Contracts\ErrorMessage.cs" />
     <Compile Include="ActorException.cs" />
-    <Compile Include="Internal\InternalMultithreadedServiceNet40.cs" />
     <Compile Include="IRemactConfig.cs" />
     <Compile Include="Protocol\IRemactProtocolDriver.cs" />
     <Compile Include="Protocol\Wamp\WampClient.cs" />
@@ -68,11 +67,12 @@
     <Compile Include="Protocol\WebSocketPortManager.cs" />
     <Compile Include="RemactConfigDefault.cs" />
     <Compile Include="RemactDelegates.cs" />
-    <Compile Include="Internal\IRemoteActor.cs" />
-    <Compile Include="Internal\RemactClient.cs" />
-    <Compile Include="Internal\RemactService.cs" />
-    <Compile Include="Internal\RemactServiceUser.cs" />
-    <Compile Include="Internal\RemactCatalogClient.cs" />
+    <Compile Include="Remote\IRemoteActor.cs" />
+    <Compile Include="Remote\MultithreadedServiceNet40.cs" />
+    <Compile Include="Remote\RemactCatalogClient.cs" />
+    <Compile Include="Remote\RemactClient.cs" />
+    <Compile Include="Remote\RemactService.cs" />
+    <Compile Include="Remote\RemactServiceUser.cs" />
     <Compile Include="Util\RaLog.cs" />
     <Compile Include="Util\RaLogPluginConsole.cs" />
     <Compile Include="Util\RaLogPluginFile.cs" />

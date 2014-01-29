@@ -18,7 +18,7 @@ namespace Test2.Service
     
     public  IActorInput      Input {get{return m_Input;}}
     public  int              Seconds;
-    public  int              Requests;
+    public  volatile int     Requests;
     
     private int              m_UpdateIndex = 0;
     private ActorInput       m_Input;
@@ -32,10 +32,10 @@ namespace Test2.Service
     /// </summary>
     public Test2Service ()
     {
-      m_Input = new ActorInput ("NEW", OnRequest);
-      m_Input.OnInputConnected += OnConnectDisconnect;
-      m_Input.OnInputDisconnected += OnConnectDisconnect;
-      //m_Input.TraceSend = true;
+        m_Input = new ActorInput ("NEW", OnRequest);
+        m_Input.OnInputConnected += OnConnectDisconnect;
+        m_Input.OnInputDisconnected += OnConnectDisconnect;
+        //m_Input.TraceSend = true;
     }
 
     #endregion
@@ -48,47 +48,43 @@ namespace Test2.Service
     
     public void OnRequest (ActorMessage msg)
     {
-      Requests++;
-      object response = null;
+        Requests++;
+        object response = null;
 
-      if (msg.DestinationMethod == "Test2Req")
-      {
-          // SpeedTest
-          Test2Req req;
-          if (msg.TryConvertPayload(out req))
-          {
-              response = new ReadyMessage();
-          }
-          else
-          {
-              response = new ErrorMessage(ErrorMessage.Code.ReqOrRspNotSerializableOnService);
-          }
-      }
-      else
-      {
-        RaLog.Info (msg.SvcRcvId, string.Format ("{0}, thd={1}",
-                    msg.ToString(), Thread.CurrentThread.ManagedThreadId.ToString()));
-
-        if (msg.DestinationMethod == "ReadyMessage")
+        if (msg.DestinationMethod == "Test2Req")
         {
-          var rsp = new Test2Rsp();
-          rsp.Index = ++m_UpdateIndex;
-
-          rsp.AddItem("Item A", 1, 11, 101, "text1");
-          rsp.AddItem("Item B", 2, 12, 102, "text2");
-          rsp.AddItem("Item C", 3, 13, 103, "text3");
-          rsp.AddItem("Item D", 4, 14, 104, "text4");
-          response = rsp;
+            // SpeedTest
+            Test2Req req;
+            if (msg.TryConvertPayload(out req))
+            {
+                response = new ReadyMessage();
+            }
+            else
+            {
+                response = new ErrorMessage(ErrorMessage.Code.ReqOrRspNotSerializableOnService);
+            }
         }
         else
         {
-            response = new ReadyMessage();
+            RaLog.Info(msg.SvcRcvId, string.Format("{0}, thd={1}",
+                        msg.ToString(), Thread.CurrentThread.ManagedThreadId.ToString()));
+
+            if (msg.DestinationMethod == "ReadyMessage")
+            {
+                var rsp = new Test2Rsp();
+                rsp.Index = ++m_UpdateIndex;
+
+                rsp.AddItem("Item A", 1, 11, 101, "text1");
+                rsp.AddItem("Item B", 2, 12, 102, "text2");
+                rsp.AddItem("Item C", 3, 13, 103, "text3");
+                rsp.AddItem("Item D", 4, 14, 104, "text4");
+
+                msg.SendResponse(new ReadyMessage());
+            }
+            response = new ReadyMessage(); // an additional notification in case of "ReadyMessage"
         }
-      }
 
-      msg.SendResponse (response); // an additional notification
-
-      msg.SendResponse (new ReadyMessage ());
+        msg.SendResponse (response); 
 
     }// OnRequest
 
@@ -96,19 +92,18 @@ namespace Test2.Service
     // returns true, when a client state has changed.
     public bool DoPeriodicTasks()
     {
-      if (m_Input.MustOpenInput)
-      {
-        m_Input.Open(); // opens the service host
-        return false;
-      }
-      else
-      {
-        Seconds++;
-        return m_Input.DoPeriodicTasks();
-      }
+        if (m_Input.MustOpenInput)
+        {
+            m_Input.Open(); // opens the service host
+            return false;
+        }
+        else
+        {
+            Seconds++;
+            return m_Input.DoPeriodicTasks();
+        }
     }
       
     #endregion
-
   }
 }

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug.Mono</Configuration>
@@ -71,16 +71,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="FrmRouter.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="FrmRouter.Designer.cs">
-      <DependentUpon>FrmRouter.cs</DependentUpon>
-    </Compile>
+    <Compile Include="Catalog.cs" />
+    <Compile Include="CatalogService.cs" />
+    <Compile Include="FrmCatalog.cs" />
+    <Compile Include="FrmCatalog.Designer.cs" />
     <Compile Include="Program.cs" />
-    <EmbeddedResource Include="FrmRouter.resx">
-      <DependentUpon>FrmRouter.cs</DependentUpon>
-    </EmbeddedResource>
+    <EmbeddedResource Include="FrmCatalog.resx" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -101,8 +97,6 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <Compile Include="Router.cs" />
-    <Compile Include="RouterService.cs" />
     <Compile Include="Properties\AssemblyInfo.mono.cs" />
     <Compile Include="..\Remact.Net\Properties\AssemblyInfoCommon.cs">
       <Link>Properties\AssemblyInfoCommon.cs</Link>

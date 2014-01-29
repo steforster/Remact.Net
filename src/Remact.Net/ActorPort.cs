@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Net;                  // Dns, IpAddress
 using System.Threading;            // SynchronizationContext
 using System.Threading.Tasks;
-using Remact.Net.Internal;
+using Remact.Net.Remote;
 
 namespace Remact.Net
 {
@@ -74,7 +74,7 @@ namespace Remact.Net
     
     /// <summary>
     /// <para>Universal resource identifier to reach the input of the service or client.</para>
-    /// <para>E.g. RouterService: http://localhost:40000/Remact/RouterService</para>
+    /// <para>E.g. CatalogService: http://localhost:40000/Remact/CatalogService</para>
     /// </summary>
     public  Uri    Uri              {get; internal set;}
 
@@ -477,7 +477,7 @@ namespace Remact.Net
     public    bool                   TraceReceive { get; set; }
 
     /// <summary>
-    /// Trace switch: Traces connect/disconnect messages (not to the router). Default = true;
+    /// Trace switch: Traces connect/disconnect messages (not to the catalog service). Default = true;
     /// </summary>
     public    bool                   TraceConnect { get; set; }
 

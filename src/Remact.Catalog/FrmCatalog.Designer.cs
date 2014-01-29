@@ -1,6 +1,6 @@
 namespace Remact.Catalog
 {
-  partial class FrmRouter
+  partial class FrmCatalog
   {
     /// <summary>
     /// Required designer variable.
@@ -49,13 +49,13 @@ namespace Remact.Catalog
       this.timer1.Interval = 1000;
       this.timer1.Tick += new System.EventHandler (this.timer1_Tick);
       // 
-      // FrmRouter
+      // FrmCatalog
       // 
       this.AutoScaleDimensions = new System.Drawing.SizeF (8F, 16F);
       this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
       this.ClientSize = new System.Drawing.Size (890, 166);
       this.Controls.Add (this.tbStatus);
-      this.Name = "FrmRouter";
+      this.Name = "FrmCatalog";
       this.ResumeLayout (false);
       this.PerformLayout ();
 

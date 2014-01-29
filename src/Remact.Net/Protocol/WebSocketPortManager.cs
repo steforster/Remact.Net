@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 using Alchemy;
-using Remact.Net.Internal;
+using Remact.Net.Remote;
 
 namespace Remact.Net.Protocol
 {

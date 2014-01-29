@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Runtime.Serialization;// DataContract
 using System.Net;                  // Dns
 using System.Threading;            // SynchronizationContext
-using Remact.Net.Internal;
+using Remact.Net.Remote;
 
 namespace Remact.Net
 {
@@ -75,7 +75,7 @@ namespace Remact.Net
 
     /// <summary>
     /// Link output to remote service. Look for the service Uri at Remact.Catalog on local host.
-    /// Remact.Catalog may have synchronized its service register with peer routers on other hosts.
+    /// Remact.Catalog may have synchronized its service register with peer catalogs on other hosts.
     /// </summary>
     /// <param name="serviceName">The unique service name to connect to.</param>
     /// <param name="clientConfig">Plugin your own client configuration instead of RemactDefaults.Instance.DoClientConfiguration.</param>
@@ -86,18 +86,18 @@ namespace Remact.Net
 
     /// <summary>
     /// Link output to remote service. Look for the service Uri at Remact.Catalog on a remote host.
-    /// Remact.Catalog may have synchronized its service register with peer routers on other hosts.
+    /// Remact.Catalog may have synchronized its service register with peer catalogs on other hosts.
     /// </summary>
-    /// <param name="routerHost">The hostname, where the Remact.Catalog runs.</param>
+    /// <param name="catalogHost">The hostname, where the Remact.Catalog runs.</param>
     /// <param name="serviceName">The unique service name.</param>
     /// <param name="clientConfig">Plugin your own client configuration instead of RemactDefaults.Instance.DoClientConfiguration.</param>
-    public void LinkOutputToRemoteService( string routerHost, string serviceName, IActorOutputConfiguration clientConfig = null )
+    public void LinkOutputToRemoteService(string catalogHost, string serviceName, IActorOutputConfiguration clientConfig = null)
     {
       Disconnect();
-      if (routerHost != null && serviceName != null && serviceName.Length > 0)
+      if (catalogHost != null && serviceName != null && serviceName.Length > 0)
       {
         var clt = new RemactClient(this);
-        clt.LinkToService( routerHost, serviceName, clientConfig );
+        clt.LinkToService(catalogHost, serviceName, clientConfig);
         m_Output        = clt.ServiceIdent;
         m_BasicOutput   = clt;
         m_MyOutputProxy = clt;

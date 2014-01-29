@@ -111,7 +111,7 @@ namespace Remact.Net.Protocol.Wamp
 
             if (request.Source.IsMultithreaded)
             {
-                _callback.OnOpenCompleted(request); // Test1.ClientNoSync, RouterClient
+                _callback.OnOpenCompleted(request); // Test1.ClientNoSync, CatalogClient
             }
             else if (request.Source.SyncContext == null)
             {

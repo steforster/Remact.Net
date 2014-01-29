@@ -17,18 +17,18 @@ namespace Remact.Catalog
   /// <summary>
   /// Represents ...
   /// </summary>
-  public partial class FrmRouter: Form
+  public partial class FrmCatalog: Form
   {
     //----------------------------------------------------------------------------------------------
     #region Constructors
 
     /// <summary>
-    /// Initializes a new instance of the FrmRouter class.
+    /// Initializes a new instance of the FrmCatalog class.
     /// </summary>
-    public FrmRouter()
+    public FrmCatalog()
     {
       InitializeComponent();
-      this.Text = "Remact.Router on "+Dns.GetHostName ();
+      this.Text = "Remact.Catalog on " + Dns.GetHostName();
     }
 
     #endregion
@@ -45,7 +45,7 @@ namespace Remact.Catalog
 
       try
       {
-        Program.Router.PeriodicCall (1, tbStatus);
+        Program.Catalog.PeriodicCall (1, tbStatus);
       }
       catch (Exception ex)
       {

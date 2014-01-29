@@ -11,7 +11,7 @@ using System.ServiceModel.Description; // ServiceHost
 using System.Windows.Forms;
 using System.Net;
 using Remact.Net;
-using Remact.Net.Internal;
+using Remact.Net.Remote;
 using Remact.Net.Protocol;
 
 namespace Remact.Catalog
@@ -26,17 +26,17 @@ namespace Remact.Catalog
   }
   
   /// <summary>
-  /// The Router Class is used to Create and Dispose the RouterService.
+  /// The Catalog Class is used to Create and Dispose the CatalogService.
   /// It has to be called periodically to do checks on all connections and update the statusdisplay.
   /// </summary>
-  class Router : IActorInputConfiguration, IActorOutputConfiguration
+  class Catalog : IActorInputConfiguration, IActorOutputConfiguration
   {
     //----------------------------------------------------------------------------------------------
     #region Fields
     
-    private ActorInput    m_RemactService;
-    private RouterService m_RouterService;
-    private int           m_knownServiceCount;
+    private ActorInput     m_RemactService;
+    private CatalogService m_CatalogService;
+    private int            m_knownServiceCount;
 
     #endregion
     //----------------------------------------------------------------------------------------------
@@ -45,19 +45,19 @@ namespace Remact.Catalog
     public  IActorPort             Service { get{ return m_RemactService;} }
     public  ActorInfoList    SvcRegister;
     public  bool                     SvcRegisterChanged = true;
-    public  List<ActorOutput<SvcDat>> PeerRouters;
+    public  List<ActorOutput<SvcDat>> PeerCatalogs;
 
     #endregion
     //----------------------------------------------------------------------------------------------
     #region Constructors/Destructor
 
     /// <summary>
-    /// Initializes a new instance of the Router class.
+    /// Initializes a new instance of the Catalog class.
     /// </summary>
-    public Router()
+    public Catalog()
     {
       SvcRegister = new ActorInfoList();
-      PeerRouters = new List<ActorOutput<SvcDat>>(Properties.Settings.Default.PeerHosts.Count);
+      PeerCatalogs = new List<ActorOutput<SvcDat>>(Properties.Settings.Default.PeerHosts.Count);
     }
 
     /// <summary>
@@ -70,8 +70,8 @@ namespace Remact.Catalog
         if (m_RemactService != null)
         {
             m_RemactService.Disconnect();
-            m_RemactService.OnInputConnected    -= m_RouterService.OnClientConnectedOrDisconnected;
-            m_RemactService.OnInputDisconnected -= m_RouterService.OnClientConnectedOrDisconnected;
+            m_RemactService.OnInputConnected    -= m_CatalogService.OnClientConnectedOrDisconnected;
+            m_RemactService.OnInputDisconnected -= m_CatalogService.OnClientConnectedOrDisconnected;
             RaLog.Info("Remact", "Closed service " + m_RemactService.Uri);
             m_RemactService = null;
         }
@@ -88,10 +88,10 @@ namespace Remact.Catalog
 
     public void PeriodicCall(int seconds, TextBox tbStatus)
     {
-        if (m_RouterService == null) Open();
+        if (m_CatalogService == null) Open();
 
-        int connectedPeerRouters = UpdatePeerRouters( seconds );
-        int servicesFromPeerRouters = 0;
+        int connectedPeerCatalogs = UpdatePeerCatalogs( seconds );
+        int servicesFromPeerCatalogs = 0;
 
         foreach (ActorInfo s in SvcRegister.Item)
         {
@@ -106,9 +106,9 @@ namespace Remact.Catalog
                 }
             }
             
-            if( s.RouterHopCount > 1 )
+            if( s.CatalogHopCount > 1 )
             {
-                servicesFromPeerRouters++;
+                servicesFromPeerCatalogs++;
             }
         }
 
@@ -123,19 +123,19 @@ namespace Remact.Catalog
 
             if (!m_RemactService.MustOpenInput)
             {
-                sb.Append("RouterService listening on '" + m_RemactService.Uri + "'");
+                sb.Append("CatalogService listening on '" + m_RemactService.Uri + "'");
             }
             else
             {
-                sb.Append(m_RemactService.InputStateFromNetwork + " RouterService '" + m_RemactService.Uri + "'");
+                sb.Append(m_RemactService.InputStateFromNetwork + " CatalogService '" + m_RemactService.Uri + "'");
             }
 
             sb.AppendLine();
             sb.Append( SvcRegister.Item.Count+" registered Remact services (");
-            sb.Append( servicesFromPeerRouters+" from remote catalogs). " );
+            sb.Append( servicesFromPeerCatalogs+" from remote catalogs). " );
             sb.Append( m_RemactService.BasicService.ConnectedClientCount+" clients. ");
-            sb.Append( connectedPeerRouters + "/" + PeerRouters.Count );
-            sb.Append(" configured remote routers.");
+            sb.Append( connectedPeerCatalogs + "/" + PeerCatalogs.Count );
+            sb.Append(" configured remote catalog services.");
             sb.AppendLine();
         
             foreach (ActorInfo s in SvcRegister.Item)
@@ -164,13 +164,13 @@ namespace Remact.Catalog
     }// PeriodicCall
 
 
-    private int UpdatePeerRouters( int seconds )
+    private int UpdatePeerCatalogs( int seconds )
     {
         bool changed = SvcRegister.Item.Count != m_knownServiceCount;
         m_knownServiceCount = SvcRegister.Item.Count;
 
-        int connectedPeerRouters = 0;
-        foreach( ActorOutput<SvcDat> p in PeerRouters )
+        int connectedPeerCatalogs = 0;
+        foreach( ActorOutput<SvcDat> p in PeerCatalogs )
         {
             if( !p.IsOutputConnected )
             {
@@ -187,7 +187,7 @@ namespace Remact.Catalog
             }
             else
             {
-                connectedPeerRouters++;
+                connectedPeerCatalogs++;
                 p.OutputContext.WaitSecondsForUpdate -= seconds;
                 if( p.OutputContext.WaitSecondsForUpdate <= 0 || changed )
                 {
@@ -196,15 +196,15 @@ namespace Remact.Catalog
                 }
             }
         }
-        return connectedPeerRouters;
+        return connectedPeerCatalogs;
     }
 
 
     // Register remote service. returns true, when svc is referenced by SvcRegister.
     public bool RegisterService (ActorInfo svc, string mark)
     {
-      svc.RouterHopCount++;                                 // ==1: Direct info from service on local host
-      if (svc.RouterHopCount > 1) svc.TimeoutSeconds = 120; // > 1: Indirect info from another router
+      svc.CatalogHopCount++;                                 // ==1: Direct info from service on local host
+      if (svc.CatalogHopCount > 1) svc.TimeoutSeconds = 120; // > 1: Indirect info from another catalog
       
       if (svc.Usage != ActorInfo.Use.ServiceEnableRequest
        && svc.Usage != ActorInfo.Use.ServiceDisableRequest)
@@ -219,7 +219,7 @@ namespace Remact.Catalog
       {
           RaLog.Info( mark, "Register  " + svc.Uri.ToString() );
           SvcRegister.Item.Add (svc);
-          Program.Router.SvcRegisterChanged = true;
+          Program.Catalog.SvcRegisterChanged = true;
           return true;
       }
       else
@@ -243,7 +243,7 @@ namespace Remact.Catalog
                 RaLog.Info( mark, "Switch to " + svc.Uri.ToString ());
                 changed = true;
             }
-            else //if (svc.RouterHopCount > 1)
+            else //if (svc.CatalogHopCount > 1)
             { // will be removed from all registers after some time
                 RaLog.Info( mark, "Backup    " + svc.Uri.ToString() );
             }
@@ -251,7 +251,7 @@ namespace Remact.Catalog
         }
         else
         {
-          if( registered.RouterHopCount < svc.RouterHopCount )
+          if( registered.CatalogHopCount < svc.CatalogHopCount )
           {
               // circular reference: do not use this old information
           }
@@ -279,7 +279,7 @@ namespace Remact.Catalog
       if (changed)
       {
         SvcRegister.Item[found] = svc;
-        Program.Router.SvcRegisterChanged = true;
+        Program.Catalog.SvcRegisterChanged = true;
       }
       return changed;
     }// RegisterService
@@ -291,14 +291,14 @@ namespace Remact.Catalog
 
     private void Open()
     {
-        // Create the RouterService-Singleton
-        m_RouterService = new RouterService();
+        // Create the CatalogService-Singleton
+        m_CatalogService = new CatalogService();
 
         // Open the service
-        m_RemactService = new ActorInput(RemactConfigDefault.Instance.CatalogServiceName, m_RouterService.OnRequest);
-        m_RemactService.OnInputConnected    += m_RouterService.OnClientConnectedOrDisconnected;
-        m_RemactService.OnInputDisconnected += m_RouterService.OnClientConnectedOrDisconnected;
-        m_RemactService.LinkInputToNetwork( null, RemactConfigDefault.Instance.CatalogPort, publishToRouter: false, serviceConfig: this ); // calls our DoServiceConfiguration
+        m_RemactService = new ActorInput(RemactConfigDefault.Instance.CatalogServiceName, m_CatalogService.OnRequest);
+        m_RemactService.OnInputConnected    += m_CatalogService.OnClientConnectedOrDisconnected;
+        m_RemactService.OnInputDisconnected += m_CatalogService.OnClientConnectedOrDisconnected;
+        m_RemactService.LinkInputToNetwork( null, RemactConfigDefault.Instance.CatalogPort, publishToCatalog: false, serviceConfig: this ); // calls our DoServiceConfiguration
         m_RemactService.TraceConnect = false;
         m_RemactService.TryConnect();
       
@@ -307,35 +307,35 @@ namespace Remact.Catalog
         {
             if (host != null && host.Trim().Length > 0)
             {
-                var output = new ActorOutput<SvcDat>("Clt>"+host, OnResponseFromPeerRouter);
+                var output = new ActorOutput<SvcDat>("Clt>"+host, OnResponseFromPeerCatalog);
                 output.LinkOutputToRemoteService(new Uri("http://" + host + ':' + RemactConfigDefault.Instance.CatalogPort
-                                 + "/" + RemactConfigDefault.WsNamespace + "/" + RemactConfigDefault.Instance.CatalogServiceName),// no router lookup as uri is given.
+                                 + "/" + RemactConfigDefault.WsNamespace + "/" + RemactConfigDefault.Instance.CatalogServiceName),// no catalog lookup as uri is given.
                                  this ); // calls our DoClientConfiguration
                 output.OutputContext = new SvcDat();
                 output.TryConnect();
-                PeerRouters.Add (output);
+                PeerCatalogs.Add (output);
                 names += host+", ";
             }
         }
-        RaLog.Info("Remact", "Opened clients for peer routers on " + PeerRouters.Count + " configured PeerHosts: " + names);
+        RaLog.Info("Remact", "Opened clients for peer catalogs on " + PeerCatalogs.Count + " configured PeerHosts: " + names);
     }// Open
 
 
     // implement IActorInputConfiguration
-    public WebSocketPortManager DoServiceConfiguration(RemactService service, ref Uri uri, bool isRouter)
+    public WebSocketPortManager DoServiceConfiguration(RemactService service, ref Uri uri, bool isCatalog)
     {
-        return RemactConfigDefault.Instance.DoServiceConfiguration(service, ref uri, /*isCatalog=*/ true);
+        return RemactConfigDefault.Instance.DoServiceConfiguration(service, ref uri, isCatalog:true);
     }
 
 
     // implement IActorOutputConfiguration
-    public void DoClientConfiguration( object clientBase, ref Uri uri, bool forRouter )
+    public void DoClientConfiguration(object clientBase, ref Uri uri, bool forCatalog)
     {
-        RemactConfigDefault.Instance.DoClientConfiguration( clientBase, ref uri, /*forRouter=*/ true );
+        RemactConfigDefault.Instance.DoClientConfiguration(clientBase, ref uri, forCatalog:true);
     }
     
 
-    private void OnResponseFromPeerRouter(ActorMessage id, SvcDat svcDat)
+    private void OnResponseFromPeerCatalog(ActorMessage id, SvcDat svcDat)
     {
       if (
        id.On<ActorInfo>(partner=>

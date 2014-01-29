@@ -7,7 +7,7 @@ using System.ServiceModel.Channels;// Binding
 using System.Reflection;           // Assembly
 using System.Net;                  // Dns
 using System.IO;                   // Files
-using Remact.Net.Internal;
+using Remact.Net.Remote;
 
 namespace Remact.Net
 {

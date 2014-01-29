@@ -4,7 +4,7 @@
 using System;
 using System.Threading;            // SynchronizationContext
 using Newtonsoft.Json.Linq;
-using Remact.Net.Internal;
+using Remact.Net.Remote;
 
 namespace Remact.Net
 {
