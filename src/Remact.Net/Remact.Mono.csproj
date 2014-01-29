@@ -59,6 +59,7 @@
     <Compile Include="Contracts\IRemactCatalog.cs" />
     <Compile Include="Contracts\ErrorMessage.cs" />
     <Compile Include="ActorException.cs" />
+    <Compile Include="Dispatcher.cs" />
     <Compile Include="IRemactConfig.cs" />
     <Compile Include="Protocol\IRemactProtocolDriver.cs" />
     <Compile Include="Protocol\Wamp\WampClient.cs" />

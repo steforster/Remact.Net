@@ -467,6 +467,11 @@ namespace Remact.Net
     #region Message dispatching
 
     /// <summary>
+    /// The dispatcher for incoming messages must be added by the user.
+    /// </summary>
+    public    Dispatcher             Dispatcher { get; set; }
+
+    /// <summary>
     /// Trace switch: Traces all sent messages. Default = false;
     /// </summary>
     public    bool                   TraceSend    {get; set;}
@@ -651,11 +656,16 @@ namespace Remact.Net
             }
             bool needsResponse = id.IsRequest;
 
-            if( id.DestinationLambda != null )
+            if (id.DestinationLambda != null)
             {
-                id = id.DestinationLambda (id); // a response to a lambda function, one of the On<T> extension methods may handle the message type
+                id = id.DestinationLambda(id); // a response to a lambda function, one of the On<T> extension methods may handle the message type
             }
-        
+
+            if (id != null && Dispatcher != null)
+            { // method dispatching
+                id = Dispatcher.CallMethod(id, null); // TODO context
+            }
+
             if (id != null)
             { // not handled yet
                 if( connectMsg != null )
