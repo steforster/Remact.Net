@@ -88,7 +88,7 @@ namespace Remact.Net
     /// <summary>
     /// Get the folder name where tracefiles may be stored. 
     /// </summary>
-    string TraceFolder  {get;}
+    string LogFolder  {get;}
 
     #endregion
     //----------------------------------------------------------------------------------------------

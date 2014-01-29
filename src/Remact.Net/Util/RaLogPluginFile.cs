@@ -175,7 +175,7 @@ public partial class RaLog
       {
         if (i_FileName == null || i_FileName.Length == 0)
         {
-          i_FileName = RemactConfigDefault.Instance.TraceFolder;
+          i_FileName = RemactConfigDefault.Instance.LogFolder;
           // i_FileName += "/" + Path.GetFileNameWithoutExtension (RemactApplication.ExecutablePath);
           // if (!Directory.Exists(i_FileName)) Directory.CreateDirectory(i_FileName);
 

@@ -273,33 +273,36 @@ namespace Remact.Net
         RaLog.Run(); // open file and write first messages
     }
 
-    protected string m_TraceFolder = null;
+    protected string m_LogFolder = null;
 
     /// <summary>
     /// Get the folder name where tracefiles may be stored. 
     /// </summary>
-    public virtual string TraceFolder
+    public virtual string LogFolder
     {
       get{
-        if (m_TraceFolder != null) return m_TraceFolder;
+        if (m_LogFolder != null) return m_LogFolder;
 
         string sBase = Path.GetFullPath (Path.GetDirectoryName (RemactApplication.ExecutablePath));
-        m_TraceFolder = sBase+"/../trace";
-        if (Directory.Exists(m_TraceFolder)) return m_TraceFolder;
+        m_LogFolder = sBase + "/../logs";
+        if (Directory.Exists(m_LogFolder)) return m_LogFolder;
 
-        m_TraceFolder = sBase+"/../../trace";
-        if (Directory.Exists(m_TraceFolder)) return m_TraceFolder;
+        m_LogFolder = sBase + "/../../logs";
+        if (Directory.Exists(m_LogFolder)) return m_LogFolder;
 
-        m_TraceFolder = sBase+"/../../../trace";
-        if (Directory.Exists(m_TraceFolder)) return m_TraceFolder;
+        m_LogFolder = sBase + "/../../../logs";
+        if (Directory.Exists(m_LogFolder)) return m_LogFolder;
+
+        m_LogFolder = sBase + "/../../../../logs";
+        if (Directory.Exists(m_LogFolder)) return m_LogFolder;
 
         // store trace beside .exe file, if no other tracepath exists
-        m_TraceFolder = sBase;
-        return m_TraceFolder;
+        m_LogFolder = sBase;
+        return m_LogFolder;
       }
 
       set{
-        m_TraceFolder = value;
+        m_LogFolder = value;
       }
     }
 
