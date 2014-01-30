@@ -76,13 +76,13 @@ namespace Remact.Net
     /// <para>Universal resource identifier to reach the input of the service or client.</para>
     /// <para>E.g. CatalogService: http://localhost:40000/Remact/CatalogService</para>
     /// </summary>
-    public  Uri    Uri              {get; internal set;}
+    public  Uri Uri  {get; internal set;}
 
     /// <summary>
     /// <para>To support networks without DNS server, the Remact.Catalog sends a list of all IP-Adresses of a host.</para>
     /// <para>May be null, when no info from Remact.Catalog has been received yet.</para>
     /// </summary>
-    public List<string>  AddressList  {get; internal set;}
+    public List<string> AddressList  {get; internal set;}
 
     /// <summary>
     /// After a service has no message received for TimeoutSeconds, it may render the connection to this client as disconnected.
@@ -90,7 +90,7 @@ namespace Remact.Net
     /// The client should send at least 2 messages each TimeoutSeconds-period in order to keep the correct connection state on the service.
     /// A Service is trying to notify 2 messages each TimeoutSeconds-period in order to check a dual-Http connection.
     /// </summary>
-    public int     TimeoutSeconds   {get; set;}
+    public int TimeoutSeconds   {get; set;}
 
     /// <summary>
     /// <para>Creates an address for a client or service running in the current application on the local host.</para>
@@ -115,11 +115,11 @@ namespace Remact.Net
       // Prepare uri for application internal partner. May be overwritten, when linking to external partner.
       if (!RemactConfigDefault.Instance.IsProcessIdUsed (AppInstance))
       {
-        Uri = new Uri(string.Format ("cli://{0}/{1}-{2:0#}/{3}", HostName, AppName, AppInstance, Name));
+          Uri = new Uri(string.Format ("cli://{0}/{1}-{2:0#}/{3}", HostName, AppName, AppInstance, Name));
       }
       else
       {
-        Uri = new Uri(string.Format ("cli://{0}/{1}({2})/{3}", HostName, AppName, ProcessId, Name));
+          Uri = new Uri(string.Format ("cli://{0}/{1}({2})/{3}", HostName, AppName, ProcessId, Name));
       }
     }// CTOR1
 
@@ -274,7 +274,7 @@ namespace Remact.Net
         {
             RaLog.Exception("Svc: Error while closing all services and disconnecting all clients", ex, RemactApplication.Logger);
         }
-    }// DisconnectAll
+    }
 
 
     /// <summary>
@@ -469,22 +469,29 @@ namespace Remact.Net
     /// <summary>
     /// The dispatcher for incoming messages must be added by the user.
     /// </summary>
-    public    Dispatcher             Dispatcher { get; set; }
+    public Dispatcher Dispatcher
+    {
+        get
+        {
+            if (m_Dispatcher == null) m_Dispatcher = new Dispatcher();
+            return m_Dispatcher;
+        }
+    }
 
     /// <summary>
     /// Trace switch: Traces all sent messages. Default = false;
     /// </summary>
-    public    bool                   TraceSend    {get; set;}
+    public bool TraceSend    {get; set;}
 
     /// <summary>
     /// Trace switch: Traces all received messages. Default = false;
     /// </summary>
-    public    bool                   TraceReceive { get; set; }
+    public bool TraceReceive { get; set; }
 
     /// <summary>
     /// Trace switch: Traces connect/disconnect messages (not to the catalog service). Default = true;
     /// </summary>
-    public    bool                   TraceConnect { get; set; }
+    public bool TraceConnect { get; set; }
 
     /// <summary>
     /// Set your logging object here (null by default).
@@ -492,19 +499,19 @@ namespace Remact.Net
     /// You will use it when writing your own adapter class based on RaLog.ITracePlugin.
     /// The adapter class is needed to redirect trace output to your own logging/tracing framework.
     /// </summary>
-    public    object                 Logger       { get; set; }
+    public object Logger     { get; set; }
 
     /// <summary>
     /// The request id given to the last message sent from this client.
     /// The request id is incremented by the client for each request.
     /// The same id is returned in the response from the service.
     /// </summary>
-    public    int                    LastRequestIdSent  {get; internal set;}
+    public int LastRequestIdSent  {get; internal set;}
 
     /// <summary>
     /// Increment the LastRequestIdSent.
     /// </summary>
-    internal  int                    NextRequestId
+    internal int NextRequestId
     {
         get
         {
@@ -517,7 +524,7 @@ namespace Remact.Net
     /// Multithreaded partners do not use a message input queue. All threads may directly call InputHandler delegates.
     /// Default = false.
     /// </summary>
-    public    bool                   IsMultithreaded    {get; set;}
+    public bool IsMultithreaded    {get; set;}
 
     /// <summary>
     /// Incoming messages are directly redirected to this partner (used library intern)
@@ -528,7 +535,7 @@ namespace Remact.Net
     /// False when not connected or disconnected. Prevents message passing during shutdown.
     /// </summary>
     internal protected bool          m_Connected;
-
+    private  Dispatcher              m_Dispatcher;
     private  ActorMessage            m_CurrentReq;
     internal SynchronizationContext  SyncContext;
     internal int                     ManagedThreadId;
@@ -638,18 +645,19 @@ namespace Remact.Net
             var connectMsg = id.Payload as ActorInfo;
             if (connectMsg != null)
             {
-                if (connectMsg.Usage != ActorInfo.Use.ClientConnectRequest
-                 && connectMsg.Usage != ActorInfo.Use.ClientDisconnectRequest)
+                if (connectMsg.Usage == ActorInfo.Use.ClientConnectRequest
+                 || connectMsg.Usage == ActorInfo.Use.ClientDisconnectRequest)
                 {
-                    connectMsg = null;
-                }
-                else if (TraceConnect && IsServiceName)
-                {
-                    RaLog.Info(id.SvcRcvId, String.Format("{0} to Remact service './{1}'", connectMsg.Usage.ToString(), Name), Logger);
-                }
+                    if (TraceConnect && IsServiceName)
+                    {
+                        RaLog.Info(id.SvcRcvId, String.Format("{0} to Remact service './{1}'", connectMsg.Usage.ToString(), Name), Logger);
+                    }
+                    OnConnectDisconnect(id, connectMsg); // may be overloaded
+                    return;
+                }// -------
             }
 
-            if (TraceReceive && connectMsg == null)
+            if (TraceReceive)
             {
                 if( IsServiceName ) RaLog.Info( id.SvcRcvId, id.ToString(), Logger );
                                else RaLog.Info( id.CltRcvId, id.ToString(), Logger );
@@ -661,19 +669,14 @@ namespace Remact.Net
                 id = id.DestinationLambda(id); // a response to a lambda function, one of the On<T> extension methods may handle the message type
             }
 
-            if (id != null && Dispatcher != null)
-            { // method dispatching
-                id = Dispatcher.CallMethod(id, null); // TODO context
+            if (id != null && m_Dispatcher != null)
+            {
+                id = m_Dispatcher.CallMethod(id, null); // TODO context
             }
 
-            if (id != null)
-            { // not handled yet
-                if( connectMsg != null )
-                {
-                    OnConnectDisconnect(id, connectMsg); // may be overloaded
-                    return; 
-                }
-                else if (DefaultInputHandler != null)
+            if (id != null) // not handled yet
+            { 
+                if (DefaultInputHandler != null)
                 {
                     DefaultInputHandler (id); // MessageHandlerlegate
                 }
@@ -684,7 +687,7 @@ namespace Remact.Net
                 }
             }
 
-            if (needsResponse && id.Response == null)
+            if (id != null && needsResponse && id.Response == null)
             {
                 id.SendResponse(new ReadyMessage());
             }

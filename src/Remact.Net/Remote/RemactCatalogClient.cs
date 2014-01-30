@@ -115,14 +115,14 @@ namespace Remact.Net.Remote
               {
                 svc.NextEnableMessage = DateTime.Now.AddSeconds(20);
                 svc.IsServiceRegistered = true;
-                ActorMessage id = m_CatalogClient.SendOut (req);
+                ActorMessage id = m_CatalogClient.SendActorInfo(req);
                 RaLog.Info( id.CltSndId, "send to Remact.Catalog: " + req.ToString(), RemactApplication.Logger );// msg.CltSndId is updated in Send()
 
               }
               else if (m_ServiceList[m_nCurrentSvc].NextEnableMessage < DateTime.Now)
               {
                 m_ServiceList[m_nCurrentSvc].NextEnableMessage  = DateTime.Now.AddSeconds(20);
-                m_CatalogClient.SendOut (req);
+                m_CatalogClient.SendActorInfo(req);
                 //RaLog.Info (req.CltSndId, "Alive    "+req.ToString ()); // req.CltSndId is updated in Send()
               }
               m_nCurrentSvc++; // next Svc on next timer event
@@ -294,7 +294,7 @@ namespace Remact.Net.Remote
         {
           ActorInfo req = new ActorInfo (m_ServiceList[n].ServiceIdent, 
                                                          ActorInfo.Use.ServiceDisableRequest);
-          ActorMessage id = m_CatalogClient.SendOut (req);
+          ActorMessage id = m_CatalogClient.SendActorInfo(req);
           RaLog.Info( id.CltSndId, "Disable  " + req.ToString(), RemactApplication.Logger );
           m_ServiceList[n].IsServiceRegistered = false;
         }

@@ -380,7 +380,7 @@ namespace Remact.Net.Remote
     {
         bool traceSend = ClientIdent.TraceSend;
         ClientIdent.TraceSend = ClientIdent.TraceConnect;
-        SendOut (new ActorInfo (ClientIdent, ActorInfo.Use.ClientDisconnectRequest));
+        SendActorInfo(new ActorInfo(ClientIdent, ActorInfo.Use.ClientDisconnectRequest));
         ClientIdent.TraceSend = traceSend;
         Thread.Sleep(30);
     }
@@ -435,7 +435,7 @@ namespace Remact.Net.Remote
         ClientIdent.PickupSynchronizationContext();
         ClientIdent.m_Connected = true; // internal, from ActorOutput to RemactClient
         ActorMessage msg = new ActorMessage(ClientIdent, ClientIdent.OutputClientId, ClientIdent.NextRequestId, 
-                                             ServiceIdent, null, null);
+                                            ServiceIdent, null, null);
         m_protocolClient.OpenAsync(msg, this); 
         // Callback to OnOpenCompleted when channel has been opened locally (no TCP connection opened on mono).
     }// OpenConnectionToService
@@ -467,7 +467,8 @@ namespace Remact.Net.Remote
             {
                 string serviceAddr = GetSetServiceAddress();
                 request.Payload = new ActorInfo(ClientIdent, ActorInfo.Use.ClientConnectRequest);
-                request.PayloadType = typeof(ActorInfo).FullName;
+                request.DestinationMethod = string.Concat("Remact.", ActorInfo.Use.ClientConnectRequest);
+                //request.PayloadType = typeof(ActorInfo).FullName;
   
                 if (ClientIdent.TraceConnect) {
                     if (m_boTemporaryCatalogConn) RaLog.Info(request.CltSndId, string.Concat("Temporary connecting .....: '", serviceAddr, "'"), ClientIdent.Logger);
@@ -551,10 +552,12 @@ namespace Remact.Net.Remote
                 }
                 if (m != null) m.IsSent = true;
 
+                if (message.DestinationMethod == null) message.DestinationMethod = string.Empty;
+
                 if (message.IsResponse)
                 {
                     LastRequestIdReceived = message.RequestId;
-                    if (message.PayloadType == typeof(ActorInfo).FullName)
+                    if (message.DestinationMethod.StartsWith("Remact."))
                     {
                         ActorInfo actorInfo;
                         if (message.TryConvertPayload(out actorInfo)
@@ -640,7 +643,7 @@ namespace Remact.Net.Remote
             lookup.Name = m_ServiceNameToLookup;
             lookup.IsServiceName = true;
             ActorInfo req = new ActorInfo(lookup, ActorInfo.Use.ServiceAddressRequest);
-            SendOut(req); // lookup the service URI (especially the TCP port)
+            SendActorInfo(req); // lookup the service URI (especially the TCP port)
         }
         else if (svcRsp != null && svcRsp.Usage == ActorInfo.Use.ServiceAddressResponse)
         {
@@ -799,7 +802,7 @@ namespace Remact.Net.Remote
     /// Called from ClientIdent, when SendOut a message to remote partner.
     /// </summary>
     /// <param name="request">A <see cref="ActorMessage"/></param>
-    public virtual void PostInput (ActorMessage request)
+    public void PostInput (ActorMessage request)
     {
         ErrorMessage err = null;
         if (!IsFaulted && ClientIdent.OutputClientId > 0) // Send() may be used during connection buildup as well
@@ -829,20 +832,22 @@ namespace Remact.Net.Remote
     /// the intuitive action is to send the message to remote service.
     /// </summary>
     /// <param name="msg">A <see cref="ActorMessage"/></param>
-    public void SendOut (ActorMessage msg)
-    {
-      PostInput(msg);
-    }
+    //public void SendOut (ActorMessage msg)
+    //{
+    //  PostInput(msg);
+    //}
 
     /// <summary>
-    /// <para>Send a message to the service. Do not wait here for the response.</para>
-    /// <para>The AsyncResponseHandler is called on the same thread,</para>
-    /// <para>when a response or errormessage arrives or a timeout has passed.</para>
+    /// Asynchronously send an ActorInfo to the service.
     /// </summary>
     /// <param name="request">The message to send.</param>
-    public ActorMessage SendOut(object request)
+    public ActorMessage SendActorInfo(ActorInfo request)
     {
-      return SendOut (request, null);
+        var method = string.Concat("Remact.", ActorInfo.Use.ClientConnectRequest);
+        ActorMessage msg = new ActorMessage(ClientIdent, ClientIdent.OutputClientId, ClientIdent.NextRequestId,
+                                           ServiceIdent, method, request, null);
+        PostInput(msg);
+        return msg;
     }
 
     /// <summary>
@@ -856,13 +861,13 @@ namespace Remact.Net.Remote
     /// </summary>
     /// <param name="request">The message to send.</param>
     /// <param name="asyncResponseHandler"><see cref="ActorMessageExtensions.On{T}(ActorMessage, Action{T})"/></param>
-    public ActorMessage SendOut(object request, AsyncResponseHandler asyncResponseHandler)
-    {
-        ActorMessage id = new ActorMessage(ClientIdent, ClientIdent.OutputClientId, ClientIdent.NextRequestId,
-                                           ServiceIdent, null, request, asyncResponseHandler);
-        PostInput  (id);
-        return id;
-    }
+    //public ActorMessage SendOut(object request, AsyncResponseHandler asyncResponseHandler)
+    //{
+    //    ActorMessage id = new ActorMessage(ClientIdent, ClientIdent.OutputClientId, ClientIdent.NextRequestId,
+    //                                       ServiceIdent, null, request, asyncResponseHandler);
+    //    PostInput  (id);
+    //    return id;
+    //}
 
     /// <summary>
     /// Gets the Uri of a linked service.

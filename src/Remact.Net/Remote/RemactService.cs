@@ -574,25 +574,22 @@ namespace Remact.Net.Remote
         req.Destination = ServiceIdent;
         req.DestinationLambda = null;// make sure to call the DefaultHandler
         object response = null;
-        ActorInfo cltReq;
-        if (!string.IsNullOrEmpty(req.PayloadType)
-         && req.TryConvertPayload(out cltReq))
-        {
-            req.Payload = cltReq; // use converted payload later on
-            if (ServiceIdent.Uri == null)
-            {
-                // TODO
-                UriBuilder uri = new UriBuilder(OperationContext.Current.Channel.LocalAddress.Uri);
-                uri.Host = ServiceIdent.HostName;
-                ServiceIdent.Uri = uri.Uri;
-            }
 
-            switch (cltReq.Usage)
-            {
-                case ActorInfo.Use.ClientConnectRequest:    response = ConnectPartner(cltReq, req, ref svcUser); break;
-                case ActorInfo.Use.ClientDisconnectRequest: response = DisconnectPartner(cltReq, req, ref svcUser); break;
-                default: break;// continue below
-            }
+        if (req.DestinationMethod == null) req.DestinationMethod = string.Empty;
+
+        if (req.DestinationMethod.StartsWith("Remact."))
+        {
+           ActorInfo cltReq;
+           if (req.TryConvertPayload(out cltReq))
+           {
+               req.Payload = cltReq; // use converted payload later on
+               switch (cltReq.Usage)
+               {
+                   case ActorInfo.Use.ClientConnectRequest:    response = ConnectPartner(cltReq, req, ref svcUser); break;
+                   case ActorInfo.Use.ClientDisconnectRequest: response = DisconnectPartner(cltReq, req, ref svcUser); break;
+                   default: break;// continue below
+               }
+           }
         }
       
         if (response == null)

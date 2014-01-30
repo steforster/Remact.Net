@@ -131,7 +131,6 @@ namespace Remact.Net.Protocol.Wamp
             {
                 _disposed = true;
                 _wsClient.Disconnect();
-                // do not dispose, this sets the global cancellation token: _wsClient.Dispose();
             }
             catch { }
         }
@@ -140,10 +139,10 @@ namespace Remact.Net.Protocol.Wamp
         public void MessageFromClient(ActorMessage msg)
         {
             string callId = msg.RequestId.ToString();
-            string procUri = string.Concat(/*msg.Destination.Name, '/',*/ msg.DestinationMethod, '/', msg.PayloadType);
+            //string procUri = string.Concat(/*msg.Destination.Name, '/',*/ msg.DestinationMethod, '/', msg.PayloadType);
 
             // eg. CALL message for RPC with no arguments: [2, "7DK6TdN4wLiUJgNM", "http://example.com/api#howdy"]
-            var wamp = new JArray(WampMessageType.v1Call, callId, procUri);
+            var wamp = new JArray(WampMessageType.v1Call, callId, msg.DestinationMethod);
 
             if (msg.Payload != null)
             {
@@ -259,21 +258,22 @@ namespace Remact.Net.Protocol.Wamp
                     message.Type = ActorMessageType.Response;
                     JToken payload = wamp[2];
                     message.Payload = payload;
+                    message.PayloadType = null; // has to be converted
 
                     // For ActorInfo-requests, we expect an ActorInfo as response.
-                    if (message.PayloadType != typeof(ActorInfo).FullName)
-                    {
-                        if (!payload.HasValues && payload.Type == JTokenType.Object)
-                        {
-                            // empty responses are ReadyMessages !
-                            message.Payload = new ReadyMessage();
-                            message.PayloadType = typeof(ReadyMessage).FullName;
-                        }
-                        else
-                        {
-                            message.PayloadType = null; // other payloads will be converted in anonymous methods, when receiving.
-                        }
-                    }
+                    //if (message.PayloadType != typeof(ActorInfo).FullName)
+                    //{
+                    //    if (!payload.HasValues && payload.Type == JTokenType.Object)
+                    //    {
+                    //        // empty responses are ReadyMessages !
+                    //        message.Payload = new ReadyMessage();
+                    //        message.PayloadType = typeof(ReadyMessage).FullName;
+                    //    }
+                    //    else
+                    //    {
+                    //        message.PayloadType = null; // other payloads will be converted in anonymous methods, when receiving.
+                    //    }
+                    //}
 
                     _callback.MessageFromService(message); // adds source and destination
                 }
@@ -299,7 +299,7 @@ namespace Remact.Net.Protocol.Wamp
                     if (wamp.Count > 4)
                     {
                         message.Payload = wamp[4];
-                        message.PayloadType = errorUri;
+                        message.PayloadType = errorUri; // TODO ???
                     }
                     else
                     {
@@ -315,10 +315,10 @@ namespace Remact.Net.Protocol.Wamp
                     // eg. EVENT message with 'null' as payload: [8, "http://example.com/simple", null]
 
                     object payload = wamp[2];
-                    string portName, methodName, payloadType;
-                    WampClientProxy.SplitProcUri((string)wamp[1], out portName, out methodName, out payloadType);
-                    message = new ActorMessage(null, 0, 0, null, methodName, payload);
-                    message.PayloadType = payloadType;
+                    //string portName, methodName, payloadType;
+                    //WampClientProxy.SplitProcUri((string)wamp[1], out portName, out methodName, out payloadType);
+                    message = new ActorMessage(null, 0, 0, null, (string)wamp[1], payload);
+                    message.PayloadType = null; // has to be converted
 
                     message.Type = ActorMessageType.Notification;
                     _callback.MessageFromService(message); // adds source and destination

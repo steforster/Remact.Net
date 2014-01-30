@@ -128,7 +128,7 @@ namespace Remact.Net.Protocol.Wamp
                 if (payload == null) payload = JToken.FromObject(notification.Payload);
             }
 
-            var wamp = new JArray(WampMessageType.v1Event, notification.PayloadType, payload);
+            var wamp = new JArray(WampMessageType.v1Event, notification.DestinationMethod, payload);
             _wsChannel.Send(wamp.ToString(Formatting.None));
         }
 
@@ -166,11 +166,11 @@ namespace Remact.Net.Protocol.Wamp
                         payload = wamp[3];
                     }
 
-                    string portName, methodName, payloadType;
-                    SplitProcUri((string)wamp[2], out portName, out methodName, out payloadType);
+                    //string portName, methodName, payloadType;
+                    //SplitProcUri((string)wamp[2], out portName, out methodName, out payloadType);
                     var message = new ActorMessage(_clientIdent, _clientIdent.OutputClientId, id,
-                                                   _serviceIdent, methodName, payload);
-                    message.PayloadType = payloadType;
+                                                   _serviceIdent, (string)wamp[2], payload);
+                    message.PayloadType = null; // has to be converted
 
                     _requestHandler.MessageFromClient(message);
                 }
@@ -192,7 +192,7 @@ namespace Remact.Net.Protocol.Wamp
                     if (wamp.Count > 4)
                     {
                         message.Payload = wamp[4];
-                        message.PayloadType = errorUri;
+                        message.PayloadType = errorUri; // TODO ???
                     }
                     else
                     {
@@ -208,11 +208,11 @@ namespace Remact.Net.Protocol.Wamp
                     // eg. EVENT message with 'null' as payload: [8, "http://example.com/simple", null]
 
                     JToken payload = wamp[2];
-                    string portName, methodName, payloadType;
-                    SplitProcUri((string)wamp[1], out portName, out methodName, out payloadType);
+                    //string portName, methodName, payloadType;
+                    //SplitProcUri((string)wamp[1], out portName, out methodName, out payloadType);
                     var message = new ActorMessage(_clientIdent, _clientIdent.OutputClientId, 0,
-                                                   _serviceIdent, methodName, payload);
-                    message.PayloadType = payloadType;
+                                                   _serviceIdent, (string)wamp[2], payload);
+                    message.PayloadType = null; // has to be converted
 
                     message.Type = ActorMessageType.Notification;
                     _requestHandler.MessageFromClient(message);
@@ -236,7 +236,7 @@ namespace Remact.Net.Protocol.Wamp
 
         #endregion
 
-        internal static void SplitProcUri(string uri, out string portName, out string methodName, out string payloadType)
+       /* internal static void SplitProcUri(string uri, out string portName, out string methodName, out string payloadType)
         {
             // <ActorPortName> / <MethodName> / <FullQualifiedPayloadType>
             portName = null;
@@ -279,6 +279,6 @@ namespace Remact.Net.Protocol.Wamp
             }
 
             payloadType = uri.Substring(i, j - i);
-        }
+        }*/
     }
 }

@@ -27,13 +27,16 @@ namespace Remact.Net
 
         public ActorMessage CallMethod(ActorMessage msg, object context)
         {
+            if (string.IsNullOrEmpty(msg.DestinationMethod)) return msg;
+
             ActorMethod method;
             if (!_methods.TryGetValue(msg.DestinationMethod, out method))
             {
                 return msg;
             }
 
-            var reply = method.Info.Invoke(method.Implementation, method.Parameters(msg, context));
+            var parameters = method.Parameters(msg, context);
+            var reply = method.Info.Invoke(method.Implementation, parameters);
             if (reply != null)
             {
                 msg.SendResponse(reply);
@@ -113,7 +116,7 @@ namespace Remact.Net
                 var jToken = msg.Payload as JToken;
                 if (jToken != null)
                 {
-                    param[0] = jToken.ToObject(PayloadType); // deserialized
+                    param[0] = jToken.ToObject(this.PayloadType); // deserialized
                 }
             }
 

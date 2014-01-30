@@ -291,7 +291,11 @@ namespace Remact.Net
         /// <returns>The message in readable text form.</returns>
         public override string ToString ()
         {
-            if (!string.IsNullOrEmpty(PayloadType))
+            if (!string.IsNullOrEmpty(DestinationMethod))
+            {
+                return DestinationMethod;
+            }
+            else if (!string.IsNullOrEmpty(PayloadType))
             {
                 return PayloadType;
             }

@@ -26,188 +26,141 @@ namespace Test2.Client
     [STAThread]
     static void Main (string[] args)
     {
-      try
-      {
-        Application.EnableVisualStyles ();
-        Application.SetCompatibleTextRenderingDefault (false);
-        RemactConfigDefault.ApplicationStart (args, new RaLog.PluginFile());
-        RaLog.Info( "Clt1", "Start" );
+        try
+        {
+            Application.EnableVisualStyles ();
+            Application.SetCompatibleTextRenderingDefault (false);
+            RemactConfigDefault.ApplicationStart (args, new RaLog.PluginFile());
+            RaLog.Info( "Clt1", "Start" );
 
-        Application.Run(new FrmClient());
-      }
-      catch (Exception ex) // any Exception
-      {
-        RaLog.Exception ("Clt1: Fatal error", ex);
-      }
-      RemactConfigDefault.Instance.Shutdown();
-      RaLog.Info( "Clt1", "Stop" );
-      RaLog.Stop ();
+            Application.Run(new FrmClient());
+        }
+        catch (Exception ex) // any Exception
+        {
+            RaLog.Exception ("Clt1: Fatal error", ex);
+        }
+
+        RemactConfigDefault.Instance.Shutdown();
+        RaLog.Info( "Clt1", "Stop" );
+        RaLog.Stop ();
     }
     #endregion
     //----------------------------------------------------------------------------------------------
-    #region Fields
-    
-    ActorOutput    Client1;
-    StringBuilder  Log1;
-    int            m_nResponses1;
-    bool           m_boSpeedTest = false;
-    
-    #endregion
-    //----------------------------------------------------------------------------------------------
-    #region Constructors
+    #region Fields and constructor
+
+    private Test2Client Client1;
+  
 
     /// <summary>
     /// Initializes a new instance of the FrmMain class.
     /// </summary>
     public FrmClient ()
     {
-      InitializeComponent ();
-
-      Client1 = new ActorOutput("Client1", OnMessageFromService);
-      Client1.TraceSend = true;
-      Client1.TraceReceive = false;
-      Log1 = new StringBuilder(11000);
-      lbClient.Text = Client1.ToString("Client", 20);
-      this.Text     = Client1.AppIdentification;
+        InitializeComponent ();
+        Client1 = new Test2Client();
+        Client1.UpdateView += OnUpdateView;
+        lbClient.Text = Client1.Output.ToString("Client", 20);
+        this.Text = Client1.Output.AppIdentification;
     }
 
     #endregion
     //----------------------------------------------------------------------------------------------
     #region Event Handlers
 
-    // This handler is used for Test2.Service.
-    private void OnMessageFromService (ActorMessage msg)
+    // event from client
+    void OnUpdateView()
     {
-      if (!m_boSpeedTest)
-      {
-        Log1.Length=0;
-        Log1.AppendFormat("{0} {1}, thd={2}", msg.CltRcvId, msg.Payload.ToString(), Thread.CurrentThread.ManagedThreadId.ToString());
-        if (Client1.OutstandingResponsesCount != 0) { Log1.Append(", out="); Log1.Append(Client1.OutstandingResponsesCount); }
-      }
-      
-      if (msg.IsError)
-      {
-          ErrorMessage error;
-          msg.TryConvertPayload(out error);
-          RaLog.Warning(msg.CltRcvId, error.ToString());
-      }
-      else if (m_boSpeedTest)
-      {
-          m_nResponses1++;
-          // send payload to the destination method, do not handle the response here - handle it in the default handler 'OnMessageFromService'
-          Client1.Ask<object>("Test2Req", new Test2Req(Test2Req.ERequestCode.Normal), null);
-      }
-      else
-      {
-          Test2Rsp t2r;
-          if (msg.TryConvertPayload(out t2r))
-          {
-              string s = string.Empty;
-              foreach (var item in t2r.Items)
-              {
-                  s += ", " + item.ItemName;
-              }
-              RaLog.Info(msg.CltRcvId, "Test2Rsp contains " + t2r.Items.Count + " items" + s);
-          }
-          else
-          {
-              RaLog.Info(msg.CltRcvId, msg.Payload.ToString());
-          }
-      }
-
-      if (!m_boSpeedTest)
-      {
-        Log1.Append("\r\n");
-        Log1.Append(tbService1.Text);
-        int len = Log1.Length;
-        if (len > 10000) len = 10000;
-        tbService1.Text = Log1.ToString(0, len);
-
-        if (lbService1.Text.Length == 0)
+        if (!Client1.SpeedTest)
         {
-          lbClient.Text   = Client1.ToString ("Client", 20);
-          lbService1.Text = Client1.OutputSidePartner.ToString("Service", 20);
+            Client1.Log.Append("\r\n");
+            Client1.Log.Append(tbService1.Text);
+            int len = Client1.Log.Length;
+            if (len > 10000) len = 10000;
+            tbService1.Text = Client1.Log.ToString(0, len);
+
+            if (lbService1.Text.Length == 0)
+            {
+                lbClient.Text = Client1.Output.ToString("Client", 20);
+                lbService1.Text = Client1.Output.OutputSidePartner.ToString("Service", 20);
+            }
         }
-      }
     }
 
 
-    private int  m_Seconds=0;
-    //---------------------------------------------------
-    private void timer1_Tick (object sender, EventArgs e)
+    private int  m_Seconds;
+
+    private void Timer1_Tick (object sender, EventArgs e)
     {
       try
       {
         if (m_Seconds % 5 == 0) RaLog.Run ();
         m_Seconds++;
 
-        if (cbService1.Checked)
+        if (!cbService1.Checked)
         {
-          if (Client1.OutputState == PortState.Faulted)
-          {
+            if (Client1.Output.OutputState != PortState.Disconnected)
+            {
+                if (Client1.Output.OutputState != PortState.Faulted) lbState1.Text = "disconnected";
+                Client1.Output.Disconnect();
+            }
+            return;
+        }
+            
+        if (Client1.Output.OutputState == PortState.Faulted)
+        {
             cbService1.Checked = false;
             lbState1.Text = "-FAULT-";
-          }
-          else if (Client1.OutputState == PortState.Disconnected || Client1.OutputState == PortState.Unlinked)
-          {
-              RaLog.Info( "Clt1", "open S1" );
-              tbService1.Text = string.Empty;
-              lbService1.Text = string.Empty;
-              lbState1.Text   = "connecting ...";
-              //Client1.LinkOutputToRemoteService (tbCatalogHost.Text, "Test2.Service");
-              Client1.LinkOutputToRemoteService(new Uri("ws://"+tbCatalogHost.Text+"/Remact/Test2.Service"));
-              ActorInput.DisableCatalogClient = true;
-              Client1.TryConnect();
-              m_nResponses1 = 0;
-              m_boSpeedTest = cbSpeedTest1.Checked;
-          }
-          else if (Client1.OutputState == PortState.Ok)
-          {
-            if (m_boSpeedTest)
+        }
+        else if (Client1.Output.OutputState == PortState.Disconnected 
+              || Client1.Output.OutputState == PortState.Unlinked)
+        {
+            RaLog.Info( "Clt1", "open S1" );
+            tbService1.Text = string.Empty;
+            lbService1.Text = string.Empty;
+            lbState1.Text   = "connecting ...";
+            //Client1.LinkOutputToRemoteService (tbCatalogHost.Text, "Test2.Service");
+            ActorInput.DisableCatalogClient = true; // prov.
+            Client1.Output.LinkOutputToRemoteService(new Uri("ws://" + tbCatalogHost.Text + "/Remact/Test2.Service"));
+            Client1.TryConnect();
+            Client1.ResponseCount = 0;
+        }
+        else if (Client1.Output.OutputState == PortState.Ok)
+        {
+            if (Client1.SpeedTest)
             {
-              if (m_Seconds % 3 == 0)
-              {
-                lbState1.Text   = "CltReq="+Client1.LastRequestIdSent;
-                lbClient.Text   = Client1.ToString  ("Client", 20);
-                lbService1.Text = Client1.OutputSidePartner.ToString ("Service", 20);
-                if (m_nResponses1 > 150)
+                if (m_Seconds % 3 == 0)
                 {
-                    tbService1.Text = (m_nResponses1 / 3).ToString() + " Requests / sec";
+                    //lbClient.Text   = Client1.Output.ToString  ("Client", 20);
+                    //lbService1.Text = Client1.Output.OutputSidePartner.ToString("Service", 20);
+                    if (Client1.ResponseCount > 150)
+                    {
+                        tbService1.Text = (Client1.ResponseCount / 3).ToString() + " Requests / sec";
+                    }
+                    else
+                    {
+                        tbService1.Text = Math.Round((float)Client1.ResponseCount / 3.0, 1).ToString() + " Requests / sec";
+                    }
+
+                    Client1.ResponseCount = 0;
                 }
-                else
-                {
-                    tbService1.Text = Math.Round((float)m_nResponses1 / 3.0, 1).ToString() + " Requests / sec";
-                }
-                m_nResponses1 = 0;
-              }
-            }
-            else
-            {
-              lbState1.Text = "CltReq="+Client1.LastRequestIdSent;
-              if (cbSpeedTest1.Checked) Client1.Ask<object> ("Test2Req",     new Test2Req (Test2Req.ERequestCode.Normal), null);
-                                   else Client1.Ask<object> ("ReadyMessage", new ReadyMessage (), null);
             }
 
-            m_boSpeedTest = cbSpeedTest1.Checked;
-            Client1.TraceSend = !m_boSpeedTest;
-          }
-        }
-        else if (Client1.OutputState != PortState.Disconnected)
-        {
-            if (Client1.OutputState != PortState.Faulted) lbState1.Text = "disconnected";
-            Client1.Disconnect();
+            lbState1.Text = "CltReq="+Client1.LastRequestIdSent;
+            Client1.SpeedTest = cbSpeedTest1.Checked;
+            Client1.SendPeriodicMessage();
+            Client1.Output.TraceSend = !Client1.SpeedTest;
         }
       }
       catch (Exception ex)
       {
-        RaLog.Exception ("during timerevent", ex);
+          RaLog.Exception ("during timerevent", ex);
       }
-    }// timer1_Tick
+    }// Timer1_Tick
     
     
     private void FrmClient_FormClosing(object sender, FormClosingEventArgs e)
     {
-      Client1.Disconnect();
+      Client1.Output.Disconnect();
     }
 
     #endregion

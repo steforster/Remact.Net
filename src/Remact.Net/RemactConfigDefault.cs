@@ -123,6 +123,14 @@ namespace Remact.Net
         {
             RaLog.Error("Svc:", "No service found on '" + absolutePath + "' to connect client " + userContext.ClientAddress);
         }
+
+        //if (ServiceIdent.Uri == null)
+        //{
+        //    // TODO
+        //    UriBuilder uri = new UriBuilder(OperationContext.Current.Channel.LocalAddress.Uri);
+        //    uri.Host = ServiceIdent.HostName;
+        //    ServiceIdent.Uri = uri.Uri;
+        //}
     }
 
     /// <summary>
