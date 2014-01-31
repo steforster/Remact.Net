@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Remact.Net;
 using Test2.Contracts;
 
@@ -95,6 +96,27 @@ namespace Test2.Client
 
         RaLog.Info(msg.CltRcvId, "Test2Rsp contains " + response.Items.Count + " items" + s);
         UpdateView();
+    }
+
+    // implementation of the service interface for type safety
+    private class Proxy : ITest2Service
+    {
+        public ActorOutput Output;
+
+        public Task<ActorMessage<Test2Rsp>> GetSomeData(ReadyMessage req)
+        {
+            return Output.Ask<Test2Rsp>("GetSomeData", req);
+        }
+
+        public Task<ActorMessage<ReadyMessage>> SpeedTest1(Test2Req req)
+        {
+            return Output.Ask<ReadyMessage>("SpeedTest1", req);
+        }
+
+        public Task<ActorMessage<Test2Rsp>> SpeedTest2(Test2Req req)
+        {
+            return Output.Ask<Test2Rsp>("SpeedTest2", req);
+        }
     }
   }
 }

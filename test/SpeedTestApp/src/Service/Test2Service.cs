@@ -11,7 +11,7 @@ namespace Test2.Service
   /// <summary>
   /// Implementation of the Test2 Service
   /// </summary>
-  class Test2Service : ITest2Service
+  class Test2Service
   {
     public IActorInput Input { get { return m_Input; } } // just the ActorInput interface is public
     public  int          Seconds;
@@ -64,7 +64,7 @@ namespace Test2.Service
 
       
     // Remact service method
-    Test2Rsp ITest2Service.GetSomeData(ReadyMessage req, ActorMessage msg)
+    Test2Rsp GetSomeData(ReadyMessage req, ActorMessage msg)
     {
         Requests++;
         RaLog.Info(msg.SvcRcvId, string.Format("{0}, thd={1}",
@@ -84,14 +84,14 @@ namespace Test2.Service
     }
 
     // Remact service method
-    ReadyMessage ITest2Service.SpeedTest1(Test2Req req, ActorMessage msg)
+    ReadyMessage SpeedTest1(Test2Req req, ActorMessage msg)
     {
         Requests++;
         return new ReadyMessage();
     }
 
     // Remact service method
-    Test2Rsp ITest2Service.SpeedTest2(Test2Req req, ActorMessage msg)
+    Test2Rsp SpeedTest2(Test2Req req, ActorMessage msg)
     {
         Requests++;
         var rsp = new Test2Rsp();

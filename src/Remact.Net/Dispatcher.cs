@@ -4,8 +4,10 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Threading.Tasks;
 
 namespace Remact.Net
 {
@@ -36,7 +38,7 @@ namespace Remact.Net
             }
 
             var parameters = method.Parameters(msg, context);
-            var reply = method.Info.Invoke(method.Implementation, parameters);
+            var reply = method.Target.Invoke(method.Implementation, parameters);
             if (reply != null)
             {
                 msg.SendResponse(reply);
@@ -47,37 +49,68 @@ namespace Remact.Net
 
         public void AddActorInterface(Type actorInterface, object implementation)
         {
-            if (!actorInterface.IsAssignableFrom (implementation.GetType()))
+            var mTargetList = implementation.GetType().GetMethods(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.FlattenHierarchy
+                                                                | BindingFlags.Instance | BindingFlags.Static);
+            var mInterfaceList = actorInterface.GetMethods();
+
+            foreach (var mInterface in mInterfaceList)
             {
-                throw new ArgumentException(implementation.GetType().FullName + " does not implement interface " + actorInterface.FullName);
+                try
+                {
+                    var mTarget = mTargetList.Single((m) => m.Name == mInterface.Name);
+                    var param = mTarget.GetParameters();
+
+                    if (param.Length < 2 || param.Length > 3)
+                    {
+                        throw new InvalidOperationException("method '" + mTarget.Name + "' must have 2 to 3 parameters");
+                    }
+
+                    if (param[1].ParameterType != typeof(ActorMessage))
+                    {
+                        throw new InvalidOperationException("method '" + mTarget.Name + "', second parameter must be of type 'ActorMessage'");
+                    }
+
+                    if (_methods.ContainsKey(mTarget.Name))
+                    {
+                        throw new InvalidOperationException("more than one method '" + mTarget.Name + "' found in " + actorInterface.FullName);
+                    }
+
+                    var innerIf = InnerType(mInterface.ReturnType);
+                    var innerTgt = InnerType(mTarget.ReturnType);
+                    if (innerIf != innerTgt)
+                    {
+                        throw new InvalidOperationException("return type of method '" + mTarget.Name + "' does not match the interface. Note, Task<ActorMessage<T>> is accepted.");
+                    }
+
+                    var method = new ActorMethod
+                    {
+                        Target = mTarget,
+                        Implementation = implementation,
+                        PayloadType = param[0].ParameterType,
+                    };
+
+                    if (param.Length == 3)
+                    {
+                        method.ContextType = param[2].ParameterType;
+                    }
+
+                    _methods.Add(mTarget.Name, method);
+                }
+                catch (Exception ex)
+                {
+                    RaLog.Exception("Cannot add interface '" + actorInterface.FullName + "' to '" + implementation.GetType().FullName + "'", ex); // TODO logger + gathering exceptions for all methods
+                    throw;
+                }
             }
+        }
 
-            var list = actorInterface.GetMethods();
-            foreach (var m in list)
+        private Type InnerType (Type type)
+        {
+            while (type.IsGenericType)
             {
-                var param = m.GetParameters();
-                if (param.Length < 2 || param.Length > 3) continue;
-                if (param[1].ParameterType != typeof(ActorMessage)) continue;
-
-                if (_methods.ContainsKey (m.Name))
-                {
-                    throw new InvalidOperationException("more than one method '"+m.Name+"' found when adding interface " + actorInterface.FullName);
-                }
-
-                var method = new ActorMethod
-                {
-                    Info = m,
-                    Implementation = implementation,
-                    PayloadType = param[0].ParameterType,
-                };
-
-                if (param.Length == 3)
-                {
-                    method.ContextType = param[2].ParameterType;
-                }
-
-                _methods.Add(m.Name, method);
-           }
+                type = type.GetGenericArguments()[0];
+            }
+            return type;
         }
     }
 
@@ -90,7 +123,7 @@ namespace Remact.Net
     /// </summary>
     public class ActorMethod
     {
-        public MethodInfo Info;
+        public MethodInfo Target;
         public object Implementation;
         public Type PayloadType;
         public Type ContextType;

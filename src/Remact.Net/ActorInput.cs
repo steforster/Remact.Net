@@ -420,7 +420,7 @@ namespace Remact.Net
   /// <para>This class represents an incoming connection from a client to an actor (service).</para>
   /// <para>It is the destination of requests and contains additional data representing the session and the sending actor (client).</para>
   /// </summary>
-  /// <typeparam name="TSC">Additional data (sender context) representing the communication session and the sending actor.</typeparam>
+  /// <typeparam name="TSC">Additional data (source context) representing the communication session and the sending actor.</typeparam>
   public class ActorInput<TSC>: ActorInput where TSC: class, new ()
   {
     /// <summary>
