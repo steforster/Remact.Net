@@ -349,7 +349,7 @@ namespace Remact.Net
     {
         ActorMessage msg = new ActorMessage(this, OutputClientId, 0,
                                             this, method, payload);
-        SendOut(msg);
+        PostInput(msg);
     }
 
     /// <summary>
@@ -618,7 +618,7 @@ namespace Remact.Net
 
 
     // Message is passed to the lambda functions of the sending context or to the default response handler
-    internal void DispatchMessage (ActorMessage id)
+    internal void DispatchMessage (ActorMessage msg)
     {
         if( !m_Connected )
         {
@@ -634,15 +634,15 @@ namespace Remact.Net
 
         if (!IsMultithreaded)
         {
-            var m = id.Payload as IExtensibleActorMessage;
+            var m = msg.Payload as IExtensibleActorMessage;
             if( m != null ) m.BoundSyncContext = SyncContext;
         }
 
         try
         {
-            m_CurrentReq   = id;
-            id.Destination = this;
-            var connectMsg = id.Payload as ActorInfo;
+            m_CurrentReq   = msg;
+            msg.Destination = this;
+            var connectMsg = msg.Payload as ActorInfo;
             if (connectMsg != null)
             {
                 if (connectMsg.Usage == ActorInfo.Use.ClientConnectRequest
@@ -650,35 +650,35 @@ namespace Remact.Net
                 {
                     if (TraceConnect && IsServiceName)
                     {
-                        RaLog.Info(id.SvcRcvId, String.Format("{0} to Remact service './{1}'", connectMsg.Usage.ToString(), Name), Logger);
+                        RaLog.Info(msg.SvcRcvId, String.Format("{0} to Remact service './{1}'", connectMsg.Usage.ToString(), Name), Logger);
                     }
-                    OnConnectDisconnect(id, connectMsg); // may be overloaded
+                    OnConnectDisconnect(msg, connectMsg); // may be overloaded
                     return;
                 }// -------
             }
 
             if (TraceReceive)
             {
-                if( IsServiceName ) RaLog.Info( id.SvcRcvId, id.ToString(), Logger );
-                               else RaLog.Info( id.CltRcvId, id.ToString(), Logger );
+                if( IsServiceName ) RaLog.Info( msg.SvcRcvId, msg.ToString(), Logger );
+                               else RaLog.Info( msg.CltRcvId, msg.ToString(), Logger );
             }
-            bool needsResponse = id.IsRequest;
+            bool needsResponse = msg.IsRequest;
 
-            if (id.DestinationLambda != null)
+            if (msg.DestinationLambda != null)
             {
-                id = id.DestinationLambda(id); // a response to a lambda function, one of the On<T> extension methods may handle the message type
+                msg = msg.DestinationLambda(msg); // a response to a lambda function, one of the On<T> extension methods may handle the message type
             }
 
-            if (id != null && m_Dispatcher != null)
+            if (msg != null && m_Dispatcher != null)
             {
-                id = m_Dispatcher.CallMethod(id, null); // TODO context
+                msg = m_Dispatcher.CallMethod(msg, null); // TODO context
             }
 
-            if (id != null) // not handled yet
+            if (msg != null) // not handled yet
             { 
                 if (DefaultInputHandler != null)
                 {
-                    DefaultInputHandler (id); // MessageHandlerlegate
+                    DefaultInputHandler (msg); // MessageHandlerlegate
                 }
                 else
                 {
@@ -687,9 +687,9 @@ namespace Remact.Net
                 }
             }
 
-            if (id != null && needsResponse && id.Response == null)
+            if (msg != null && needsResponse && msg.Response == null)
             {
-                id.SendResponse(new ReadyMessage());
+                msg.SendResponse(new ReadyMessage());
             }
         }
         finally

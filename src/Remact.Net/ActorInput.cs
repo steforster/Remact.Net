@@ -288,29 +288,32 @@ namespace Remact.Net
     /// Anonymous sender: Threadsafe enqueue payload at the receiving partner. No response is expected.
     /// </summary>
     /// <param name="payload">The message to enqueue.</param>
-    public void PostInput(object payload)
+    public void PostFromAnonymous(object payload)
     {
-        PostInputFrom(null, payload, null);
+        var sender = GetAnonymousPartner();
+        ActorMessage msg = new ActorMessage(sender, 0, sender.NextRequestId,
+                                            this, payload.GetType().FullName, payload, null);
+        base.PostInput(msg);
     }
 
     /// <summary>
     /// Used internally: Threadsafe enqueue message at the receiving partner (must be implemented to guide the compiler)
     /// </summary>
     /// <param name="message">The message to send.</param>
-    public new void PostInput(ActorMessage message)
-    {
-        base.PostInput(message);
-    }
+    //public new void PostInput(ActorMessage message)
+    //{
+    //    base.PostInput(message);
+    //}
 
     /// <summary>
     /// Used internally: Threadsafe enqueue payload at the receiving partner.
     /// </summary>
     /// <param name="sender">The source partner sending the message <see cref="ActorPort"/>. Its default message handler will receive the response.</param>
     /// <param name="payload">The message to enqueue.</param>
-    public void PostInputFrom(ActorOutput sender, object payload)
-    {
-        PostInputFrom(sender, payload, null);
-    }
+    //internal void PostInputFrom(ActorOutput sender, object payload)
+    //{
+    //    PostInputFrom(sender, payload, null);
+    //}
 
     /// <summary>
     /// Used internally: Threadsafe enqueue payload at the receiving partner.
@@ -318,7 +321,7 @@ namespace Remact.Net
     /// <param name="sender">The source partner sending the message <see cref="ActorPort"/></param>
     /// <param name="payload">The message to enqueue.</param>
     /// <param name="responseHandler">The lambda expression executed at the source partner, when a response arrives.</param>
-    public void PostInputFrom(ActorOutput sender, object payload, AsyncResponseHandler responseHandler)
+    /*internal void PostInputFrom(ActorOutput sender, object payload, AsyncResponseHandler responseHandler)
     {
       if (sender == null)
       {
@@ -345,7 +348,7 @@ namespace Remact.Net
       ActorMessage msg = new ActorMessage(sender, 0, sender.NextRequestId,
                                           this, payload.GetType().FullName, payload, responseHandler);
       base.PostInput (msg); // Message is posted into the message queue
-    }
+    }*/
 
 
     /// <summary>

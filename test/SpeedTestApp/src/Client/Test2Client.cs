@@ -12,14 +12,14 @@ namespace Test2.Client
   /// <summary>
   /// Implementation of the Test2 Client
   /// </summary>
-  class Test2Client // : ITest2Client
+  class Test2Client
   {
-    ActorOutput _output;
+    Proxy _proxy;
 
     public event Action UpdateView;
     public StringBuilder Log;
-    public IActorOutput Output { get { return _output; } }
-    public int LastRequestIdSent { get { return _output.LastRequestIdSent; } }
+    public IActorOutput Output { get { return _proxy.Output; } }  // just return the IActorOutput interface
+    public int LastRequestIdSent { get { return _proxy.Output.LastRequestIdSent; } }
     public int ResponseCount;
     public bool SpeedTest;
 
@@ -29,29 +29,41 @@ namespace Test2.Client
     /// </summary>
     public Test2Client()
     {
-        _output = new ActorOutput("Client1", OnUnhandledResponse);
-        _output.TraceSend = true;
-        _output.TraceReceive = false;
+        _proxy = new Proxy
+        {
+            Output = new ActorOutput("Client1", OnUnhandledResponse) {TraceSend = true, TraceReceive = false}
+        };
         Log = new StringBuilder(11000);
     }
 
 
     public void TryConnect()
     {
-        _output.TryConnect();
+        _proxy.Output.TryConnect();
     }
 
 
     public void SendPeriodicMessage()
     {
-        if (SpeedTest) _output.Ask<ReadyMessage>("SpeedTest1", new Test2Req(Test2Req.ERequestCode.Normal), OnSpeed1Response);
-                  else _output.Ask<Test2Rsp>    ("GetSomeData", new ReadyMessage(), OnDataResponse);
+        if (SpeedTest)
+        {
+            OnSpeed1Response(null, null); // start the test
+        }
+        else
+        {
+            var task = _proxy.GetSomeData(new ReadyMessage());
+            task.ContinueWith((t) => OnDataResponse(t.Result.Payload, t.Result), TaskContinuationOptions.ExecuteSynchronously);
+        }
     }
 
 
     // Remact client method for unknown responses
     private void OnUnhandledResponse(ActorMessage msg)
     {
+        ResponseCount++;
+        Log.AppendFormat("{0} {1}, thd={2}", msg.CltRcvId, msg.Payload.ToString(), Thread.CurrentThread.ManagedThreadId.ToString());
+        Log.AppendLine();
+
         if (msg.IsError)
         {
             ErrorMessage error;
@@ -71,8 +83,10 @@ namespace Test2.Client
         ResponseCount++;
         if (SpeedTest)
         {
-            // send payload to the destination method, do not handle the response here - handle it in the default handler 'OnMessageFromService'
-            _output.Ask<ReadyMessage>("SpeedTest1", new Test2Req(Test2Req.ERequestCode.Normal), OnSpeed1Response);
+            // send payload to the destination method
+            var task = _proxy.SpeedTest1(new Test2Req(Test2Req.ERequestCode.Normal));
+            // when the response is received asynchronously (after this method is left), call this method again
+            task.ContinueWith((t) => OnSpeed1Response(t.Result.Payload, t.Result), TaskContinuationOptions.ExecuteSynchronously);
         }
     }
 
@@ -80,23 +94,26 @@ namespace Test2.Client
     // Remact client method
     private void OnDataResponse(Test2Rsp response, ActorMessage msg)
     {
-        Log.Length = 0;
+        ResponseCount++;
         Log.AppendFormat("{0} {1}, thd={2}", msg.CltRcvId, msg.Payload.ToString(), Thread.CurrentThread.ManagedThreadId.ToString());
-        if (Output.OutstandingResponsesCount != 0) 
+        if (_proxy.Output.OutstandingResponsesCount != 0) 
         { 
             Log.Append(", out="); 
             Log.Append(Output.OutstandingResponsesCount); 
         }
+        Log.AppendLine();
 
         string s = string.Empty;
         foreach (var item in response.Items)
         {
             s += ", " + item.ItemName;
         }
-
         RaLog.Info(msg.CltRcvId, "Test2Rsp contains " + response.Items.Count + " items" + s);
+
         UpdateView();
+        Log.Length = 0;
     }
+
 
     // implementation of the service interface for type safety
     private class Proxy : ITest2Service

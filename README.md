@@ -4,35 +4,37 @@ Remote Actors for .NET
 **Remact.Net** facilitates the development of [actors](http://en.wikipedia.org/wiki/Actor_model) in .NET languages.
 
 It is a class library written in C-Sharp.  
-It runs in Microsoft .NET and Linux-Mono environements.  
+It runs in Microsoft .NET and Linux-Mono environments.  
 
 **Project status**  
-Remact.Net is work in progress. The first integration test is running.  
+Remact.Net is work in progress. Some integration test are running.  
 [AsyncWcfLib](http://sourceforge.net/projects/asyncwcflib/) is the predecessor of Remact.Net.
-Both are developed by the same author.
+
+The motivation for this new project is improved support for bidirectional communication,   
+higher performance on Linux/Mono based environments and wider interoperability  
+So that actors written in Java or JavaScript (browser based actors) can participate.
+
 
 
 ### Feature list
 
-The following goals are intended to reach:
+The following goals have been reached:
 
-- [ ] Small and clean API like AsyncWcfLib
-- [ ] Local actors (message passing between threads)
-- [ ] Remote actors (message passing between hosts or processes)
-- [ ] Unlike AsyncWcfLib, Remact will be based on open web standards (WebSockets).  
-   The motivation is better support for bidirectional communication and higher performance
-   on Linux/Mono based environments.
-- [ ] WebSockets and Json are used to link actors written in Java or JavaScript (browser based actors)
+- [*] Small and clean API allows to dynamically create lightweight actors
+- [*] Local actors (message passing between threads)
+- [*] Remote actors (message passing between hosts or processes)
+- [*] WebSockets, Json and other open standards are used to link Remact actors.
+
 
 
 ### Related work
 
-Some programmming languages have built in support for remote actors:
+Some programming languages have built in support for remote actors:
 
 * [Scala](http://www.scala-lang.org/).RemoteActors
 * [Erlang](http://www.erlang.org/)
 
-For other languages there are librarys to help programming remote actors:
+For other languages there are libraries to help programming remote actors:
 
 * [Java and Scala: The Akka library](http://akka.io/)
 * [C#: The Stact library](https://github.com/phatboyg/Stact)
@@ -40,11 +42,28 @@ For other languages there are librarys to help programming remote actors:
 
 
 
+Dependencies and standards
+--------------------------
+Remact.Net is built on open standards and uses open source components.
+I would like to thank all participants for their contribution to the open source community.
+
+* [WebSocket](http://tools.ietf.org/html/rfc6455), the IETF standard RFC6455
+* [Alchemy-Websockets](https://github.com/Olivine-Labs/Alchemy-Websockets), a class library from Olivine-Labs.
+  I had to improve the c# client side part. Therefore, I created another [fork](https://github.com/steforster/Alchemy-Websockets.git) of this project.
+* [WAMP](http://wamp.ws/), the WebSocket Application Messaging Protocol
+* [Newtonsoft.Json](https://github.com/JamesNK/Newtonsoft.Json), a class library for Json serialization
+* [Log4Net](http://logging.apache.org/log4net/), logging component from Apache
+* [NUnit](http://www.nunit.org/), unit testing infrastructure
+* [Nito.Async.ActionThread](http://nitoasync.codeplex.com/) is used for testing console applications
+* [WampSharp](https://github.com/darkl/WampSharp) is not used as a component, but I have lent some ideas from this WAMP implementation
+
+
+
 Documentation
 -------------
 Currently, [the main conceptual ideas](http://sourceforge.net/p/asyncwcflib/wiki/Actors/) should be read on the AsyncWcfLib pages.
 
-The folder **src/Remact.Net/Contracts** contains remotly callable methods and their corresponding request- and response messages.
+The folder **src/Remact.Net/Contracts** contains remotely callable methods and their corresponding request- and response messages.
 These definitions and their XML comments form the basic interface definition of actors.
 
 Application actors will add more contracts in other assemblies. 
@@ -60,26 +79,10 @@ Receiving of WAMP messages is done in five steps:
 
 
 
-Third party components and standards
-------------------------------------
-Remact.Net is built on open standards and uses open software components, namely
-
-* [WebSocket](http://tools.ietf.org/html/rfc6455), the IETF standard RFC6455
-* [Alchemy-Websockets](https://github.com/Olivine-Labs/Alchemy-Websockets), a class library from Olivine-Labs.
-  I had to improve the c# client side part. Therefore, I created another [fork](https://github.com/steforster/Alchemy-Websockets.git) of this project.
-* [WAMP](http://wamp.ws/), the WebSocket Application Messaging Protocol
-* [Newtonsoft.Json](https://github.com/JamesNK/Newtonsoft.Json), a class library for Json serialization
-* [Log4Net](http://logging.apache.org/log4net/), logging component from Apache
-* [NUnit](http://www.nunit.org/), unit testing infrastructure
-* [Nito.Async.ActionThread](http://nitoasync.codeplex.com/) is used for testing console applications
-* [WampSharp](https://github.com/darkl/WampSharp) is not used as a component, but I have lent some ideas from this WAMP implementation
-
-
-
 How to build
 ------------
-Currently, the Remact.Mono solution is used from VisualStudio 2012 and from MonoDevelop 2.8.6.3.  
-Currently source projects of other git repositories are referenced from Remact.Mono.sln.  
+The Remact.Mono solution is used for VisualStudio 2012 and for MonoDevelop 2.8.6.3.  
+Source projects of other git repositories are referenced from Remact.Mono.sln.  
 You have to clone all these (small) repos to be able to build Remact:
 
       $ git clone https://github.com/steforster/Remact.Net.git  
@@ -90,6 +93,7 @@ Afterwards your project folder should look like this:
 
       $ ls  
       Alchemy-Websockets  Newtonsoft.Json  Remact.Net  ...  
+
 
 
 License
