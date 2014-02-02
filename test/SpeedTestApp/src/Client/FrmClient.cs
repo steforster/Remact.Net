@@ -145,9 +145,13 @@ namespace Test2.Client
             }
 
             lbState1.Text = "CltReq="+Client1.LastRequestIdSent;
-            Client1.SpeedTest = cbSpeedTest1.Checked;
-            Client1.SendPeriodicMessage();
-            Client1.Output.TraceSend = !Client1.SpeedTest;
+            // TODO when more than one request is on the way ...
+            if (!cbSpeedTest1.Checked || !Client1.SpeedTest)
+            {
+                Client1.SpeedTest = cbSpeedTest1.Checked;
+                Client1.Output.TraceSend = !Client1.SpeedTest;
+                Client1.SendPeriodicMessage();
+            }
         }
       }
       catch (Exception ex)
