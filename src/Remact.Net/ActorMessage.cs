@@ -113,11 +113,6 @@ namespace Remact.Net
         public string DestinationMethod { get; internal set; }
 
         /// <summary>
-        /// The full qualified .net data type of Payload for requests and notifications.
-        /// </summary>
-        public string PayloadType { get; internal set; }
-
-        /// <summary>
         /// For local and remote requests the send operation may specify a lambda expression handling the response.
         /// </summary>
         internal AsyncResponseHandler   SourceLambda;      // delegate ActorMessage  AsyncResponseHandler (ActorMessage msg);
@@ -157,10 +152,6 @@ namespace Remact.Net
             }
 
             Payload = payload;
-            if (payload != null)
-            {
-                PayloadType = payload.GetType().FullName;
-            }
             SourceLambda = responseHandler;
         }// CTOR1
 
@@ -178,7 +169,6 @@ namespace Remact.Net
             Source = msg.Source;
             Destination = msg.Destination;
             DestinationMethod = msg.DestinationMethod;
-            PayloadType = msg.PayloadType;
             SourceLambda = msg.SourceLambda;
             DestinationLambda = msg.DestinationLambda;
             Response = msg.Response;
@@ -188,11 +178,6 @@ namespace Remact.Net
         public bool TryConvertPayload<T>(out T result) where T : class
         {
             result = null;
-            if (PayloadType != null && PayloadType != typeof(T).FullName)
-            {
-                return false; // different type name or method name 
-            }
-
             if (Payload == null)
             {
                 return true; 
@@ -210,7 +195,8 @@ namespace Remact.Net
             {
                 try
                 {
-                    result = jToken.ToObject<T>();
+                    result = jToken.ToObject<T>(); 
+                    Payload = result; // keep converted result
                     return true;
                 }
                 catch { }
@@ -218,6 +204,28 @@ namespace Remact.Net
 
             return false;
         }
+
+        
+        public static object Convert(JToken jToken, string assemblyQualifiedTypeName)
+        {
+            if (string.IsNullOrEmpty(assemblyQualifiedTypeName))
+            {
+                return jToken;
+            }
+
+            try
+            {
+                var type = System.Type.GetType(assemblyQualifiedTypeName);
+                object payload = jToken.ToObject(type);
+                return payload;
+            }
+            catch (Exception ex)
+            {
+                RaLog.Exception("could not convert payload type '" + assemblyQualifiedTypeName + "'", ex);
+                return jToken;
+            }
+        }
+
 
         /// <summary>
         /// Notification is sent from service to client without a matching request.
@@ -291,21 +299,30 @@ namespace Remact.Net
         /// <returns>The message in readable text form.</returns>
         public override string ToString ()
         {
-            if (!string.IsNullOrEmpty(DestinationMethod))
+            string name = DestinationMethod;
+            if (string.IsNullOrEmpty(name))
             {
-                return DestinationMethod;
+                name = PayloadType;
             }
-            else if (!string.IsNullOrEmpty(PayloadType))
+
+            return string.Concat(Type.ToString(), '<', name, '>');
+        }
+
+        /// <summary>
+        /// The full qualified .net data type of the Payload.
+        /// </summary>
+        public string PayloadType 
+        {
+            get
             {
-                return PayloadType;
-            }
-            else if (Payload != null)
-            {
-                return Payload.GetType().FullName;
-            }
-            else
-            {
-                return string.Format ("<null> payload");
+                if (Payload != null)
+                {
+                    return Payload.GetType().FullName;
+                }
+                else
+                {
+                    return "<null> payload";
+                }
             }
         }
 

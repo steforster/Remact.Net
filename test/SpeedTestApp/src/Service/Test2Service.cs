@@ -13,7 +13,7 @@ namespace Test2.Service
   /// </summary>
   class Test2Service
   {
-    public IActorInput Input { get { return m_Input; } } // just the ActorInput interface is public
+    public  IActorInput  Input      { get { return m_Input; } } // just the ActorInput interface is public
     public  int          Seconds;
     public  volatile int Requests;
     

@@ -30,6 +30,7 @@ namespace Remact.Net.Protocol.Wamp
                 //OnConnect = OnConnect,
                 //OnConnected = OnConnected,
             _wsChannel.SetOnDisconnect(OnDisconnect);
+
             _clientIdent = clientIdent;
             _serviceIdent = serviceIdent;
             _requestHandler = requestHandler;
@@ -41,9 +42,9 @@ namespace Remact.Net.Protocol.Wamp
         public Uri ClientUri { get { return new Uri("ws://"+_wsChannel.ClientAddress.ToString()); } }
 
 
-        public void Dispose()
+        public void OnServiceDisconnect()
         {
-            _wsChannel = null; // TODO .Dispose();
+            _wsChannel = null;
         }
 
         #region IRemactProtocolDriverCallbacks implementation
@@ -54,61 +55,62 @@ namespace Remact.Net.Protocol.Wamp
             throw new NotImplementedException();
         }
 
-        public void MessageFromService(ActorMessage message)
-        {
-            switch (message.Type)
-            {
-                case ActorMessageType.Response: ResponseFromService(message); break;
-                case ActorMessageType.Error:    ErrorFromService(message); break;
-                default:                        NotificationFromService(message); break;
-            }
-        }
 
         private void RequestNotDeserializable(int id, string errorDesc)
         {
             var error = new ErrorMessage(ErrorMessage.Code.ReqOrRspNotSerializableOnService, errorDesc);
-            var message = new ActorMessage(null, 0, id, null, null, error);
-            ErrorFromService(message);
+            OnErrorFromService(id, error);
         }
 
-        private void ResponseFromService(ActorMessage response)
+
+        /// <inheritdoc/>
+        public void OnMessageFromService(LowerProtocolMessage lower)
         {
-            string callId = response.RequestId.ToString();
-            JToken payload = null;
-            if (response.Payload != null)
+            switch (lower.Type)
             {
-                payload = response.Payload as JToken;
-                if (payload == null) payload = JToken.FromObject(response.Payload);
+                case ActorMessageType.Response: OnResponseFromService(lower.RequestId, lower.Payload); break;
+                case ActorMessageType.Error: OnErrorFromService(lower.RequestId, lower.Payload); break;
+                default: OnNotificationFromService(lower.Payload); break;
+            }
+        }
+
+
+        private void OnResponseFromService(int requestId, object payload)
+        {
+            JToken jToken = null;
+            if (payload != null)
+            {
+                jToken = payload as JToken;
+                if (jToken == null) jToken = JToken.FromObject(payload);
             }
 
             // eg. CALLRESULT message with 'null' result: [3, "CcDnuI2bl2oLGBzO", null] 
 
-            var wamp = new JArray(WampMessageType.v1CallResult, callId, payload);
+            var wamp = new JArray(WampMessageType.v1CallResult, requestId, jToken);
             _wsChannel.Send(wamp.ToString(Formatting.None));
         }
 
-        private void ErrorFromService(ActorMessage message)
+
+        private void OnErrorFromService(int requestId, object detail)
         {
-            string callId = message.RequestId.ToString();
-            string errorUri = string.Empty;
-            string errorDesc = string.Empty;
-            if (message.Payload != null)
+            string type;
+            if (detail != null)
             {
-                errorUri = message.Payload.GetType().FullName;
+                type = detail.GetType().AssemblyQualifiedName;
             }
             else
             {
-                errorUri = "ErrorFromService";
+                type = "ErrorFromService";
             }
 
             // eg. CALLERROR message with generic error: [4, "gwbN3EDtFv6JvNV5", "http://autobahn.tavendo.de/error#generic", "math domain error"]
 
-            var wamp = new JArray(WampMessageType.v1CallError, callId, errorUri, errorDesc);
+            var wamp = new JArray(WampMessageType.v1CallError, requestId, type, "");
 
-            if (message.Payload != null)
+            if (detail != null)
             {
-                var jToken = message.Payload as JToken;
-                if (jToken == null) jToken = JToken.FromObject(message.Payload);
+                var jToken = detail as JToken;
+                if (jToken == null) jToken = JToken.FromObject(detail);
 
                 wamp.Add(jToken);
             }
@@ -116,19 +118,26 @@ namespace Remact.Net.Protocol.Wamp
             _wsChannel.Send(wamp.ToString(Formatting.None));
         }
 
-        // TODO, this event comes without subscription !?
-        private void NotificationFromService(ActorMessage notification)
-        {
-            // eg. EVENT message with 'null' as payload: [8, "http://example.com/simple", null]
 
-            JToken payload = null;
-            if (notification.Payload != null)
+        private void OnNotificationFromService(object payload)
+        {
+            string type;
+            JToken jToken = null;
+            if (payload != null)
             {
-                payload = notification.Payload as JToken;
-                if (payload == null) payload = JToken.FromObject(notification.Payload);
+                type = payload.GetType().AssemblyQualifiedName;
+
+                jToken = payload as JToken;
+                if (jToken == null) jToken = JToken.FromObject(payload);
+            }
+            else
+            {
+                type = "NotificationFromService";
             }
 
-            var wamp = new JArray(WampMessageType.v1Event, notification.DestinationMethod, payload);
+            // eg. EVENT message with 'null' as payload: [8, "http://example.com/simple", null]
+
+            var wamp = new JArray(WampMessageType.v1Event, type, jToken);
             _wsChannel.Send(wamp.ToString(Formatting.None));
         }
 
@@ -137,10 +146,9 @@ namespace Remact.Net.Protocol.Wamp
         #region Alchemy callbacks
 
 
-        // DataFrame.State == Handlers.WebSocket.DataFrame.DataState.Complete
+        // message from web socket
         private void OnReceived(UserContext context)
         {
-            //Console.WriteLine("Received Data From :" + context.ClientAddress);
             int id = 0;
             bool errorReceived = false;
 
@@ -166,11 +174,8 @@ namespace Remact.Net.Protocol.Wamp
                         payload = wamp[3];
                     }
 
-                    //string portName, methodName, payloadType;
-                    //SplitProcUri((string)wamp[2], out portName, out methodName, out payloadType);
                     var message = new ActorMessage(_clientIdent, _clientIdent.OutputClientId, id,
                                                    _serviceIdent, (string)wamp[2], payload);
-                    message.PayloadType = null; // has to be converted
 
                     _requestHandler.MessageFromClient(message);
                 }
@@ -191,13 +196,11 @@ namespace Remact.Net.Protocol.Wamp
                                                    _serviceIdent, null, null);
                     if (wamp.Count > 4)
                     {
-                        message.Payload = wamp[4];
-                        message.PayloadType = errorUri; // TODO ???
+                        message.Payload = ActorMessage.Convert(wamp[4], errorUri); // errorUri is assemblyQualifiedTypeName
                     }
                     else
                     {
                         message.Payload = new ErrorMessage(ErrorMessage.Code.Undef, errorUri + ": " + errorDesc); // Errormessage from client
-                        message.PayloadType = typeof(ErrorMessage).FullName;
                     }
 
                     message.Type = ActorMessageType.Error;
@@ -207,12 +210,10 @@ namespace Remact.Net.Protocol.Wamp
                 {
                     // eg. EVENT message with 'null' as payload: [8, "http://example.com/simple", null]
 
-                    JToken payload = wamp[2];
-                    //string portName, methodName, payloadType;
-                    //SplitProcUri((string)wamp[1], out portName, out methodName, out payloadType);
+                    var eventUri = (string)wamp[1];
+                    var payload = ActorMessage.Convert(wamp[2], eventUri); // eventUri is assemblyQualifiedTypeName
                     var message = new ActorMessage(_clientIdent, _clientIdent.OutputClientId, 0,
-                                                   _serviceIdent, (string)wamp[2], payload);
-                    message.PayloadType = null; // has to be converted
+                                                   _serviceIdent, null, payload);
 
                     message.Type = ActorMessageType.Notification;
                     _requestHandler.MessageFromClient(message);
@@ -235,50 +236,5 @@ namespace Remact.Net.Protocol.Wamp
         }
 
         #endregion
-
-       /* internal static void SplitProcUri(string uri, out string portName, out string methodName, out string payloadType)
-        {
-            // <ActorPortName> / <MethodName> / <FullQualifiedPayloadType>
-            portName = null;
-            methodName = null;
-            payloadType = null;
-            if(string.IsNullOrEmpty(uri)) return;
- 
-            int i = 0;
-            while (uri[i] == '/')
-            {
-                i++; // skip leading slashes
-                if (i >= uri.Length) return;
-            }
-
-            int j = uri.IndexOf('/', i);
-            if (j < 0)
-            {
-                payloadType = uri.Substring(i);
-                return;
-            }
-
-            string first = uri.Substring(i, j - i);
-            i = j + 1;
-            j = uri.IndexOf('/', i);
-            if (j < 0)
-            {
-                methodName = first;
-                payloadType = uri.Substring(i);
-                return;
-            }
-
-            portName = first;
-            methodName = uri.Substring(i, j - i);
-            i = j + 1;
-            j = uri.IndexOf('/', i);
-            if (j < 0)
-            {
-                payloadType = uri.Substring(i);
-                return;
-            }
-
-            payloadType = uri.Substring(i, j - i);
-        }*/
     }
 }

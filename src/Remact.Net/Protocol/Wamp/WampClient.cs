@@ -18,7 +18,6 @@ namespace Remact.Net.Protocol.Wamp
     public class WampClient : IRemactProtocolDriverService
     {
         private WebSocketClient _wsClient;
-        private ConcurrentDictionary<int, ActorMessage> _outstandingRequests;
         private IRemactProtocolDriverCallbacks _callback;
         private int _lowLevelErrorCount;
         private bool _faulted;
@@ -27,7 +26,6 @@ namespace Remact.Net.Protocol.Wamp
         public WampClient(Uri websocketUri)
         {
             ServiceUri = websocketUri;
-            _outstandingRequests = new ConcurrentDictionary<int, ActorMessage>();
             _wsClient = new WebSocketClient(websocketUri.ToString())
             {
                 //OnSend = OnSend,// Message has been dequeued and passed to the socket buffer
@@ -39,8 +37,6 @@ namespace Remact.Net.Protocol.Wamp
 
         #region IRemactProtocolDriverService proxy implementation
 
-
-        public int OutstandingResponsesCount { get { return _outstandingRequests.Count; }}
 
         public Uri ServiceUri { get; private set; }
 
@@ -139,7 +135,6 @@ namespace Remact.Net.Protocol.Wamp
         public void MessageFromClient(ActorMessage msg)
         {
             string callId = msg.RequestId.ToString();
-            //string procUri = string.Concat(/*msg.Destination.Name, '/',*/ msg.DestinationMethod, '/', msg.PayloadType);
 
             // eg. CALL message for RPC with no arguments: [2, "7DK6TdN4wLiUJgNM", "http://example.com/api#howdy"]
             var wamp = new JArray(WampMessageType.v1Call, callId, msg.DestinationMethod);
@@ -152,14 +147,6 @@ namespace Remact.Net.Protocol.Wamp
                 wamp.Add(jToken);
             }
 
-            // TODO check + trace
-            if (!_outstandingRequests.TryAdd(msg.RequestId, msg))
-            {
-                ActorMessage lost;
-                _outstandingRequests.TryRemove (msg.RequestId, out lost);
-                RaLog.Error(lost.CltSndId, "response was never received");
-                _outstandingRequests.TryAdd(msg.RequestId, msg);
-            }
             _wsClient.Send(wamp.ToString(Formatting.None));
         }
 
@@ -210,19 +197,15 @@ namespace Remact.Net.Protocol.Wamp
         #region Alchemy callbacks
 
 
-        // DataFrame.State == Handlers.WebSocket.DataFrame.DataState.Complete
+        // message from web socket
         private void OnReceived(UserContext context)
         {
-            //Console.WriteLine("Received Data From :" + context.ClientAddress);
             if (_disposed)
             {
                 return;
             }
 
-            int id = 0;
-            bool errorReceived = false;
-            ActorMessage message = null;
-
+            var msg = new LowerProtocolMessage();
             try
             {
                 string json = context.DataFrame.ToString();
@@ -247,105 +230,55 @@ namespace Remact.Net.Protocol.Wamp
                 if (wampType == (int)WampMessageType.v1CallResult)
                 {
                     // eg. CALLRESULT message with 'null' result: [3, "CcDnuI2bl2oLGBzO", null]
-                    id = int.Parse((string)wamp[1]);
-                    message = GetResponseMessage(id);
-                    if (message == null)
-                    {
-                        RaLog.Error("Clt", "Received response to unknown request id " + id + " from " + ServiceUri);
-                        return;
-                    }
-
-                    message.Type = ActorMessageType.Response;
-                    JToken payload = wamp[2];
-                    message.Payload = payload;
-                    message.PayloadType = null; // has to be converted
-
-                    // For ActorInfo-requests, we expect an ActorInfo as response.
-                    //if (message.PayloadType != typeof(ActorInfo).FullName)
-                    //{
-                    //    if (!payload.HasValues && payload.Type == JTokenType.Object)
-                    //    {
-                    //        // empty responses are ReadyMessages !
-                    //        message.Payload = new ReadyMessage();
-                    //        message.PayloadType = typeof(ReadyMessage).FullName;
-                    //    }
-                    //    else
-                    //    {
-                    //        message.PayloadType = null; // other payloads will be converted in anonymous methods, when receiving.
-                    //    }
-                    //}
-
-                    _callback.MessageFromService(message); // adds source and destination
+                    msg.Type = ActorMessageType.Response;
+                    msg.RequestId = int.Parse((string)wamp[1]);
+                    msg.Payload = wamp[2]; // JToken
+                    _callback.OnMessageFromService(msg);
                 }
                 else if (wampType == (int)WampMessageType.v1CallError)
                 {
                     // eg. CALLERROR message with generic error: [4, "gwbN3EDtFv6JvNV5", "http://autobahn.tavendo.de/error#generic", "math domain error"]
-                    errorReceived = true;
+                    msg.Type = ActorMessageType.Error;
                     var requestId = (string)wamp[1];
                     var errorUri  = (string)wamp[2];
                     var errorDesc = (string)wamp[3];
 
                     if (!string.IsNullOrEmpty(requestId))
                     {
-                        id = int.Parse(requestId);
-                        message = GetResponseMessage(id);
-                    }
-
-                    if (message == null)
-                    {
-                        message = new ActorMessage(null, 0, 0, null, null, null);
+                        msg.RequestId = int.Parse(requestId);
                     }
 
                     if (wamp.Count > 4)
                     {
-                        message.Payload = wamp[4];
-                        message.PayloadType = errorUri; // TODO ???
+                        msg.Payload = ActorMessage.Convert(wamp[4], errorUri); // errorUri is assemblyQualifiedTypeName
                     }
                     else
                     {
-                        message.Payload = new ErrorMessage(ErrorMessage.Code.Undef, errorUri + ": " + errorDesc); // Errormessage from service
-                        message.PayloadType = typeof(ErrorMessage).FullName;
+                        msg.Payload = new ErrorMessage(ErrorMessage.Code.Undef, errorUri + ": " + errorDesc);
                     }
 
-                    message.Type = ActorMessageType.Error;
-                    _callback.MessageFromService(message); // adds source and destination
+                    _callback.OnMessageFromService(msg);
                 }
                 else if (wampType == (int)WampMessageType.v1Event)
                 {
                     // eg. EVENT message with 'null' as payload: [8, "http://example.com/simple", null]
 
-                    object payload = wamp[2];
-                    //string portName, methodName, payloadType;
-                    //WampClientProxy.SplitProcUri((string)wamp[1], out portName, out methodName, out payloadType);
-                    message = new ActorMessage(null, 0, 0, null, (string)wamp[1], payload);
-                    message.PayloadType = null; // has to be converted
-
-                    message.Type = ActorMessageType.Notification;
-                    _callback.MessageFromService(message); // adds source and destination
+                    msg.Type = ActorMessageType.Notification;
+                    var notifyUri = (string)wamp[1];
+                    msg.Payload = ActorMessage.Convert(wamp[2], notifyUri); // eventUri is assemblyQualifiedTypeName
+                    _callback.OnMessageFromService(msg);
                 }
                 else
                 {
-                    ResponseNotDeserializable(id, "expected wamp message type 3 (v1CallResult)");
+                    ResponseNotDeserializable(msg.RequestId, "expected wamp message type 3 (v1CallResult)");
                 }
             }
             catch (Exception ex)
             {
-                if (!errorReceived) ResponseNotDeserializable(id, ex.Message);
+                if (msg.Type != ActorMessageType.Error) ResponseNotDeserializable(msg.RequestId, ex.Message);
             }
         }
 
-        private ActorMessage GetResponseMessage(int id)
-        {
-            ActorMessage message;
-            if (!_outstandingRequests.TryRemove(id, out message))
-            {
-                return null;
-            }
-            message.Type = ActorMessageType.Response;
-            message.DestinationLambda = message.SourceLambda;
-            message.SourceLambda = null;
-            return message;
-        }
 
         // Connect failure or disposing context 
         private void OnDisconnect(UserContext context)
@@ -356,18 +289,7 @@ namespace Remact.Net.Protocol.Wamp
                 return;
             }
 
-            var copy = _outstandingRequests;
-            _outstandingRequests = new ConcurrentDictionary<int, ActorMessage>();
-
-            foreach (var msg in copy.Values)
-            {
-                msg.Type = ActorMessageType.Error;
-                msg.DestinationLambda = msg.SourceLambda;
-                msg.SourceLambda = null;
-                msg.Payload = new ErrorMessage(ErrorMessage.Code.CouldNotSend, "web socket disconnected");
-                msg.PayloadType = msg.Payload.GetType().FullName;
-                _callback.MessageFromService(msg); // adds source and destination
-            }
+            _callback.OnServiceDisconnect();
         }
 
         #endregion

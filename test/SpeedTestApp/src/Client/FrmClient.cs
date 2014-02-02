@@ -72,7 +72,6 @@ namespace Test2.Client
     {
         if (!Client1.SpeedTest)
         {
-            Client1.Log.Append("\r\n");
             Client1.Log.Append(tbService1.Text);
             int len = Client1.Log.Length;
             if (len > 10000) len = 10000;

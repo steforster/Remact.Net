@@ -23,11 +23,6 @@ namespace Remact.Net.Protocol
         PortState PortState { get; }
 
         /// <summary>
-        /// Gets the number of requests waiting for a response.
-        /// </summary>
-        int OutstandingResponsesCount { get; }
-
-        /// <summary>
         /// Opens the connection.
         /// </summary>
         /// <param name="message">A request message to return error info.</param>
@@ -63,11 +58,25 @@ namespace Remact.Net.Protocol
         Uri ClientUri { get; }
 
         /// <summary>
-        /// Occurs when a call result is returned from service, when the service sends a notification or an error message.
+        /// Occurs when a message is received from service.
         /// </summary>
-        /// <param name="message">The result of a call, when message.Type is ActorMessageType.Response. 
-        /// In this case, the type of message.Payload corresponds to the return type of the called method. Payload is null for void methods.
+        /// <param name="msg">The message in form of a LowerProtocolMessage. 
+        /// In case of Type==Response, the Payload is a JsonToken.
+        /// The Payload is converted later on to the return type of the called method.
+        /// The return Payload is null for void methods.
         /// </param>
-        void MessageFromService(ActorMessage message);
+        void OnMessageFromService(LowerProtocolMessage msg);
+
+        /// <summary>
+        /// Occurs when the service disconnects from client.
+        /// </summary>
+        void OnServiceDisconnect();
+    }
+
+    public class LowerProtocolMessage
+    {
+        public ActorMessageType Type;
+        public int RequestId;
+        public object Payload;
     }
 }

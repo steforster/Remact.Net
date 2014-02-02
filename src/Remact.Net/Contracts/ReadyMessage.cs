@@ -2,7 +2,7 @@
 // Copyright (c) 2014, github.com/steforster/Remact.Net
 
 using System;
-using System.Runtime.Serialization;// DataContract
+using System.Runtime.Serialization;// IExtensibleDataObject
 using System.Collections.Generic;  // List
 using System.Reflection;           // Assembly
 using System.Text;                 // StringBuilder

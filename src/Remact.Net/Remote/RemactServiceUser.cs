@@ -2,7 +2,6 @@
 // Copyright (c) 2014, github.com/steforster/Remact.Net
 
 using System;
-using System.ServiceModel;         // OperationContext
 using System.Net;                  // Dns
 using Newtonsoft.Json.Linq;
 using Remact.Net.Protocol;
@@ -209,9 +208,9 @@ namespace Remact.Net.Remote
             }
             else
             {
-                var message = new ActorMessage(null, 0, 0, null, null, notification);
-                message.Type = ActorMessageType.Notification;
-                _protocolCallback.MessageFromService(message);
+                var msg = new ActorMessage(null, 0, 0, null, null, notification);
+                msg.Type = ActorMessageType.Notification;
+                PostInput(msg);
             }
         }
         catch (Exception ex)
@@ -244,12 +243,19 @@ namespace Remact.Net.Remote
     }
 
     /// <summary>
-    /// Send a response to the remote client belonging to this client-stub.
+    /// Send a response, error or notification to the remote client belonging to this client-stub.
     /// </summary>
-    /// <param name="response">A <see cref="ActorMessage"/>.</param>
-    public void PostInput(ActorMessage response)
+    /// <param name="msg">A <see cref="ActorMessage"/>.</param>
+    public void PostInput(ActorMessage msg)
     {
-        _protocolCallback.MessageFromService(response);
+        var lower = new LowerProtocolMessage
+        {
+            Type = msg.Type,
+            RequestId = msg.RequestId,
+            Payload = msg.Payload
+        };
+
+        _protocolCallback.OnMessageFromService(lower);
     }
 
     /// <summary>

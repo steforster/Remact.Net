@@ -3,7 +3,6 @@
 
 using System;
 using System.Threading;
-using System.ServiceModel;         // OperationContext
 using System.Collections.Generic;
 using Remact.Net.Protocol;
 
@@ -577,7 +576,7 @@ namespace Remact.Net.Remote
 
         if (req.DestinationMethod == null) req.DestinationMethod = string.Empty;
 
-        if (req.DestinationMethod.StartsWith("Remact."))
+        if (req.DestinationMethod.StartsWith(ActorInfo.MethodNamePrefix))
         {
            ActorInfo cltReq;
            if (req.TryConvertPayload(out cltReq))

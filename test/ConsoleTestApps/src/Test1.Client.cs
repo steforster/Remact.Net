@@ -92,7 +92,7 @@ namespace Test1.Client
     // receive a message from main or from service
     static void OnMessageReceived (ActorMessage msg)
     {
-        Console.Write ("\n\r Thread="+Thread.CurrentThread.ManagedThreadId+", received: "+msg.PayloadType);
+        Console.Write ("\n\r Thread="+Thread.CurrentThread.ManagedThreadId+", received: " + msg.PayloadType);
 
         Test1CommandMessage testMessage;
         ErrorMessage errorMessage;

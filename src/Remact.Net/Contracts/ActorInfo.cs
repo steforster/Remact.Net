@@ -103,7 +103,7 @@ namespace Remact.Net
 
     /// <summary>
     /// The message may be used for several purposes.
-    /// In Json, 'Usage' is streamed as int. We do not stream this property but stream the z_usage instead.
+    /// In Json, 'Usage' is streamed as int. We do not stream this property but stream 'int usage' instead.
     /// Then we protect us from usage-enums sent by a communication partner with newer version than ours.
     /// </summary>
     [JsonIgnore]
@@ -111,11 +111,14 @@ namespace Remact.Net
     {
       get
       {
-        if (z_usage < 0 || z_usage >= (int)Use.Last) return Use.Undef;
-                                                else return (Use) z_usage;
+        if (usage < 0 || usage >= (int)Use.Last) return Use.Undef;
+                                                else return (Use) usage;
       }
-      set { z_usage = (int)value; }
+      set { usage = (int)value; }
     }
+
+    [JsonProperty]
+    private int usage;
 
     /// <summary>
     /// Usage of ActorInfo triggers functionality on service oder client side while connecting/disconnecting.
@@ -185,13 +188,7 @@ namespace Remact.Net
       Last
     }
 
-    /// <summary>
-    /// z_usage is public but used internally only! Access 'Usage' instead!
-    /// Reason: http://msdn.microsoft.com/en-us/library/bb924412%28v=VS.100%29.aspx
-    /// 'Usage' is streamed as int in order to make it backwards compatible to older communication partners
-    /// </summary>
-    public  int    z_usage;
-
+    public const string MethodNamePrefix = "Remact.ActorInfo.";
 
     /// <summary>
     /// <para>Create a message from a ActorPort.</para>

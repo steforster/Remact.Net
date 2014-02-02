@@ -2,7 +2,6 @@
 // Copyright (c) 2014, github.com/steforster/Remact.Net
 
 using System;
-using System.ServiceModel; // EndpointAddress
 using System.Collections.Generic;
 using System.Threading;    // Timer
 

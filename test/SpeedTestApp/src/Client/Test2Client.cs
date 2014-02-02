@@ -18,7 +18,7 @@ namespace Test2.Client
 
     public event Action UpdateView;
     public StringBuilder Log;
-    public IActorOutput Output { get { return _proxy.Output; } }  // just return the IActorOutput interface
+    public IActorOutput Output   { get { return _proxy.Output; } }  // just return the IActorOutput interface
     public int LastRequestIdSent { get { return _proxy.Output.LastRequestIdSent; } }
     public int ResponseCount;
     public bool SpeedTest;
@@ -64,11 +64,16 @@ namespace Test2.Client
         Log.AppendFormat("{0} {1}, thd={2}", msg.CltRcvId, msg.Payload.ToString(), Thread.CurrentThread.ManagedThreadId.ToString());
         Log.AppendLine();
 
+        ReadyMessage ready;
         if (msg.IsError)
         {
             ErrorMessage error;
             msg.TryConvertPayload(out error);
             RaLog.Warning(msg.CltRcvId, error.ToString());
+        }
+        else if (msg.TryConvertPayload(out ready))
+        {
+            RaLog.Info(msg.CltRcvId, msg.Payload.ToString());
         }
         else
         {
@@ -83,6 +88,11 @@ namespace Test2.Client
         ResponseCount++;
         if (SpeedTest)
         {
+            if (msg != null && !msg.IsResponse)
+            {
+                RaLog.Error(msg.CltRcvId, "received unexpected message " + msg.ToString());
+            }
+
             // send payload to the destination method
             var task = _proxy.SpeedTest1(new Test2Req(Test2Req.ERequestCode.Normal));
             // when the response is received asynchronously (after this method is left), call this method again

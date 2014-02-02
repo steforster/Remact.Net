@@ -144,13 +144,10 @@ namespace Remact.Net
             param[1] = msg;
             param[0] = msg.Payload; // raw
 
-            if (msg.PayloadType == null)
+            var jToken = msg.Payload as JToken;
+            if (jToken != null)
             {
-                var jToken = msg.Payload as JToken;
-                if (jToken != null)
-                {
-                    param[0] = jToken.ToObject(this.PayloadType); // deserialized
-                }
+                param[0] = jToken.ToObject(this.PayloadType); // deserialized
             }
 
             return param;

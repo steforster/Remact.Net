@@ -2,8 +2,6 @@
 // Copyright (c) 2014, github.com/steforster/Remact.Net
 
 using System;
-using System.ServiceModel;         // Channels
-using System.ServiceModel.Channels;// Binding
 using System.Reflection;           // Assembly
 using System.Net;                  // Dns
 using System.IO;                   // Files

@@ -2,13 +2,13 @@
 // Copyright (c) 2014, github.com/steforster/Remact.Net
 
 using System;
-using System.ServiceModel;
 using System.Net;            // Dns
 using System.Threading;
 using System.ComponentModel; // AsyncOperation
 using Newtonsoft.Json.Linq;
 using Remact.Net.Protocol;
 using Remact.Net.Protocol.Wamp;
+using System.Collections.Generic;
 
 namespace Remact.Net.Remote
 {
@@ -109,6 +109,12 @@ namespace Remact.Net.Remote
     /// </summary>
     protected bool m_TraceConnectBefore;
 
+    /// <summary>
+    /// Outstanding requests, key = request ID.
+    /// </summary>
+    private Dictionary<int, ActorMessage> m_OutstandingRequests; // TODO does not support multithreaded clients
+
+
     #endregion
     //----------------------------------------------------------------------------------------------
     #region Constructors, linking and connecting
@@ -120,6 +126,7 @@ namespace Remact.Net.Remote
     internal RemactClient (ActorOutput clientIdent)
     {
       m_DefaultInputHandlerForApplication = clientIdent.DefaultInputHandler;
+      m_OutstandingRequests = new Dictionary<int, ActorMessage>();
       ClientIdent = clientIdent;
       ServiceIdent = new ActorInput(); // not yet defined
       ServiceIdent.IsServiceName = true;
@@ -312,12 +319,7 @@ namespace Remact.Net.Remote
     /// <summary>
     /// Returns the number of requests that have not received a response by the service.
     /// </summary>
-    public int  OutstandingResponsesCount
-    { get {
-        if (m_protocolClient != null){
-           return m_protocolClient.OutstandingResponsesCount;
-        }else{ return 0;}
-    }}
+    public int  OutstandingResponsesCount  { get { return m_OutstandingRequests.Count; }}
 
 
     /// <summary>
@@ -414,12 +416,17 @@ namespace Remact.Net.Remote
                     , ClientIdent.Logger );
       }
     }// TraceState
-    
+
+
+    private void OpenConnectionToService(object dummy)
+    {
+        OpenConnectionToService(); // 2. try on the right sync context
+    }
+
 
     /// <summary>
-    /// Connect this Client to the prepared m_protocolClient
+    /// Connect this Client to the prepared m_protocolClient. Running on the user thread.
     /// </summary>
-    //  Running on the user thread
     private void OpenConnectionToService()
     {
         ClientIdent.OutputClientId = 0;
@@ -438,53 +445,53 @@ namespace Remact.Net.Remote
                                             ServiceIdent, null, null);
         m_protocolClient.OpenAsync(msg, this); 
         // Callback to OnOpenCompleted when channel has been opened locally (no TCP connection opened on mono).
-    }// OpenConnectionToService
+    }
 
 
     // Eventhandler, running on user thread, sent from m_protocolClient.
     void IRemactProtocolDriverCallbacks.OnOpenCompleted(object obj)
     {
-        ActorMessage request = obj as ActorMessage;
-        request.DestinationLambda = null;
-        request.SourceLambda = null;
+        ActorMessage msg = obj as ActorMessage;
+        msg.DestinationLambda = null;
+        msg.SourceLambda = null;
       
         try
         {
-            if (request.Payload != null)
+            if (msg.Payload != null)
             {   // error while opening
-                request.Type = ActorMessageType.Error;
-                request.Source = ServiceIdent;
+                msg.Type = ActorMessageType.Error;
+                msg.Source = ServiceIdent;
                 if( ServiceIdent.AddressList != null )
                 {
-                    ClientIdent.DefaultInputHandler(request); // pass the negative feedback from real service to the handler in this class
+                    ClientIdent.DefaultInputHandler(msg); // pass the negative feedback from real service to the handler in this class
                 }
                 else
                 {
-                    EndOfConnectionTries(request); // enter 'faulted' state when eg. catalog service not running
+                    EndOfConnectionTries(msg); // enter 'faulted' state when eg. catalog service not running
                 }
             }
             else
             {
                 string serviceAddr = GetSetServiceAddress();
-                request.Payload = new ActorInfo(ClientIdent, ActorInfo.Use.ClientConnectRequest);
-                request.DestinationMethod = string.Concat("Remact.", ActorInfo.Use.ClientConnectRequest);
-                //request.PayloadType = typeof(ActorInfo).FullName;
+                msg.Payload = new ActorInfo(ClientIdent, ActorInfo.Use.ClientConnectRequest);
+                msg.DestinationMethod = string.Concat(ActorInfo.MethodNamePrefix, ActorInfo.Use.ClientConnectRequest);
   
                 if (ClientIdent.TraceConnect) {
-                    if (m_boTemporaryCatalogConn) RaLog.Info(request.CltSndId, string.Concat("Temporary connecting .....: '", serviceAddr, "'"), ClientIdent.Logger);
-                    else RaLog.Info(request.CltSndId, string.Concat("Connecting svc: '", serviceAddr, "'"), ClientIdent.Logger);
+                    if (m_boTemporaryCatalogConn) RaLog.Info(msg.CltSndId, string.Concat("Temporary connecting .....: '", serviceAddr, "'"), ClientIdent.Logger);
+                                             else RaLog.Info(msg.CltSndId, string.Concat("Connecting svc: '", serviceAddr, "'"), ClientIdent.Logger);
                 }
 
-                // send first connection request on user thread --> response will be received on this thread also
-                m_protocolClient.MessageFromClient(request);
+                // send first connection request to RemactService
+                m_OutstandingRequests.Add(msg.RequestId, msg);
+                m_protocolClient.MessageFromClient(msg);
             }
         }
         catch (Exception ex)
         {
-            request.Type = ActorMessageType.Error;
-            request.Source = ServiceIdent;
-            request.Payload = new ErrorMessage(ErrorMessage.Code.CouldNotStartConnect, ex);
-            EndOfConnectionTries(request); // enter 'faulted' state when eg. configuration is incorrect
+            msg.Type = ActorMessageType.Error;
+            msg.Source = ServiceIdent;
+            msg.Payload = new ErrorMessage(ErrorMessage.Code.CouldNotStartConnect, ex);
+            EndOfConnectionTries(msg); // enter 'faulted' state when eg. configuration is incorrect
         }
     }// OnOpenCompleted
 
@@ -518,50 +525,134 @@ namespace Remact.Net.Remote
 #endif
     }
 
+
+    private bool TryGetResponseMessage(int id, out ActorMessage msg)
+    {
+        if (!m_OutstandingRequests.TryGetValue(id, out msg))
+        {
+            return false;
+        }
+
+        m_OutstandingRequests.Remove(id);
+        msg.DestinationLambda = msg.SourceLambda;
+        msg.SourceLambda = null;
+        msg.Source = ServiceIdent;
+        msg.Destination = ClientIdent;
+        msg.ClientId = ClientIdent.OutputClientId;
+        return true;
+    }
+
+
     Uri IRemactProtocolDriverCallbacks.ClientUri { get { return ClientIdent.Uri; } }
 
+
     // sent from m_protocolClient
-    void IRemactProtocolDriverCallbacks.MessageFromService(ActorMessage message)
+    void IRemactProtocolDriverCallbacks.OnServiceDisconnect()
     {
         if (ClientIdent.IsMultithreaded || ClientIdent.SyncContext == null)
         {
-            throw new NotImplementedException("must sync to user thread");
+            OnServiceDisconnectOnActorThread(null);
         }
         else
         {
-            message.Source = ServiceIdent;
-            message.Destination = ClientIdent;
-            message.ClientId = ClientIdent.OutputClientId;
-            ClientIdent.SyncContext.Post(OnIncomingMessageOnActorThread, message);
+            ClientIdent.SyncContext.Post(OnServiceDisconnectOnActorThread, null);
         }
     }
+
+
+    private void OnServiceDisconnectOnActorThread(object obj)
+    {
+        m_boTimeout = true;
+        var copy = m_OutstandingRequests;
+        m_OutstandingRequests = new Dictionary<int, ActorMessage>();
+
+        foreach (var msg in copy.Values)
+        {
+            var lower = new LowerProtocolMessage
+            {
+                Type = ActorMessageType.Error,
+                RequestId = msg.RequestId,
+                Payload = new ErrorMessage(ErrorMessage.Code.CouldNotSend, "web socket disconnected")
+            };
+
+            OnIncomingMessageOnActorThread(lower);
+        }
+    }
+
+    // sent from m_protocolClient
+    void IRemactProtocolDriverCallbacks.OnMessageFromService(LowerProtocolMessage msg)
+    {
+        if (ClientIdent.IsMultithreaded || ClientIdent.SyncContext == null)
+        {
+            OnIncomingMessageOnActorThread(msg);
+        }
+        else
+        {
+            ClientIdent.SyncContext.Post(OnIncomingMessageOnActorThread, msg);
+        }
+    }
+
 
     private void OnIncomingMessageOnActorThread(object obj)
     {
         try
         {
-            var message = (ActorMessage)obj;
-            // TODO m_boTimeout    = x.timeout;
+            var lower = (LowerProtocolMessage)obj;
+
+            ActorMessage msg;
+
+            switch (lower.Type)
+            {
+                case ActorMessageType.Response:
+                    {
+                        if (!TryGetResponseMessage(lower.RequestId, out msg))
+                        {
+                            RaLog.Warning(ClientIdent.Name, "skipped unexpected response with id " + lower.RequestId);
+                            return;
+                        }
+                    }
+                    break;
+
+                case ActorMessageType.Error:
+                    {
+                        if (!TryGetResponseMessage(lower.RequestId, out msg))
+                        {
+                            msg = new ActorMessage(ServiceIdent, ClientIdent.OutputClientId, lower.RequestId,
+                                                   ClientIdent, string.Empty, lower.Payload);
+                        }
+                    }
+                    break;
+
+                default:
+                    {
+                        msg = new ActorMessage(ServiceIdent, ClientIdent.OutputClientId, 0,
+                                               ClientIdent, string.Empty, lower.Payload);
+                    }
+                    break;
+            }
+
+            msg.Type = lower.Type;
+            msg.Payload = lower.Payload;
 
             if (!m_boTimeout)
             {
-                var m = message.Payload as IExtensibleActorMessage;
+                var m = msg.Payload as IExtensibleActorMessage;
                 if (!ClientIdent.IsMultithreaded)
                 {
                     if (m != null) m.BoundSyncContext = SynchronizationContext.Current;
                 }
                 if (m != null) m.IsSent = true;
 
-                if (message.DestinationMethod == null) message.DestinationMethod = string.Empty;
+                if (msg.DestinationMethod == null) msg.DestinationMethod = string.Empty;
 
-                if (message.IsResponse)
+                if (msg.IsResponse)
                 {
-                    LastRequestIdReceived = message.RequestId;
-                    if (message.DestinationMethod.StartsWith("Remact."))
+                    LastRequestIdReceived = msg.RequestId;
+                    if (msg.DestinationMethod.StartsWith(ActorInfo.MethodNamePrefix))
                     {
                         ActorInfo actorInfo;
-                        if (message.TryConvertPayload(out actorInfo)
-                         && HandleActorInfo(message, actorInfo))
+                        if (msg.TryConvertPayload(out actorInfo)
+                         && HandleActorInfo(msg, actorInfo))
                         {
                             return;
                         }
@@ -569,7 +660,7 @@ namespace Remact.Net.Remote
                 }
             }
 
-            ClientIdent.DispatchMessage(message);
+            ClientIdent.DispatchMessage(msg);
         }
         catch (Exception ex)
         {
@@ -792,25 +883,30 @@ namespace Remact.Net.Remote
       }
     }
 
-    private void OpenConnectionToService(object dummy)
-    {
-        OpenConnectionToService(); // 2. try on the right sync context
-    }
 
     /// <summary>
     /// Post a request to the input of the remote partner. It will be sent over the network.
     /// Called from ClientIdent, when SendOut a message to remote partner.
     /// </summary>
-    /// <param name="request">A <see cref="ActorMessage"/></param>
-    public void PostInput (ActorMessage request)
+    /// <param name="msg">A <see cref="ActorMessage"/></param>
+    public void PostInput (ActorMessage msg)
     {
         ErrorMessage err = null;
         if (!IsFaulted && ClientIdent.OutputClientId > 0) // Send() may be used during connection buildup as well
         {
             try
             {
-                if (ClientIdent.TraceSend) RaLog.Info(request.CltSndId, request.ToString(), ClientIdent.Logger);
-                m_protocolClient.MessageFromClient(request);
+                if (ClientIdent.TraceSend) RaLog.Info(msg.CltSndId, msg.ToString(), ClientIdent.Logger);
+
+                ActorMessage lost;
+                if (m_OutstandingRequests.TryGetValue(msg.RequestId, out lost))
+                {
+                    m_OutstandingRequests.Remove(msg.RequestId);
+                    RaLog.Error(lost.CltSndId, "response was never received");
+                }
+
+                m_OutstandingRequests.Add(msg.RequestId, msg);
+                m_protocolClient.MessageFromClient(msg);
             }
             catch (Exception ex)
             {
@@ -824,18 +920,10 @@ namespace Remact.Net.Remote
 
         if (err != null)
         {
-            request.SendResponseFrom(ServiceIdent, err, null);
+            msg.SendResponseFrom(ServiceIdent, err, null);
         }
     }
 
-    /// <summary>
-    /// the intuitive action is to send the message to remote service.
-    /// </summary>
-    /// <param name="msg">A <see cref="ActorMessage"/></param>
-    //public void SendOut (ActorMessage msg)
-    //{
-    //  PostInput(msg);
-    //}
 
     /// <summary>
     /// Asynchronously send an ActorInfo to the service.
@@ -843,36 +931,19 @@ namespace Remact.Net.Remote
     /// <param name="request">The message to send.</param>
     public ActorMessage SendActorInfo(ActorInfo request)
     {
-        var method = string.Concat("Remact.", ActorInfo.Use.ClientConnectRequest);
+        var method = string.Concat(ActorInfo.MethodNamePrefix, ActorInfo.Use.ClientConnectRequest);
         ActorMessage msg = new ActorMessage(ClientIdent, ClientIdent.OutputClientId, ClientIdent.NextRequestId,
                                            ServiceIdent, method, request, null);
         PostInput(msg);
         return msg;
     }
 
-    /// <summary>
-    /// <para>Send a message to the service. Do not wait here for the response.</para>
-    /// <para>The response is asynchronously passed to the extension method "On", normally used as asyncResponseHandler.</para>
-    /// <para>If the sending thread has a message queue, the response is executed by the same thread as the send operation was.</para>
-    /// <para>If the response could not be handled by the On-extension methods, the default MessageHandler passed to TryConnect() is called.</para>
-    /// <para>Example:</para>
-    /// <para>Send (request, rsp => rsp.On&lt;ReadyMessage>(idle => {do something with idle message 'idle'})</para>
-    /// <para>.On&lt;ErrorMessage>(err => {do something with error message 'err'}));</para>
-    /// </summary>
-    /// <param name="request">The message to send.</param>
-    /// <param name="asyncResponseHandler"><see cref="ActorMessageExtensions.On{T}(ActorMessage, Action{T})"/></param>
-    //public ActorMessage SendOut(object request, AsyncResponseHandler asyncResponseHandler)
-    //{
-    //    ActorMessage id = new ActorMessage(ClientIdent, ClientIdent.OutputClientId, ClientIdent.NextRequestId,
-    //                                       ServiceIdent, null, request, asyncResponseHandler);
-    //    PostInput  (id);
-    //    return id;
-    //}
 
     /// <summary>
     /// Gets the Uri of a linked service.
     /// </summary>
     public Uri Uri {get{return ServiceIdent.Uri;}}
+
 
     #endregion
   }

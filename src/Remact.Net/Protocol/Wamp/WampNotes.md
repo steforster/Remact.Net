@@ -1,28 +1,40 @@
 ﻿
-Remact uses only the following [Wamp](http://wamp.ws/) message types:
-v1Call, v1CallResult, v1CallError, v1Event.
+Limits of the implementation of Wamp in Remact
+----------------------------------------------
 
-The normal client server pattern is supported by **v1Call** and **v1CallResult**:
-ActorOutputs send requests to an ActorInput and get the response to this request.
-For a v1Call, Remact supports only ONE argument.
-This means, there are a maximum of 4 JTokens in the JArray of a v1Call-message.
+Remact uses only the following [Wamp](http://wamp.ws/) message types:  
+v1Call, v1CallResult, v1CallError, v1Event.  
 
-Event notifications do not have to be subscribed. A server can send notifications to each connected client.
-This means, that an ActorInput will send a **v1Event** message to its connected ActorOutput.
+The request/response pattern is supported by **v1Call** and **v1CallResult**:  
+For a v1Call, Remact supports only ONE argument.  
+This means, there are a maximum of 4 JTokens in the JArray of a v1Call-message.  
 
-**v1CallError** is sent from server to client when the request cannot be processed on the server side.
-Additionally v1CallError can be sent from client to server when the response or the notification cannot 
-be processed on the client side.
+Event notifications do not have to be subscribed in Remact. A server can send notifications to each connected client.  
+'Publish to all' means, an ActorInput will notify a **v1Event** message to all its connected client actors.  
 
-**Curie's** are not used by Remact so far.
+**v1CallError** is sent from server to client when the request cannot be processed on the server side.  
+Additionally in Remact, a v1CallError can be sent from client to server when the response or the notification cannot   
+be processed on the client side.  
 
-**Uri's** are case sensitive, they do have the following format:
+**Curie's** are not used in Remact.
 
-	a) <MethodName> 
-    b) Remact.ActorInfo.<Use-enum>
-	c) <Type.FullName of the error detail>
+**Uri's** are case sensitive, they do have one of the following formats in Remact:
 
-Variant (a) is used for v1Call, v1Event.
-Variant (b) is used for Remact internal messages (v1Call, v1CallResult).
-Variant (c) is used for v1CallError messages
+	a) <MethodName>  
+    b) Remact.ActorInfo.<Use-enum>  
+	c) <Type.AssemblyQualifiedTypeName>  
+
+Variant (a) is used for v1Call. The method name is registered in the Dispatcher of the receiving ActorInput.  
+Variant (b) is used for messages to be processed by the RemactService or the RemactCatalog (v1Call, v1CallResult).  
+Variant (c) is used in v1CallError messages to transfer the .NET type of error detail.  
+Variant (c) is used in v1Event messages to transfer the .NET type of the payload.  
+
+When the AssemblyQualifiedTypeName of variant (c) is empty, the errorDetail or notification payload is passed as 
+Json.Net.JToken to the application.
+
+An example for an AssemblyQualifiedTypeName of variant (c) is:
+
+    "Remact.Net.ErrorMessage, Remact.Net, Version=0.1.0.0, Culture=neutral, PublicKeyToken=null"
+
+The string contains: Type.FullName, Assembly.Name, Assembly.Version, Assembly.Culture, Assembly.PublicKeyToken.
  
