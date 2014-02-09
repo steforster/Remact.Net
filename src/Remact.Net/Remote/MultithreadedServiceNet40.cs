@@ -68,7 +68,7 @@ namespace Remact.Net.Remote
                 else
                 {
                     var task = DoRequestAsync(message);
-                    message = task.Result; // blocking wait!
+                    //message = task.Result; // blocking wait!
                     // Response and optional notifications have been returned to the client already
                     return;
                 }

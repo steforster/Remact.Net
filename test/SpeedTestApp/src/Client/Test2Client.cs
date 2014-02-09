@@ -108,7 +108,7 @@ namespace Test2.Client
         Log.AppendFormat("{0} {1}, thd={2}", msg.CltRcvId, msg.Payload.ToString(), Thread.CurrentThread.ManagedThreadId.ToString());
         if (_proxy.Output.OutstandingResponsesCount != 0) 
         { 
-            Log.Append(", out="); 
+            Log.Append(", ## missing replies: ");
             Log.Append(Output.OutstandingResponsesCount); 
         }
         Log.AppendLine();

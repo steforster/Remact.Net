@@ -931,7 +931,7 @@ namespace Remact.Net.Remote
     /// <param name="request">The message to send.</param>
     public ActorMessage SendActorInfo(ActorInfo request)
     {
-        var method = string.Concat(ActorInfo.MethodNamePrefix, ActorInfo.Use.ClientConnectRequest);
+        var method = string.Concat(ActorInfo.MethodNamePrefix, request.Usage);
         ActorMessage msg = new ActorMessage(ClientIdent, ClientIdent.OutputClientId, ClientIdent.NextRequestId,
                                            ServiceIdent, method, request, null);
         PostInput(msg);

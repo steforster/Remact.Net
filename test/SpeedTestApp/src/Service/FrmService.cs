@@ -60,6 +60,7 @@ namespace Test2.Service
       m_Service = new Test2Service ();
       m_Service.Input.LinkInputToNetwork ("Test2.Service", 40002);
       this.Text = m_Service.Input.AppIdentification;
+      _milliseconds = Environment.TickCount;
     }
 
     #endregion
@@ -81,6 +82,7 @@ namespace Test2.Service
     }
 
     private int  m_Seconds=-1;
+    private int _milliseconds;
     //---------------------------------------------------
     private void timer1_Tick (object sender, EventArgs e)
     {
@@ -92,18 +94,23 @@ namespace Test2.Service
       {
         m_Service.DoPeriodicTasks ();
 
-        if (m_Seconds % 3 == 0)
+        int requestCount = m_Service.Requests;
+        int current = Environment.TickCount;
+        int dt = current - _milliseconds;
+
+        if (dt > 2500)
         {
+          m_Service.Requests -= requestCount;
+          _milliseconds = current;
           tbStatus.Text  = "listening on '"+m_Service.Input.Uri;
-          if (m_Service.Requests > 150)
+          if (requestCount > 150)
           {
-              tbStatus.Text += "'\r\n" + (m_Service.Requests / 3).ToString() + " Requests / sec";
+              tbStatus.Text += "'\r\n" + (requestCount * 1000 / dt).ToString() + " Requests / sec";
           }
           else
           {
-              tbStatus.Text += "'\r\n" + Math.Round((float)m_Service.Requests / 3.0, 1).ToString() + " Requests / sec";
+              tbStatus.Text += "'\r\n" + Math.Round((float)requestCount * 1000.0 / dt, 1).ToString() + " Requests / sec";
           }
-          m_Service.Requests = 0;
         }
       }
       catch (Exception ex)
