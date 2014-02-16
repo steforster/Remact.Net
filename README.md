@@ -10,9 +10,9 @@ It runs in Microsoft .NET and Linux-Mono environments.
 Remact.Net is work in progress. Some integration test are running.  
 [AsyncWcfLib](http://sourceforge.net/projects/asyncwcflib/) is the predecessor of Remact.Net.
 
-The motivation for this new project is improved support for bidirectional communication,   
+The motivation for this new project is improved support for bidirectional communication,  
 higher performance on Linux/Mono based environments and wider interoperability  
-So that actors written in Java or JavaScript (browser based actors) can participate.
+so that actors written in Java or JavaScript (browser based actors) can participate.
 
 
 
@@ -24,6 +24,7 @@ The following goals have been reached:
 - [*] Local actors (message passing between threads)
 - [*] Remote actors (message passing between hosts or processes)
 - [*] WebSockets, Json and other open standards are used to link Remact actors.
+- [*] High throughput on Linux and Windows: More than 5000 request/respose pairs per second.
 
 
 
@@ -49,7 +50,7 @@ I would like to thank all participants for their contribution to the open source
 
 * [WebSocket](http://tools.ietf.org/html/rfc6455), the IETF standard RFC6455
 * [Alchemy-Websockets](https://github.com/Olivine-Labs/Alchemy-Websockets), a class library from Olivine-Labs.
-  I had to improve the c# client side part. Therefore, I created another [fork](https://github.com/steforster/Alchemy-Websockets.git) of this project.
+  I had to considerably improve this library. Therefore, I created another [fork](https://github.com/steforster/Alchemy-Websockets.git) of this project.
 * [WAMP](http://wamp.ws/), the WebSocket Application Messaging Protocol
 * [Newtonsoft.Json](https://github.com/JamesNK/Newtonsoft.Json), a class library for Json serialization
 * [Log4Net](http://logging.apache.org/log4net/), logging component from Apache
