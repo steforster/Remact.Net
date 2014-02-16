@@ -49,13 +49,20 @@ Remact.Net is built on open standards and uses open source components.
 I would like to thank all participants for their contribution to the open source community.
 
 * [WebSocket](http://tools.ietf.org/html/rfc6455), the IETF standard RFC6455
+
 * [Alchemy-Websockets](https://github.com/Olivine-Labs/Alchemy-Websockets), a class library from Olivine-Labs.
   I had to considerably improve this library. Therefore, I created another [fork](https://github.com/steforster/Alchemy-Websockets.git) of this project.
+
 * [WAMP](http://wamp.ws/), the WebSocket Application Messaging Protocol
+
 * [Newtonsoft.Json](https://github.com/JamesNK/Newtonsoft.Json), a class library for Json serialization
+
 * [Log4Net](http://logging.apache.org/log4net/), logging component from Apache
+
 * [NUnit](http://www.nunit.org/), unit testing infrastructure
+
 * [Nito.Async.ActionThread](http://nitoasync.codeplex.com/) is used for testing console applications
+
 * [WampSharp](https://github.com/darkl/WampSharp) is not used as a component, but I have lent some ideas from this WAMP implementation
 
 
