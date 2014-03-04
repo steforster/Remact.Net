@@ -56,6 +56,7 @@ namespace Remact.Net
 
         // static configuration
         Alchemy.Handlers.Handler.FastDirectSendingMode = true;
+        CatalogHost = "localhost";
     }
 
     #endregion
@@ -123,14 +124,6 @@ namespace Remact.Net
         {
             RaLog.Error("Svc:", "No service found on '" + absolutePath + "' to connect client " + userContext.ClientAddress);
         }
-
-        //if (ServiceIdent.Uri == null)
-        //{
-        //    // TODO
-        //    UriBuilder uri = new UriBuilder(OperationContext.Current.Channel.LocalAddress.Uri);
-        //    uri.Host = ServiceIdent.HostName;
-        //    ServiceIdent.Uri = uri.Uri;
-        //}
     }
 
     /// <summary>
@@ -147,6 +140,20 @@ namespace Remact.Net
     #endregion
     //----------------------------------------------------------------------------------------------
     #region == Remact.Catalog configuration ==
+
+    /// <summary>
+    /// Default = false. When set to true: No input of this application will publish its service name to the Remact.Catalog. No output may be connected by service name only.
+    /// </summary>
+    public bool DisableCatalogClient
+    {
+        get { return RemactCatalogClient.Instance.DisableCatalogClient; }
+        set { RemactCatalogClient.Instance.DisableCatalogClient = value; }
+    }
+
+    /// <summary>
+    /// Normally the Remact.Catalog is running on every host having services. Therefore the default hostname is 'localhost'.
+    /// </summary>
+    public virtual string   CatalogHost { get; set; }
 
     /// <summary>
     /// The Remact.Catalog service listens on this port. The Remact.Catalog must be running on every host having services.
@@ -211,7 +218,7 @@ namespace Remact.Net
     public virtual bool    IsAppIdUniqueInPlant (int appId) {return appId >= 100;}
 
     /// <summary>
-    /// When ApplicationInstance remains 0, the operating system process id is used as a application instance payload for communication and trace.
+    /// When ApplicationInstance is 0, the operating system process id is used for application identification.
     /// </summary>
     public virtual bool    IsProcessIdUsed      (int appId) {return appId == 0;}
 
@@ -265,9 +272,8 @@ namespace Remact.Net
     /// Library users may change here how to extract the application instance id from commandline arguments.
     /// </summary>
     /// <param name="args">the commandline arguments passed to Main()</param>
-    /// <param name="traceWriter">null or the plugin to write trace</param>
-    /// <param name="installExitHandler">when true: install handlers for normal and exceptional application exit</param>
-    public static void ApplicationStart (string[] args, RaLog.ITracePlugin traceWriter)
+    /// <param name="logWriter">null or the plugin to write trace</param>
+    public static void ApplicationStart (string[] args, RaLog.ILogPlugin logWriter)
     {
         int appInstance; // by default the first commandline argument
         if (args.Length == 0 || !int.TryParse(args[0], out appInstance))
@@ -275,7 +281,7 @@ namespace Remact.Net
             appInstance = 0; // use ProcessId
         }
 
-        RaLog.UsePlugin (traceWriter);
+        RaLog.UsePlugin (logWriter);
         RaLog.Start (appInstance);
         RemactApplication.InstallExitHandler();
         RaLog.Run(); // open file and write first messages
@@ -284,7 +290,7 @@ namespace Remact.Net
     protected string m_LogFolder = null;
 
     /// <summary>
-    /// Get the folder name where tracefiles may be stored. 
+    /// Get the folder name where log files may be stored. 
     /// </summary>
     public virtual string LogFolder
     {
@@ -295,16 +301,19 @@ namespace Remact.Net
         m_LogFolder = sBase + "/../logs";
         if (Directory.Exists(m_LogFolder)) return m_LogFolder;
 
-        m_LogFolder = sBase + "/../../logs";
+        m_LogFolder = Path.GetFullPath(sBase + "/../../logs");
         if (Directory.Exists(m_LogFolder)) return m_LogFolder;
 
-        m_LogFolder = sBase + "/../../../logs";
+        m_LogFolder = Path.GetFullPath(sBase + "/../../../logs");
         if (Directory.Exists(m_LogFolder)) return m_LogFolder;
 
-        m_LogFolder = sBase + "/../../../../logs";
+        m_LogFolder = Path.GetFullPath(sBase + "/../../../../logs");
         if (Directory.Exists(m_LogFolder)) return m_LogFolder;
 
-        // store trace beside .exe file, if no other tracepath exists
+        m_LogFolder = Path.GetFullPath(sBase + "/../../../../../logs");
+        if (Directory.Exists(m_LogFolder)) return m_LogFolder;
+
+        // store logs beside .exe file, if no other logs path exists
         m_LogFolder = sBase;
         return m_LogFolder;
       }

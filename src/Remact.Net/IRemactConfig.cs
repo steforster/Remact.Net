@@ -18,15 +18,26 @@ namespace Remact.Net
     //----------------------------------------------------------------------------------------------
     #region == Remact.Catalog configuration ==
 
+
+    /// <summary>
+    /// Default = false. When set to true: No input of this application will publish its service name to the Remact.Catalog. No output may be connected by service name only.
+    /// </summary>
+    bool DisableCatalogClient { get; set; }
+
+    /// <summary>
+    /// Normally the Remact.Catalog is running on every host having services. Therefore the default hostname is 'localhost'.
+    /// </summary>
+    string CatalogHost { get; set; }
+
     /// <summary>
     /// The Remact.Catalog service listens on this port. The Remact.Catalog must be running on every host having services.
     /// </summary>
-    int      CatalogPort {get;}
+    int    CatalogPort {get;}
     
     /// <summary>
     /// The Remact.Catalog service listens on this name.
     /// </summary>
-    string   CatalogServiceName {get;}
+    string CatalogServiceName {get;}
     
 
     #endregion
@@ -60,7 +71,7 @@ namespace Remact.Net
     bool    IsAppIdUniqueInPlant (int appId);
 
     /// <summary>
-    /// When ApplicationInstance remains 0, the operating system process id is used as a application instance id for communication and trace.
+    /// When ApplicationInstance is 0, the operating system process id is used for application identification.
     /// </summary>
     bool    IsProcessIdUsed      (int appId);
 
@@ -81,10 +92,10 @@ namespace Remact.Net
 
     #endregion
     //----------------------------------------------------------------------------------------------
-    #region == Tracing ==
+    #region == Logging ==
 
     /// <summary>
-    /// Get the folder name where tracefiles may be stored. 
+    /// Get the folder name where log files are stored. 
     /// </summary>
     string LogFolder  {get;}
 

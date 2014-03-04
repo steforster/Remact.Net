@@ -17,118 +17,64 @@ namespace Remact.Catalog
   /// </summary>
   class CatalogService
   {
-    //----------------------------------------------------------------------------------------------
-    #region Public Methods
-
-
     public void OnClientConnectedOrDisconnected (ActorMessage id)
     {
         Program.Catalog.SvcRegisterChanged = true;
     }
 
-    public void OnRequest (ActorMessage id)
+    public void OnUnknownRequest (ActorMessage msg)
     {
-        ActorInfo service = id.Payload as ActorInfo;
-        bool ok = false;
-        if (service != null && service.IsServiceName)
+        RaLog.Warning(msg.SvcRcvId, "Unknown request or no service: " + msg.Payload.ToString());
+        msg.SendResponse(new ErrorMessage(ErrorMessage.Code.AppRequestNotAcceptedByService, "Remact.CatalogService"));
+    }
+
+    // service request method implements IRemactCatalog
+    private ReadyMessage InputIsOpen(ActorInfo actorInput, ActorMessage msg)
+    {
+        Program.Catalog.RegisterService(actorInput, msg.SvcRcvId);
+        return new ReadyMessage();
+    }
+
+    // service request method implements IRemactCatalog
+    ReadyMessage InputIsClosed(ActorInfo actorInput, ActorMessage msg)
+    {
+        Program.Catalog.RegisterService(actorInput, msg.SvcRcvId);
+        return new ReadyMessage();
+    }
+
+    // service request method implements IRemactCatalog
+    ActorInfo LookupInput(string actorInputName, ActorMessage msg)
+    {
+        ActorInfo found = null;
+        foreach (ActorInfo s in Program.Catalog.SvcRegister.Item)
         {
-            switch (service.Usage)
+            if (s.Name == actorInputName && s.IsServiceName)
             {
-                case ActorInfo.Use.ServiceEnableRequest:  ok = RegisterService(service, id); break;
-                case ActorInfo.Use.ServiceDisableRequest: ok = RegisterService(service, id); break;
-                case ActorInfo.Use.ServiceAddressRequest: ok = GetAddress(service, id); break;
-                default: break;// continue below
+                found = new ActorInfo(s); // create a copy in order not to change the SvcRegister
+                found.Usage = ActorInfo.Use.ServiceAddressResponse;
+                break;
             }
         }
 
-        ActorInfoList list = id.Payload as ActorInfoList;
-        if (list != null)
+        if (found == null)
         {
-            ok = RegisterList(list, id);
+            msg.SendResponse(new ErrorMessage(ErrorMessage.Code.AppDataNotAvailableInService,
+              "Service name = '" + actorInputName + "' not registered in '" + Program.Catalog.Service.Uri + "'"));
         }
 
-
-        if (!ok)
-        {
-            RaLog.Warning(id.SvcRcvId, "Unknown request or no service: " + id.Payload.ToString());
-            id.SendResponse(new ErrorMessage(ErrorMessage.Code.AppRequestNotAcceptedByService, "Remact.CatalogService"));
-        }
+        return found;
     }
 
-
-    #endregion
-    //----------------------------------------------------------------------------------------------
-    #region Private Methods
-
-    // A single service entry is beeing enabled, disabled or updated
-    // return the service info as response
-    private bool RegisterService (ActorInfo req, ActorMessage id)
+    // service request method implements IRemactCatalog
+    ActorInfoList SynchronizeCatalog(ActorInfoList serviceList, ActorMessage msg)
     {
-      ActorInfo response = req;
-      if (Program.Catalog.RegisterService (req, id.SvcRcvId))
-      {
-        // req is used in the SvcRegister now. We have to create a copy
-        response = new ActorInfo(req);
-      }
-
-      // reply the registered service
-      if (req.Usage == ActorInfo.Use.ServiceEnableRequest)
-      {
-        response.Usage = ActorInfo.Use.ServiceEnableResponse;
-      }
-      else 
-      {
-        response.Usage = ActorInfo.Use.ServiceDisableResponse;
-      }
-
-      id.SendResponse (response);
-      return true;
-    }
-
-
-    // A list of service entries is beeing enabled, disabled or updated
-    // return our list as response, to synchronize the peer catalog
-    private bool RegisterList (ActorInfoList list, ActorMessage id)
-    {
-        RaLog.Info( id.SvcRcvId, "PeerRtr sends list containing " + list.Item.Count + " services." );
-        foreach( ActorInfo s in list.Item )
+        RaLog.Info(msg.SvcRcvId, "Peer catalog sends list containing " + serviceList.Item.Count + " services.");
+        foreach (ActorInfo s in serviceList.Item)
         {
-            Program.Catalog.RegisterService (s, id.SvcRcvId);
+            Program.Catalog.RegisterService(s, msg.SvcRcvId);
         }
-        id.SendResponse (Program.Catalog.SvcRegister);
-        return true;
+
+        return Program.Catalog.SvcRegister;
     }
-    
-
-    // GetAddress: Search URI (with TCP port number) of a registered service
-    private bool GetAddress (ActorInfo search, ActorMessage id)
-    {
-      bool found = false;
-      foreach (ActorInfo s in Program.Catalog.SvcRegister.Item)
-      {
-        if (s.Name == search.Name
-         && s.IsServiceName == search.IsServiceName)
-        {
-          search = new ActorInfo (s); // create a copy in order not to change the SvcRegister
-          search.Usage = ActorInfo.Use.ServiceAddressResponse;
-          found = true;
-          break;
-        }
-      }
-
-      if (!found)
-      {
-        id.SendResponse (new ErrorMessage (ErrorMessage.Code.AppDataNotAvailableInService,
-          "Service name = '" + search.Name + "' not registered in '" + Program.Catalog.Service.Uri + "'"));
-      }
-      else
-      {
-        id.SendResponse (search);
-      }
-      return true;
-    }// GetAddress
-
-    #endregion
-
-  }// class CatalogService
-}// namespace
+  }
+}

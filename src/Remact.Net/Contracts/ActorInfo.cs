@@ -25,7 +25,7 @@ namespace Remact.Net
     public bool    IsServiceName;
     
     /// <summary>
-    /// Identification in Trace and name of endpoint address in App.config file.
+    /// Identification in logs and name of endpoint address in App.config file.
     /// </summary>
     public string  Name;
     
@@ -121,6 +121,7 @@ namespace Remact.Net
     private int usage;
 
     /// <summary>
+    /// TODO replace this by bool Active
     /// Usage of ActorInfo triggers functionality on service oder client side while connecting/disconnecting.
     /// Use is set to ServiceEnableRequest when a Service is opened or ClientConnectRequest when a client is connected. 
     /// Use is set to another state when a Service is closed or a client is disconnected or a timeout has occured. 
@@ -133,14 +134,10 @@ namespace Remact.Net
       Undef,
       
       /// <summary>
-      /// A constructor has been called that sets the own address of a service or client.
-      /// </summary>
-      MyAddress,
-      
-      /// <summary>
       /// The identified client has sent a connect request to its service.
       /// </summary>
       ClientConnectRequest,
+
       /// <summary>
       /// The identified service has accepted the connect request from a client.
       /// </summary>
@@ -149,34 +146,18 @@ namespace Remact.Net
       /// <summary>
       /// The identified client has sent a disconnect request to its service.
       /// </summary>
-      ClientDisconnectRequest,
-      /// <summary>
-      /// The identified service has accepted the disconnect request from a client.
-      /// </summary>
-      ServiceDisconnectResponse,
+      ClientDisconnectNotification,
 
       /// <summary>
       /// The identified service has sent a register request to Remact.Catalog.
       /// </summary>
       ServiceEnableRequest,
-      /// <summary>
-      /// The identified service has been registered in Remact.Catalog.
-      /// </summary>
-      ServiceEnableResponse,
 
       /// <summary>
       /// The identified service is going to be closed, it has informed Remact.Catalog about it.
       /// </summary>
       ServiceDisableRequest,
-      /// <summary>
-      /// The identified service is marked as closed in Remact.Catalog.
-      /// </summary>
-      ServiceDisableResponse,
 
-      /// <summary>
-      /// The service name is going to be looked up in Remact.Catalog.
-      /// </summary>
-      ServiceAddressRequest,
       /// <summary>
       /// The complete, matching service identification has been found in Remact.Catalog registry.
       /// </summary>
@@ -335,8 +316,6 @@ namespace Remact.Net
 
       switch (Usage)
       {
-          case Use.ServiceEnableResponse:
-          case Use.ServiceDisableResponse:
           case Use.ServiceAddressResponse:
               return String.Format ("{0} for '{1}'",  Usage.ToString(), name);
 

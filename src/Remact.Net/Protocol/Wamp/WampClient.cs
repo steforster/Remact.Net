@@ -87,7 +87,7 @@ namespace Remact.Net.Protocol.Wamp
                 context.SetOnDisconnect(OnDisconnect);
             }
 
-            ConnectCallback(request);
+            _callback.OnOpenCompleted(request);
         }
 
         private void OnConnectFailure(UserContext context)
@@ -95,31 +95,8 @@ namespace Remact.Net.Protocol.Wamp
             _faulted = true;
             var request = (ActorMessage)context.Data;
             request.Payload = new ErrorMessage(ErrorMessage.Code.CouldNotOpen, context.LatestException);
-            ConnectCallback(request);
+            _callback.OnOpenCompleted(request);
         }
-
-        private void ConnectCallback(ActorMessage request)
-        {
-            if (_disposed)
-            {
-                return;
-            }
-
-            if (request.Source.IsMultithreaded)
-            {
-                _callback.OnOpenCompleted(request); // Test1.ClientNoSync, CatalogClient
-            }
-            else if (request.Source.SyncContext == null)
-            {
-                RaLog.Error("Remact", "No synchronization context to open " + request.Source.Name, request.Source.Logger);
-                _callback.OnOpenCompleted(request);
-            }
-            else
-            {
-                request.Source.SyncContext.Post(_callback.OnOpenCompleted, request);
-            }
-        }
-
 
         public void Dispose()
         {
@@ -157,7 +134,7 @@ namespace Remact.Net.Protocol.Wamp
                 return; // do not respond endless on erronous error messages
             }
 
-            var error = new ErrorMessage(ErrorMessage.Code.RspNotDeserializableOnClient, errorDesc);
+            var error = new ErrorMessage(ErrorMessage.Code.ResponseNotDeserializableOnClient, errorDesc);
             var message = new ActorMessage(null, 0, id, null, null, error);
             ErrorFromClient(message);
         }

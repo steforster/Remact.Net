@@ -1,3 +1,3 @@
-start ../ConsoleTestApps/Mono/bin/Debug/Test1.Service.exe
+start ../ConsoleTestApps/Mono/bin/Release/Test1.Service.exe
 
 

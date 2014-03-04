@@ -26,7 +26,7 @@ namespace Remact.Net
     public bool    IsServiceName    {get; internal set;}
     
     /// <summary>
-    /// Identification in Trace and name of endpoint address in App.config file.
+    /// Identification in log and name of endpoint address in App.config file.
     /// </summary>
     public string  Name             {get; internal set;}
     
@@ -179,7 +179,7 @@ namespace Remact.Net
 
 
     /// <summary>
-    /// Trace or display status info
+    /// Log or display status info
     /// </summary>
     /// <returns>Readable communication partner description</returns>
     public override string ToString ()
@@ -189,7 +189,7 @@ namespace Remact.Net
 
 
     /// <summary>
-    /// Trace or display formatted status info
+    /// Log or display formatted status info
     /// </summary>
     /// <param name="prefix">Start with this text</param>
     /// <param name="intendCnt">intend the following lines by some spaces</param>
@@ -289,11 +289,7 @@ namespace Remact.Net
     {
         if( !m_Connected )
         {
-            var disconnectMsg = msg.Payload as ActorInfo;
-            if (disconnectMsg == null || disconnectMsg.Usage != ActorInfo.Use.ServiceDisconnectResponse)
-            {
-                DispatchingError(msg, new ErrorMessage(ErrorMessage.Code.NotConnected, "Cannot post message"));
-            }
+            DispatchingError(msg, new ErrorMessage(ErrorMessage.Code.NotConnected, "Cannot post message"));
         }
         else if (m_RedirectIncoming != null)
         {
@@ -396,9 +392,11 @@ namespace Remact.Net
     /// Invokes the specified remote method and pass the payload as parameter.
     /// The remote method has to return a payload of type TRsp.
     /// The asynchronous responseHandler expects a payload of type TRsp.
+    /// Unexpected response types do not throw an exception. Such (error) message are sent to the default message handler.
     /// </summary>
     /// <param name="method">The name of the method to be called.</param>
     /// <param name="payload">The message payload to send. It must be of a type acceptable for the called method.</param>
+    /// <param name="sentMessage">The message that has been sent. Useful for tracing.</param>
     /// <param name="responseHandler">A method or lambda expression handling the asynchronous response.</param>
     /// <typeparam name="TRsp">The expected type of the response payload. When receiving other types, the message will be passed to the default message handler.</typeparam>
     public void Ask<TRsp>(string method, object payload, Action<TRsp, ActorMessage> responseHandler) where TRsp : class
@@ -426,7 +424,7 @@ namespace Remact.Net
     /// Ask: sends a request message to the partner ActorPort.
     /// Invokes the specified remote method and passes the payload as parameter.
     /// The remote method has to return a payload of type TRsp.
-    /// The returned asynchronous Task expects a payload of type TRsp.
+    /// The returned asynchronous Task.Result is of type TRsp.
     /// </summary>
     /// <param name="method">The name of the method to be called.</param>
     /// <param name="payload">The message payload to send. It must be of a type acceptable for the called method.</param>
@@ -435,30 +433,50 @@ namespace Remact.Net
     /// <returns>A Task to track the asynchronous completion of the request.</returns>
     public Task<ActorMessage<TRsp>> Ask<TRsp>(string method, object payload) where TRsp : class
     {
+        ActorMessage sentMessage;
+        return Ask<TRsp> (method, payload, out sentMessage, true);
+    }
+
+    /// <summary>
+    /// Ask: sends a request message to the partner ActorPort.
+    /// Invokes the specified remote method and passes the payload as parameter.
+    /// The remote method has to return a payload of type TRsp.
+    /// The returned asynchronous Task.Result is of type TRsp.
+    /// </summary>
+    /// <param name="method">The name of the method to be called.</param>
+    /// <param name="payload">The message payload to send. It must be of a type acceptable for the called method.</param>
+    /// <param name="sentMessage">The message that has been sent. Useful for tracing.</param>
+    /// <param name="throwException">When set to true, a response with unexpected type (e.g. an ErrorMessage) will be thrown as an ActorException{OtherType}.
+    ///                              When set to false, a message with unexpected response type will be sent to the default message handler.</param>
+    /// <typeparam name="TRsp">The expected type of the response payload.</typeparam>
+    /// <returns>A Task to track the asynchronous completion of the request.</returns>
+    public Task<ActorMessage<TRsp>> Ask<TRsp>(string method, object payload, out ActorMessage sentMessage, bool throwException = true) where TRsp : class
+    {
         var tcs = new TaskCompletionSource<ActorMessage<TRsp>>();
 
-        ActorMessage msg = new ActorMessage(this, OutputClientId, NextRequestId,
-                                            this, method, payload,
+        sentMessage = new ActorMessage(this, OutputClientId, NextRequestId, this, method, payload,
 
-                                            delegate (ActorMessage rsp)
-                                            {
-                                                TRsp typedPayload;
-                                                if (rsp.Type == ActorMessageType.Response
-                                                 && rsp.TryConvertPayload(out typedPayload))
-                                                {
-                                                    var typedRsp = new ActorMessage<TRsp>(typedPayload, rsp);
-                                                    tcs.SetResult(typedRsp);
-                                                }
-                                                else
-                                                {
-                                                    var dynamicRsp = new ActorMessage<dynamic>((dynamic)rsp.Payload, rsp);
-                                                    var ex = new ActorException<dynamic>(dynamicRsp, "unexpected response type '" + rsp.Payload.GetType().FullName + "' from method '" + method + "'");
-                                                    tcs.SetException(ex);
-                                                }
-                                                return null;
-                                            });
+                        delegate(ActorMessage rsp) // the response handler
+                        {
+                            TRsp typedPayload;
+                            if (rsp.Type == ActorMessageType.Response
+                             && rsp.TryConvertPayload(out typedPayload))
+                            {
+                                var typedRsp = new ActorMessage<TRsp>(typedPayload, rsp);
+                                tcs.SetResult(typedRsp);
+                                return null;
+                            }
+                            else if (throwException)
+                            {
+                                var dynamicRsp = new ActorMessage<dynamic>((dynamic)rsp.Payload, rsp);
+                                var ex = new ActorException<dynamic>(dynamicRsp, "unexpected response type '" + rsp.Payload.GetType().FullName + "' from method '" + method + "'");
+                                tcs.SetException(ex);
+                                return null;
+                            }
+                            return rsp; // response will be handled by default message handler
+                        });
 
-        SendOut(msg);
+        SendOut (sentMessage);
         return tcs.Task;
     }
 
@@ -467,7 +485,7 @@ namespace Remact.Net
     #region Message dispatching
 
     /// <summary>
-    /// The dispatcher for incoming messages must be added by the user.
+    /// Get the dispatcher for incoming messages. The user must call Dispatcher.AddActorInterface() to make the dispatcher ready for incoming messages.
     /// </summary>
     public Dispatcher Dispatcher
     {
@@ -495,9 +513,9 @@ namespace Remact.Net
 
     /// <summary>
     /// Set your logging object here (null by default).
-    /// It is passed to the logging methods of RaLog.ITracePlugin.
-    /// You will use it when writing your own adapter class based on RaLog.ITracePlugin.
-    /// The adapter class is needed to redirect trace output to your own logging/tracing framework.
+    /// It is passed to the logging methods of RaLog.ILogPlugin.
+    /// You will use it when writing your own adapter class based on RaLog.ILogPlugin.
+    /// The adapter class is needed to redirect log output to your own logging/tracing framework.
     /// </summary>
     public object Logger     { get; set; }
 
@@ -646,7 +664,7 @@ namespace Remact.Net
             if (connectMsg != null)
             {
                 if (connectMsg.Usage == ActorInfo.Use.ClientConnectRequest
-                 || connectMsg.Usage == ActorInfo.Use.ClientDisconnectRequest)
+                 || connectMsg.Usage == ActorInfo.Use.ClientDisconnectNotification)
                 {
                     if (TraceConnect && IsServiceName)
                     {

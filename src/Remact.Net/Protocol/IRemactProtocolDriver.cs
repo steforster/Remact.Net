@@ -47,10 +47,10 @@ namespace Remact.Net.Protocol
     public interface IRemactProtocolDriverCallbacks
     {
         /// <summary>
-        /// Occurs when the WebSocketClient could connect to the server.
+        /// Occurs when the WebSocketClient has finished connecting to the server.
         /// </summary>
-        /// <param name="response">response is of type 'ActorMessage'. response.Payload contains information in case of error.</param>
-        void OnOpenCompleted(object response);
+        /// <param name="response">Response.Payload contains information in case of error.</param>
+        void OnOpenCompleted(ActorMessage request);
 
         /// <summary>
         /// Gets the endpoint uri of the client

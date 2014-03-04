@@ -14,74 +14,74 @@ namespace Remact.Net
 public partial class RaLog
 {
 	/// <summary>
-  /// <para>The 'file' implementation of a ITracePlugin</para>
-  /// <para>Writes 2 tracefiles.</para>
-  /// <para>Switches to the next tracefile, when 1MB has been reached.</para>
-  /// <para>Finds default trace folder.</para>
-  /// </summary>
-	public class PluginFile: ITracePlugin, IDisposable
+    /// <para>The 'file' implementation of a ILogPlugin</para>
+    /// <para>Writes 2 log files (.log.txt and .log.old.txt).</para>
+    /// <para>Switches to the next log file, when 1MB has been reached.</para>
+    /// <para>Finds default log folder.</para>
+    /// </summary>
+	public class PluginFile: ILogPlugin, IDisposable
 	{
     //------------------------------------------------------------
     /// <summary>
-    /// Write trace header and store 'ApplicationInstance'
-    /// You can easyly write a similar adapter class to redirect trace output to your own logging framework. See RaLog.PluginConsole.
+    /// Write log header and store 'ApplicationInstance'
+    /// You can easely write a similar adapter class to redirect log output to your own logging framework. See RaLog.PluginConsole.
     /// </summary>
     /// <param name="appInstance">a number to identify the application instance, see RemactDefaults</param>
     public void Start (int appInstance)
     {
       ApplicationInstance = appInstance;
-      SetTraceOutput(null);
+      SetLogOutput(null);
     }
 
     /// <summary>
-    /// Call it periodically (e.g. 5 sec.) to flush buffer to tracefile
+    /// Call it periodically (e.g. 5 sec.) to flush buffer to log file
     /// </summary>
     public void Run () { Refresh (); }
 
     /// <summary>
-    /// Write trace footer
+    /// Write log footer
     /// </summary>
     public void Stop () { Dispose (); }
 
     /// <inheritdoc/>
     public void Info( string group, string text, object logger )
     {
-        Trace( "..", group, text );
+        Log( "..", group, text );
     }
 
     /// <inheritdoc/>
     public void Warning( string group, string text, object logger )
     {
-        Trace( "!!", group, text );
+        Log("!!", group, text);
     }
 
     /// <inheritdoc/>
     public void Error( string group, string text, object logger )
     {
-        Trace( "##", group, text );
+        Log("##", group, text);
     }
 
     /// <inheritdoc/>
     public void Exception( string text, Exception ex, object logger )
     {
-        Trace( "##", "EXCEPT", text
+        Log("##", "EXCEPT", text
                   + "\r\n   " + ex.Message
                   + "\r\n" + ex.StackTrace );
     }
 
     /// <summary>
-    /// Write a trace statement.
+    /// Write a log statement.
     /// </summary>
-    /// <param name="severity">A mark to distiguish trace severity.</param>
-    /// <param name="group">A mark to group trace source.</param>
-    /// <param name="text">The trace line(s).</param>
-    private void Trace (string severity, string group, string text)
+    /// <param name="severity">A mark to distiguish log severity.</param>
+    /// <param name="group">A mark to group log source.</param>
+    /// <param name="text">The log line(s).</param>
+    private void Log(string severity, string group, string text)
     {
-      string s = String.Format (m_TraceFormat, severity, DateTime.Now, group, text);
-      if (m_TraceFile != null) System.Diagnostics.Trace.Write (s);
-                          else TracingException (s); // Notfall Trace, um Aufstartprobleme zu sehen
-      m_boTraceReady = true;
-      ++m_nTraceLines;
+      string s = String.Format (m_LogFormat, severity, DateTime.Now, group, text);
+      if (m_LogFile != null) System.Diagnostics.Trace.Write (s);
+                          else LoggingException (s);
+      m_boLogReady = true;
+      ++m_nLogLines;
     }
 
 
@@ -90,16 +90,16 @@ public partial class RaLog
     /// <summary>
     /// Problem report of the tracing itself, for debugging purpose.
     /// </summary>
-    public  static string                              sLastTraceProblem = "";
+    public  static string                              sLastLoggingProblem = "";
     
-    private static TextWriterTraceListener             m_TraceFile = null;
-    private static string                              m_TraceFileName="";
+    private static TextWriterTraceListener             m_LogFile = null;
+    private static string                              m_LogFileName="";
     private static StreamWriter                        m_DirectStreamWriter = null;
  
-    private static bool                                m_boTraceReady;
+    private static bool                                m_boLogReady;
     private const  int                                 c_nMaxFileLength = 1000000; // 1MB
-    private static int                                 m_nTraceLines = 0;
-    private static string                              m_TraceFormat; 
+    private static int                                 m_nLogLines = 0;
+    private static string                              m_LogFormat; 
     private static bool                                m_boDisplayDate = (DisplayDate = false);
 
     //--------------------------------------------------------------------------
@@ -112,7 +112,7 @@ public partial class RaLog
 	{
       try
       {
-        if (m_TraceFile != null)
+        if (m_LogFile != null)
         {
           if (calledByUser)
           {
@@ -130,23 +130,23 @@ public partial class RaLog
       }
       catch (Exception ex)
       {
-        TracingException ("##,Error while disposing\r\n   " + ex.Message);
+        LoggingException ("##,Error while disposing\r\n   " + ex.Message);
       }
     }
 		
     //--------------------------------------------------------------------------
     /// <summary>
-    /// Set or get the current tracefile path and name.
+    /// Set or get the current log file path and name.
     /// </summary>
 	public static string FileName
 	{
-		get{return m_TraceFileName;}
-		set{SetTraceOutput (value);}
+		get{return m_LogFileName;}
+		set{SetLogOutput (value);}
 	}
 
     ///--------------------------------------------------------------------------
     /// <summary>
-    /// choose whether to trace date on each line or not
+    /// choose wether to log date on each line.
     /// </summary>
     public static bool DisplayDate
     {
@@ -158,16 +158,16 @@ public partial class RaLog
         // {1} = DateTime.Now
         // {2} = group, Format string: {Num,FieldLen:Format}
         // {3} = info
-        if (m_boDisplayDate) m_TraceFormat = "{0}{1:d} {1:HH:mm:ss.fff}, {2,-6}, {3}\r\n";
-                        else m_TraceFormat =       "{0}{1:HH:mm:ss.fff}, {2,-6}, {3}\r\n";
+        if (m_boDisplayDate) m_LogFormat = "{0}{1:d} {1:HH:mm:ss.fff}, {2,-6}, {3}\r\n";
+                        else m_LogFormat =       "{0}{1:HH:mm:ss.fff}, {2,-6}, {3}\r\n";
       }
     }
 
     //--------------------------------------------------------------------------
     /// <summary>
-    /// Set the current tracefile path and name.
+    /// Set the current log file path and name.
     /// </summary>
-    public static void SetTraceOutput (string i_FileName)
+    public static void SetLogOutput (string i_FileName)
     {
       bool boStartup = true;
       
@@ -176,12 +176,10 @@ public partial class RaLog
         if (i_FileName == null || i_FileName.Length == 0)
         {
           i_FileName = RemactConfigDefault.Instance.LogFolder;
-          // i_FileName += "/" + Path.GetFileNameWithoutExtension (RemactApplication.ExecutablePath);
-          // if (!Directory.Exists(i_FileName)) Directory.CreateDirectory(i_FileName);
 
-          // older files than 30 days will be deleted
+          // files older than 30 days will be deleted
           DateTime tooOld = DateTime.Now.AddDays(-30);  
-          string[] files = Directory.GetFiles (i_FileName, "*.trace.*", SearchOption.TopDirectoryOnly);
+          string[] files = Directory.GetFiles (i_FileName, "*.log.*", SearchOption.TopDirectoryOnly);
           foreach (string filename in files)
           {
             try
@@ -193,24 +191,24 @@ public partial class RaLog
             }
             catch (Exception) {}
           }
-          i_FileName += "/" + RemactConfigDefault.Instance.AppIdentification + ".trace.txt";
+          i_FileName += "/" + RemactConfigDefault.Instance.AppIdentification + ".log.txt";
         }
       }
       catch (Exception ex)
       {
-        TracingException("##,Error while creating directory " + i_FileName +"\r\n   " + ex.Message);
+        LoggingException("##,Error while creating directory " + i_FileName +"\r\n   " + ex.Message);
       }
 
       
-      if (m_TraceFile != null)
+      if (m_LogFile != null)
       {
         boStartup = false;
-        System.Diagnostics.Trace.WriteLine (String.Format ("| {0:D} {0:T} Next trace file://{1}", DateTime.Now, i_FileName));
+        System.Diagnostics.Trace.WriteLine (String.Format ("| {0:D} {0:T} Next log file://{1}", DateTime.Now, i_FileName));
         System.Diagnostics.Trace.Flush ();
-        System.Diagnostics.Trace.Listeners.Remove (m_TraceFile);
-        m_TraceFileName = "";
-        m_TraceFile.Close();
-        m_TraceFile.Dispose();
+        System.Diagnostics.Trace.Listeners.Remove (m_LogFile);
+        m_LogFileName = "";
+        m_LogFile.Close();
+        m_LogFile.Dispose();
       }
       if (m_DirectStreamWriter != null) m_DirectStreamWriter.Dispose();
       
@@ -230,54 +228,53 @@ public partial class RaLog
       }
       catch (Exception ex)
       {
-        TracingException("##,Error while renaming trace file://" + i_FileName +"\r\n   " + ex.Message);
+        LoggingException("##,Error while renaming log file://" + i_FileName +"\r\n   " + ex.Message);
       }
 
       // Create or Append file
       try
       {
-        m_TraceFileName      = i_FileName;
+        m_LogFileName      = i_FileName;
         m_DirectStreamWriter = File.AppendText(i_FileName);
    
         //Create a new text writer using the output stream, and add it to the trace listeners.
-        m_TraceFile = new TextWriterTraceListener(m_DirectStreamWriter);
-        System.Diagnostics.Trace.Listeners.Add (m_TraceFile);
+        m_LogFile = new TextWriterTraceListener(m_DirectStreamWriter);
+        System.Diagnostics.Trace.Listeners.Add (m_LogFile);
         System.Diagnostics.Trace.WriteLine ("\n+-------------------------------------------------------------------------------------------------");
         if (boStartup)
         {
-          System.Diagnostics.Trace.WriteLine (String.Format ("| TRACE  {0:D} {0:T}: Starting application", DateTime.Now));
+          System.Diagnostics.Trace.WriteLine (String.Format ("| LOG  {0:D} {0:T}: Starting application", DateTime.Now));
         }
         else
         {
-          System.Diagnostics.Trace.WriteLine (String.Format ("| TRACE  {0:D} {0:T}: Continue tracing ", DateTime.Now));
+          System.Diagnostics.Trace.WriteLine (String.Format ("| LOG  {0:D} {0:T}: Continue logging ", DateTime.Now));
         }
       }
       catch (Exception ex)
       {
         // Wenn die Trace.Listener Property null zurückgibt ist ev. kein EXE.config file vorhanden
-        TracingException("##,Error while opening trace listener file://" + i_FileName +"\r\n   " + ex.Message);
-        if (m_TraceFile != null) m_TraceFile.Dispose(); // schliesst auch den m_DirectStreamWriter
-        m_TraceFile = null;    // Trace Listener funktioniert nicht
+        LoggingException("##,Error while opening trace listener file://" + i_FileName +"\r\n   " + ex.Message);
+        if (m_LogFile != null) m_LogFile.Dispose(); // schliesst auch den m_DirectStreamWriter
+        m_LogFile = null;    // Trace Listener funktioniert nicht
         try
         {
           m_DirectStreamWriter = File.AppendText(i_FileName); // Notbetrieb direkt ins File
         }
         catch (Exception ex2)
         {
-          TracingException("##,Error while opening trace file://" + i_FileName +"\r\n   " + ex2.Message);
+          LoggingException("##,Error while opening log file://" + i_FileName +"\r\n   " + ex2.Message);
         }
       }
       
       String s = AppInfo ();
-      s += "\r\n|   CurrentDir \t: " + Environment.CurrentDirectory;
-      s += "\r\n|   Tracefile  \t: " + m_TraceFileName;
+      s += "\r\n|   Log file  \t: " + m_LogFileName;
       s += "\r\n+-------------------------------------------------------------------------------------------------";
       
       System.Diagnostics.Trace.WriteLine (s);
-      m_boTraceReady = true;
-      m_nTraceLines = 0;
+      m_boLogReady = true;
+      m_nLogLines = 0;
       
-    }// SetTraceOutput (i_FileName)
+    }// SetLogOutput (i_FileName)
 
 
     ///--------------------------------------------------------------------------
@@ -288,17 +285,17 @@ public partial class RaLog
     {
       try
       {
-        if (m_boTraceReady)
+        if (m_boLogReady)
         {
           System.Diagnostics.Trace.Flush ();
-          m_boTraceReady = false;
-          if (m_nTraceLines > 200)
+          m_boLogReady = false;
+          if (m_nLogLines > 200)
           {
-            m_nTraceLines = 0;
-            FileInfo fi = new FileInfo(m_TraceFileName);
+            m_nLogLines = 0;
+            FileInfo fi = new FileInfo(m_LogFileName);
             if (fi.Length > c_nMaxFileLength)
             {
-              SetTraceOutput (m_TraceFileName);
+              SetLogOutput (m_LogFileName);
             }
           }
         }
@@ -306,16 +303,16 @@ public partial class RaLog
       catch (Exception ex)
       {
         // Can't do anything against some other process locking the file !
-        sLastTraceProblem = ex.Message;
+        sLastLoggingProblem = ex.Message;
       }
     }// Refresh
     
     
     //--------------------------------------------------------------------------
     /// <summary>
-    /// Get tracefile header, may be used for Help - About box.
+    /// Get log file header, may be used for Help - About box.
     /// </summary>
-    /// <returns>tracefile header</returns>
+    /// <returns>log file header</returns>
     public static String AppInfo ()
     {
       string s = "| ";
@@ -355,18 +352,18 @@ public partial class RaLog
         if (RemactApplication.ServiceName.Length > 0) s += ", running as service "+RemactApplication.ServiceName;
                                    
         string[] arg = Environment.GetCommandLineArgs();
-        s += "\r\n|";                            
-        s += "\r\n|   Executable \t: " + arg [0];   // = Application.ExecutablePath
+        s += "\r\n|";
+        s += "\r\n|   Current dir\t: " + Environment.CurrentDirectory;
+        s += "\r\n|   Executable \t: " + arg[0];   // = Application.ExecutablePath
         for (int i=1; i < arg.GetLength(0); i++)
         {
           if (i == 1) s += "\r\n|   Commandline\t: ";
           s += arg[i] + " ";
         }
-        s += "\r\n|";
       }
       catch (Exception ex)
       {
-        TracingException("##,Error while generating application info:" + s + ex.Message);
+        LoggingException("##,Error while generating application info:" + s + ex.Message);
       }
       return s;
     }// static AppInfo
@@ -389,10 +386,10 @@ public partial class RaLog
         if (s2!=null)s2=null; // remove a warning
       }
       return s;
-    }// static AssemblyVersion
+    }
     
     
-    private static void TracingException (string Message)
+    private static void LoggingException (string Message)
     {
       if (m_DirectStreamWriter != null) try
       {
@@ -404,8 +401,7 @@ public partial class RaLog
                         "Exception while tracing for "+RemactConfigDefault.Instance.AppIdentification,
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
       }
-    }// static TracingExeception
+    }
 
   }//class PluginFile
-}// partial class RaLog
-}// namespace
+}}

@@ -95,15 +95,6 @@ namespace Remact.Net
     }
 
     /// <summary>
-    /// Default = false. When set to true: Disable catalog client, no input of this application will publish its service name to the Remact.Catalog.
-    /// </summary>
-    public static bool DisableCatalogClient
-    {
-      get { return RemactCatalogClient.Instance().DisableCatalogClient; }
-      set { RemactCatalogClient.Instance().DisableCatalogClient = value; }
-    }
-
-    /// <summary>
     /// Link this input to the network. Remote clients will be able to connect to this service after Open() has been called.
     /// When this method is not called, the service is accessible application internally only.
     /// </summary>
@@ -363,7 +354,7 @@ namespace Remact.Net
         {
             if (OnInputConnected != null) OnInputConnected(msg); // optional event
         }
-        else if (info.Usage == ActorInfo.Use.ClientDisconnectRequest)
+        else if (info.Usage == ActorInfo.Use.ClientDisconnectNotification)
         {
             if (OnInputDisconnected != null) OnInputDisconnected(msg); // optional event
         }
@@ -477,7 +468,7 @@ namespace Remact.Net
         {
             if (OnInputConnected != null) OnInputConnected(msg, senderCtx); // optional event
         }
-        else if (info.Usage == ActorInfo.Use.ClientDisconnectRequest)
+        else if (info.Usage == ActorInfo.Use.ClientDisconnectNotification)
         {
             if (OnInputDisconnected != null) OnInputDisconnected(msg, senderCtx); // optional event
         }

@@ -11,6 +11,7 @@ using System.Net;
 using Remact.Net;
 using Remact.Net.Remote;
 using Remact.Net.Protocol;
+using Remact.Net.Contracts;
 
 namespace Remact.Catalog
 {
@@ -293,7 +294,8 @@ namespace Remact.Catalog
         m_CatalogService = new CatalogService();
 
         // Open the service
-        m_RemactService = new ActorInput(RemactConfigDefault.Instance.CatalogServiceName, m_CatalogService.OnRequest);
+        m_RemactService = new ActorInput(RemactConfigDefault.Instance.CatalogServiceName, m_CatalogService.OnUnknownRequest);
+        m_RemactService.Dispatcher.AddActorInterface(typeof(IRemactCatalog), m_CatalogService);
         m_RemactService.OnInputConnected    += m_CatalogService.OnClientConnectedOrDisconnected;
         m_RemactService.OnInputDisconnected += m_CatalogService.OnClientConnectedOrDisconnected;
         m_RemactService.LinkInputToNetwork( null, RemactConfigDefault.Instance.CatalogPort, publishToCatalog: false, serviceConfig: this ); // calls our DoServiceConfiguration
@@ -306,7 +308,7 @@ namespace Remact.Catalog
             if (host != null && host.Trim().Length > 0)
             {
                 var output = new ActorOutput<SvcDat>("Clt>"+host, OnResponseFromPeerCatalog);
-                output.LinkOutputToRemoteService(new Uri("http://" + host + ':' + RemactConfigDefault.Instance.CatalogPort
+                output.LinkOutputToRemoteService(new Uri("ws://" + host + ':' + RemactConfigDefault.Instance.CatalogPort
                                  + "/" + RemactConfigDefault.WsNamespace + "/" + RemactConfigDefault.Instance.CatalogServiceName),// no catalog lookup as uri is given.
                                  this ); // calls our DoClientConfiguration
                 output.OutputContext = new SvcDat();

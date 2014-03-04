@@ -38,32 +38,32 @@ namespace Remact.Net.Remote
         void IRemactProtocolDriverService.MessageFromClient(ActorMessage message)
         {
             object response = null;
+            bool connectEvent = false;
+            bool disconnectEvent = false;
             try
             {
-                // We are instantiated for each connected client, we know the _svcUser (other stacks do not).
+                // We are instantiated for each connected client, we know the _svcUser (because of the underlying WebSocket implementation).
                 // Several threads may access the common RemactService. TODO: is the lock really needed ?
                 lock (_service)
                 {
-                    response = _service.CheckBasicResponse(message, ref _svcUser);
+                    response = _service.CheckBasicResponse(message, ref _svcUser, ref connectEvent, ref disconnectEvent);
                 }
 
                 // multithreaded access, several requests may run in parallel. They will be scheduled for execution on the right synchronization context.
-                if( response != null )
+                if (response != null)
                 {
-                    var connectMsg = response as ActorInfo;
-                    if (connectMsg != null) // no error and connected
+                    if (connectEvent || disconnectEvent) // no error
                     {
-                        var reqCopy = new ActorMessage(message.Source, message.ClientId, message.RequestId, 
-                                                       message.Destination, message.DestinationMethod, message.Payload, 
-                                                       message.SourceLambda);
+                        var reqCopy = new ActorMessage(message);
                         reqCopy.Response = reqCopy; // do not send a ReadyMessage
-                        var task = DoRequestAsync( reqCopy ); // call event OnInputConnected or OnInputDisconnected on the correct thread.
-                        if (connectMsg.Usage != ActorInfo.Use.ServiceDisconnectResponse)
+                        var task = DoRequestAsync(reqCopy); // call event OnInputConnected or OnInputDisconnected on the correct thread.
+                        if (disconnectEvent)
                         {
-                            var dummy = task.Result; // blocking wait!
+                            return; // no reply to disconnect notification
                         }
-                        // return the original response.
+                        var dummy = task.Result; // blocking wait
                     }
+                    // return the basic response.
                 }
                 else
                 {
@@ -73,10 +73,25 @@ namespace Remact.Net.Remote
                     return;
                 }
             }
-            catch( Exception ex )
+            catch (NotImplementedException ex)
             {
                 RaLog.Exception(message.SvcRcvId, ex, _service.ServiceIdent.Logger);
-                response = new ErrorMessage( ErrorMessage.Code.UnhandledExceptionOnService, ex );
+                response = new ErrorMessage(ErrorMessage.Code.NotImplementedOnService, ex);
+            }
+            catch (NotSupportedException ex)
+            {
+                RaLog.Exception(message.SvcRcvId, ex, _service.ServiceIdent.Logger);
+                response = new ErrorMessage(ErrorMessage.Code.NotImplementedOnService, ex);
+            }
+            catch (ArgumentException ex)
+            {
+                RaLog.Exception(message.SvcRcvId, ex, _service.ServiceIdent.Logger);
+                response = new ErrorMessage(ErrorMessage.Code.ArgumentExceptionOnService, ex);
+            }
+            catch (Exception ex)
+            {
+                RaLog.Exception(message.SvcRcvId, ex, _service.ServiceIdent.Logger);
+                response = new ErrorMessage(ErrorMessage.Code.UnhandledExceptionOnService, ex);
             }
             message.SendResponse(response);
         }

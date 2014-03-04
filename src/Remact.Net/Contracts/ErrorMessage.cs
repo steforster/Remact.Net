@@ -45,7 +45,7 @@ namespace Remact.Net
      {
          if (error <= 0 || error >= (int)Code.Last) 
               {return Code.Undef;}
-         else if (error > (int)Code.LastAppCode && error < (int)Code.NotConnected)   
+         else if (error > (int)Code.LastAppCode && error < (int)Code.NotImplementedOnService)   
               {return Code.Undef;}
          else {return(Code) error;}
      }
@@ -69,13 +69,7 @@ namespace Remact.Net
       
       // -------------------- Errorcodes for free use, not used by Remact ------------------
       /// <summary>
-      /// An exception occured while executing the request in the service-application.
-      /// Set by library user.
-      /// </summary>
-      AppUnhandledExceptionOnService,
-      
-      /// <summary>
-      /// The service-application does not know or does not accept this request.
+      /// The service-application does not accept this request.
       /// Set by library user.
       /// </summary>
       AppRequestNotAcceptedByService,
@@ -93,15 +87,31 @@ namespace Remact.Net
       AppDataNotAvailableInService,
 
       /// <summary>
-      /// This and enum values up to NotConnected are internally mapped to 'Undef' (used to check version compatibility).
+      /// This and enum values up to NotImplementedOnService are internally mapped to 'Undef' (used to check version compatibility).
       /// </summary>
       LastAppCode,
 
       // -------------------- Errorcodes used by Remact ------------------
       /// <summary>
+      /// The service throws a NotImplementedException or NotSupportedException. This is the case, when an unknown request has been received.
+      /// A software update on the server may be needed.
+      /// </summary>
+      NotImplementedOnService = 1000,
+
+      /// <summary>
+      /// The service throws an ArgumentException or ArgumentNullException. This is the case when wrong request arguments are sent.
+      /// </summary>
+      ArgumentExceptionOnService,
+
+      /// <summary>
+      /// Another exception occured while executing the request in the service-application.
+      /// </summary>
+      UnhandledExceptionOnService,
+
+      /// <summary>
       /// Cannot send as the client is not (yet) connected.
       /// </summary>
-      NotConnected = 1000,
+      NotConnected,
       
       /// <summary>
       /// Cannot open the client (configuration error).
@@ -124,9 +134,9 @@ namespace Remact.Net
       CouldNotStartConnect,
 
       /// <summary>
-      /// No response from service, when trying to connect.
+      /// Error on service, when trying to disconnect.
       /// </summary>
-      CouldNotConnect,
+      CouldNotDisconnect,
 
       /// <summary>
       /// Wrong response from Remact.Catalog, when trying to connect.
@@ -149,44 +159,19 @@ namespace Remact.Net
       CouldNotDispatch,
       
       /// <summary>
-      /// The service did not respond in time. Detected by client.
+      /// Exception while deserializing on service side.
       /// </summary>
-      TimeoutOnClient,
+      ReqestNotDeserializableOnService,
       
       /// <summary>
-      /// The service did not respond in time. Detected by service itself.
+      /// Exception while deserializing on client side.
       /// </summary>
-      TimeoutOnService,
-      
-      /// <summary>
-      /// Exception while deserializing or serializing on service side.
-      /// </summary>
-      ReqOrRspNotSerializableOnService,
-      
-      /// <summary>
-      /// null message received.
-      /// </summary>
-      RspNotDeserializableOnClient,
-      
-      /// <summary>
-      /// The request-message-type is not registered as a known type on this service.
-      /// </summary>
-      RequestTypeUnknownOnService,
+      ResponseNotDeserializableOnClient,
       
       /// <summary>
       /// ActorMessage with unknown client id.
       /// </summary>
       ClientIdNotFoundOnService,
-
-      /// <summary>
-      /// An exception occured while executing the request in the service-application.
-      /// </summary>
-      ClientDetectedUnhandledExceptionOnService,
-
-      /// <summary>
-      /// An exception occured while executing the request in the service-application.
-      /// </summary>
-      UnhandledExceptionOnService,
 
       /// <summary>
       /// This and higher enum values are internally mapped to 'Undef' (used to check version compatibility).
@@ -247,7 +232,7 @@ namespace Remact.Net
     }// CTOR 2
     
     /// <summary>
-    /// Trace the errormessage
+    /// Log the error message
     /// </summary>
     /// <returns>string containing all information about the error</returns>
     public override string ToString ()

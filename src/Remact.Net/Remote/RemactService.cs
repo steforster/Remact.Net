@@ -5,6 +5,8 @@ using System;
 using System.Threading;
 using System.Collections.Generic;
 using Remact.Net.Protocol;
+using System.Net.Sockets;
+using System.Net;
 
 namespace Remact.Net.Remote
 {
@@ -42,8 +44,8 @@ namespace Remact.Net.Remote
     /// </summary>
     public static bool DisableCatalogClient
     {
-      get { return RemactCatalogClient.Instance ().DisableCatalogClient; }
-      set { RemactCatalogClient.Instance ().DisableCatalogClient = value; }
+      get { return RemactCatalogClient.Instance.DisableCatalogClient; }
+      set { RemactCatalogClient.Instance.DisableCatalogClient = value; }
     }
 
     /// <summary>
@@ -148,7 +150,7 @@ namespace Remact.Net.Remote
     }// CTOR1
 
 
-    /// <summary>
+    /*/ <summary>
     /// Create a RemactService object, used by AsyncRemact.Catalog (only).
     /// </summary>
     /// <param name="serviceName">a unique service name.</param>
@@ -163,7 +165,7 @@ namespace Remact.Net.Remote
       ServiceIdent.InputClientList = new List<ActorOutput> (maxClients);
       if (firstClientId > 0) m_FirstClientId = firstClientId;
                         else m_FirstClientId = 1;
-    }// CTOR2
+    }// CTOR2*/
 
 
     /// <summary>
@@ -192,64 +194,45 @@ namespace Remact.Net.Remote
         try
         {
             if (_networkPortManager != null) Disconnect();
-/*
-            // Do we have to add a dynamically generated endpoint ?
-            if (m_ServiceHost.Description.Endpoints.Count == 0
-            || (m_ServiceHost.Description.Endpoints.Count == 1 && m_ServiceHost.Description.Endpoints[0].Name.ToLower() == "mex"))
-            {
-                if (_tcpPort == 0)
-                {
-                    if (ms_nSharedTcpPort==0 || ms_nSharedTcpPortCount==0)
-                    {
-                        // Find the next free local TCP-port:
-                        Socket     socket   = new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                        IPEndPoint endpoint = new IPEndPoint (0, 0);   // Local Address, dynamic port assignment
-                        socket.Bind (endpoint);
-                        endpoint = socket.LocalEndPoint as IPEndPoint; // a free port has been assigned by windows
-            #if !MONO
-                        ms_nSharedTcpPort = endpoint.Port; // a free dynamic assigned, local port
-            #else
-                        // Portsharing does not work for Mono, last checked on Mono 2.10.8.1
-                        _tcpPort = endpoint.Port;
-            #endif
-                        socket.Close(); // socket.Shutdown is not allowed as we are not yet connected
-                    }
-            #if !MONO
-                    m_nTcpPort = ms_nSharedTcpPort;
-                    ms_nSharedTcpPortCount++;
-            #endif
-                }
-*/
-            // Set URI before the first request arrives (as in RemactService). 
-                // The URI will be sent to Remact.Catalog for registration.
-                Uri uri = new Uri ("ws://"
-                    + ServiceIdent.HostName     // initialized with Dns.GetHostName()
-                    +":"+_tcpPort
-                    +"/"+RemactConfigDefault.WsNamespace+"/"+ServiceIdent.Name);// ServiceName, not the ServiceType
 
-                // Open the ServiceHost to start listening for messages.
-                // Add the dynamically created endpoint. And let the library user add binding and security credentials.
-                // By default RemactDefaults.DoServiceConfiguration is called.
-                _networkPortManager = _serviceConfig.DoServiceConfiguration(this, ref uri, /*isCatalog=*/false);
-                ServiceIdent.Uri = uri;
-            //}
-            //else
-            //{
-            //    // Set configured URI so it can be sent to Remact.Catalog for registration.
-            //    // TODO: ServiceIdent.Name is used as identification in Remact.Catalog - should it be changed now ???
-            //    //       or should the Uri be changed / created from different fields ???
-            //    UriBuilder uri = new UriBuilder (m_ServiceHost.Description.Endpoints[0].ListenUri);
-            //    uri.Host = base.ServiceIdent.HostName; // initialized with Dns.GetHostName(), replaces "localhost"
-            //    base.ServiceIdent.Uri = uri.Uri;
-            //}
+            if (_tcpPort == 0)
+            {
+                if (ms_nSharedTcpPort==0 || ms_nSharedTcpPortCount==0)
+                {
+                    // Find the next free local TCP-port:
+                    Socket     socket   = new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                    IPEndPoint endpoint = new IPEndPoint (0, 0);   // Local Address, dynamic port assignment
+                    socket.Bind (endpoint);
+                    endpoint = socket.LocalEndPoint as IPEndPoint; // a free port has been assigned by windows
+            //#if !MONO
+                    ms_nSharedTcpPort = endpoint.Port; // a free dynamic assigned, local port
+            //#else
+            //        // Portsharing does not work for Mono, last checked on Mono 2.10.8.1
+            //        _tcpPort = endpoint.Port;
+            //#endif
+                    socket.Close(); // socket.Shutdown is not allowed as we are not yet connected
+                }
+            //#if !MONO
+                _tcpPort = ms_nSharedTcpPort;
+                ms_nSharedTcpPortCount++;
+            //#endif
+            }
+
+            Uri uri = new Uri ("ws://"
+                + ServiceIdent.HostName     // initialized with Dns.GetHostName()
+                +":"+_tcpPort
+                +"/"+RemactConfigDefault.WsNamespace+"/"+ServiceIdent.Name);// ServiceName, not the ServiceType
+
+            // Let the library user add the service. By default RemactDefaults.DoServiceConfiguration is called.
+            _networkPortManager = _serviceConfig.DoServiceConfiguration(this, ref uri, /*isCatalog=*/false);
+            ServiceIdent.Uri = uri;
         
             if (_publishToCatalog)
             {
                 // Start registering on Remact.Catalog
-                RemactCatalogClient.Instance().AddService(this);
+                RemactCatalogClient.Instance.AddService(this);
             }
         
-            // The service can now be accessed, but must be registered.
             RaLog.Info("Remact", "Opened service " + ServiceIdent.Uri, ServiceIdent.Logger);
             return true;
         }
@@ -290,7 +273,7 @@ namespace Remact.Net.Remote
                 _networkPortManager = null;
             }
         
-            RemactCatalogClient.Instance().RemoveService (this); // send disable message to Remact.CatalogService
+            RemactCatalogClient.Instance.RemoveService (this); // send disable message to Remact.CatalogService
 
             if (ServiceIdent.Uri != null) RaLog.Info("Remact", "Closed service " + ServiceIdent.Uri, ServiceIdent.Logger);
                                      else RaLog.Info("Remact", "Closed service " + ServiceIdent.Name, ServiceIdent.Logger);
@@ -347,7 +330,7 @@ namespace Remact.Net.Remote
     /// <param name="req">the ActorMessage to be used for responses.</param>
     /// <param name="svcUser">Output the user object containing a "ClientIdent.UserContext" object for free application use</param>
     /// <returns>Service info as response</returns>
-    private object ConnectPartner(ActorInfo client, ActorMessage req, ref RemactServiceUser svcUser)
+    private object ConnectPartner(ActorInfo client, ActorMessage req, ref RemactServiceUser svcUser, ref bool connectEvent)
     {
       if (req.ClientId != 0)
       {// Client war schon mal verbunden
@@ -440,8 +423,8 @@ namespace Remact.Net.Remote
       // Connection state is kept in client object
       svcUser.ChannelTestTimer = 0;
       svcUser.SetConnected();
-      //svcUser.OpenNotificationChannel();
       HasConnectionStateChanged = true;
+      connectEvent = true;
       
       // reply ServiceIdent
       ActorInfo response = new ActorInfo (ServiceIdent, ActorInfo.Use.ServiceConnectResponse);
@@ -458,14 +441,13 @@ namespace Remact.Net.Remote
     /// <param name="req">the ActorMessage to be used for responses.</param>
     /// <param name="svcUser">Output the user object containing a "ClientIdent.UserContext" object for free application use</param>
     /// <returns>Service info as response</returns>
-    private object DisconnectPartner(ActorInfo client, ActorMessage req, ref RemactServiceUser svcUser)
+    private object DisconnectPartner(ActorInfo client, ActorMessage req, ref RemactServiceUser svcUser, ref bool disconnectEvent)
     {
       int i = req.ClientId - m_FirstClientId;
       if (i >= 0 && i < ServiceIdent.InputClientList.Count)
       {
         svcUser = ServiceIdent.InputClientList[i].SvcUser;
         svcUser.ChannelTestTimer = 0;
-        //req.CurrentSvcUser = svcUser;
         req.Source = svcUser.ClientIdent;
         HasConnectionStateChanged = true;
         if (client.IsEqualTo (svcUser.ClientIdent))
@@ -478,6 +460,7 @@ namespace Remact.Net.Remote
             ServiceIdent.InputClientList[i] = null; // will never be used again, the client has been shutdown
           }
           m_ConnectedClientCount--;
+          disconnectEvent = true;
         }
         else
         {
@@ -492,9 +475,8 @@ namespace Remact.Net.Remote
         LastAction = "Disconnect unknown client";
       }
 
-      // Note: This response will not really be sent to the client. The connection is already disconnected.
-      //       See ActorPort.PostInput
-      ActorInfo response = new ActorInfo (ServiceIdent, ActorInfo.Use.ServiceDisconnectResponse);
+      // Note: This response will normally not be sent to the client. The disconnect message is a notification.
+      var response = new ErrorMessage(ErrorMessage.Code.CouldNotDisconnect, LastAction);
       return response;
     }// Disconnect
 
@@ -562,7 +544,7 @@ namespace Remact.Net.Remote
     /// </param>
     /// <returns><para> null when the response has to be generated by the application.</para>
     ///          <para>!null if the response already has been generated by this class.</para></returns>
-    internal object CheckBasicResponse(ActorMessage req, ref RemactServiceUser svcUser)
+    internal object CheckBasicResponse(ActorMessage req, ref RemactServiceUser svcUser, ref bool connectEvent, ref bool disconnectEvent)
     {
         if (m_boCurrentlyCalled)
         {
@@ -584,8 +566,8 @@ namespace Remact.Net.Remote
                req.Payload = cltReq; // use converted payload later on
                switch (cltReq.Usage)
                {
-                   case ActorInfo.Use.ClientConnectRequest:    response = ConnectPartner(cltReq, req, ref svcUser); break;
-                   case ActorInfo.Use.ClientDisconnectRequest: response = DisconnectPartner(cltReq, req, ref svcUser); break;
+                   case ActorInfo.Use.ClientConnectRequest:    response = ConnectPartner(cltReq, req, ref svcUser, ref connectEvent); break;
+                   case ActorInfo.Use.ClientDisconnectNotification: response = DisconnectPartner(cltReq, req, ref svcUser, ref disconnectEvent); break;
                    default: break;// continue below
                }
            }
@@ -647,7 +629,6 @@ namespace Remact.Net.Remote
               ServiceIdent.InputClientList[i] = null;// will never be used again, the client has been shutdown
             }
             m_ConnectedClientCount--;
-            //u.TraceState("");
           }
         }
         

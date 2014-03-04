@@ -58,7 +58,7 @@ namespace Remact.Net
   public interface IActorPort
   {
     /// <summary>
-    /// Identification in Trace and name of endpoint address in App.config file.
+    /// Identification in logs and name of endpoint address in App.config file.
     /// </summary>
     string  Name             {get;}
     
@@ -121,7 +121,7 @@ namespace Remact.Net
     List<string> AddressList { get; }
 
     /// <summary>
-    /// Trace or display formatted status info
+    /// Log or display formatted status info
     /// </summary>
     /// <param name="prefix">Start with this text</param>
     /// <param name="intendCnt">intend the following lines by some spaces</param>
@@ -265,27 +265,19 @@ namespace Remact.Net
     void LinkOutputTo (IActorInput output);
 
     /// <summary>
-    /// Add a RemactClient and lookup the service Uri at Remact.Catalog.
+    /// Add a RemactClient and lookup the service Uri at Remact.Catalog (catalog uri is defined by RemactConfigDefault).
     /// Remact.Catalog may have synchronized its service register with peer catalogs on other hosts.
     /// </summary>
     /// <param name="serviceName">The unique service name to connect to.</param>
     /// <param name="clientConfig">Plugin your own client configuration instead of RemactDefaults.DoClientConfiguration.</param>
-    void LinkOutputToRemoteService( string serviceName, IActorOutputConfiguration clientConfig = null );
-
-    /// <summary>
-    /// Add a RemactClient and lookup the service Uri at Remact.Catalog.
-    /// </summary>
-    /// <param name="catalogHost">The hostname, where the Remact.Catalog runs.</param>
-    /// <param name="serviceName">The unique service name to connect to.</param>
-    /// <param name="clientConfig">Plugin your own client configuration instead of RemactDefaults.DoClientConfiguration.</param>
-    void LinkOutputToRemoteService(string catalogHost, string serviceName, IActorOutputConfiguration clientConfig = null);
+    void LinkOutputToRemoteService (string serviceName, IActorOutputConfiguration clientConfig = null);
 
     /// <summary>
     /// Add a RemactClient. No lookup at Remact.Catalog is needed as we know the TCP portnumber.
     /// </summary>
     /// <param name="serviceUri">The uri of the remote service.</param>
     /// <param name="clientConfig">Plugin your own client configuration instead of RemactDefaults.DoClientConfiguration.</param>
-    void LinkOutputToRemoteService( Uri serviceUri, IActorOutputConfiguration clientConfig = null );
+    void LinkOutputToRemoteService (Uri serviceUri, IActorOutputConfiguration clientConfig = null);
 
     /// <summary>
     /// The request id given to the last message sent from this client.

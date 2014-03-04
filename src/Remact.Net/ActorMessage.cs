@@ -64,7 +64,7 @@ namespace Remact.Net
     /// <summary>
     /// <para>All data for a message sent through Remact.</para>
     /// <para>Contains the Payload itself as well as some request identification and a reference to the sending ActorPort.</para>
-    /// <para>The class may be used to send a response to the sender and to trace unique message identification.</para>
+    /// <para>The class may be used to send a response to the sender and to log unique message identification.</para>
     /// </summary>
     public class ActorMessage
     {
@@ -125,7 +125,7 @@ namespace Remact.Net
         /// </summary>
         /// <param name="source">The sending partner.</param>
         /// <param name="clientId">The ClientId used on the service.</param>
-        /// <param name="requestId">The RequestId is incremented by the client.</param>
+        /// <param name="requestId">The RequestId is incremented by the client. When 0 is passed, a notification is created.</param>
         /// <param name="destination">The receiving partner.</param>
         /// <param name="destinationMethod">The receiving method defines the payload type.</param>
         /// <param name="payload">The user payload to send.</param>
@@ -157,7 +157,7 @@ namespace Remact.Net
 
         
         /// <summary>
-        /// Creates a new ActorMessage.
+        /// Copies an ActorMessage.
         /// </summary>
         /// <param name="msg">An ActorMessage to copy all information from.</param>
         internal ActorMessage(ActorMessage msg)
@@ -294,7 +294,7 @@ namespace Remact.Net
 
 
         /// <summary>
-        /// Each message my be printed e.g. to trace.
+        /// Each message may be printed e.g. to log.
         /// </summary>
         /// <returns>The message in readable text form.</returns>
         public override string ToString ()
@@ -328,7 +328,7 @@ namespace Remact.Net
 
 
         /// <summary>
-        /// Generates part of a standardised mark for trace output on client side.
+        /// Generates part of a standardised mark for log output on client side.
         /// </summary>
         internal string DestMark(bool full)
         {
@@ -347,7 +347,7 @@ namespace Remact.Net
         }
 
         /// <summary>
-        /// Generates part of a standardised mark for trace output on service side.
+        /// Generates part of a standardised mark for log output on service side.
         /// </summary>
         internal string SourceMark(bool full)
         {
@@ -365,13 +365,6 @@ namespace Remact.Net
             }
         }
 
-
-        /// <summary>
-        /// Generates part of a standardised mark for trace output.
-        /// </summary>
-        /// <summary>
-        /// Generates part of a standardised mark for trace output.
-        /// </summary>
         private string ReqMark
         {
             get
@@ -391,22 +384,22 @@ namespace Remact.Net
         }
 
         /// <summary>
-        /// Client sending request: Standardised mark for trace output.
+        /// Client sending request: Standardised mark for log output.
         /// </summary>
         public string CltSndId { get { return string.Concat( SourceMark(false), ReqMark, "-->"); } }
 
         /// <summary>
-        /// Service receiving request: Standardised mark for trace output.
+        /// Service receiving request: Standardised mark for log output.
         /// </summary>
         public string SvcRcvId { get { return string.Concat( SourceMark(true),  ReqMark, "~~>"); } }
 
         /// <summary>
-        /// Service sending response: Standardised mark for trace output.
+        /// Service sending response: Standardised mark for log output.
         /// </summary>
         public string SvcSndId { get { return string.Concat( DestMark(true),    RspMark, "<~~" ); } }
 
         /// <summary>
-        /// Client receiving response: Standardised mark for trace output.
+        /// Client receiving response: Standardised mark for log output.
         /// </summary>
         public string CltRcvId { get { return string.Concat( DestMark(false),   RspMark, "<--"); } }
     };
@@ -418,7 +411,7 @@ namespace Remact.Net
     /// <summary>
     /// <para>All data for a message sent through Remact.</para>
     /// <para>Contains a Payload of type T as well as some request identification and a reference to the sending ActorPort.</para>
-    /// <para>The class may be used to send a response to the sender and to trace unique message identification.</para>
+    /// <para>The class may be used to send a response to the sender and to log unique message identification.</para>
     /// </summary>
     public class ActorMessage<T> : ActorMessage
     {

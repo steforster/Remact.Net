@@ -117,9 +117,8 @@ namespace Test2.Client
             tbService1.Text = string.Empty;
             lbService1.Text = string.Empty;
             lbState1.Text   = "connecting ...";
-            //Client1.LinkOutputToRemoteService (tbCatalogHost.Text, "Test2.Service");
-            ActorInput.DisableCatalogClient = true; // prov.
-            Client1.Output.LinkOutputToRemoteService(new Uri("ws://" + tbCatalogHost.Text + "/Remact/Test2.Service"));
+            RemactConfigDefault.Instance.CatalogHost = tbCatalogHost.Text;
+            Client1.Output.LinkOutputToRemoteService ("Test2.Service");
             Client1.TryConnect();
             Client1.ResponseCount = 0;
         }

@@ -9,6 +9,8 @@ using Newtonsoft.Json.Linq;
 using Remact.Net.Protocol;
 using Remact.Net.Protocol.Wamp;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using Remact.Net.Contracts;
 
 namespace Remact.Net.Remote
 {
@@ -18,25 +20,25 @@ namespace Remact.Net.Remote
   /// <para>Responses are asynchroniously received on the same thread as the request was sent</para>
   /// <para>(only when sent from a thread with message queue (as WinForms), but not when sent from a threadpool-thread).</para>
   /// </summary>
-  internal class RemactClient : IRemoteActor, IRemactProtocolDriverCallbacks
+  internal class RemactClient : IRemoteActor, IRemactProtocolDriverCallbacks, IRemactService
   {
     //----------------------------------------------------------------------------------------------
     #region Properties
     /// <summary>
     /// Detailed information about this client. May be a ActorOutput&lt;TOC&gt; object containing application specific "OutputContext".
     /// </summary>
-    public    ActorOutput       ClientIdent            {get; private set;}
+    public ActorOutput ClientIdent {get; private set;}
 
     /// <summary>
     /// The last request id received in a response from the connected service.
     /// It is used to calculate outstandig responses.
     /// </summary>
-    protected int               LastRequestIdReceived;
+    protected int LastRequestIdReceived;
 
     /// <summary>
     /// Detailed information about the connected service. Contains a "UserContext" object for free use by the client application.
     /// </summary>
-    public    ActorInput        ServiceIdent           {get; private set;}
+    public ActorInput ServiceIdent {get; private set;}
 
     /// <summary>
     /// The lower level client.
@@ -67,7 +69,7 @@ namespace Remact.Net.Remote
     /// <summary>
     /// True, when connecting or connected to catalog service, not to the original service.
     /// </summary>
-    protected bool m_boTemporaryCatalogConn;
+    private bool _connectViaCatalog;
 
     /// <summary>
     /// True, when connecting and not yet connected.
@@ -90,26 +92,6 @@ namespace Remact.Net.Remote
     protected bool m_boFirstResponseReceived;
 
     /// <summary>
-    /// The default message handler to use, when connected to the target service.
-    /// </summary>
-    protected MessageHandler m_DefaultInputHandlerForApplication;
-
-    /// <summary>
-    /// The hostname of the catalog service.
-    /// </summary>
-    protected string m_CatalogHostToLookup;
-
-    /// <summary>
-    /// The TCP port of the catalog.
-    /// </summary>
-    protected int m_RemactCatalogPort;
-    
-    /// <summary>
-    /// True, when traces of the connect process to the target service should be written.
-    /// </summary>
-    protected bool m_TraceConnectBefore;
-
-    /// <summary>
     /// Outstanding requests, key = request ID.
     /// </summary>
     private Dictionary<int, ActorMessage> m_OutstandingRequests; // TODO does not support multithreaded clients
@@ -125,7 +107,6 @@ namespace Remact.Net.Remote
     /// <param name="clientIdent">Link this ActorOutput to the remote service.</param>
     internal RemactClient (ActorOutput clientIdent)
     {
-      m_DefaultInputHandlerForApplication = clientIdent.DefaultInputHandler;
       m_OutstandingRequests = new Dictionary<int, ActorMessage>();
       ClientIdent = clientIdent;
       ServiceIdent = new ActorInput(); // not yet defined
@@ -142,25 +123,12 @@ namespace Remact.Net.Remote
     ///    <para>By default TCP port 40000 is used for Remact.CatalogService, but you can specify another TCP port for the catalog eg. "host:3333"</para></param>
     /// <param name="serviceName">A unique name of the service. This service may run on any host that has been registered at the Remact.CatalogService.</param>
     /// <param name="clientConfig">Plugin your own client configuration instead of RemactDefaults.ClientConfiguration.</param>
-    internal void LinkToService(string catalogHost, string serviceName, IActorOutputConfiguration clientConfig = null)
+    internal void LinkToService(string serviceName, IActorOutputConfiguration clientConfig = null)
     {
-        m_RemactCatalogPort = RemactConfigDefault.Instance.CatalogPort;
-        m_CatalogHostToLookup = catalogHost;
-        try
-        {
-            int i = catalogHost.LastIndexOf(':');
-            if (i > 0)
-            {
-                m_CatalogHostToLookup = catalogHost.Substring(0, i);
-                m_RemactCatalogPort = Convert.ToInt32(catalogHost.Substring(i + 1));
-            }
-        }
-        catch
-        {
-        }
-        m_CatalogHostToLookup = NormalizeHostName(m_CatalogHostToLookup);
+        _connectViaCatalog = true;
+        m_ClientConfig = clientConfig;
         m_ServiceNameToLookup = serviceName;
-        ServiceIdent.PrepareServiceName(m_CatalogHostToLookup, m_ServiceNameToLookup);
+        ServiceIdent.PrepareServiceName(RemactConfigDefault.Instance.CatalogHost, m_ServiceNameToLookup);
     }// LinkToService (URI)
 
 
@@ -173,9 +141,9 @@ namespace Remact.Net.Remote
     {
       // this link method does not read the App.config file (it is running on mono also).
       if (!IsDisconnected) Disconnect ();
-      m_CatalogHostToLookup = null;
-      websocketUri = NormalizeHostName(websocketUri);
-      m_RequestedServiceUri = websocketUri;
+      _connectViaCatalog = false;
+      m_ClientConfig = clientConfig;
+      m_RequestedServiceUri = NormalizeHostName(websocketUri);
     }
 
     private Uri NormalizeHostName( Uri uri )
@@ -223,27 +191,74 @@ namespace Remact.Net.Remote
 
         try
         {
-            if (m_CatalogHostToLookup != null)
+            ServiceIdent.IsMultithreaded = ClientIdent.IsMultithreaded;
+            ServiceIdent.TryConnect(); // internal, from ServiceIdent to ClientIdent
+            ClientIdent.PickupSynchronizationContext();
+            ClientIdent.m_Connected = true; // internal, from ActorOutput to RemactClient
+
+            if (!_connectViaCatalog)
             {
-                // connect to catalog first
-                var uri = new Uri("http://" + m_CatalogHostToLookup + ':' + m_RemactCatalogPort + "/" + RemactConfigDefault.WsNamespace + "/" + RemactConfigDefault.Instance.CatalogServiceName);
-                TryConnectVia(uri, OnResponseFromCatalogService, toCatalog: true);
-                return true;
+                return ConnectToRemoteInput(m_RequestedServiceUri);
             }
-            else
+
+            if (RemactCatalogClient.Instance.DisableCatalogClient)
             {
-                // do not connect to catalog
-                LinkToService(m_RequestedServiceUri);
-                m_protocolClient = new WampClient(m_RequestedServiceUri);
-                // Let now the library user change binding and security credentials.
-                // By default RemactDefaults.OnClientConfiguration is called.
-                var websocketUri = m_RequestedServiceUri;
-                DoClientConfiguration(ref websocketUri, forCatalog:false);
-                ServiceIdent.PrepareServiceName(websocketUri);
-                ClientIdent.PickupSynchronizationContext();
-                OpenConnectionToService();
-                return true; // Connecting now
+                throw new InvalidOperationException("cannot open " + ClientIdent.Name + ", RemactCatalogClient is disabled");
             }
+
+            if (!RemactCatalogClient.Instance.IsConnected)
+            {
+                Thread.Sleep(100); // initial connection
+            }
+
+            if (!RemactCatalogClient.Instance.IsConnected)
+            {
+                return false;
+            }
+
+            // TODO Timeout and Fault messages
+            Task<ActorMessage<ActorInfo>> task = RemactCatalogClient.Instance.LookupInput(m_ServiceNameToLookup);
+            task.ContinueWith(t =>
+            {
+                try
+                {
+                    if (ClientIdent.TraceSend) RaLog.Info(t.Result.CltRcvId, "Received response from catalog: '" + t.Result.Source.Name + "' on '" + t.Result.Source.HostName + "'", ClientIdent.Logger);
+                    ServiceIdent.UseDataFrom(t.Result.Payload);
+                    if (ClientIdent.TraceSend)
+                    {
+                        string s = string.Empty;
+                        if (t.Result.Payload.AddressList != null)
+                        {
+                            string delimiter = ", IP-adresses = ";
+                            foreach (var adr in t.Result.Payload.AddressList)
+                            {
+                                s = string.Concat(s, delimiter, adr.ToString());
+                                delimiter = ", ";
+                            }
+                        }
+                        RaLog.Info(t.Result.CltRcvId, "ServiceAddressResponse: " + t.Result.Payload.Uri + s, ClientIdent.Logger);
+                    }
+                    m_addressesTried = 0;
+                    OnConnectionResponseFromService(null); // try first address
+                }
+                catch (ActorException<ErrorMessage> ex)
+                {
+                    //RaLog.Warning (rsp.CltRcvId, "Catalog "+rsp.ToString());
+                    if (ex.ActorMessage.Payload.Error == ErrorMessage.Code.ServiceNotRunning)
+                    {
+                        ex.ActorMessage.Payload.Error = ErrorMessage.Code.CatalogServiceNotRunning;
+                    }
+                    EndOfConnectionTries(ex.ActorMessage); // failed at catalog
+                }
+                catch (ActorException ex)
+                {
+                    RaLog.Error(ex.ActorMessage.CltRcvId, "Receiving unexpected response from Remact.CatalogService: " + ex.ActorMessage.ToString(), ClientIdent.Logger);
+                    ex.ActorMessage.Payload = new ErrorMessage(ErrorMessage.Code.CouldNotConnectCatalog, "Unexpected response from Remact.CatalogService");
+                    EndOfConnectionTries(ex.ActorMessage); // failed at catalog
+                }
+            });
+
+            return true;
         }
         catch (Exception ex)
         {
@@ -254,45 +269,28 @@ namespace Remact.Net.Remote
     }// TryConnect
 
 
-    /// <summary>
-    /// <para>Connect this client to a catalog or to the requested service, without configuration from App.config file.</para>
-    /// </summary>
-    /// <param name="websocketUri">fully specified URI of the service</param>
-    /// <param name="viaResponseHandler">The callback method when a response arrives</param>
-    /// <param name="toCatalog">True, when the connection to a catalog is made.</param>
-    internal virtual void TryConnectVia(Uri websocketUri, MessageHandler viaResponseHandler, bool toCatalog)
+    public virtual bool ConnectToRemoteInput(Uri uri)
     {
-      if (!IsDisconnected) Disconnect ();
-      try
-      {
-          if (toCatalog)
-          {
-              m_TraceConnectBefore = ClientIdent.TraceConnect;
-              ClientIdent.TraceConnect = ClientIdent.TraceSend;
-              m_boTemporaryCatalogConn = true;
-              ServiceIdent.Uri = null; // yet unknown
-          }
-          else if( m_boTemporaryCatalogConn )
-          {
-              ClientIdent.TraceConnect = m_TraceConnectBefore;
-              m_boTemporaryCatalogConn = false;
-          }
+        m_RequestedServiceUri = NormalizeHostName(uri);
+        m_protocolClient = new WampClient(m_RequestedServiceUri);
+        // Let now the library user change binding and security credentials.
+        // By default RemactDefaults.OnClientConfiguration is called.
+        var websocketUri = m_RequestedServiceUri;
+        DoClientConfiguration(ref websocketUri, forCatalog: false);
+        ServiceIdent.PrepareServiceName(websocketUri);
 
-          ClientIdent.DefaultInputHandler = viaResponseHandler;
-          websocketUri = NormalizeHostName(websocketUri);
-          m_RequestedServiceUri = websocketUri;
-          m_protocolClient = new WampClient(websocketUri);
-          // Let now the library user change binding and security credentials.
-          // By default RemactDefaults.OnClientConfiguration is called.
-          DoClientConfiguration(ref websocketUri, toCatalog); // TODO: changes in uri are not reflected in a new m_protocolClient
-          OpenConnectionToService();
-      }
-      catch (Exception ex)
-      {
-          RaLog.Exception("Cannot open Remact connection(2)", ex, ClientIdent.Logger);
-          m_boTimeout = true; // enter 'faulted' state when eg. configuration is incorrect
-      }
-    }// TryConnectVia
+        ClientIdent.OutputClientId = 0;
+        ClientIdent.LastRequestIdSent = 9;
+        LastRequestIdReceived = 9;
+        m_boFirstResponseReceived = false;
+        m_boTimeout = false;
+        m_boConnecting = true;
+        ActorMessage msg = new ActorMessage(ClientIdent, ClientIdent.OutputClientId, ClientIdent.NextRequestId,
+                                            ServiceIdent, null, null);
+        m_protocolClient.OpenAsync(msg, this);
+        // Callback to OnOpenCompleted when channel has been opened locally (no TCP connection opened on mono).
+        return true; // Connecting now
+    }
 
 
     /// <summary>
@@ -344,8 +342,8 @@ namespace Remact.Net.Remote
             {
                 try
                 {
-                    RemactCatalogClient.Instance().RemoveClient(this);
-                    SendDisconnectMessage();
+                    RemactCatalogClient.Instance.RemoveClient(this);
+                    Remact_ActorInfo_ClientDisconnectNotification(new ActorInfo(ClientIdent, ActorInfo.Use.ClientDisconnectNotification));
                 }
                 catch
                 {
@@ -355,8 +353,7 @@ namespace Remact.Net.Remote
             if (m_protocolClient != null) 
             {
                 m_protocolClient.Dispose();
-                RemactCatalogClient.Instance().RemoveClient (this);
-                //TraceState("Abortd");
+                RemactCatalogClient.Instance.RemoveClient (this);
             }
         }
         catch (Exception ex)
@@ -368,26 +365,12 @@ namespace Remact.Net.Remote
         m_boConnecting = false;
         m_boFirstResponseReceived = false;
         m_boTimeout = false;
-        m_boTemporaryCatalogConn  = false;
         ServiceIdent.m_Connected = false; // internal, from ServiceIdent to ClientIdent
         ClientIdent.m_Connected = false; // internal, from ActorOutput to RemactClient
 
     }// Disconnect
 
     
-    /// <summary>
-    /// internal: Overloaded by ClientAsyncAwait
-    /// </summary>
-    internal protected virtual void SendDisconnectMessage()
-    {
-        bool traceSend = ClientIdent.TraceSend;
-        ClientIdent.TraceSend = ClientIdent.TraceConnect;
-        SendActorInfo(new ActorInfo(ClientIdent, ActorInfo.Use.ClientDisconnectRequest));
-        ClientIdent.TraceSend = traceSend;
-        Thread.Sleep(30);
-    }
-
-
     /// <summary>
     /// <para>Abort all messages, go from any state to Disconnected state.</para>
     /// <para>Makes it possible to restart the client with TryConnect.</para>
@@ -396,60 +379,40 @@ namespace Remact.Net.Remote
     {
       m_boTimeout = true;
       Disconnect();
-    }// AbortCommunication
+    }
 
 
     #endregion
     //----------------------------------------------------------------------------------------------
     #region Message handling
 
-    /// <summary>
-    /// Trace internal state of this client
-    /// </summary>
-    /// <param name="mark">6 char mark: Opened, Abortd, ...</param>
-    public void TraceState (string mark)
+ 
+    // Eventhandler, running on threadpool thread, sent from m_protocolClient.
+    void IRemactProtocolDriverCallbacks.OnOpenCompleted(ActorMessage request)
     {
-      if (m_protocolClient != null)
-      {
-        RaLog.Info("RemactClt", "["+mark.PadRight(6)+"] "+ ClientIdent.Name+"["+ClientIdent.OutputClientId+"]"
-                    +", PortState=" + m_protocolClient.PortState.ToString()
-                    , ClientIdent.Logger );
-      }
-    }// TraceState
+        if (m_protocolClient == null)
+        {
+            return;
+        }
 
-
-    private void OpenConnectionToService(object dummy)
-    {
-        OpenConnectionToService(); // 2. try on the right sync context
+        if (ClientIdent.IsMultithreaded)
+        {
+            OnOpenCompletedOnUserThread(request); // Test1.ClientNoSync, CatalogClient
+        }
+        else if (ClientIdent.SyncContext == null)
+        {
+            RaLog.Error("Remact", "No synchronization context to open " + ClientIdent.Name, ClientIdent.Logger);
+            OnOpenCompletedOnUserThread(request);
+        }
+        else
+        {
+            ClientIdent.SyncContext.Post(OnOpenCompletedOnUserThread, request);
+        }
     }
 
 
-    /// <summary>
-    /// Connect this Client to the prepared m_protocolClient. Running on the user thread.
-    /// </summary>
-    private void OpenConnectionToService()
-    {
-        ClientIdent.OutputClientId = 0;
-        ClientIdent.LastRequestIdSent = 9;
-        LastRequestIdReceived = 9;
-        m_boFirstResponseReceived = false;
-        m_boTimeout = false;
-        m_boConnecting = true;
-        if (ServiceIdent.Uri == null) ServiceIdent.PrepareServiceName(m_protocolClient.ServiceUri);
-        ServiceIdent.IsMultithreaded = ClientIdent.IsMultithreaded;
-        ServiceIdent.TryConnect(); // internal, from ServiceIdent to ClientIdent
-
-        ClientIdent.PickupSynchronizationContext();
-        ClientIdent.m_Connected = true; // internal, from ActorOutput to RemactClient
-        ActorMessage msg = new ActorMessage(ClientIdent, ClientIdent.OutputClientId, ClientIdent.NextRequestId, 
-                                            ServiceIdent, null, null);
-        m_protocolClient.OpenAsync(msg, this); 
-        // Callback to OnOpenCompleted when channel has been opened locally (no TCP connection opened on mono).
-    }
-
-
-    // Eventhandler, running on user thread, sent from m_protocolClient.
-    void IRemactProtocolDriverCallbacks.OnOpenCompleted(object obj)
+    // Eventhandler, running on user thread.
+    private void OnOpenCompletedOnUserThread(object obj)
     {
         ActorMessage msg = obj as ActorMessage;
         msg.DestinationLambda = null;
@@ -472,18 +435,25 @@ namespace Remact.Net.Remote
             }
             else
             {
-                string serviceAddr = GetSetServiceAddress();
-                msg.Payload = new ActorInfo(ClientIdent, ActorInfo.Use.ClientConnectRequest);
-                msg.DestinationMethod = string.Concat(ActorInfo.MethodNamePrefix, ActorInfo.Use.ClientConnectRequest);
-  
-                if (ClientIdent.TraceConnect) {
-                    if (m_boTemporaryCatalogConn) RaLog.Info(msg.CltSndId, string.Concat("Temporary connecting .....: '", serviceAddr, "'"), ClientIdent.Logger);
-                                             else RaLog.Info(msg.CltSndId, string.Concat("Connecting svc: '", serviceAddr, "'"), ClientIdent.Logger);
-                }
-
-                // send first connection request to RemactService
-                m_OutstandingRequests.Add(msg.RequestId, msg);
-                m_protocolClient.MessageFromClient(msg);
+                var task = Remact_ActorInfo_ClientConnectRequest(new ActorInfo(ClientIdent, ActorInfo.Use.ClientConnectRequest));
+                task.ContinueWith(t =>
+                    {
+                        if (t.Result.Payload.Usage == ActorInfo.Use.ServiceConnectResponse)
+                        { // First message received from Service
+                            t.Result.Payload.Uri = ServiceIdent.Uri; // keep the Uri used to request the message (maybe IP address instead of hostname used)
+                            ServiceIdent.UseDataFrom (t.Result.Payload);
+                            ClientIdent.OutputClientId = t.Result.Payload.ClientId; // defined by server
+                            t.Result.ClientId = t.Result.Payload.ClientId;
+                            RemactCatalogClient.Instance.AddClient(this);
+                            m_boFirstResponseReceived = true; // IsConnected --> true !
+                            m_boConnecting = false;
+                            if (ClientIdent.TraceConnect) RaLog.Info(t.Result.CltRcvId, ServiceIdent.ToString("Connected  svc", 0), ClientIdent.Logger);
+                        }
+                        else
+                        {
+                            RaLog.Error( t.Result.CltRcvId, "unexpeced connect response: " + t.Result.ToString(), ClientIdent.Logger );
+                        }
+                    });
             }
         }
         catch (Exception ex)
@@ -496,6 +466,35 @@ namespace Remact.Net.Remote
     }// OnOpenCompleted
 
 
+    #region IRemactService implementation
+
+    public Task<ActorMessage<ActorInfo>> Remact_ActorInfo_ClientConnectRequest(ActorInfo actorOutput)
+    {
+        ActorMessage sentMessage;
+        var task = ClientIdent.Ask<ActorInfo>(string.Concat(ActorInfo.MethodNamePrefix, "ClientConnectRequest"), actorOutput, out sentMessage, throwException: false);
+
+        if (ClientIdent.TraceConnect)
+        {
+            string serviceAddr = GetSetServiceAddress();
+            RaLog.Info(sentMessage.CltSndId, string.Concat("Connecting svc: '", serviceAddr, "'"), ClientIdent.Logger);
+        }
+        return task;
+    }
+
+    public void Remact_ActorInfo_ClientDisconnectNotification(ActorInfo actorOutput)
+    {
+        bool traceSend = ClientIdent.TraceSend;
+        ClientIdent.TraceSend = ClientIdent.TraceConnect;
+        var msg = new ActorMessage(ClientIdent, ClientIdent.OutputClientId, 0, // creates a notification
+                                   ServiceIdent, string.Concat(ActorInfo.MethodNamePrefix, "ClientDisconnectNotification"), actorOutput, null);
+        PostInput(msg);
+        ClientIdent.TraceSend = traceSend;
+        Thread.Sleep(30);
+    }
+
+    #endregion
+
+      
     /// <summary>
     /// Called before opening a connection. Prepares endpointaddress for tracing.
     /// </summary>
@@ -644,20 +643,6 @@ namespace Remact.Net.Remote
                 if (m != null) m.IsSent = true;
 
                 if (msg.DestinationMethod == null) msg.DestinationMethod = string.Empty;
-
-                if (msg.IsResponse)
-                {
-                    LastRequestIdReceived = msg.RequestId;
-                    if (msg.DestinationMethod.StartsWith(ActorInfo.MethodNamePrefix))
-                    {
-                        ActorInfo actorInfo;
-                        if (msg.TryConvertPayload(out actorInfo)
-                         && HandleActorInfo(msg, actorInfo))
-                        {
-                            return;
-                        }
-                    }
-                }
             }
 
             ClientIdent.DispatchMessage(msg);
@@ -668,114 +653,6 @@ namespace Remact.Net.Remote
         }
     }// OnIncomingMessageOnActorThread
 
-
-    /// <summary>
-    /// This function is normally only used internally by OnRequestCompleted. It checks whether the response has to be handled by application code.
-    /// </summary>
-    /// <param name="result">received response.</param>
-    /// <param name="rsp">response is of type ActorInfo.</param>
-    /// <returns>True if response has been handled internally; False, when response must be handled by application</returns>
-    protected bool HandleActorInfo(ActorMessage result, ActorInfo rsp)
-    {
-        if (rsp.Usage == ActorInfo.Use.ServiceConnectResponse)
-        { // First message received from Service
-            rsp.Uri = ServiceIdent.Uri; // keep the Uri used to request the message (maybe IP address instead of hostname used)
-            ServiceIdent.UseDataFrom (rsp);
-            ClientIdent.OutputClientId = rsp.ClientId; // defined by server
-            result.ClientId = rsp.ClientId;
-            OnConnectMessage (result);
-        }
-        else if (rsp.Usage == ActorInfo.Use.ServiceDisconnectResponse)
-        {
-            RaLog.Info( result.CltRcvId, rsp.ToString(), ClientIdent.Logger ); // this is unexpected, response is swallowed by service
-            return true;
-        }
-        else if (rsp.Usage == ActorInfo.Use.ServiceAddressResponse
-              || rsp.Usage == ActorInfo.Use.ServiceEnableResponse
-              || rsp.Usage == ActorInfo.Use.ServiceDisableResponse)
-        {
-          // service address management
-        }
-        else
-        {
-            RaLog.Error( result.CltRcvId, "Unknown use of " + rsp.ToString(), ClientIdent.Logger );
-        }
-
-        return false; // Message must be handled by application
-    }
-
-
-    // Implements the connect message handling for RemactClientAsync.
-    // 1. call from Remact.CatalogService
-    // 2. call from looked up service
-    // the same message will be sent to OnResponseFromCatalogService or to application later on.
-    internal void OnConnectMessage(ActorMessage id)
-    {
-        if (m_CatalogHostToLookup == null || ServiceIdent.Name == m_ServiceNameToLookup)
-        {
-            RemactCatalogClient.Instance ().AddClient (this);
-            m_boFirstResponseReceived = true; // IsConnected --> true !
-            m_boConnecting = false;
-            if( ClientIdent.TraceConnect ) RaLog.Info( id.CltRcvId, ServiceIdent.ToString( "Connected  svc", 0 ), ClientIdent.Logger );
-            //TraceState("Opened");
-        }
-    }
-
-
-    // Response callback from Remact.CatalogService
-    private void OnResponseFromCatalogService(ActorMessage rsp)
-    {
-        ActorInfo svcRsp = rsp.Payload as ActorInfo;
-        if (svcRsp != null && svcRsp.Usage == ActorInfo.Use.ServiceConnectResponse)
-        {
-            if (ClientIdent.TraceSend) RaLog.Info(rsp.CltRcvId, "Temporary connected catalog: '" + svcRsp.Name + "' on '" + svcRsp.HostName + "'", ClientIdent.Logger);
-            ActorPort lookup = new ActorPort();
-            lookup.HostName = m_CatalogHostToLookup;
-            lookup.Name = m_ServiceNameToLookup;
-            lookup.IsServiceName = true;
-            ActorInfo req = new ActorInfo(lookup, ActorInfo.Use.ServiceAddressRequest);
-            SendActorInfo(req); // lookup the service URI (especially the TCP port)
-        }
-        else if (svcRsp != null && svcRsp.Usage == ActorInfo.Use.ServiceAddressResponse)
-        {
-            ServiceIdent.UseDataFrom( svcRsp );
-            if( ClientIdent.TraceSend )
-            {
-                string s = string.Empty;
-                if( svcRsp.AddressList != null )
-                {
-                    string delimiter = ", IP-adresses = ";
-                    foreach( var adr in svcRsp.AddressList )
-                    {
-                        s = string.Concat( s, delimiter, adr.ToString() );
-                        delimiter = ", ";
-                    }
-                }
-                RaLog.Info( rsp.CltRcvId, "ServiceAddressResponse: " + svcRsp.Uri + s, ClientIdent.Logger );
-            }
-            m_addressesTried = 0;
-            OnConnectionResponseFromService( null ); // try first address
-        }
-        else
-        {
-            ErrorMessage err = rsp.Payload as ErrorMessage;
-            if (err != null)
-            {
-                //RaLog.Warning (rsp.CltRcvId, "Catalog "+rsp.ToString());
-                if (err.Error == ErrorMessage.Code.ServiceNotRunning)
-                {
-                    err.Error = ErrorMessage.Code.CatalogServiceNotRunning;
-                }
-            }
-            else
-            {
-                RaLog.Error( rsp.CltRcvId, "Receiving unexpected response from Remact.CatalogService: " + rsp.ToString(), ClientIdent.Logger );
-                rsp.Payload = new ErrorMessage(ErrorMessage.Code.CouldNotConnectCatalog,
-                                                    "Unexpected response from Remact.CatalogService");
-            }
-            EndOfConnectionTries(rsp); // failed at catalog
-        }
-    }// OnResponseFromCatalogService
 
 
     // Response callback from real service
@@ -812,19 +689,14 @@ namespace Remact.Net.Remote
             b.Host = ServiceIdent.AddressList[m_addressNumber - 1].ToString(); // an IP address
         }
         b.Host = b.Uri.DnsSafeHost;
-        TryConnectVia(b.Uri, OnConnectionResponseFromService, toCatalog: false);
+        ConnectToRemoteInput(b.Uri);
     }
 
 
     private void EndOfConnectionTries( ActorMessage rsp )
     {
         m_boTimeout = !m_boFirstResponseReceived; // Fault state when not correct response in OnConnectMessage
-        if( m_boTemporaryCatalogConn )
-        {
-            ClientIdent.TraceConnect = m_TraceConnectBefore;
-        }
 
-        ClientIdent.DefaultInputHandler = m_DefaultInputHandlerForApplication;
         try
         {
             ClientIdent.DefaultInputHandler(rsp); // pass the negative or positive feedback from catalog or real service to the application
@@ -833,12 +705,6 @@ namespace Remact.Net.Remote
         {
             RaLog.Exception( "Connect message to " + ClientIdent.Name + " cannot be handled by application", ex, ClientIdent.Logger );
         }
-
-        if( m_boTimeout && m_boTemporaryCatalogConn )
-        {
-          ServiceIdent.PrepareServiceName( m_CatalogHostToLookup, m_ServiceNameToLookup ); // prepare for next connect try
-        }
-        m_boTemporaryCatalogConn = false;
     }
 
 
@@ -892,7 +758,7 @@ namespace Remact.Net.Remote
     public void PostInput (ActorMessage msg)
     {
         ErrorMessage err = null;
-        if (!IsFaulted && ClientIdent.OutputClientId > 0) // Send() may be used during connection buildup as well
+        if (!IsFaulted && m_protocolClient != null) // PostInput() may be used during connection buildup as well
         {
             try
             {
@@ -923,21 +789,6 @@ namespace Remact.Net.Remote
             msg.SendResponseFrom(ServiceIdent, err, null);
         }
     }
-
-
-    /// <summary>
-    /// Asynchronously send an ActorInfo to the service.
-    /// </summary>
-    /// <param name="request">The message to send.</param>
-    public ActorMessage SendActorInfo(ActorInfo request)
-    {
-        var method = string.Concat(ActorInfo.MethodNamePrefix, request.Usage);
-        ActorMessage msg = new ActorMessage(ClientIdent, ClientIdent.OutputClientId, ClientIdent.NextRequestId,
-                                           ServiceIdent, method, request, null);
-        PostInput(msg);
-        return msg;
-    }
-
 
     /// <summary>
     /// Gets the Uri of a linked service.

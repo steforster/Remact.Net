@@ -50,7 +50,7 @@ namespace Remact.Net.Protocol.Wamp
         #region IRemactProtocolDriverCallbacks implementation
 
 
-        public void OnOpenCompleted(object response)
+        public void OnOpenCompleted(ActorMessage request)
         {
             throw new NotImplementedException();
         }
@@ -58,7 +58,7 @@ namespace Remact.Net.Protocol.Wamp
 
         private void RequestNotDeserializable(int id, string errorDesc)
         {
-            var error = new ErrorMessage(ErrorMessage.Code.ReqOrRspNotSerializableOnService, errorDesc);
+            var error = new ErrorMessage(ErrorMessage.Code.ReqestNotDeserializableOnService, errorDesc);
             OnErrorFromService(id, error);
         }
 

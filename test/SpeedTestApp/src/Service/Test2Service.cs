@@ -59,7 +59,8 @@ namespace Test2.Service
     // Remact service method for unknown messages
     void OnUnhandledRequest(ActorMessage msg)
     {
-        msg.SendResponse(new ErrorMessage(ErrorMessage.Code.ReqOrRspNotSerializableOnService));
+        // will send ErrorMessage.Code.NotImplementedOnService
+        throw new NotImplementedException("unknown message on service "+msg.ToString());
     }
 
       

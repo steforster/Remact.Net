@@ -74,30 +74,18 @@ namespace Remact.Net
     }
 
     /// <summary>
-    /// Link output to remote service. Look for the service Uri at Remact.Catalog on local host.
+    /// Link output to remote service. Look for the service Uri at Remact.Catalog (catalog uri is defined by RemactConfigDefault).
     /// Remact.Catalog may have synchronized its service register with peer catalogs on other hosts.
     /// </summary>
-    /// <param name="serviceName">The unique service name to connect to.</param>
-    /// <param name="clientConfig">Plugin your own client configuration instead of RemactDefaults.Instance.DoClientConfiguration.</param>
-    public void LinkOutputToRemoteService( string serviceName, IActorOutputConfiguration clientConfig = null )
-    {
-        LinkOutputToRemoteService( "localhost", serviceName, clientConfig );
-    }
-
-    /// <summary>
-    /// Link output to remote service. Look for the service Uri at Remact.Catalog on a remote host.
-    /// Remact.Catalog may have synchronized its service register with peer catalogs on other hosts.
-    /// </summary>
-    /// <param name="catalogHost">The hostname, where the Remact.Catalog runs.</param>
     /// <param name="serviceName">The unique service name.</param>
     /// <param name="clientConfig">Plugin your own client configuration instead of RemactDefaults.Instance.DoClientConfiguration.</param>
-    public void LinkOutputToRemoteService(string catalogHost, string serviceName, IActorOutputConfiguration clientConfig = null)
+    public void LinkOutputToRemoteService (string serviceName, IActorOutputConfiguration clientConfig = null)
     {
       Disconnect();
-      if (catalogHost != null && serviceName != null && serviceName.Length > 0)
+      if (!string.IsNullOrEmpty(serviceName))
       {
         var clt = new RemactClient(this);
-        clt.LinkToService(catalogHost, serviceName, clientConfig);
+        clt.LinkToService(serviceName, clientConfig);
         m_Output        = clt.ServiceIdent;
         m_BasicOutput   = clt;
         m_MyOutputProxy = clt;
@@ -105,11 +93,11 @@ namespace Remact.Net
     }
 
     /// <summary>
-    /// Link output to remote service. No lookup at Remact.Catalog is needed as we know the romote host and the services TCP portnumber.
+    /// Link output to remote service. No lookup at Remact.Catalog is needed as we know the romote host and the service TCP portnumber.
     /// </summary>
     /// <param name="serviceUri">The uri of the remote service.</param>
     /// <param name="clientConfig">Plugin your own client configuration instead of RemactDefaults.DoClientConfiguration.</param>
-    public void LinkOutputToRemoteService( Uri serviceUri, IActorOutputConfiguration clientConfig = null )
+    public void LinkOutputToRemoteService (Uri serviceUri, IActorOutputConfiguration clientConfig = null)
     {
       Disconnect();
       if (serviceUri != null)

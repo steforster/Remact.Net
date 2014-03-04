@@ -112,21 +112,6 @@ namespace Remact.Net.Remote
     /// </summary>
     public bool IsFaulted {get{return m_boTimeout;}}
 
-
-    /// <summary>
-    /// Trace internal state of the client connection to this service
-    /// </summary>
-    /// <param name="mark">6 char, eg. 'Connec', 'Discon', 'Abortd'</param>
-    public void TraceState(string mark)
-    {
-        if (_protocolCallback != null)
-        {
-            RaLog.Info ("RemactSvc", "["+mark.PadRight (6)+"] "+ ClientMark
-                            + ", ClientAddress=" + _protocolCallback.ClientUri.ToString()
-                            , ClientIdent.Logger );
-        }
-    }
-
     /// <summary>
     /// Used for tracing messages from/to this client.
     /// </summary>
@@ -181,7 +166,6 @@ namespace Remact.Net.Remote
         try
         {
             Disconnect();
-            //TraceState("Abortd");
             //_protocolCallback.Dispose(); TODO
             _protocolCallback = null;
         }

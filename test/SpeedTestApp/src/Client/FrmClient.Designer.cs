@@ -158,7 +158,7 @@ namespace Test2.Client
             this.tbCatalogHost.Name = "tbCatalogHost";
             this.tbCatalogHost.Size = new System.Drawing.Size(86, 20);
             this.tbCatalogHost.TabIndex = 7;
-            this.tbCatalogHost.Text = "localhost:40002";
+            this.tbCatalogHost.Text = "localhost";
             // 
             // FrmClient
             // 

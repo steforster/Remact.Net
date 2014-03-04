@@ -36,6 +36,7 @@ namespace Test2.Service
       {
         RaLog.Exception ("Svc1: Fatal error", ex);
       }
+
       RemactConfigDefault.Instance.Shutdown();
       RaLog.Info( "Svc1", "Stop" );
       RaLog.Stop ();
@@ -58,7 +59,7 @@ namespace Test2.Service
       InitializeComponent ();
       
       m_Service = new Test2Service ();
-      m_Service.Input.LinkInputToNetwork ("Test2.Service", 40002);
+      m_Service.Input.LinkInputToNetwork ("Test2.Service");
       this.Text = m_Service.Input.AppIdentification;
       _milliseconds = Environment.TickCount;
     }

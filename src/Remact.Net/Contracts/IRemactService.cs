@@ -1,29 +1,27 @@
 ﻿
 // Copyright (c) 2014, github.com/steforster/Remact.Net
 
+using System.Threading.Tasks;
 namespace Remact.Net.Contracts
 {
     /// <summary>
     /// Common, remotly callable methods provided by all Remact ActorInputs (services).
-    /// <para>
-    /// Note: Method calls returning void are not awaitable for a reply on the client side. These are 'one way' notifications.
-    /// Use 'ReadyMessage' as return value to be able to await a reply on client side.
-    /// </para>
     /// </summary>
-    public interface IRemactService
+    internal interface IRemactService
     {
         /// <summary>
         /// Called when a client connects to a service.
+        /// The sent destination method name actually is "Remact.ActorInfo.ClientConnectRequest".
         /// </summary>
-        /// <param name="actorOutput">The <see cref="ActorInfo"/> of the client.</param>
-        /// <returns>The <see cref="ActorInfo"/> of the service (ActorInput).</returns>
-        ActorInfo ConnectClient(ActorInfo actorOutput);
+        /// <param name="actorOutput">The <see cref="ActorInfo"/> of the client. Usage = ClientConnectRequest.</param>
+        /// <returns>The <see cref="ActorInfo"/> of the service (ActorInput). Usage = ServiceConnectResponse.</returns>
+        Task<ActorMessage<ActorInfo>> Remact_ActorInfo_ClientConnectRequest(ActorInfo actorOutput);
 
         /// <summary>
-        /// Called when a client gracefully disconnects from a service.
+        /// Called when a client gracefully disconnects from a service. No reply is expected.
+        /// The sent destination method name actually is "Remact.ActorInfo.ClientDisconnectNotification".
         /// </summary>
-        /// <param name="actorOutput">The <see cref="ActorInfo"/> of the client.</param>
-        /// <returns>The <see cref="ActorInfo"/> of the service (ActorInput).</returns>
-        ActorInfo DisconnectClient(ActorInfo actorOutput);
+        /// <param name="actorOutput">The <see cref="ActorInfo"/> of the client. Usage = ClientDisconnectNotification.</param>
+        void Remact_ActorInfo_ClientDisconnectNotification(ActorInfo actorOutput);
     }
 }

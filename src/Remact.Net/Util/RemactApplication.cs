@@ -40,9 +40,9 @@ namespace Remact.Net
 
     /// <summary>
     /// Set your logging object here (null by default).
-    /// It is passed to the logging methods of RaLog.ITracePlugin.
-    /// You will use it when writing your own adapter class based on RaLog.ITracePlugin.
-    /// The adapter class is needed to redirect trace output to your own logging/tracing framework.
+    /// It is passed to the logging methods of RaLog.ILogPlugin.
+    /// You will use it when writing your own adapter class based on RaLog.ILogPlugin.
+    /// The adapter class is needed to redirect log output to your own logging/tracing framework.
     /// </summary>
     public static object Logger { get; set; }
 
@@ -51,8 +51,8 @@ namespace Remact.Net
     /// Handle the UI exceptions by showing a dialog box, and asking the user whether
     /// or not they wish to abort execution.
     ///
-    /// Before 'Application.Run' add the event handler for handling UI thread exceptions: 
-    ///   Application.ThreadException += new ThreadExceptionEventHandler(RaLog.DefaultTracePlugin.WinForms_ThreadException);
+    /// In 'InstallExitHandler' add the event handler for handling UI thread exceptions: 
+    ///   Application.ThreadException += new ThreadExceptionEventHandler(WinForms_ThreadException);
     /// Set the unhandled exception mode to force all Windows Forms errors to go through our handler.
     ///   Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
     /// </summary>
@@ -85,9 +85,8 @@ namespace Remact.Net
     /// NOTE: This exception cannot be kept from terminating the application - it can only 
     /// log the event, and inform the user about it.
     /// 
-    /// Before 'Application.Run' add the handler for handling non-UI thread exceptions to the event:
-    ///   AppDomain.CurrentDomain.UnhandledException 
-    ///     += new UnhandledExceptionEventHandler(RaLog.DefaultTracePlugin.CurrentDomain_UnhandledException);
+    /// In 'InstallExitHandler' add the handler for handling non-UI thread exceptions to the event:
+    ///   AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
     /// </summary>
     public static void CurrentDomain_UnhandledException (object sender, UnhandledExceptionEventArgs e)
     {
@@ -216,14 +215,6 @@ namespace Remact.Net
     /// </summary>
     public static void InstallExitHandler ()
     {
-     // not working ???
-//      Process p = Process.GetCurrentProcess();
-//      p.Exited  += new EventHandler (ExitEventHandler);
-//      p.EnableRaisingEvents = true;
-//      p.Dispose();
-//      AppDomain.CurrentDomain.DomainUnload += new EventHandler (ExitEventHandler);
-//      AppDomain.CurrentDomain.ProcessExit  += new EventHandler (ExitEventHandler);
-
       // Windows+Unix: Add the event handler for Console CTRL+C input, this interrupt may end the application
       // slows down exit to windows: Console.CancelKeyPress += new ConsoleCancelEventHandler (Console_CancelKeyPress);
 
@@ -253,7 +244,7 @@ namespace Remact.Net
       AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler (CurrentDomain_UnhandledException);
 
       // Add the event handler for System.Windows.Forms exit and thread exceptions:
-    //Application.ApplicationExit += new EventHandler (ExitEventHandler);
+      //Application.ApplicationExit += new EventHandler (ExitEventHandler);
       Application.ThreadException += new ThreadExceptionEventHandler (WinForms_ThreadException);
       Application.SetUnhandledExceptionMode (UnhandledExceptionMode.CatchException);
 
