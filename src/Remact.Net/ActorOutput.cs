@@ -148,7 +148,7 @@ namespace Remact.Net
         if (m_MyOutputProxy != null) return m_MyOutputProxy.OutputState; // proxy for remote actor
         if( m_BasicOutput != null )
         {   // internal actor
-            if( m_Connected ) return PortState.Ok;
+            if( m_isOpen ) return PortState.Ok;
             return PortState.Disconnected; 
         }
         return PortState.Unlinked;
@@ -178,7 +178,7 @@ namespace Remact.Net
         if( m_MyOutputProxy != null ) return m_MyOutputProxy.TryConnect(); // calls PickupSynchronizationContext and sets m_Connected
         if( m_BasicOutput == null )   return false; // not linked
         PickupSynchronizationContext();
-        m_Connected = true;
+        m_isOpen = true;
         return true;
     }
 

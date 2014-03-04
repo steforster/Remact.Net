@@ -149,7 +149,7 @@ namespace Remact.Net
     public PortState InputStateFromNetwork 
     { get{
         if (m_MyInputService != null) return m_MyInputService.InputStateFromNetwork;
-        if( m_Connected ) return PortState.Ok;
+        if( m_isOpen ) return PortState.Ok;
         return PortState.Unlinked;
       } 
       set{} 
@@ -218,7 +218,7 @@ namespace Remact.Net
         {
             ok = m_MyInputService.OpenService();
         }
-        m_Connected = ok;
+        m_isOpen = ok;
         return ok;
     }
 
@@ -249,31 +249,6 @@ namespace Remact.Net
         return 0;
     }}
 
-#if !BEFORE_NET45
-
-    /// <summary>
-    /// VS2012 Version:
-    /// Switch to the actors thread of this input and process the request there.
-    /// At least a ReadyMessage will asynchronously be passed to the Task-return value.
-    /// </summary>
-    /// <param name="id">The request to send.</param>
-    /// <returns>The asynchronous response</returns>
-    public Task<ActorMessage> SendReceiveAsync( ActorMessage id )
-    {
-        // see  TA.docx: Workloads : IO bound
-        var tcs = new TaskCompletionSource<ActorMessage>();
-        id.SourceLambda = ( rsp ) =>
-            {
-                tcs.TrySetResult( rsp ); // response has been received
-                return null;
-            };
-        
-        PostInput( id ); // switch synchronization context and process message
-        
-        return tcs.Task; // return awaitable task
-    }
-
-#endif
 
     /// <summary>
     /// Anonymous sender: Threadsafe enqueue payload at the receiving partner. No response is expected.
@@ -287,74 +262,19 @@ namespace Remact.Net
         base.PostInput(msg);
     }
 
-    /// <summary>
-    /// Used internally: Threadsafe enqueue message at the receiving partner (must be implemented to guide the compiler)
-    /// </summary>
-    /// <param name="message">The message to send.</param>
-    //public new void PostInput(ActorMessage message)
-    //{
-    //    base.PostInput(message);
-    //}
-
-    /// <summary>
-    /// Used internally: Threadsafe enqueue payload at the receiving partner.
-    /// </summary>
-    /// <param name="sender">The source partner sending the message <see cref="ActorPort"/>. Its default message handler will receive the response.</param>
-    /// <param name="payload">The message to enqueue.</param>
-    //internal void PostInputFrom(ActorOutput sender, object payload)
-    //{
-    //    PostInputFrom(sender, payload, null);
-    //}
-
-    /// <summary>
-    /// Used internally: Threadsafe enqueue payload at the receiving partner.
-    /// </summary>
-    /// <param name="sender">The source partner sending the message <see cref="ActorPort"/></param>
-    /// <param name="payload">The message to enqueue.</param>
-    /// <param name="responseHandler">The lambda expression executed at the source partner, when a response arrives.</param>
-    /*internal void PostInputFrom(ActorOutput sender, object payload, AsyncResponseHandler responseHandler)
-    {
-      if (sender == null)
-      {
-        sender = GetAnonymousPartner();
-        if (responseHandler != null)
-        {
-          throw new Exception ("Remact: No response supported when sending from anonymous partner");
-        }
-      }
-      else
-      {
-        int threadId = Thread.CurrentThread.ManagedThreadId;
-        if (sender.SyncContext == null)
-        {
-          sender.ManagedThreadId = threadId;
-          sender.SyncContext = SynchronizationContext.Current;    // set on first send operation
-        }
-        else if (sender.ManagedThreadId != threadId)
-        {
-          throw new Exception ("Remact: wrong thread synchronization context when posting from '"+sender.Name+"'");
-        }
-      }
-
-      ActorMessage msg = new ActorMessage(sender, 0, sender.NextRequestId,
-                                          this, payload.GetType().FullName, payload, responseHandler);
-      base.PostInput (msg); // Message is posted into the message queue
-    }*/
-
 
     /// <summary>
     /// Message is passed to users connect/disconnect event handler, may be overloaded and call a MessageHandler;TSC>
     /// </summary>
     /// <param name="msg">ActorMessage containing Payload and Source.</param>
-    /// <param name="info">The ActorInfo payload.</param>
     /// <returns>True when handled.</returns>
-    protected override bool OnConnectDisconnect (ActorMessage msg, ActorInfo info)
+    protected override bool OnConnectDisconnect (ActorMessage msg)
     {
-        if (info.Usage == ActorInfo.Use.ClientConnectRequest)
+        if (msg.DestinationMethod == RemactService.ConnectMethodName)
         {
             if (OnInputConnected != null) OnInputConnected(msg); // optional event
         }
-        else if (info.Usage == ActorInfo.Use.ClientDisconnectNotification)
+        else if (msg.DestinationMethod == RemactService.DisconnectMethodName)
         {
             if (OnInputDisconnected != null) OnInputDisconnected(msg); // optional event
         }
@@ -362,6 +282,7 @@ namespace Remact.Net
         {
             return false;
         }
+
         return true;
     }
 
@@ -458,17 +379,16 @@ namespace Remact.Net
     /// Message is passed to users connect/disconnect event handler.
     /// </summary>
     /// <param name="msg">ActorMessage containing Payload and Source.</param>
-    /// <param name="info">The ActorInfo payload.</param>
     /// <returns>True when handled.</returns>
-    protected override bool OnConnectDisconnect (ActorMessage msg, ActorInfo info)
+    protected override bool OnConnectDisconnect (ActorMessage msg)
     {
         TSC senderCtx = GetSenderContext(msg);
 
-        if (info.Usage == ActorInfo.Use.ClientConnectRequest)
+        if (msg.DestinationMethod == RemactService.ConnectMethodName)
         {
             if (OnInputConnected != null) OnInputConnected(msg, senderCtx); // optional event
         }
-        else if (info.Usage == ActorInfo.Use.ClientDisconnectNotification)
+        else if (msg.DestinationMethod == RemactService.DisconnectMethodName)
         {
             if (OnInputDisconnected != null) OnInputDisconnected(msg, senderCtx); // optional event
         }
@@ -476,6 +396,7 @@ namespace Remact.Net
         {
             return false;
         }
+
         return true;
     }
 

@@ -115,7 +115,7 @@ namespace Remact.Net
     Uri     Uri {get;}   // EndpointAddress is not serializable, URI is set before first send operation
 
     /// <summary>
-    /// <para>To support networks without DNS server, the Remact.Catalog sends a list of all IP-Adresses of a host.</para>
+    /// <para>To support networks without DNS server, the Remact.Catalog sends a list of all IP-Addresses of a host.</para>
     /// <para>May be null, as long as no info from Remact.Catalog has been received.</para>
     /// </summary>
     List<string> AddressList { get; }
@@ -141,6 +141,12 @@ namespace Remact.Net
     /// Default = false.
     /// </summary>
     bool    IsMultithreaded { get; }
+
+    /// <summary>
+    /// IsOpen=true : The input or output is currently open or connected.
+    /// IsOpen=false: The input or output has closed or disconnected.
+    /// </summary>
+    bool    IsOpen { get; }
 
     /// <summary>
     /// Shutdown the outgoing remote connection. Send a disconnect message to the partner.

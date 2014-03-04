@@ -80,7 +80,7 @@ namespace Remact.Net.Remote
     {
         ClientIdent.SyncContext = _serviceIdent.SyncContext;
         ClientIdent.ManagedThreadId = _serviceIdent.ManagedThreadId;
-        ClientIdent.m_Connected = true;
+        ClientIdent.m_isOpen = true;
         m_boTimeout = false;
         if (ClientIdent.Uri == null && _protocolCallback != null)
         {
@@ -103,7 +103,7 @@ namespace Remact.Net.Remote
     public bool IsConnected
     {
       get {
-          return ClientIdent.m_Connected && !m_boTimeout && _protocolCallback != null;
+          return ClientIdent.m_isOpen && !m_boTimeout && _protocolCallback != null;
       }
     }
 
@@ -188,7 +188,7 @@ namespace Remact.Net.Remote
         {
             if (_protocolCallback == null)
             {
-                RaLog.Error( "RemactSvc", "Closed notification channel to " + ClientMark, ClientIdent.Logger );
+                RaLog.Error( "RemactService", "Closed notification channel to " + ClientMark, ClientIdent.Logger );
             }
             else
             {
@@ -232,14 +232,21 @@ namespace Remact.Net.Remote
     /// <param name="msg">A <see cref="ActorMessage"/>.</param>
     public void PostInput(ActorMessage msg)
     {
-        var lower = new LowerProtocolMessage
+        if (_protocolCallback == null)
         {
-            Type = msg.Type,
-            RequestId = msg.RequestId,
-            Payload = msg.Payload
-        };
+            RaLog.Warning("RemactService", "Closed channel to " + ClientMark, ClientIdent.Logger);
+        }
+        else
+        {
+            var lower = new LowerProtocolMessage
+            {
+                Type = msg.Type,
+                RequestId = msg.RequestId,
+                Payload = msg.Payload
+            };
 
-        _protocolCallback.OnMessageFromService(lower);
+            _protocolCallback.OnMessageFromService(lower);
+        }
     }
 
     /// <summary>

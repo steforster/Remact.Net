@@ -23,7 +23,13 @@ namespace Remact.Net
     /// IsServiceName=false: A client  name must be combined with application name, host name, instance- or process id for unique identification.
     /// </summary>
     public bool    IsServiceName;
-    
+
+    /// <summary>
+    /// IsOpen=true : The service or client is currently open or connected.
+    /// IsOpen=false: The service or client has closed or disconnected.
+    /// </summary>
+    public bool    IsOpen;
+
     /// <summary>
     /// Identification in logs and name of endpoint address in App.config file.
     /// </summary>
@@ -68,7 +74,7 @@ namespace Remact.Net
     /// <para>Universal resource identifier to reach the input of the service or client.</para>
     /// <para>E.g. CatalogService: http://localhost:40000/Remact/CatalogService</para>
     /// </summary>
-    public  Uri    Uri;
+    public  Uri  Uri;
 
     /// <summary>
     /// <para>Identifies the client on the remote service.</para>
@@ -77,7 +83,7 @@ namespace Remact.Net
     public int ClientId;
 
     /// <summary>
-    /// <para>To support networks without DNS server, the Remact.Catalog keeps a list of all IP-Adresses of a host.</para>
+    /// <para>To support networks without DNS server, the Remact.Catalog keeps a list of all IP-Addresses of a host.</para>
     /// </summary>
     public List<string> AddressList;
 
@@ -102,87 +108,22 @@ namespace Remact.Net
     public TimeSpan ApplicationRunTime;
 
     /// <summary>
-    /// The message may be used for several purposes.
-    /// In Json, 'Usage' is streamed as int. We do not stream this property but stream 'int usage' instead.
-    /// Then we protect us from usage-enums sent by a communication partner with newer version than ours.
+    /// The method name prefix used for Remact internal messages.
     /// </summary>
-    [JsonIgnore]
-    public Use Usage
-    {
-      get
-      {
-        if (usage < 0 || usage >= (int)Use.Last) return Use.Undef;
-                                                else return (Use) usage;
-      }
-      set { usage = (int)value; }
-    }
-
-    [JsonProperty]
-    private int usage;
-
-    /// <summary>
-    /// TODO replace this by bool Active
-    /// Usage of ActorInfo triggers functionality on service oder client side while connecting/disconnecting.
-    /// Use is set to ServiceEnableRequest when a Service is opened or ClientConnectRequest when a client is connected. 
-    /// Use is set to another state when a Service is closed or a client is disconnected or a timeout has occured. 
-    /// </summary>
-    public enum Use
-    {
-      /// <summary>
-      /// A constructor has been called that does not define the usage of this class.
-      /// </summary>
-      Undef,
-      
-      /// <summary>
-      /// The identified client has sent a connect request to its service.
-      /// </summary>
-      ClientConnectRequest,
-
-      /// <summary>
-      /// The identified service has accepted the connect request from a client.
-      /// </summary>
-      ServiceConnectResponse,
-
-      /// <summary>
-      /// The identified client has sent a disconnect request to its service.
-      /// </summary>
-      ClientDisconnectNotification,
-
-      /// <summary>
-      /// The identified service has sent a register request to Remact.Catalog.
-      /// </summary>
-      ServiceEnableRequest,
-
-      /// <summary>
-      /// The identified service is going to be closed, it has informed Remact.Catalog about it.
-      /// </summary>
-      ServiceDisableRequest,
-
-      /// <summary>
-      /// The complete, matching service identification has been found in Remact.Catalog registry.
-      /// </summary>
-      ServiceAddressResponse,
-
-      /// <summary>
-      /// This and higher enum values are internally mapped to 'Undef' (used to check version compatibility).
-      /// </summary>
-      Last
-    }
-
     public const string MethodNamePrefix = "Remact.ActorInfo.";
 
     /// <summary>
     /// <para>Create a message from a ActorPort.</para>
     /// </summary>
     /// <param name="p">Copy data from partner p.</param>
-    /// <param name="usage">Usage enumeration of this message.</param>
-    public ActorInfo (IActorPort p, Use usage)
+    public ActorInfo (IActorPort p)
     {
       AppName     = p.AppName;
       AppVersion  = p.AppVersion;
       AppInstance = p.AppInstance;
       ProcessId   = p.ProcessId;
       Name        = p.Name;
+      IsOpen      = p.IsOpen;
       IsServiceName    = p.IsServiceName;
       CifComponentName = p.CifComponentName;
       CifVersion       = p.CifVersion;
@@ -190,7 +131,6 @@ namespace Remact.Net
       HostName    = p.HostName;
       AddressList = p.AddressList;
       Uri         = p.Uri;
-      Usage = usage;
       
       CatalogHopCount = 0;
       ApplicationRunTime = DateTime.Now - ms_ApplicationStartTime;
@@ -217,6 +157,7 @@ namespace Remact.Net
       AppInstance = p.AppInstance;
       ProcessId   = p.ProcessId;
       Name        = p.Name;
+      IsOpen      = p.IsOpen;
       IsServiceName    = p.IsServiceName;
       CifComponentName = p.CifComponentName;
       CifVersion       = p.CifVersion;
@@ -225,8 +166,7 @@ namespace Remact.Net
       AddressList      = p.AddressList;
       Uri              = p.Uri;
       ClientId         = p.ClientId;
-      Usage            = p.Usage;
-      CatalogHopCount     = p.CatalogHopCount;
+      CatalogHopCount  = p.CatalogHopCount;
       ApplicationRunTime = p.ApplicationRunTime;
     }// CTOR2
 
@@ -314,14 +254,7 @@ namespace Remact.Net
           name = RemactConfigDefault.Instance.GetAppIdentification(AppName, AppInstance, HostName, ProcessId) + "/" + Name;
       }
 
-      switch (Usage)
-      {
-          case Use.ServiceAddressResponse:
-              return String.Format ("{0} for '{1}'",  Usage.ToString(), name);
-
-          default:
-              return String.Format ("{0} from '{1}'", Usage.ToString(), name);
-      };
+      return String.Format("ActorInfo of {0} '{1}'", IsOpen ? "open":"closed", name);
     }
   }
 

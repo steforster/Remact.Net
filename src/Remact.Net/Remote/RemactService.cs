@@ -77,6 +77,9 @@ namespace Remact.Net.Remote
     private static int                 ms_nSharedTcpPort;
     private static int                 ms_nSharedTcpPortCount;
 
+    internal const string ConnectMethodName    = ActorInfo.MethodNamePrefix + "ClientConnectRequest";
+    internal const string DisconnectMethodName = ActorInfo.MethodNamePrefix + "ClientDisconnectNotification";
+
     /// <summary>
     /// Returns true, when service is ready to receive requests.
     /// </summary>
@@ -121,9 +124,12 @@ namespace Remact.Net.Remote
     /// <param name="publishToCatalog">True(=default): The servicename will be published to the Remact.Catalog on localhost.</param>
     /// <param name="serviceConfig">Plugin your own service configuration instead of RemactDefaults.ServiceConfiguration.</param>
     internal RemactService(ActorInput serviceIdent, int tcpPort = 0, bool publishToCatalog = true,
-                              IActorInputConfiguration serviceConfig = null )
-        : this (serviceIdent, /*firstClient=*/1, /*maxClients=*/20)
+                           IActorInputConfiguration serviceConfig = null )
     {
+        ServiceIdent = serviceIdent;
+        ServiceIdent.IsServiceName = true;
+        ServiceIdent.InputClientList = new List<ActorOutput>(20);
+        m_FirstClientId = 1;
         _tcpPort = tcpPort;
         _publishToCatalog = publishToCatalog;
         _serviceConfig = serviceConfig;
@@ -133,40 +139,6 @@ namespace Remact.Net.Remote
         }
     }// CTOR
     
-
-    /// <summary>
-    /// Create a RemactService object
-    /// </summary>
-    /// <param name="serviceIdent">a ActorInput having a unique name for the service.</param>
-    /// <param name="firstClientId">client Id's start with this number, normally = 1.</param>
-    /// <param name="maxClients">initial capacity of the User List.</param>
-    private RemactService (ActorInput serviceIdent, int firstClientId, int maxClients)
-    {
-      ServiceIdent = serviceIdent;
-      ServiceIdent.IsServiceName = true;
-      ServiceIdent.InputClientList = new List<ActorOutput> (maxClients);
-      if (firstClientId > 0) m_FirstClientId = firstClientId;
-                        else m_FirstClientId = 1;
-    }// CTOR1
-
-
-    /*/ <summary>
-    /// Create a RemactService object, used by AsyncRemact.Catalog (only).
-    /// </summary>
-    /// <param name="serviceName">a unique service name.</param>
-    /// <param name="serviceUri">the Uri for the service.</param>
-    /// <param name="firstClientId">client Id's start with this number, normally = 1.</param>
-    /// <param name="maxClients">initial capacity of the User List.</param>
-    internal RemactService(string serviceName, Uri serviceUri, int firstClientId, int maxClients)
-    {
-      ServiceIdent = new ActorInput (serviceName);
-      ServiceIdent.Uri = serviceUri;
-      ServiceIdent.IsServiceName = true;
-      ServiceIdent.InputClientList = new List<ActorOutput> (maxClients);
-      if (firstClientId > 0) m_FirstClientId = firstClientId;
-                        else m_FirstClientId = 1;
-    }// CTOR2*/
-
 
     /// <summary>
     /// <para>** IsMultithreaded==FALSE **  = default on ActorPort</para>
@@ -295,7 +267,7 @@ namespace Remact.Net.Remote
         {
             if (clt.SvcUser != null) clt.SvcUser.AbortNotificationChannel();
         }
-    }// AbortUserNotificationChannels
+    }
 
 
     #endregion
@@ -427,7 +399,7 @@ namespace Remact.Net.Remote
       connectEvent = true;
       
       // reply ServiceIdent
-      ActorInfo response = new ActorInfo (ServiceIdent, ActorInfo.Use.ServiceConnectResponse);
+      ActorInfo response = new ActorInfo (ServiceIdent);
       response.ClientId = svcUser.ClientIdent.OutputClientId;
       req.Source   = svcUser.ClientIdent;
       return response;
@@ -515,10 +487,10 @@ namespace Remact.Net.Remote
         }
         else
         {
-            LastAction = "Client '" + svcUser.ClientIdent.Uri.ToString() + "' connected";
+            LastAction = "Client '" + svcUser.ClientIdent.Uri.ToString() + "' connected without ConnectRequest";
             if (ServiceIdent.TraceConnect)
             {
-                RaLog.Info(req.SvcRcvId, String.Format("{0} to Remact service './{0}'", LastAction, ServiceIdent.Name), ServiceIdent.Logger);
+                RaLog.Info(req.SvcRcvId, String.Format("{0} to service './{0}'", LastAction, ServiceIdent.Name), ServiceIdent.Logger);
             }
         }
 
@@ -538,13 +510,15 @@ namespace Remact.Net.Remote
     /// </summary>
     /// <param name="req">The ActorMessage contains the request. It is used for the response also.</param>
     /// <param name="svcUser">
-    /// input: null --> create a new RemactServiceUser as protocol independant client proxy
-    ///        not null --> use this RemactServiceUser as protocol independant client proxy
+    /// input: null --> create a new RemactServiceUser as protocol independent client proxy
+    ///        not null --> use this RemactServiceUser as protocol independent client proxy
     /// output: the user object contains the "ClientIdent.SenderContext" object for free application use
     /// </param>
+    /// <param name="connectEvent">Set to true, when the connect method was called.</param>
+    /// <param name="disconnectEvent">Set to true, when the disconnect method was called.</param>
     /// <returns><para> null when the response has to be generated by the application.</para>
     ///          <para>!null if the response already has been generated by this class.</para></returns>
-    internal object CheckBasicResponse(ActorMessage req, ref RemactServiceUser svcUser, ref bool connectEvent, ref bool disconnectEvent)
+    internal object CheckRemactInternalResponse(ActorMessage req, ref RemactServiceUser svcUser, ref bool connectEvent, ref bool disconnectEvent)
     {
         if (m_boCurrentlyCalled)
         {
@@ -564,10 +538,10 @@ namespace Remact.Net.Remote
            if (req.TryConvertPayload(out cltReq))
            {
                req.Payload = cltReq; // use converted payload later on
-               switch (cltReq.Usage)
+               switch (req.DestinationMethod)
                {
-                   case ActorInfo.Use.ClientConnectRequest:    response = ConnectPartner(cltReq, req, ref svcUser, ref connectEvent); break;
-                   case ActorInfo.Use.ClientDisconnectNotification: response = DisconnectPartner(cltReq, req, ref svcUser, ref disconnectEvent); break;
+                   case ConnectMethodName   : response = ConnectPartner   (cltReq, req, ref svcUser, ref connectEvent); break;
+                   case DisconnectMethodName: response = DisconnectPartner(cltReq, req, ref svcUser, ref disconnectEvent); break;
                    default: break;// continue below
                }
            }
@@ -575,7 +549,7 @@ namespace Remact.Net.Remote
       
         if (response == null)
         {
-            // no response generated yet (no ActorInfo-message or unknown Usage)
+            // no internal response generated
             if (FindPartnerAndCheck (req, ref svcUser))
             {
                 LastAction = "ActorMessage";// response must be generated by service-application, request.ClientIdent has been set
@@ -590,7 +564,8 @@ namespace Remact.Net.Remote
 
         m_boCurrentlyCalled = false;
         return response;
-    }// CheckBasicResponse
+    }
+
 
     #endregion
     //----------------------------------------------------------------------------------------------
@@ -643,7 +618,7 @@ namespace Remact.Net.Remote
       m_ConnectedClientCount = nConnected;
       m_UnusedClientCount    = nUnused;
       return boChange;
-    }// DoPeriodicTasks
+    }
       
     
     #endregion

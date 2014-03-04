@@ -79,7 +79,7 @@ namespace Remact.Net
     public  Uri Uri  {get; internal set;}
 
     /// <summary>
-    /// <para>To support networks without DNS server, the Remact.Catalog sends a list of all IP-Adresses of a host.</para>
+    /// <para>To support networks without DNS server, the Remact.Catalog sends a list of all IP-Addresses of a host.</para>
     /// <para>May be null, when no info from Remact.Catalog has been received yet.</para>
     /// </summary>
     public List<string> AddressList  {get; internal set;}
@@ -200,8 +200,8 @@ namespace Remact.Net
       string uri;
       if (prefix.Length == 0)
       {
-        if (IsServiceName)  prefix = "Remact Service";//+Usage.ToString();
-                      else  prefix = "Remact Client ";//+Usage.ToString();
+        if (IsServiceName)  prefix = "Remact Service";
+                      else  prefix = "Remact Client ";
       }
 
       if (intendCnt==0) intend = " ";
@@ -254,7 +254,7 @@ namespace Remact.Net
     /// </summary>
     public virtual void Disconnect ()
     {
-        m_Connected = false;
+        m_isOpen = false;
         ManagedThreadId = 0;
         SyncContext = null;
     }
@@ -287,7 +287,7 @@ namespace Remact.Net
     /// <param name="msg">A <see cref="ActorMessage"/> the 'Source' property references the sending partner.</param>
     public void PostInput(ActorMessage msg)
     {
-        if( !m_Connected )
+        if( !m_isOpen )
         {
             DispatchingError(msg, new ErrorMessage(ErrorMessage.Code.NotConnected, "Cannot post message"));
         }
@@ -361,7 +361,7 @@ namespace Remact.Net
     {
         if (m_BasicOutput == null) throw new Exception("Remact: Output of '" + Name + "' has not been linked");
 
-        if (!m_Connected)
+        if (!m_isOpen)
         {
             RaLog.Warning("Remact", "ActorPort '" + Name + "' is not connected. Cannot send message!", Logger);
             return;
@@ -545,6 +545,12 @@ namespace Remact.Net
     public bool IsMultithreaded    {get; set;}
 
     /// <summary>
+    /// IsOpen=true : The input or output is currently open or connected.
+    /// IsOpen=false: The input or output has closed or disconnected.
+    /// </summary>
+    public bool IsOpen { get { return m_isOpen; } }
+
+    /// <summary>
     /// Incoming messages are directly redirected to this partner (used library intern)
     /// </summary>
     internal protected IRemoteActor  m_RedirectIncoming;
@@ -552,7 +558,7 @@ namespace Remact.Net
     /// <summary>
     /// False when not connected or disconnected. Prevents message passing during shutdown.
     /// </summary>
-    internal protected bool          m_Connected;
+    internal protected bool          m_isOpen;
     private  Dispatcher              m_Dispatcher;
     private  ActorMessage            m_CurrentReq;
     internal SynchronizationContext  SyncContext;
@@ -610,7 +616,7 @@ namespace Remact.Net
             else
             {
                 int threadId = Thread.CurrentThread.ManagedThreadId;
-                if (SyncContext != null && ManagedThreadId != threadId && m_Connected)
+                if (SyncContext != null && ManagedThreadId != threadId && m_isOpen)
                 {
                     RaLog.Error( "Remact", "Thread connecting ActorPort '" + Name + "' has changed. Only one synchronization context is supported!", Logger );
                 }
@@ -638,7 +644,7 @@ namespace Remact.Net
     // Message is passed to the lambda functions of the sending context or to the default response handler
     internal void DispatchMessage (ActorMessage msg)
     {
-        if( !m_Connected )
+        if( !m_isOpen )
         {
             RaLog.Warning( "Remact", "ActorPort '" + Name + "' is not connected. Cannot dispatch message!", Logger );
             return;
@@ -660,20 +666,17 @@ namespace Remact.Net
         {
             m_CurrentReq   = msg;
             msg.Destination = this;
-            var connectMsg = msg.Payload as ActorInfo;
-            if (connectMsg != null)
+
+            if (msg.DestinationLambda == null && IsServiceName && msg.DestinationMethod.StartsWith(ActorInfo.MethodNamePrefix))
             {
-                if (connectMsg.Usage == ActorInfo.Use.ClientConnectRequest
-                 || connectMsg.Usage == ActorInfo.Use.ClientDisconnectNotification)
+                if (TraceConnect)
                 {
-                    if (TraceConnect && IsServiceName)
-                    {
-                        RaLog.Info(msg.SvcRcvId, String.Format("{0} to Remact service './{1}'", connectMsg.Usage.ToString(), Name), Logger);
-                    }
-                    OnConnectDisconnect(msg, connectMsg); // may be overloaded
-                    return;
-                }// -------
-            }
+                    RaLog.Info(msg.SvcRcvId, String.Format("{0} to service './{1}'", msg.DestinationMethod, Name), Logger);
+                }
+                
+                OnConnectDisconnect(msg); // may be overloaded
+                return;
+            }// -------
 
             if (TraceReceive)
             {
@@ -721,9 +724,8 @@ namespace Remact.Net
     /// Message is passed to users connect/disconnect event handler, may be overloaded and call a MessageHandler;TSC>
     /// </summary>
     /// <param name="msg">ActorMessage containing Payload and Source.</param>
-    /// <param name="info">The message payload.</param>
     /// <returns>True when handled.</returns>
-    protected virtual bool OnConnectDisconnect(ActorMessage msg, ActorInfo info)
+    protected virtual bool OnConnectDisconnect(ActorMessage msg)
     {
          return false;
     }

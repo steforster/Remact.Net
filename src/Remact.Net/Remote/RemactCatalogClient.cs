@@ -114,20 +114,20 @@ namespace Remact.Net.Remote
                 {
                     lock (ms_Lock)
                     {
-                        ActorInfo req = new ActorInfo (m_ServiceList[m_nCurrentSvc].ServiceIdent, ActorInfo.Use.ServiceEnableRequest);
+                        ActorInfo info = new ActorInfo (m_ServiceList[m_nCurrentSvc].ServiceIdent);
                         RemactService svc = m_ServiceList[m_nCurrentSvc];
                         if (!svc.IsServiceRegistered)
                         {
                             svc.NextEnableMessage = DateTime.Now.AddSeconds(20);
                             svc.IsServiceRegistered = true;
-                            InputIsOpen(req);
-                            RaLog.Info(_latestSentMessage.CltSndId, "Sent to Remact.Catalog: " + req.ToString(), RemactApplication.Logger);
+                            UpdateCatalog(info);
+                            RaLog.Info(_latestSentMessage.CltSndId, "Sent to Remact.Catalog: " + info.ToString(), RemactApplication.Logger);
                         }
                         else if (m_ServiceList[m_nCurrentSvc].NextEnableMessage < DateTime.Now)
                         {
                             m_ServiceList[m_nCurrentSvc].NextEnableMessage  = DateTime.Now.AddSeconds(20);
-                            InputIsOpen(req);
-                            //RaLog.Info (_latestSentMessage.CltSndId, "Alive    "+req.ToString ());
+                            UpdateCatalog(info);
+                            //RaLog.Info (_latestSentMessage.CltSndId, "Alive    "+info.ToString ());
                         }
                         m_nCurrentSvc++; // next Svc on next timer event
                     }
@@ -144,7 +144,20 @@ namespace Remact.Net.Remote
         m_Running = false;
     }// OnTimerTick
 
-    
+
+    private void UpdateCatalog(ActorInfo svc)
+    {
+        if (svc.IsOpen)
+        {   // actually all members of the m_ServiceList should be open
+            ((IRemactCatalog)this).InputIsOpen(svc);
+        }
+        else
+        {
+            ((IRemactCatalog)this).InputIsClosed(svc);
+        }
+    }
+
+
     // Response callback from Remact.CatalogService
     private void OnMessageReceived (ActorMessage rsp)
     {
@@ -286,9 +299,10 @@ namespace Remact.Net.Remote
             if (n < 0) return; // already removed
             if (m_CatalogClient != null && m_CatalogClient.IsOutputConnected)
             {
-                ActorInfo req = new ActorInfo (m_ServiceList[n].ServiceIdent, ActorInfo.Use.ServiceDisableRequest);
-                InputIsClosed(req);
-                RaLog.Info(_latestSentMessage.CltSndId, "Disabled " + req.ToString(), RemactApplication.Logger);
+                ActorInfo info = new ActorInfo (m_ServiceList[n].ServiceIdent);
+                info.IsOpen = false;
+                ((IRemactCatalog)this).InputIsClosed(info);
+                RaLog.Info(_latestSentMessage.CltSndId, "Disabled " + info.ToString(), RemactApplication.Logger);
                 m_ServiceList[n].IsServiceRegistered = false;
             }
             m_ServiceList.RemoveAt(n);
@@ -329,12 +343,12 @@ namespace Remact.Net.Remote
 
     private ActorMessage _latestSentMessage;
 
-    public Task<ActorMessage<ReadyMessage>> InputIsOpen(ActorInfo actorInput)
+    Task<ActorMessage<ReadyMessage>> IRemactCatalog.InputIsOpen(ActorInfo actorInput)
     {
         return m_CatalogClient.Ask<ReadyMessage>("InputIsOpen", actorInput, out _latestSentMessage, false);
     }
 
-    public Task<ActorMessage<ReadyMessage>> InputIsClosed(ActorInfo actorInput)
+    Task<ActorMessage<ReadyMessage>> IRemactCatalog.InputIsClosed(ActorInfo actorInput)
     {
         return m_CatalogClient.Ask<ReadyMessage>("InputIsClosed", actorInput, out _latestSentMessage, false);
     }

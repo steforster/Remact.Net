@@ -31,6 +31,7 @@ namespace Test2.Service
       try
       {
         Application.Run (new FrmService ());
+        Environment.ExitCode = 0;
       }
       catch (Exception ex) // any Exception
       {

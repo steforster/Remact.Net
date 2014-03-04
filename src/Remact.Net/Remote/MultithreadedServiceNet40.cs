@@ -46,7 +46,7 @@ namespace Remact.Net.Remote
                 // Several threads may access the common RemactService. TODO: is the lock really needed ?
                 lock (_service)
                 {
-                    response = _service.CheckBasicResponse(message, ref _svcUser, ref connectEvent, ref disconnectEvent);
+                    response = _service.CheckRemactInternalResponse (message, ref _svcUser, ref connectEvent, ref disconnectEvent);
                 }
 
                 // multithreaded access, several requests may run in parallel. They will be scheduled for execution on the right synchronization context.
@@ -55,7 +55,7 @@ namespace Remact.Net.Remote
                     if (connectEvent || disconnectEvent) // no error
                     {
                         var reqCopy = new ActorMessage(message);
-                        reqCopy.Response = reqCopy; // do not send a ReadyMessage
+                        reqCopy.Response = reqCopy; // do not reply a ReadyMessage
                         var task = DoRequestAsync(reqCopy); // call event OnInputConnected or OnInputDisconnected on the correct thread.
                         if (disconnectEvent)
                         {
@@ -63,12 +63,11 @@ namespace Remact.Net.Remote
                         }
                         var dummy = task.Result; // blocking wait
                     }
-                    // return the basic response.
+                    // return the Remact internal response.
                 }
                 else
                 {
                     var task = DoRequestAsync(message);
-                    //message = task.Result; // blocking wait!
                     // Response and optional notifications have been returned to the client already
                     return;
                 }
@@ -93,6 +92,7 @@ namespace Remact.Net.Remote
                 RaLog.Exception(message.SvcRcvId, ex, _service.ServiceIdent.Logger);
                 response = new ErrorMessage(ErrorMessage.Code.UnhandledExceptionOnService, ex);
             }
+
             message.SendResponse(response);
         }
 

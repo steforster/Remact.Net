@@ -119,8 +119,6 @@ namespace Remact.Net.Remote
     /// <para>Connect this Client to a service identified by the serviceName parameter.</para>
     /// <para>The correct serviceHost and TCP port will be looked up at a Remact.CatalogService identified by parameter catalogHost.</para>
     /// </summary>
-    /// <param name="catalogHost">The HostName, where the Remact.CatalogService is running. This may be the 'localhost'.
-    ///    <para>By default TCP port 40000 is used for Remact.CatalogService, but you can specify another TCP port for the catalog eg. "host:3333"</para></param>
     /// <param name="serviceName">A unique name of the service. This service may run on any host that has been registered at the Remact.CatalogService.</param>
     /// <param name="clientConfig">Plugin your own client configuration instead of RemactDefaults.ClientConfiguration.</param>
     internal void LinkToService(string serviceName, IActorOutputConfiguration clientConfig = null)
@@ -166,6 +164,95 @@ namespace Remact.Net.Remote
       return host;
     }
 
+
+    /// <summary>
+    /// A client is connected after the ServiceConnectResponse has been received.
+    /// </summary>
+    public bool IsConnected    { get { return m_protocolClient != null 
+                                           && m_boFirstResponseReceived
+                                           && !m_boTimeout
+                                           && m_protocolClient.PortState == PortState.Ok; }}
+
+    /// <summary>
+    /// A client is disconnected after construction, after a call to Disconnect() or AbortCommunication()
+    /// </summary>
+    public bool IsDisconnected { get { return m_protocolClient == null 
+                                       ||   (!m_boConnecting && !m_boFirstResponseReceived && !m_boTimeout);}}
+
+    /// <summary>
+    /// A client is in Fault state when a connection cannot be kept open or a timeout has passed.
+    /// </summary>
+    public bool IsFaulted      { get { return m_boTimeout
+                                       ||    (m_protocolClient != null
+                                           && m_protocolClient.PortState == PortState.Faulted);}}
+
+    /// <summary>
+    /// Returns the number of requests that have not received a response by the service.
+    /// </summary>
+    public int  OutstandingResponsesCount  { get { return m_OutstandingRequests.Count; }}
+
+
+    /// <summary>
+    /// Same as Disconnect.
+    /// </summary>
+    public void Dispose()
+    {
+      Disconnect();
+    }
+
+
+    /// <summary>
+    /// <para>Send Disconnect messages to service if possible . Go from any state to Disconnected state.</para>
+    /// <para>Makes it possible to restart the client with TryConnect.</para>
+    /// </summary>
+    public void Disconnect()
+    {
+        try
+        {
+            if (IsConnected)
+            {
+                try
+                {
+                    RemactCatalogClient.Instance.RemoveClient(this);
+                    Remact_ActorInfo_ClientDisconnectNotification(new ActorInfo(ClientIdent));
+                }
+                catch
+                {
+                }
+            }
+        
+            if (m_protocolClient != null) 
+            {
+                m_protocolClient.Dispose();
+                RemactCatalogClient.Instance.RemoveClient (this);
+            }
+        }
+        catch (Exception ex)
+        {
+            RaLog.Exception("Cannot abort Remact connection", ex, ClientIdent.Logger);
+        }
+      
+        m_protocolClient = null;
+        m_boConnecting = false;
+        m_boFirstResponseReceived = false;
+        m_boTimeout = false;
+        ServiceIdent.m_isOpen = false; // internal, from ServiceIdent to ClientIdent
+        ClientIdent.m_isOpen = false; // internal, from ActorOutput to RemactClient
+
+    }// Disconnect
+
+    
+    /// <summary>
+    /// <para>Abort all messages, go from any state to Disconnected state.</para>
+    /// <para>Makes it possible to restart the client with TryConnect.</para>
+    /// </summary>
+    public void AbortCommunication()
+    {
+      m_boTimeout = true;
+      Disconnect();
+    }
+
+
     /// <summary>
     /// Accept the binding configuration provided when linking the ActorOutput or set in RemactDefaults.ClientConfiguration.
     /// </summary>
@@ -173,7 +260,7 @@ namespace Remact.Net.Remote
     /// <param name="forCatalog">True, when the connection is to a Remact.Catalog.</param>
     protected internal void DoClientConfiguration(ref Uri serviceUri, bool forCatalog)
     {
-        if( m_ClientConfig == null )
+        if (m_ClientConfig == null)
         {
             m_ClientConfig = RemactConfigDefault.Instance;
         }
@@ -194,7 +281,7 @@ namespace Remact.Net.Remote
             ServiceIdent.IsMultithreaded = ClientIdent.IsMultithreaded;
             ServiceIdent.TryConnect(); // internal, from ServiceIdent to ClientIdent
             ClientIdent.PickupSynchronizationContext();
-            ClientIdent.m_Connected = true; // internal, from ActorOutput to RemactClient
+            ClientIdent.m_isOpen = true; // internal, from ActorOutput to RemactClient
 
             if (!_connectViaCatalog)
             {
@@ -222,14 +309,13 @@ namespace Remact.Net.Remote
             {
                 try
                 {
-                    if (ClientIdent.TraceSend) RaLog.Info(t.Result.CltRcvId, "Received response from catalog: '" + t.Result.Source.Name + "' on '" + t.Result.Source.HostName + "'", ClientIdent.Logger);
                     ServiceIdent.UseDataFrom(t.Result.Payload);
                     if (ClientIdent.TraceSend)
                     {
                         string s = string.Empty;
                         if (t.Result.Payload.AddressList != null)
                         {
-                            string delimiter = ", IP-adresses = ";
+                            string delimiter = ", IP-addresses = ";
                             foreach (var adr in t.Result.Payload.AddressList)
                             {
                                 s = string.Concat(s, delimiter, adr.ToString());
@@ -293,95 +379,6 @@ namespace Remact.Net.Remote
     }
 
 
-    /// <summary>
-    /// A client is connected after the ServiceConnectResponse has been received.
-    /// </summary>
-    public bool IsConnected    { get { return m_protocolClient != null 
-                                           && m_boFirstResponseReceived
-                                           && !m_boTimeout
-                                           && m_protocolClient.PortState == PortState.Ok; }}
-
-    /// <summary>
-    /// A client is disconnected after construction, after a call to Disconnect() or AbortCommunication()
-    /// </summary>
-    public bool IsDisconnected { get { return m_protocolClient == null 
-                                       ||   (!m_boConnecting && !m_boFirstResponseReceived && !m_boTimeout);}}
-
-    /// <summary>
-    /// A client is in Fault state when a connection cannot be kept open or a timeout has passed.
-    /// </summary>
-    public bool IsFaulted      { get { return m_boTimeout
-                                       ||    (m_protocolClient != null
-                                           && m_protocolClient.PortState == PortState.Faulted);}}
-
-    /// <summary>
-    /// Returns the number of requests that have not received a response by the service.
-    /// </summary>
-    public int  OutstandingResponsesCount  { get { return m_OutstandingRequests.Count; }}
-
-
-    /// <summary>
-    /// Same as Disconnect.
-    /// </summary>
-    public void Dispose()
-    {
-      Disconnect();
-    }
-
-
-    //--------------------
-    /// <summary>
-    /// <para>Send Disconnect messages to service if possible . Go from any state to Disconnected state.</para>
-    /// <para>Makes it possible to restart the client with TryConnect.</para>
-    /// </summary>
-    public void Disconnect()
-    {
-        try
-        {
-            if (IsConnected)
-            {
-                try
-                {
-                    RemactCatalogClient.Instance.RemoveClient(this);
-                    Remact_ActorInfo_ClientDisconnectNotification(new ActorInfo(ClientIdent, ActorInfo.Use.ClientDisconnectNotification));
-                }
-                catch
-                {
-                }
-            }
-        
-            if (m_protocolClient != null) 
-            {
-                m_protocolClient.Dispose();
-                RemactCatalogClient.Instance.RemoveClient (this);
-            }
-        }
-        catch (Exception ex)
-        {
-            RaLog.Exception("Cannot abort Remact connection", ex, ClientIdent.Logger);
-        }
-      
-        m_protocolClient = null;
-        m_boConnecting = false;
-        m_boFirstResponseReceived = false;
-        m_boTimeout = false;
-        ServiceIdent.m_Connected = false; // internal, from ServiceIdent to ClientIdent
-        ClientIdent.m_Connected = false; // internal, from ActorOutput to RemactClient
-
-    }// Disconnect
-
-    
-    /// <summary>
-    /// <para>Abort all messages, go from any state to Disconnected state.</para>
-    /// <para>Makes it possible to restart the client with TryConnect.</para>
-    /// </summary>
-    public void AbortCommunication()
-    {
-      m_boTimeout = true;
-      Disconnect();
-    }
-
-
     #endregion
     //----------------------------------------------------------------------------------------------
     #region Message handling
@@ -435,10 +432,10 @@ namespace Remact.Net.Remote
             }
             else
             {
-                var task = Remact_ActorInfo_ClientConnectRequest(new ActorInfo(ClientIdent, ActorInfo.Use.ClientConnectRequest));
+                var task = Remact_ActorInfo_ClientConnectRequest(new ActorInfo(ClientIdent));
                 task.ContinueWith(t =>
                     {
-                        if (t.Result.Payload.Usage == ActorInfo.Use.ServiceConnectResponse)
+                        if (t.Result.Payload.IsServiceName && t.Result.Payload.IsOpen)
                         { // First message received from Service
                             t.Result.Payload.Uri = ServiceIdent.Uri; // keep the Uri used to request the message (maybe IP address instead of hostname used)
                             ServiceIdent.UseDataFrom (t.Result.Payload);
@@ -470,11 +467,19 @@ namespace Remact.Net.Remote
 
     public Task<ActorMessage<ActorInfo>> Remact_ActorInfo_ClientConnectRequest(ActorInfo actorOutput)
     {
+        actorOutput.IsOpen = true;
         ActorMessage sentMessage;
-        var task = ClientIdent.Ask<ActorInfo>(string.Concat(ActorInfo.MethodNamePrefix, "ClientConnectRequest"), actorOutput, out sentMessage, throwException: false);
+        bool traceSend = ClientIdent.TraceSend;
+        if (ClientIdent.TraceConnect)
+        {
+            ClientIdent.TraceSend = false;
+        }
+
+        var task = ClientIdent.Ask<ActorInfo>(RemactService.ConnectMethodName, actorOutput, out sentMessage, throwException: false);
 
         if (ClientIdent.TraceConnect)
         {
+            ClientIdent.TraceSend = traceSend;
             string serviceAddr = GetSetServiceAddress();
             RaLog.Info(sentMessage.CltSndId, string.Concat("Connecting svc: '", serviceAddr, "'"), ClientIdent.Logger);
         }
@@ -483,10 +488,11 @@ namespace Remact.Net.Remote
 
     public void Remact_ActorInfo_ClientDisconnectNotification(ActorInfo actorOutput)
     {
+        actorOutput.IsOpen = false;
         bool traceSend = ClientIdent.TraceSend;
         ClientIdent.TraceSend = ClientIdent.TraceConnect;
         var msg = new ActorMessage(ClientIdent, ClientIdent.OutputClientId, 0, // creates a notification
-                                   ServiceIdent, string.Concat(ActorInfo.MethodNamePrefix, "ClientDisconnectNotification"), actorOutput, null);
+                                   ServiceIdent, RemactService.DisconnectMethodName, actorOutput, null);
         PostInput(msg);
         ClientIdent.TraceSend = traceSend;
         Thread.Sleep(30);

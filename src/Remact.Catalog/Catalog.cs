@@ -94,12 +94,12 @@ namespace Remact.Catalog
 
         foreach (ActorInfo s in SvcRegister.Item)
         {
-            if (s.Usage == ActorInfo.Use.ServiceEnableRequest)
+            if (s.IsOpen)
             {
                 s.TimeoutSeconds -= seconds;
                 if (s.TimeoutSeconds < 0)
                 {
-                    s.Usage = ActorInfo.Use.ServiceDisableRequest;
+                    s.IsOpen = false;
                     SvcRegisterChanged = true;
                     RaLog.Warning("   "+s.Name+"  ", "Timeout  "+s.ToString ());
                 }
@@ -149,8 +149,8 @@ namespace Remact.Catalog
                     versionCount = 3;
                 }
                 sb.AppendLine();
-                if (s.Usage == ActorInfo.Use.ServiceEnableRequest) sb.Append ("++");
-                                                                      else sb.Append ("--");
+                if (s.IsOpen) sb.Append ("++");
+                         else sb.Append ("--");
                 sb.Append (s.Uri);
                 sb.Append (" in ");
                 sb.Append (RemactConfigDefault.Instance.GetAppIdentification (s.AppName, s.AppInstance, s.HostName, s.ProcessId));
@@ -205,13 +205,6 @@ namespace Remact.Catalog
       svc.CatalogHopCount++;                                 // ==1: Direct info from service on local host
       if (svc.CatalogHopCount > 1) svc.TimeoutSeconds = 120; // > 1: Indirect info from another catalog
       
-      if (svc.Usage != ActorInfo.Use.ServiceEnableRequest
-       && svc.Usage != ActorInfo.Use.ServiceDisableRequest)
-      {
-        RaLog.Error (mark, "Got wrong status: "+svc.ToString ());
-        svc.Usage = ActorInfo.Use.ServiceDisableRequest;
-      }
-
       bool changed = false;
       int found = SvcRegister.Item.FindIndex (s => s.IsEqualTo (svc));
       if (found < 0)
@@ -228,14 +221,12 @@ namespace Remact.Catalog
         if (registered.Uri != svc.Uri)
         {
           // a changed or a second service tries to register
-          if (registered.Usage == ActorInfo.Use.ServiceDisableRequest
-                  && svc.Usage == ActorInfo.Use.ServiceEnableRequest)
+          if (!registered.IsOpen && svc.IsOpen)
           {
               RaLog.Info( mark, "Start new   " + svc.Uri.ToString() );
               changed = true;
           }
-          else if (registered.Usage == ActorInfo.Use.ServiceEnableRequest
-                       && svc.Usage == ActorInfo.Use.ServiceEnableRequest) 
+          else if (registered.IsOpen && svc.IsOpen) 
           {
             if (registered.ApplicationRunTime < svc.ApplicationRunTime)
             {
@@ -249,25 +240,22 @@ namespace Remact.Catalog
           }
         }
         else
-        {
+        { // same URI
           if( registered.CatalogHopCount < svc.CatalogHopCount )
           {
               // circular reference: do not use this old information
           }
-          else if( registered.Usage == ActorInfo.Use.ServiceDisableRequest
-                       && svc.Usage == ActorInfo.Use.ServiceEnableRequest)
+          else if (!registered.IsOpen && svc.IsOpen)
           {
               RaLog.Info( mark, "Restart   " + svc.Uri.ToString() );
               changed = true;
           }
-          else if (registered.Usage == ActorInfo.Use.ServiceEnableRequest
-                       && svc.Usage == ActorInfo.Use.ServiceDisableRequest)
+          else if (registered.IsOpen && !svc.IsOpen)
           {
               RaLog.Info( mark, "Stopped   " + svc.Uri.ToString() );
               changed = true;
           }
-          else if (registered.Usage == ActorInfo.Use.ServiceEnableRequest
-                       && svc.Usage == ActorInfo.Use.ServiceEnableRequest)
+          else if (registered.IsOpen && svc.IsOpen)
           {
               RaLog.Info( mark, "Alive     " + svc.Uri.ToString() );
               SvcRegister.Item[found].TimeoutSeconds = svc.TimeoutSeconds;// Restart timeout

@@ -34,6 +34,7 @@ namespace Test2.Client
             RaLog.Info( "Clt1", "Start" );
 
             Application.Run(new FrmClient());
+            Environment.ExitCode = 0;
         }
         catch (Exception ex) // any Exception
         {

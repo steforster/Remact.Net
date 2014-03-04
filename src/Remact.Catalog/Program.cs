@@ -38,6 +38,7 @@ namespace Remact.Catalog
                 Application.SetCompatibleTextRenderingDefault (false);
                 Application.Run (new FrmCatalog());
                 Catalog.Dispose();
+                Environment.ExitCode = 0;
             }
             catch (Exception ex) // any Exception
             {

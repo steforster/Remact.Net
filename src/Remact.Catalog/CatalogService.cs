@@ -51,7 +51,6 @@ namespace Remact.Catalog
             if (s.Name == actorInputName && s.IsServiceName)
             {
                 found = new ActorInfo(s); // create a copy in order not to change the SvcRegister
-                found.Usage = ActorInfo.Use.ServiceAddressResponse;
                 break;
             }
         }
