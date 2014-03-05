@@ -276,7 +276,15 @@ namespace Remact.Net
             {
                 Response = new ActorMessage(service, ClientId, RequestId, 
                                             Source, null, payload, responseHandler);
-                Response.Type = ActorMessageType.Response;
+                if (payload is ErrorMessage)
+                {
+                    Response.Type = ActorMessageType.Error;
+                }
+                else
+                {
+                    Response.Type = ActorMessageType.Response;
+                }
+
                 Response.DestinationLambda = SourceLambda; // SourceLambda will be called later on for the first response only
                 SourceLambda = null;
                 if (service.TraceSend) RaLog.Info(Response.SvcSndId, Response.ToString(), service.Logger);
@@ -286,7 +294,15 @@ namespace Remact.Net
             {
                 var msg = new ActorMessage(service, ClientId, 0,
                                            Source, null, payload, responseHandler);
-                msg.Type = ActorMessageType.Notification;
+                if (payload is ErrorMessage)
+                {
+                    msg.Type = ActorMessageType.Error;
+                }
+                else
+                {
+                    msg.Type = ActorMessageType.Notification;
+                }
+
                 if (service.TraceSend) RaLog.Info(msg.SvcSndId, msg.ToString(), service.Logger);
                 Source.PostInput(msg);
             }

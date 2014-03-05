@@ -3,6 +3,7 @@
 
 using System;
 using System.Net;                  // Dns
+using System.Threading.Tasks;
 using Remact.Net;
 
 namespace Remact.Net.Remote
@@ -19,8 +20,8 @@ namespace Remact.Net.Remote
     /// <summary>
     /// Connect or reconnect output to the previously linked partner.
     /// </summary>
-    /// <returns>false, when the connection may not be started.</returns>
-    bool TryConnect();
+    /// <returns>A task. When this task is run to completion, the task.Result corresponds to ActorPort.IsOpen.</returns>
+    Task<bool> TryConnect();
 
     /// <summary>
     /// Shutdown the outgoing remote connection. Send a disconnect message to the partner.

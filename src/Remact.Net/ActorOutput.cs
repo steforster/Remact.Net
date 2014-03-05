@@ -7,6 +7,7 @@ using System.Runtime.Serialization;// DataContract
 using System.Net;                  // Dns
 using System.Threading;            // SynchronizationContext
 using Remact.Net.Remote;
+using System.Threading.Tasks;
 
 namespace Remact.Net
 {
@@ -169,17 +170,17 @@ namespace Remact.Net
     /// The method is accessible by the owner of this ActorOutput object only. No interface exposes the method.
     /// TryConnect picks up the synchronization context and must be called on the sending thread only!
     /// The connect-process runs asynchronous and may involve an address lookup at the Remact.Catalog.
-    /// A ActorInfo message is received, after the connection has been established.
-    /// A ErrorMessage is received, when the partner is not reachable.
+    /// An ActorInfo message is received, after the connection has been established.
+    /// An ErrorMessage is received, when the partner is not reachable.
     /// </summary>
-    /// <returns>false, when the connect-process is not startable.</returns>
-    public bool TryConnect()
+    /// <returns>A task. When this task is run to completion, the task.Result corresponds to IsOpen.</returns>
+    public Task<bool> TryConnect()
     {
         if( m_MyOutputProxy != null ) return m_MyOutputProxy.TryConnect(); // calls PickupSynchronizationContext and sets m_Connected
-        if( m_BasicOutput == null )   return false; // not linked
+        if( m_BasicOutput == null )   throw new InvalidOperationException("ActorOutput is not linked");
         PickupSynchronizationContext();
         m_isOpen = true;
-        return true;
+        return ActorPort.TrueTask;
     }
 
     /// <summary>
@@ -190,42 +191,8 @@ namespace Remact.Net
       if( m_MyOutputProxy != null ) m_MyOutputProxy.Disconnect ();
       base.Disconnect();
     }
-/*
-    /// <summary>
-    /// Send a request message to the partner on the outgoing connection.
-    /// At least a ReadyMessage will asynchronously be received through 'PostInput', when the partner has processed the request.
-    /// Usage:
-    /// Clientside:  Send a request to the connected remote service.
-    /// Internal:    Send a message to the connected partner running on another thread synchronization context.
-    /// Serviceside: Source.SendOut() sends a request from client-proxy to the internal service.
-    /// </summary>
-    /// <param name="msg">A <see cref="ActorMessage"/>the 'Source' property references the sending partner, where the response is expected.</param>
-    public void SendOut (ActorMessage msg)
-    {
-      if (m_BasicOutput == null) throw new Exception ("Remact: Output of '"+Name+"' has not been linked");
 
-      if( !m_Connected )
-      {
-          RaLog.Warning( "Remact", "ActorPort '" + Name + "' is not connected. Cannot send message!", Logger );
-          return;
-      }
-
-      if( !IsMultithreaded )
-      {
-          int threadId = Thread.CurrentThread.ManagedThreadId;
-          if (SyncContext == null)
-          {
-              ManagedThreadId = threadId;
-              SyncContext = SynchronizationContext.Current;    // set on first send operation
-          }
-          else if (ManagedThreadId != threadId)
-          {
-              throw new Exception("Remact: wrong thread synchronization context when sending from '" + Name + "'");
-          }
-      }
-      m_BasicOutput.PostInput(msg);
-    }
-*/
+      
     /// <summary>
     /// The number of requests not yet responded by the service connected to this output.
     /// </summary>
@@ -235,60 +202,6 @@ namespace Remact.Net
             return m_BasicOutput.OutstandingResponsesCount;
     }}
 
-/*
-    /// <summary>
-    /// Send a request payload to the partner on the outgoing connection.
-    /// At least a ReadyMessage will asynchronously be received through 'PostInput', after the partner has processed the request.
-    /// </summary>
-    /// <param name="payload">The message payload to send.</param>
-    public void SendOut(object payload)
-    {
-      if (LastRequestIdSent == int.MaxValue) LastRequestIdSent = 10;
-      ActorMessage msg = new ActorMessage(this, OutputClientId, ++LastRequestIdSent, 
-                                          this, null, payload);
-      SendOut(msg);
-    }
-
-    /// <summary>
-    /// Send a request payload to the partner on the outgoing connection.
-    /// At least a ReadyMessage will asynchronously be received in responseHandler.
-    /// </summary>
-    /// <param name="payload">The message payload to send.</param>
-    /// <param name="responseHandler">A method or lambda expression handling the asynchronous response.</param>
-    public void SendOut(object payload, AsyncResponseHandler responseHandler)
-    {
-      if (LastRequestIdSent == int.MaxValue) LastRequestIdSent = 10;
-      ActorMessage msg = new ActorMessage(this, OutputClientId, ++LastRequestIdSent,
-                                          this, null, payload, responseHandler);
-      SendOut (msg);
-    }
-
-    /// <summary>
-    /// Send a request payload to the partner on the outgoing connection.
-    /// The responseHandler expects a response payload of a given type TRsp.
-    /// </summary>
-    /// <param name="payload">The message payload to send.</param>
-    /// <param name="responseHandler">A method or lambda expression handling the asynchronous response.</param>
-    /// <typeparam name="TRsp">The expected type of the response payload. Other types and errors are sent to the default message handler.</typeparam>
-    public void SendOut<TRsp>(object payload, Action<TRsp, ActorMessage> responseHandler) where TRsp : class
-    {
-        if (LastRequestIdSent == int.MaxValue) LastRequestIdSent = 10;
-        ActorMessage msg = new ActorMessage(this, OutputClientId, ++LastRequestIdSent,
-                                            this, null, payload, 
-                                            (rsp) =>
-                                                {
-                                                    TRsp response;
-                                                    if (rsp.Type == ActorMessageType.Response
-                                                     && rsp.TryConvertPayload(out response))
-                                                    {
-                                                        responseHandler(response, rsp);
-                                                        return null;
-                                                    }
-                                                    return rsp;
-                                                });
-        SendOut(msg);
-    }
-*/
     #endregion
   }// class ActorPort
 

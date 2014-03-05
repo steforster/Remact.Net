@@ -142,7 +142,7 @@ namespace Remact.Net.Remote
             return tcs.Task;
         }
 
-        void       IRemactProtocolDriverService.OpenAsync(ActorMessage message, IRemactProtocolDriverCallbacks callback) { }
+        void       IRemactProtocolDriverService.OpenAsync(OpenAsyncState state, IRemactProtocolDriverCallbacks callback) { }
         Uri        IRemactProtocolDriverService.ServiceUri { get { return null; } }
         PortState  IRemactProtocolDriverService.PortState { get { return PortState.Ok; } }
         void       IRemactProtocolDriverService.Dispose() { }

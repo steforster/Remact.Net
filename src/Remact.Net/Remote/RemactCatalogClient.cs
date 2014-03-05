@@ -28,8 +28,10 @@ namespace Remact.Net.Remote
     private        List<RemactService>  m_ServiceList;
     private        int                  m_nCurrentSvc;
     private        Timer                m_Timer;
-    private        bool                 m_Running;
+    private volatile bool               m_Running;
     private        int                  m_nConnectTries;
+    private        Task<bool>[]         m_connectToCatalogTask;
+
 
 
     internal bool DisableCatalogClient
@@ -87,16 +89,20 @@ namespace Remact.Net.Remote
             }//-------------------------------
             else if (state == PortState.Disconnected || state == PortState.Unlinked)
             {
-                if (!ms_DisableCatalogClient)
-                {
-                    if (++m_nConnectTries >= 10) m_nConnectTries = 1;
-                    var uri = new Uri(string.Format("ws://{0}:{1}/{2}/{3}", RemactConfigDefault.Instance.CatalogHost, RemactConfigDefault.Instance.CatalogPort, RemactConfigDefault.WsNamespace, RemactConfigDefault.Instance.CatalogServiceName));
-                    m_CatalogClient.LinkOutputToRemoteService(uri);
-                    m_CatalogClient.TryConnect();
-                }
-
                 lock (ms_Lock)
                 {
+                    if (!ms_DisableCatalogClient)
+                    {
+                        if (++m_nConnectTries >= 10) m_nConnectTries = 1;
+                        var uri = new Uri(string.Format("ws://{0}:{1}/{2}/{3}", RemactConfigDefault.Instance.CatalogHost, RemactConfigDefault.Instance.CatalogPort, RemactConfigDefault.WsNamespace, RemactConfigDefault.Instance.CatalogServiceName));
+                        m_CatalogClient.LinkOutputToRemoteService(uri);
+                        if (m_connectToCatalogTask == null)
+                        {
+                            m_connectToCatalogTask = new Task<bool>[1];
+                        }
+                        m_connectToCatalogTask[0] = m_CatalogClient.TryConnect();
+                    }
+
                     foreach (RemactService s in m_ServiceList)
                     {
                         s.IsServiceRegistered = false; // reset in case CatalogService has been restarted 
@@ -105,6 +111,7 @@ namespace Remact.Net.Remote
             }//-------------------------------
             else if (m_CatalogClient.IsOutputConnected)
             {
+                m_connectToCatalogTask = null;
                 m_nConnectTries = -1;
                 if (m_ServiceList.Count <= m_nCurrentSvc)
                 {
@@ -218,7 +225,7 @@ namespace Remact.Net.Remote
       m_CatalogClient = new ActorOutput("Remact.CatalogClient", OnMessageReceived);
       m_CatalogClient.IsMultithreaded = true; // all other clients will send LookupInput requests through this client
       m_CatalogClient.TraceConnect = false;
-      m_Timer = new Timer (OnTimerTick, this, 0, 1000); // startet immediately, Periode=1s
+      m_Timer = new Timer (OnTimerTick, this, 0, 1000); // start immediately, period=1s
     }// CTOR
 
     
@@ -353,16 +360,30 @@ namespace Remact.Net.Remote
         return m_CatalogClient.Ask<ReadyMessage>("InputIsClosed", actorInput, out _latestSentMessage, false);
     }
 
-    public Task<ActorMessage<ActorInfo>> LookupInput(string actorInputName)
+    Task<ActorMessage<ActorInfoList>> IRemactCatalog.SynchronizeCatalog(ActorInfoList serviceList)
     {
-        ActorMessage sentMessage;
-        return m_CatalogClient.Ask<ActorInfo>("LookupInput", actorInputName, out sentMessage, false);
+        throw new NotSupportedException();
     }
 
-    public Task<ActorMessage<ActorInfoList>> SynchronizeCatalog(ActorInfoList serviceList)
+    public Task<ActorMessage<ActorInfo>> LookupInput(string actorInputName)
     {
-        throw new InvalidOperationException();
+        lock (ms_Lock)
+        {
+            if (m_connectToCatalogTask != null)
+            {
+                var newTask = Task.Factory.ContinueWhenAny(m_connectToCatalogTask, (t) => Lookup(actorInputName));
+                return newTask.Unwrap();
+            }
+        }
+
+        return Lookup(actorInputName);
     }
+
+    private Task<ActorMessage<ActorInfo>> Lookup(string actorInputName)
+    {
+        return m_CatalogClient.Ask<ActorInfo>("LookupInput", actorInputName);
+    }
+
 
     #endregion
   }//class Remact.CatalogClient

@@ -3,6 +3,7 @@
 
 using System;
 using System.Net;                  // Dns
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using Remact.Net.Protocol;
 using Remact.Net.Protocol.Wamp;
@@ -221,9 +222,9 @@ namespace Remact.Net.Remote
     /// Dummy implementation. Client stub is always connected to the service.
     /// </summary>
     /// <returns>true</returns>
-    bool IRemoteActor.TryConnect()
+    Task<bool> IRemoteActor.TryConnect()
     {
-      return true;
+        return ActorPort.TrueTask;
     }
 
     /// <summary>

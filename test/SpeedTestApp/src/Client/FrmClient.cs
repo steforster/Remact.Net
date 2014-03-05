@@ -8,6 +8,7 @@ using System.Windows.Forms;
 using System.Threading;
 using Remact.Net;
 using Test2.Contracts;
+using System.Threading.Tasks;
 
 
 namespace Test2.Client
@@ -49,7 +50,8 @@ namespace Test2.Client
     //----------------------------------------------------------------------------------------------
     #region Fields and constructor
 
-    private Test2Client Client1;
+    private Test2Client _client;
+    private Task<bool> _connectionTask;
   
 
     /// <summary>
@@ -58,10 +60,10 @@ namespace Test2.Client
     public FrmClient ()
     {
         InitializeComponent ();
-        Client1 = new Test2Client();
-        Client1.UpdateView += OnUpdateView;
-        lbClient.Text = Client1.Output.ToString("Client", 20);
-        this.Text = Client1.Output.AppIdentification;
+        _client = new Test2Client();
+        _client.UpdateView += OnUpdateView;
+        lbClient.Text = _client.Output.ToString("Client", 20);
+        this.Text = _client.Output.AppIdentification;
     }
 
     #endregion
@@ -71,17 +73,18 @@ namespace Test2.Client
     // event from client
     void OnUpdateView()
     {
-        if (!Client1.SpeedTest)
+        if (!_client.SpeedTest)
         {
-            Client1.Log.Append(tbService1.Text);
-            int len = Client1.Log.Length;
+            _client.Log.Append(tbService1.Text);
+            int len = _client.Log.Length;
             if (len > 10000) len = 10000;
-            tbService1.Text = Client1.Log.ToString(0, len);
+            tbService1.Text = _client.Log.ToString(0, len);
+            _client.Log.Length = 0;
 
             if (lbService1.Text.Length == 0)
             {
-                lbClient.Text = Client1.Output.ToString("Client", 20);
-                lbService1.Text = Client1.Output.OutputSidePartner.ToString("Service", 20);
+                lbClient.Text = _client.Output.ToString("Client", 20);
+                lbService1.Text = _client.Output.OutputSidePartner.ToString("Service", 20);
             }
         }
     }
@@ -98,58 +101,63 @@ namespace Test2.Client
 
         if (!cbService1.Checked)
         {
-            if (Client1.Output.OutputState != PortState.Disconnected)
+            if (_client.Output.OutputState != PortState.Disconnected)
             {
-                if (Client1.Output.OutputState != PortState.Faulted) lbState1.Text = "disconnected";
-                Client1.Output.Disconnect();
+                if (_client.Output.OutputState != PortState.Faulted) lbState1.Text = "disconnected";
+                _client.Output.Disconnect();
             }
             return;
         }
             
-        if (Client1.Output.OutputState == PortState.Faulted)
+        if (_client.Output.OutputState == PortState.Faulted)
         {
             cbService1.Checked = false;
             lbState1.Text = "-FAULT-";
+            if (_connectionTask.Exception != null)
+            {
+                RaLog.PluginConsole.AppendFullMessage(_client.Log, _connectionTask.Exception);
+                _client.Log.AppendLine();
+                OnUpdateView();
+            }
         }
-        else if (Client1.Output.OutputState == PortState.Disconnected 
-              || Client1.Output.OutputState == PortState.Unlinked)
+        else if (_client.Output.OutputState == PortState.Disconnected 
+              || _client.Output.OutputState == PortState.Unlinked)
         {
             RaLog.Info( "Clt1", "open S1" );
-            tbService1.Text = string.Empty;
-            lbService1.Text = string.Empty;
             lbState1.Text   = "connecting ...";
+            lbService1.Text = string.Empty;
             RemactConfigDefault.Instance.CatalogHost = tbCatalogHost.Text;
-            Client1.Output.LinkOutputToRemoteService ("Test2.Service");
-            Client1.TryConnect();
-            Client1.ResponseCount = 0;
+            _client.Output.LinkOutputToRemoteService ("Test2.Service");
+            _connectionTask = _client.TryConnect();
+            _client.ResponseCount = 0;
         }
-        else if (Client1.Output.OutputState == PortState.Ok)
+        else if (_client.Output.OutputState == PortState.Ok)
         {
-            if (Client1.SpeedTest)
+            if (_client.SpeedTest)
             {
                 if (m_Seconds % 3 == 0)
                 {
                     //lbClient.Text   = Client1.Output.ToString  ("Client", 20);
                     //lbService1.Text = Client1.Output.OutputSidePartner.ToString("Service", 20);
-                    if (Client1.ResponseCount > 150)
+                    if (_client.ResponseCount > 150)
                     {
-                        tbService1.Text = (Client1.ResponseCount / 3).ToString() + " Requests / sec";
+                        tbService1.Text = (_client.ResponseCount / 3).ToString() + " Requests / sec";
                     }
                     else
                     {
-                        tbService1.Text = Math.Round((float)Client1.ResponseCount / 3.0, 1).ToString() + " Requests / sec";
+                        tbService1.Text = Math.Round((float)_client.ResponseCount / 3.0, 1).ToString() + " Requests / sec";
                     }
 
-                    Client1.ResponseCount = 0;
+                    _client.ResponseCount = 0;
                 }
             }
 
-            lbState1.Text = "CltReq="+Client1.LastRequestIdSent;
+            lbState1.Text = "CltReq="+_client.LastRequestIdSent;
 
             // In speed test mode: Every second an additional request is injected into the request/response stream
-            Client1.SpeedTest = cbSpeedTest1.Checked;
-            Client1.Output.TraceSend = !Client1.SpeedTest;
-            Client1.SendPeriodicMessage();
+            _client.SpeedTest = cbSpeedTest1.Checked;
+            _client.Output.TraceSend = !_client.SpeedTest;
+            _client.SendPeriodicMessage();
         }
       }
       catch (Exception ex)
@@ -161,7 +169,7 @@ namespace Test2.Client
     
     private void FrmClient_FormClosing(object sender, FormClosingEventArgs e)
     {
-      Client1.Output.Disconnect();
+      _client.Output.Disconnect();
     }
 
     #endregion

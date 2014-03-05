@@ -3,7 +3,8 @@
 
 using System;
 using System.Diagnostics;   // Trace Listener, Trace...
-using System.Reflection;    // Assembly, Attributes
+using System.Reflection;
+using System.Text;    // Assembly, Attributes
 
 
 namespace Remact.Net
@@ -59,9 +60,36 @@ public partial class RaLog
     /// <inheritdoc/>
     public void Exception( string text, Exception ex, object logger )
     {
-        Log("##", "EXCEPT", text
-                  +"\r\n   " + ex.Message
-                  +"\r\n"    + ex.StackTrace );
+        var sb = new StringBuilder(500);
+        sb.AppendLine(text);
+        sb.Append("  ");
+        AppendFullMessage(sb, ex);
+        sb.AppendLine();
+        sb.Append(ex.StackTrace);
+        Log("##", "EXCEPT", sb.ToString());
+    }
+
+    public static void AppendFullMessage(StringBuilder sb, Exception ex)
+    {
+        while (ex != null)
+        {
+            if (ex.InnerException != null
+            && (ex is AggregateException || ex is TargetInvocationException))
+            {
+                ex = ex.InnerException;
+                continue; // skip one exception log
+            }
+
+            sb.Append(ex.GetType().Name);
+            sb.Append(": ");
+            sb.Append(ex.Message);
+            ex = ex.InnerException;
+            if (ex != null)
+            {
+                sb.AppendLine();
+                sb.Append("  Inner ");
+            }
+        }
     }
 
     /// <summary>
@@ -73,8 +101,8 @@ public partial class RaLog
     private void Log(string severity, string group, string text)
     {
       string s = String.Format (m_LogFormat, severity, DateTime.Now, group, text);
-      if (OutputWriter == null) System.Diagnostics.Trace.Write (s);
-                           else OutputWriter.Write (s); // for MonoDevelop 2010-04
+      if (OutputWriter == null) System.Diagnostics.Trace.WriteLine (s);
+                           else OutputWriter.WriteLine (s); // for MonoDevelop 2010-04
     }
 
     //------------------------------------------------------------
@@ -102,8 +130,8 @@ public partial class RaLog
         // {1} = DateTime.Now
         // {2} = group, Format string: {Num,FieldLen:Format}
         // {3} = info
-        if (m_boDisplayDate) m_LogFormat = "{0}{1:d} {1:HH:mm:ss.fff}, {2,-6}, {3}\r\n";
-                        else m_LogFormat =       "{0}{1:HH:mm:ss.fff}, {2,-6}, {3}\r\n";
+        if (m_boDisplayDate) m_LogFormat = "{0}{1:d} {1:HH:mm:ss.fff}, {2,-6}, {3}";
+                        else m_LogFormat =       "{0}{1:HH:mm:ss.fff}, {2,-6}, {3}";
       }
     }
     

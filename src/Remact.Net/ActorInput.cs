@@ -7,6 +7,7 @@ using System.Runtime.Serialization;// DataContract
 using System.Net;                  // Dns
 using System.Threading;            // SynchronizationContext
 using Remact.Net.Remote;
+using System.Threading.Tasks;
 #if !BEFORE_NET45
     using System.Threading.Tasks;
 #endif
@@ -209,7 +210,7 @@ namespace Remact.Net
     }
 
     /// <inheritdoc />
-    public bool TryConnect()
+    public Task<bool> TryConnect()
     {
         bool ok = true;
         PickupSynchronizationContext();
@@ -219,7 +220,7 @@ namespace Remact.Net
             ok = m_MyInputService.OpenService();
         }
         m_isOpen = ok;
-        return ok;
+        return ActorPort.TrueTask;
     }
 
     /// <summary>

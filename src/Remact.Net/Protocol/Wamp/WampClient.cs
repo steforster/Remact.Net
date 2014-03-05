@@ -9,6 +9,7 @@ using Alchemy.Classes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Remact.Net.Protocol;
+using System.IO;
 
 namespace Remact.Net.Protocol.Wamp
 {
@@ -64,22 +65,22 @@ namespace Remact.Net.Protocol.Wamp
         }
 
         // Asynchronous open the connection
-        public void OpenAsync(ActorMessage request, IRemactProtocolDriverCallbacks callback)
+        public void OpenAsync(OpenAsyncState state, IRemactProtocolDriverCallbacks callback)
         {
             _callback = callback;
             _wsClient.OnConnected = OnConnected;
             _wsClient.OnDisconnect = OnConnectFailure;
-            _wsClient.BeginConnect(request);
+            _wsClient.BeginConnect(state);
         }
 
         private void OnConnected(UserContext context)
         {
-            var request = (ActorMessage)context.Data;
-            request.Payload = null; // null = ok
+            var state = (OpenAsyncState)context.Data;
+            state.Error = null;
             if (_wsClient.ReadyState != WebSocketClient.ReadyStates.OPEN)
             {
                 _faulted = true;
-                request.Payload = new ErrorMessage(ErrorMessage.Code.CouldNotOpen, "WebSocketClient not connected");
+                state.Error = new IOException("WebSocketClient not open.");
             }
             else
             {
@@ -87,15 +88,15 @@ namespace Remact.Net.Protocol.Wamp
                 context.SetOnDisconnect(OnDisconnect);
             }
 
-            _callback.OnOpenCompleted(request);
+            _callback.OnOpenCompleted(state);
         }
 
         private void OnConnectFailure(UserContext context)
         {
             _faulted = true;
-            var request = (ActorMessage)context.Data;
-            request.Payload = new ErrorMessage(ErrorMessage.Code.CouldNotOpen, context.LatestException);
-            _callback.OnOpenCompleted(request);
+            var state = (OpenAsyncState)context.Data;
+            state.Error = context.LatestException;
+            _callback.OnOpenCompleted(state);
         }
 
         public void Dispose()

@@ -50,7 +50,7 @@ namespace Remact.Net.Protocol.Wamp
         #region IRemactProtocolDriverCallbacks implementation
 
 
-        public void OnOpenCompleted(ActorMessage request)
+        public void OnOpenCompleted(OpenAsyncState state)
         {
             throw new NotImplementedException();
         }

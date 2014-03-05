@@ -37,9 +37,9 @@ namespace Test2.Client
     }
 
 
-    public void TryConnect()
+    public Task<bool> TryConnect()
     {
-        _proxy.Output.TryConnect();
+        return _proxy.Output.TryConnect();
     }
 
 
@@ -121,7 +121,6 @@ namespace Test2.Client
         RaLog.Info(msg.CltRcvId, "Test2Rsp contains " + response.Items.Count + " items" + s);
 
         UpdateView();
-        Log.Length = 0;
     }
 
 

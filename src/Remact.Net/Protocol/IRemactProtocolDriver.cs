@@ -2,6 +2,7 @@
 // Copyright (c) 2014, github.com/steforster/Remact.Net
 
 using System;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
 namespace Remact.Net.Protocol
@@ -25,9 +26,9 @@ namespace Remact.Net.Protocol
         /// <summary>
         /// Opens the connection.
         /// </summary>
-        /// <param name="message">A request message to return error info.</param>
+        /// <param name="state">The state will be returned.</param>
         /// <param name="callback">Callback handler for OnOpenCompleted and MessageFromService.</param>
-        void OpenAsync(ActorMessage message, IRemactProtocolDriverCallbacks callback);
+        void OpenAsync(OpenAsyncState state, IRemactProtocolDriverCallbacks callback);
 
         /// <summary>
         /// Occurs when a client calls a service.
@@ -49,8 +50,8 @@ namespace Remact.Net.Protocol
         /// <summary>
         /// Occurs when the WebSocketClient has finished connecting to the server.
         /// </summary>
-        /// <param name="response">Response.Payload contains information in case of error.</param>
-        void OnOpenCompleted(ActorMessage request);
+        /// <param name="state">contains information in case of error.</param>
+        void OnOpenCompleted(OpenAsyncState state);
 
         /// <summary>
         /// Gets the endpoint uri of the client
@@ -71,6 +72,12 @@ namespace Remact.Net.Protocol
         /// Occurs when the service disconnects from client.
         /// </summary>
         void OnServiceDisconnect();
+    }
+
+    public class OpenAsyncState
+    {
+        public TaskCompletionSource<bool> Tcs;
+        public Exception Error;
     }
 
     public class LowerProtocolMessage

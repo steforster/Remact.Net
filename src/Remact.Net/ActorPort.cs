@@ -307,11 +307,7 @@ namespace Remact.Net
         {
             try
             {
-            #if !BEFORE_NET45
-                this.SyncContext.Post( MessageHandlerBaseAsync, msg );// Message is posted into the message queue
-            #else
                 this.SyncContext.Post(MessageHandlerBase, msg);// Message is posted into the message queue
-            #endif
             }
             catch( Exception ex )
             {
@@ -359,13 +355,9 @@ namespace Remact.Net
     /// <param name="msg">A <see cref="ActorMessage"/>the 'Source' property references the sending partner, where the response is expected.</param>
     public void SendOut(ActorMessage msg)
     {
-        if (m_BasicOutput == null) throw new Exception("Remact: Output of '" + Name + "' has not been linked");
+        if (m_BasicOutput == null) throw new InvalidOperationException("Remact: Output of '" + Name + "' has not been linked. Cannot send message.");
 
-        if (!m_isOpen)
-        {
-            RaLog.Warning("Remact", "ActorPort '" + Name + "' is not connected. Cannot send message!", Logger);
-            return;
-        }
+        if (!m_isOpen) throw new InvalidOperationException("Remact: ActorPort '" + Name + "' is not connected. Cannot send message.");
 
         if (!IsMultithreaded)
         {
@@ -380,6 +372,7 @@ namespace Remact.Net
                 throw new Exception("Remact: wrong thread synchronization context when sending from '" + Name + "'");
             }
         }
+
         m_BasicOutput.PostInput(msg);
     }
 
@@ -468,8 +461,9 @@ namespace Remact.Net
                             }
                             else if (throwException)
                             {
-                                var dynamicRsp = new ActorMessage<dynamic>((dynamic)rsp.Payload, rsp);
-                                var ex = new ActorException<dynamic>(dynamicRsp, "unexpected response type '" + rsp.Payload.GetType().FullName + "' from method '" + method + "'");
+                                //var dynamicRsp = new ActorMessage<dynamic>((dynamic)rsp.Payload, rsp);
+                                //var ex = new ActorException<dynamic>(dynamicRsp, "unexpected response type '" + rsp.Payload.GetType().FullName + "' from method '" + method + "'");
+                                var ex = new ActorException(rsp, "unexpected response type '" + rsp.Payload.GetType().FullName + "' from method '" + method + "'");
                                 tcs.SetException(ex);
                                 return null;
                             }
@@ -549,6 +543,21 @@ namespace Remact.Net
     /// IsOpen=false: The input or output has closed or disconnected.
     /// </summary>
     public bool IsOpen { get { return m_isOpen; } }
+
+    
+    /// <summary>
+    /// Gets a completed task having the Result true. 
+    /// </summary>
+    internal static Task<bool> TrueTask
+    {
+        get
+        {
+            var tcs = new TaskCompletionSource<bool>();
+            tcs.SetResult(true);
+            return tcs.Task;
+        }
+    }
+
 
     /// <summary>
     /// Incoming messages are directly redirected to this partner (used library intern)

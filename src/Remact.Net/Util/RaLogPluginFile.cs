@@ -6,7 +6,8 @@ using System.IO;            // Files
 using System.Diagnostics;   // Trace Listener, Trace...
 using System.Reflection;    // Assembly, Attributes
 using System.Windows.Forms; // MessageBox
-using System.Threading;     // Sleep
+using System.Threading;
+using System.Text;     // Sleep
 
 
 namespace Remact.Net
@@ -64,9 +65,13 @@ public partial class RaLog
     /// <inheritdoc/>
     public void Exception( string text, Exception ex, object logger )
     {
-        Log("##", "EXCEPT", text
-                  + "\r\n   " + ex.Message
-                  + "\r\n" + ex.StackTrace );
+        var sb = new StringBuilder(500);
+        sb.AppendLine(text);
+        sb.Append("  ");
+        PluginConsole.AppendFullMessage(sb, ex);
+        sb.AppendLine();
+        sb.Append(ex.StackTrace);
+        Log("##", "EXCEPT", sb.ToString());
     }
 
     /// <summary>
@@ -78,8 +83,8 @@ public partial class RaLog
     private void Log(string severity, string group, string text)
     {
       string s = String.Format (m_LogFormat, severity, DateTime.Now, group, text);
-      if (m_LogFile != null) System.Diagnostics.Trace.Write (s);
-                          else LoggingException (s);
+      if (m_LogFile != null) System.Diagnostics.Trace.WriteLine (s);
+                        else LoggingException (s);
       m_boLogReady = true;
       ++m_nLogLines;
     }
@@ -158,8 +163,8 @@ public partial class RaLog
         // {1} = DateTime.Now
         // {2} = group, Format string: {Num,FieldLen:Format}
         // {3} = info
-        if (m_boDisplayDate) m_LogFormat = "{0}{1:d} {1:HH:mm:ss.fff}, {2,-6}, {3}\r\n";
-                        else m_LogFormat =       "{0}{1:HH:mm:ss.fff}, {2,-6}, {3}\r\n";
+        if (m_boDisplayDate) m_LogFormat = "{0}{1:d} {1:HH:mm:ss.fff}, {2,-6}, {3}";
+                        else m_LogFormat =       "{0}{1:HH:mm:ss.fff}, {2,-6}, {3}";
       }
     }
 
