@@ -40,15 +40,6 @@ namespace Remact.Net.Remote
     public   string    LastAction;
     
     /// <summary>
-    /// Default = false. When set to true: Disable catalog client, no service in this application will be published to the Remact.Catalog.
-    /// </summary>
-    public static bool DisableCatalogClient
-    {
-      get { return RemactCatalogClient.Instance.DisableCatalogClient; }
-      set { RemactCatalogClient.Instance.DisableCatalogClient = value; }
-    }
-
-    /// <summary>
     /// True if any client has been connected or disconnected. Set to false by DoPeriodicTasks()
     /// </summary>
     internal bool                      HasConnectionStateChanged = true;

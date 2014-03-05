@@ -28,11 +28,7 @@ namespace Remact.Net
         /// <returns>The same request, for chained calls.</returns>
         // inspired by http://blogs.infosupport.com/blogs/frankb/archive/2008/02/02/Using-C_2300_-3.0-Extension-methods-and-Lambda-expressions-to-avoid-nasty-Null-Checks.aspx
 
-#if !MONO
         public static ActorMessage On<T> (this ActorMessage msg, Action<T> handle) where T : class
-#else
-        public static ActorMessage On<T> (this ActorMessage msg, Action<T> handle) where T : class
-#endif
         {
             if (msg != null)
             {
@@ -131,8 +127,8 @@ namespace Remact.Net
         /// <param name="payload">The user payload to send.</param>
         /// <param name="responseHandler">null or a lamda expression to be called, when a response is aynchronously received (valid on client side requests/responses).</param>
         internal ActorMessage(ActorPort source, int clientId, int requestId, 
-            ActorPort destination, string destinationMethod, object payload, 
-            AsyncResponseHandler responseHandler = null)
+                              ActorPort destination, string destinationMethod, object payload, 
+                              AsyncResponseHandler responseHandler = null)
         {
             Source = source;
             Destination = destination;

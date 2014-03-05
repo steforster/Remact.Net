@@ -299,7 +299,7 @@ namespace Remact.Net.Remote
                 return OpenConnectionAsync(tcs, m_RequestedServiceUri);
             }
 
-            if (RemactCatalogClient.Instance.DisableCatalogClient)
+            if (RemactCatalogClient.IsDisabled)
             {
                 throw new InvalidOperationException("cannot open " + ClientIdent.Name + ", RemactCatalogClient is disabled");
             }
@@ -473,16 +473,9 @@ namespace Remact.Net.Remote
 
         if (m_boTimeout)
         {
-            if (ex != null)
-            {
-                RaLog.Exception("Remact cannot connect '" + ClientIdent.Name + "', " + reason, ex, ClientIdent.Logger);
-                tcs.SetException(ex);
-            }
-            else
-            {
-                RaLog.Error("Remact", "cannot connect '" + ClientIdent.Name + "', " + reason, ClientIdent.Logger);
-                tcs.SetResult(false);
-            }
+            if (ex == null) ex = new OperationCanceledException(reason);
+            RaLog.Exception("Remact cannot connect '" + ClientIdent.Name + "', " + reason, ex, ClientIdent.Logger);
+            tcs.SetException(ex);
         }
         else
         {

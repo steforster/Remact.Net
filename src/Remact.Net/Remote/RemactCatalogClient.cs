@@ -14,7 +14,7 @@ namespace Remact.Net.Remote
   /// <summary>
   /// A internally used singleton object for all RemactServices and RemactClientAsync to register/lookup a service with Remact.Catalog
   /// </summary>
-  internal class RemactCatalogClient : IRemactCatalog
+  public class RemactCatalogClient : IRemactCatalog
   {
     //----------------------------------------------------------------------------------------------
     #region Fields
@@ -32,9 +32,37 @@ namespace Remact.Net.Remote
     private        int                  m_nConnectTries;
     private        Task<bool>[]         m_connectToCatalogTask;
 
+    #endregion
+    //----------------------------------------------------------------------------------------------
+    #region Public members
 
 
-    internal bool DisableCatalogClient
+    /// <summary>
+    /// Get or create the Remact.CatalogClient singleton 
+    /// </summary>
+    /// <returns>singleton instance</returns>
+    public static RemactCatalogClient Instance
+    {
+        get
+        {
+            if (ms_Instance == null)
+            {
+                lock (ms_Lock)
+                {
+                    if (ms_Instance == null)
+                    {
+                        ms_Instance = new RemactCatalogClient();
+                    }
+                }
+            }
+            return ms_Instance;
+        }
+    }
+
+    /// <summary>
+    /// Default = false. When set to true: No input of this application will publish its service name to the Remact.Catalog. No output may be connected by service name only.
+    /// </summary>
+    public static bool IsDisabled
     {
         get { return ms_DisableCatalogClient; }
         set 
@@ -46,6 +74,23 @@ namespace Remact.Net.Remote
             }
         }
     }
+
+
+    /// <summary>
+    /// Gets a value indicating the client is connected to the catalog service.
+    /// </summary>
+    public bool IsConnected { get { return m_CatalogClient.IsOutputConnected; } }
+
+
+    /// <summary>
+    /// Disconnects the current catalog service and starts a new connection attempt.
+    /// </summary>
+    public void Reconnect()
+    {
+        m_CatalogClient.Disconnect();
+        m_Timer.Change(20, 1000); // wait 20 ms for restart
+    }
+
 
     #endregion
     //----------------------------------------------------------------------------------------------
@@ -85,33 +130,14 @@ namespace Remact.Net.Remote
             {
                 if (m_nConnectTries < 0) RaLog.Error("Remact", "Catalog client in fault state !", RemactApplication.Logger);
                 m_CatalogClient.Disconnect();
-                m_Timer.Change (15000, 1000); // 15 s warten und neu starten
+                m_Timer.Change (15000, 1000); // wait 15 s before next connect approach
             }//-------------------------------
             else if (state == PortState.Disconnected || state == PortState.Unlinked)
             {
-                lock (ms_Lock)
-                {
-                    if (!ms_DisableCatalogClient)
-                    {
-                        if (++m_nConnectTries >= 10) m_nConnectTries = 1;
-                        var uri = new Uri(string.Format("ws://{0}:{1}/{2}/{3}", RemactConfigDefault.Instance.CatalogHost, RemactConfigDefault.Instance.CatalogPort, RemactConfigDefault.WsNamespace, RemactConfigDefault.Instance.CatalogServiceName));
-                        m_CatalogClient.LinkOutputToRemoteService(uri);
-                        if (m_connectToCatalogTask == null)
-                        {
-                            m_connectToCatalogTask = new Task<bool>[1];
-                        }
-                        m_connectToCatalogTask[0] = m_CatalogClient.TryConnect();
-                    }
-
-                    foreach (RemactService s in m_ServiceList)
-                    {
-                        s.IsServiceRegistered = false; // reset in case CatalogService has been restarted 
-                    }
-                }
+                ConnectToCatalog();
             }//-------------------------------
             else if (m_CatalogClient.IsOutputConnected)
             {
-                m_connectToCatalogTask = null;
                 m_nConnectTries = -1;
                 if (m_ServiceList.Count <= m_nCurrentSvc)
                 {
@@ -152,6 +178,39 @@ namespace Remact.Net.Remote
     }// OnTimerTick
 
 
+    private void ConnectToCatalog()
+    {
+        lock (ms_Lock)
+        {
+            if (ms_DisableCatalogClient) return;
+            if (m_connectToCatalogTask != null && !m_connectToCatalogTask[0].IsCompleted) return; // connect in progress
+            
+            m_nConnectTries++;
+            m_nCurrentSvc = 0;
+            var uri = new Uri(string.Format("ws://{0}:{1}/{2}/{3}", RemactConfigDefault.Instance.CatalogHost, RemactConfigDefault.Instance.CatalogPort, RemactConfigDefault.WsNamespace, RemactConfigDefault.Instance.CatalogServiceName));
+            m_CatalogClient.LinkOutputToRemoteService(uri);
+            if (m_connectToCatalogTask == null)
+            {
+                m_connectToCatalogTask = new Task<bool>[1];
+            }
+
+            m_connectToCatalogTask[0] = m_CatalogClient.TryConnect();
+            m_connectToCatalogTask[0].ContinueWith(t =>
+                {
+                    if (t.Status == TaskStatus.RanToCompletion)
+                    {
+                        m_Timer.Change(20, 1000); // start updating ActorInfo when connected to the catalog service.
+                    }
+                });
+
+            foreach (RemactService s in m_ServiceList)
+            {
+                s.IsServiceRegistered = false; // reset in case CatalogService has been restarted 
+            }
+        }
+    }
+
+
     private void UpdateCatalog(ActorInfo svc)
     {
         if (svc.IsOpen)
@@ -168,51 +227,26 @@ namespace Remact.Net.Remote
     // Response callback from Remact.CatalogService
     private void OnMessageReceived (ActorMessage rsp)
     {
-        if (rsp.Payload is ErrorMessage)
+        ErrorMessage err;
+        ReadyMessage ready;
+        if (rsp.Type == ActorMessageType.Response && rsp.TryConvertPayload(out ready) && m_ServiceList != null)
         {
-            if (m_nConnectTries % 20 == 1) {
-                ErrorMessage err = rsp.Payload as ErrorMessage;
-                if (err.Error == ErrorMessage.Code.ServiceNotRunning
-                 || err.Error == ErrorMessage.Code.CatalogServiceNotRunning)
-                {
-                    RaLog.Warning( rsp.CltRcvId, "Remact catalog service not running at  '" + rsp.Source.Uri + "'", RemactApplication.Logger );
-                }
-                else
-                {
-                    RaLog.Warning( rsp.CltRcvId, err.ToString(), RemactApplication.Logger );
-                }
-            }
+            m_Timer.Change (20, 1000); // wait 20 ms before next ActorMessage update
         }
-        else if (rsp.Payload is ActorInfo && m_ServiceList != null)
+        else if (rsp.Type == ActorMessageType.Error && rsp.TryConvertPayload(out err))
         {
-            m_Timer.Change (20, 1000); // 20ms warten und nächsten ActorMessage senden, bis alle erledigt sind
+            RaLog.Warning( rsp.CltRcvId, err.ToString(), RemactApplication.Logger );
         }
         else
         {
-            RaLog.Info( rsp.CltRcvId, rsp.ToString(), RemactApplication.Logger );
+            RaLog.Info( rsp.CltRcvId, "unexpected message: " + rsp.ToString(), RemactApplication.Logger );
         }
     }// OnMessageReceived
     
 
     #endregion
     //----------------------------------------------------------------------------------------------
-    #region Constructors
-
-    /// <summary>
-    /// (static) Get or Create the Remact.CatalogClient singleton 
-    /// </summary>
-    /// <returns>singleton instance</returns>
-    internal static RemactCatalogClient Instance
-    {
-        get
-        {
-            if (ms_Instance == null)
-            {
-                ms_Instance = new RemactCatalogClient();
-            }
-            return ms_Instance;
-        }
-    }
+    #region Construct / Shutdown
 
 
     /// <summary>
@@ -227,9 +261,6 @@ namespace Remact.Net.Remote
       m_CatalogClient.TraceConnect = false;
       m_Timer = new Timer (OnTimerTick, this, 0, 1000); // start immediately, period=1s
     }// CTOR
-
-    
-    internal bool IsConnected { get { return m_CatalogClient.IsOutputConnected; } }
 
 
     /// <summary>
@@ -278,7 +309,7 @@ namespace Remact.Net.Remote
     
     #endregion
     //----------------------------------------------------------------------------------------------
-    #region Public Methods
+    #region Client and service register
 
     /// <summary>
     /// Add a local RemactService for registration with Remact.CatalogService
@@ -346,6 +377,7 @@ namespace Remact.Net.Remote
     }
 
     #endregion
+    //----------------------------------------------------------------------------------------------
     #region IRemactCatalog implementation
 
     private ActorMessage _latestSentMessage;
@@ -365,18 +397,21 @@ namespace Remact.Net.Remote
         throw new NotSupportedException();
     }
 
+    /// <summary>
+    /// Looks up a remotly accessible actor input name at the catalog service.
+    /// </summary>
+    /// <param name="actorInputName">The name.</param>
+    /// <returns>A task resulting in the looked up ActorInfo.</returns>
     public Task<ActorMessage<ActorInfo>> LookupInput(string actorInputName)
     {
-        lock (ms_Lock)
+        if (m_CatalogClient.IsOutputConnected)
         {
-            if (m_connectToCatalogTask != null)
-            {
-                var newTask = Task.Factory.ContinueWhenAny(m_connectToCatalogTask, (t) => Lookup(actorInputName));
-                return newTask.Unwrap();
-            }
+            return Lookup(actorInputName);
         }
 
-        return Lookup(actorInputName);
+        ConnectToCatalog();
+        var newTask = Task.Factory.ContinueWhenAny(m_connectToCatalogTask, (t) => Lookup(actorInputName));
+        return newTask.Unwrap();
     }
 
     private Task<ActorMessage<ActorInfo>> Lookup(string actorInputName)
@@ -386,5 +421,5 @@ namespace Remact.Net.Remote
 
 
     #endregion
-  }//class Remact.CatalogClient
-}//namespace
+  }
+}

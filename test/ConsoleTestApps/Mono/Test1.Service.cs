@@ -26,7 +26,7 @@ namespace Test1.Service
             tcpPort = 40001;
         }
 
-        RemactConfigDefault.Instance.DisableCatalogClient = false; // Test1.Client does not use Remact.Catalog.exe, but we publish this service to the catalog anyway.
+        RemactCatalogClient.IsDisabled = false; // Test1.Client does not use Remact.Catalog.exe, but we publish this service to the catalog anyway.
         Console.WriteLine ("Commandline arguments:   ServiceInstance="+RemactConfigDefault.Instance.ApplicationInstance
                         +"   ServiceTcpPort="+tcpPort+"\r\n");
 

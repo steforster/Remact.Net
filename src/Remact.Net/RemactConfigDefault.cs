@@ -142,15 +142,6 @@ namespace Remact.Net
     #region == Remact.Catalog configuration ==
 
     /// <summary>
-    /// Default = false. When set to true: No input of this application will publish its service name to the Remact.Catalog. No output may be connected by service name only.
-    /// </summary>
-    public bool DisableCatalogClient
-    {
-        get { return RemactCatalogClient.Instance.DisableCatalogClient; }
-        set { RemactCatalogClient.Instance.DisableCatalogClient = value; }
-    }
-
-    /// <summary>
     /// Normally the Remact.Catalog is running on every host having services. Therefore the default hostname is 'localhost'.
     /// </summary>
     public virtual string   CatalogHost { get; set; }

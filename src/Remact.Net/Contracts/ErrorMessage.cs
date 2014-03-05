@@ -23,17 +23,17 @@ namespace Remact.Net
     /// <summary>
     /// Get the exception information.
     /// </summary>
-    public  string    Message;
+    public string Message;
 
     /// <summary>
     /// Get the exception information (may be null).
     /// </summary>
-    public  string    InnerMessage;
+    public string InnerMessage;
 
     /// <summary>
     /// Get the exception information (may be null).
     /// </summary>
-    public  string    StackTrace;
+    public string StackTrace;
 
     /// <summary>
     /// Get or set the Error-Code
@@ -41,15 +41,16 @@ namespace Remact.Net
     [JsonIgnore]
     public Code Error 
     {
-     get
-     {
-         if (error <= 0 || error >= (int)Code.Last) 
-              {return Code.Undef;}
-         else if (error > (int)Code.LastAppCode && error < (int)Code.NotImplementedOnService)   
-              {return Code.Undef;}
-         else {return(Code) error;}
-     }
-     set {error = (int)value;}
+        get
+        {
+            if (error <= 0 || error >= (int)Code.Last) 
+                 {return Code.Undef;}
+            else if (error > (int)Code.LastAppCode && error < (int)Code.NotImplementedOnService)   
+                 {return Code.Undef;}
+            else {return(Code) error;}
+        }
+
+        set {error = (int)value;}
     }
     
     /// <summary>
@@ -114,40 +115,10 @@ namespace Remact.Net
       NotConnected,
       
       /// <summary>
-      /// Cannot open the client (configuration error).
-      /// </summary>
-      CouldNotOpen,
-
-      /// <summary>
-      /// Cannot open the service connection (refused by target).
-      /// </summary>
-      ServiceNotRunning,
-
-      /// <summary>
-      /// Cannot open the catalog service connection (refused by target).
-      /// </summary>
-      CatalogServiceNotRunning,
-
-      /// <summary>
-      /// Exception while sending (serializing) the first connect message.
-      /// </summary>
-      CouldNotStartConnect,
-
-      /// <summary>
       /// Error on service, when trying to disconnect.
       /// </summary>
       CouldNotDisconnect,
 
-      /// <summary>
-      /// Wrong response from Remact.Catalog, when trying to connect.
-      /// </summary>
-      CouldNotConnectCatalog,
-      
-      /// <summary>
-      /// Exception while sending (serializing) a message.
-      /// </summary>
-      CouldNotStartSend,
-      
       /// <summary>
       /// Exception received when waiting for response.
       /// </summary>
@@ -191,13 +162,12 @@ namespace Remact.Net
     /// <param name="text">unique information where te error occured.</param>
     public ErrorMessage (Code err, string text = null)
     {
-      Error        = err;
-      Message      = text;
+      Error = err;
+      Message = text;
       if (Message == null)
       {
           Message = String.Empty;
       }
-
     }// CTOR 1
     
     /// <summary>
@@ -224,7 +194,7 @@ namespace Remact.Net
             InnerMessage += " ...";
           }
           else {
-            InnerMessage = string.Concat (InnerMessage, " ", ex.GetType().Name, ": ", ex.Message);
+            InnerMessage = string.Concat (InnerMessage, " Inner ", ex.GetType().Name, ": ", ex.Message);
           }
           ex = ex.InnerException;
         }

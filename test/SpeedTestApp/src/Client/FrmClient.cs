@@ -7,6 +7,7 @@ using System.Text;
 using System.Windows.Forms;
 using System.Threading;
 using Remact.Net;
+using Remact.Net.Remote;
 using Test2.Contracts;
 using System.Threading.Tasks;
 
@@ -62,7 +63,7 @@ namespace Test2.Client
         InitializeComponent ();
         _client = new Test2Client();
         _client.UpdateView += OnUpdateView;
-        lbClient.Text = _client.Output.ToString("Client", 20);
+        labelClient.Text = _client.Output.ToString("Client", 20);
         this.Text = _client.Output.AppIdentification;
     }
 
@@ -75,16 +76,16 @@ namespace Test2.Client
     {
         if (!_client.SpeedTest)
         {
-            _client.Log.Append(tbService1.Text);
+            _client.Log.Append(textBoxService.Text);
             int len = _client.Log.Length;
             if (len > 10000) len = 10000;
-            tbService1.Text = _client.Log.ToString(0, len);
+            textBoxService.Text = _client.Log.ToString(0, len);
             _client.Log.Length = 0;
 
-            if (lbService1.Text.Length == 0)
+            if (labelService.Text.Length == 0)
             {
-                lbClient.Text = _client.Output.ToString("Client", 20);
-                lbService1.Text = _client.Output.OutputSidePartner.ToString("Service", 20);
+                labelClient.Text = _client.Output.ToString("Client", 20);
+                labelService.Text = _client.Output.OutputSidePartner.ToString("Service", 20);
             }
         }
     }
@@ -99,11 +100,11 @@ namespace Test2.Client
         if (m_Seconds % 5 == 0) RaLog.Run ();
         m_Seconds++;
 
-        if (!cbService1.Checked)
+        if (!checkBoxService.Checked)
         {
             if (_client.Output.OutputState != PortState.Disconnected)
             {
-                if (_client.Output.OutputState != PortState.Faulted) lbState1.Text = "disconnected";
+                if (_client.Output.OutputState != PortState.Faulted) labelState.Text = "disconnected";
                 _client.Output.Disconnect();
             }
             return;
@@ -111,8 +112,8 @@ namespace Test2.Client
             
         if (_client.Output.OutputState == PortState.Faulted)
         {
-            cbService1.Checked = false;
-            lbState1.Text = "-FAULT-";
+            checkBoxService.Checked = false;
+            labelState.Text = "-FAULT-";
             if (_connectionTask.Exception != null)
             {
                 RaLog.PluginConsole.AppendFullMessage(_client.Log, _connectionTask.Exception);
@@ -124,9 +125,14 @@ namespace Test2.Client
               || _client.Output.OutputState == PortState.Unlinked)
         {
             RaLog.Info( "Clt1", "open S1" );
-            lbState1.Text   = "connecting ...";
-            lbService1.Text = string.Empty;
-            RemactConfigDefault.Instance.CatalogHost = tbCatalogHost.Text;
+            labelState.Text   = "connecting ...";
+            labelService.Text = string.Empty;
+            if (RemactConfigDefault.Instance.CatalogHost != textBoxCatalogHost.Text)
+            {
+                RemactConfigDefault.Instance.CatalogHost = textBoxCatalogHost.Text;
+                RemactCatalogClient.Instance.Reconnect();
+            }
+
             _client.Output.LinkOutputToRemoteService ("Test2.Service");
             _connectionTask = _client.TryConnect();
             _client.ResponseCount = 0;
@@ -141,21 +147,21 @@ namespace Test2.Client
                     //lbService1.Text = Client1.Output.OutputSidePartner.ToString("Service", 20);
                     if (_client.ResponseCount > 150)
                     {
-                        tbService1.Text = (_client.ResponseCount / 3).ToString() + " Requests / sec";
+                        textBoxService.Text = (_client.ResponseCount / 3).ToString() + " Requests / sec";
                     }
                     else
                     {
-                        tbService1.Text = Math.Round((float)_client.ResponseCount / 3.0, 1).ToString() + " Requests / sec";
+                        textBoxService.Text = Math.Round((float)_client.ResponseCount / 3.0, 1).ToString() + " Requests / sec";
                     }
 
                     _client.ResponseCount = 0;
                 }
             }
 
-            lbState1.Text = "CltReq="+_client.LastRequestIdSent;
+            labelState.Text = "CltReq="+_client.LastRequestIdSent;
 
             // In speed test mode: Every second an additional request is injected into the request/response stream
-            _client.SpeedTest = cbSpeedTest1.Checked;
+            _client.SpeedTest = ccheckBoxSpeedTest.Checked;
             _client.Output.TraceSend = !_client.SpeedTest;
             _client.SendPeriodicMessage();
         }

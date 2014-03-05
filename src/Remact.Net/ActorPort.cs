@@ -539,7 +539,7 @@ namespace Remact.Net
     public bool IsMultithreaded    {get; set;}
 
     /// <summary>
-    /// IsOpen=true : The input or output is currently open or connected.
+    /// IsOpen=true : The input or output is currently open, connected or connecting.
     /// IsOpen=false: The input or output has closed or disconnected.
     /// </summary>
     public bool IsOpen { get { return m_isOpen; } }

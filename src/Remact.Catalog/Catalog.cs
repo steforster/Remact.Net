@@ -41,9 +41,9 @@ namespace Remact.Catalog
     //----------------------------------------------------------------------------------------------
     #region Properties
 
-    public  IActorPort             Service { get{ return m_RemactService;} }
-    public  ActorInfoList    SvcRegister;
-    public  bool                     SvcRegisterChanged = true;
+    public  IActorPort Service { get{ return m_RemactService;} }
+    public  ActorInfoList SvcRegister;
+    public  bool SvcRegisterChanged = true;
     public  List<ActorOutput<SvcDat>> PeerCatalogs;
 
     #endregion
@@ -154,9 +154,8 @@ namespace Remact.Catalog
                 sb.Append (s.Uri);
                 sb.Append (" in ");
                 sb.Append (RemactConfigDefault.Instance.GetAppIdentification (s.AppName, s.AppInstance, s.HostName, s.ProcessId));
-                sb.Append (" (V");
+                sb.Append (" V ");
                 sb.Append (s.AppVersion.ToString (versionCount));
-                sb.Append (")");
             }
             tbStatus.Text = sb.ToString ();
         }
@@ -326,30 +325,25 @@ namespace Remact.Catalog
     private void OnResponseFromPeerCatalog(ActorMessage id, SvcDat svcDat)
     {
       if (
-       id.On<ActorInfo>(partner=>
-      {
-        RaLog.Info      (id.CltRcvId, "PeerRtr   "+partner.ToString ());
-      })
-      .On<ErrorMessage>(err=>
-      {
-        if (err.Error == ErrorMessage.Code.ServiceNotRunning) {
-          RaLog.Warning (id.CltRcvId, "PeerRtr   "+err.Error.ToString ()+" at '"+id.Source.Uri+"'");
-        }
-        else {
-          RaLog.Error   (id.CltRcvId, "PeerRtr   "+err.ToString ()+Environment.NewLine+"   partner uri = '"+id.Source.Uri+"'");
-        }
-      })
-      .On<ActorInfoList>(list=>
-      {
-          RaLog.Info( id.CltRcvId, "PeerRtr responds with list containing " + list.Item.Count + " services." );
-          foreach( ActorInfo s in list.Item )
-        {
-          RegisterService (s, id.CltRcvId);
-        }
-      }
+          id.On<ActorInfo>(partner=>
+          {
+              RaLog.Info (id.CltRcvId, "Peer catalog   "+partner.ToString ());
+          })
+          .On<ErrorMessage>(err=>
+          {
+              RaLog.Error(id.CltRcvId, "Peer catalog   "+err.ToString ()+Environment.NewLine+"   partner uri = '"+id.Source.Uri+"'");
+          })
+          .On<ActorInfoList>(list=>
+          {
+              RaLog.Info( id.CltRcvId, "Peer catalog responds with list containing " + list.Item.Count + " services." );
+              foreach( ActorInfo s in list.Item )
+              {
+                  RegisterService (s, id.CltRcvId);
+              }
+          }
       ) != null)
       {
-          RaLog.Warning("Remact", "Received unexpected message from " + id.Source.Name + ": " + id.Payload.ToString());
+          RaLog.Warning("Remact", "Received unexpected message from peer catalog " + id.Source.Name + ": " + id.Payload.ToString());
       }
     }
     
