@@ -19,10 +19,10 @@ namespace Remact.Net.Protocol.Wamp
     {
         private UserContext _wsChannel;
         private IRemactProtocolDriverService _requestHandler;
-        private ActorOutput _clientIdent;
-        private ActorInput _serviceIdent;
+        private RemactPortClient _clientIdent;
+        private RemactPortService _serviceIdent;
 
-        public WampClientProxy(ActorOutput clientIdent, ActorInput serviceIdent, IRemactProtocolDriverService requestHandler, UserContext websocketChannel)
+        public WampClientProxy(RemactPortClient clientIdent, RemactPortService serviceIdent, IRemactProtocolDriverService requestHandler, UserContext websocketChannel)
         {
             _wsChannel = websocketChannel;
                 //OnSend = OnSend,
@@ -68,8 +68,8 @@ namespace Remact.Net.Protocol.Wamp
         {
             switch (lower.Type)
             {
-                case ActorMessageType.Response: OnResponseFromService(lower.RequestId, lower.Payload); break;
-                case ActorMessageType.Error: OnErrorFromService(lower.RequestId, lower.Payload); break;
+                case RemactMessageType.Response: OnResponseFromService(lower.RequestId, lower.Payload); break;
+                case RemactMessageType.Error: OnErrorFromService(lower.RequestId, lower.Payload); break;
                 default: OnNotificationFromService(lower.Payload); break;
             }
         }
@@ -174,7 +174,7 @@ namespace Remact.Net.Protocol.Wamp
                         payload = wamp[3];
                     }
 
-                    var message = new ActorMessage(_clientIdent, _clientIdent.OutputClientId, id,
+                    var message = new RemactMessage(_clientIdent, _clientIdent.OutputClientId, id,
                                                    _serviceIdent, (string)wamp[2], payload);
 
                     _requestHandler.MessageFromClient(message);
@@ -192,18 +192,18 @@ namespace Remact.Net.Protocol.Wamp
                         id = int.Parse(requestId);
                     }
 
-                    var message = new ActorMessage(_clientIdent, _clientIdent.OutputClientId, id,
+                    var message = new RemactMessage(_clientIdent, _clientIdent.OutputClientId, id,
                                                    _serviceIdent, null, null);
                     if (wamp.Count > 4)
                     {
-                        message.Payload = ActorMessage.Convert(wamp[4], errorUri); // errorUri is assemblyQualifiedTypeName
+                        message.Payload = RemactMessage.Convert(wamp[4], errorUri); // errorUri is assemblyQualifiedTypeName
                     }
                     else
                     {
                         message.Payload = new ErrorMessage(ErrorMessage.Code.Undef, errorUri + ": " + errorDesc); // Errormessage from client
                     }
 
-                    message.Type = ActorMessageType.Error;
+                    message.MessageType = RemactMessageType.Error;
                     _requestHandler.MessageFromClient(message);
                 }
                 else if (wampType == (int)WampMessageType.v1Event)
@@ -211,11 +211,11 @@ namespace Remact.Net.Protocol.Wamp
                     // eg. EVENT message with 'null' as payload: [8, "http://example.com/simple", null]
 
                     var eventUri = (string)wamp[1];
-                    var payload = ActorMessage.Convert(wamp[2], eventUri); // eventUri is assemblyQualifiedTypeName
-                    var message = new ActorMessage(_clientIdent, _clientIdent.OutputClientId, 0,
+                    var payload = RemactMessage.Convert(wamp[2], eventUri); // eventUri is assemblyQualifiedTypeName
+                    var message = new RemactMessage(_clientIdent, _clientIdent.OutputClientId, 0,
                                                    _serviceIdent, null, payload);
 
-                    message.Type = ActorMessageType.Notification;
+                    message.MessageType = RemactMessageType.Notification;
                     _requestHandler.MessageFromClient(message);
                 }
                 else

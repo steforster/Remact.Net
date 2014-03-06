@@ -25,9 +25,9 @@ namespace Remact.Net.Remote
     //----------------------------------------------------------------------------------------------
     #region Identification, fields
     /// <summary>
-    /// Detailed information about this client. May be a ActorOutput&lt;TOC&gt; object containing application specific "OutputContext".
+      /// Detailed information about this client. May be a RemactPortClient&lt;TOC&gt; object containing application specific "OutputContext".
     /// </summary>
-    public ActorOutput ClientIdent {get; private set;}
+    public RemactPortClient ClientIdent {get; private set;}
 
     /// <summary>
     /// The last request id received in a response from the connected service.
@@ -38,7 +38,7 @@ namespace Remact.Net.Remote
     /// <summary>
     /// Detailed information about the connected service. Contains a "UserContext" object for free use by the client application.
     /// </summary>
-    public ActorInput ServiceIdent {get; private set;}
+    public RemactPortService ServiceIdent {get; private set;}
 
     /// <summary>
     /// The lower level client.
@@ -64,7 +64,7 @@ namespace Remact.Net.Remote
     /// <summary>
     /// The plugin provided by the library user or RemactDefaults.ClientConfiguration
     /// </summary>
-    protected IActorOutputConfiguration m_ClientConfig;
+    protected IClientConfiguration m_ClientConfig;
 
     /// <summary>
     /// True, when connecting or connected to catalog service, not to the original service.
@@ -94,7 +94,7 @@ namespace Remact.Net.Remote
     /// <summary>
     /// Outstanding requests, key = request ID.
     /// </summary>
-    private Dictionary<int, ActorMessage> m_OutstandingRequests; // TODO does not support multithreaded clients
+    private Dictionary<int, RemactMessage> m_OutstandingRequests; // TODO does not support multithreaded clients
 
 
     #endregion
@@ -104,12 +104,12 @@ namespace Remact.Net.Remote
     /// <summary>
     /// Create the proxy for a remote service.
     /// </summary>
-    /// <param name="clientIdent">Link this ActorOutput to the remote service.</param>
-    internal RemactClient (ActorOutput clientIdent)
+    /// <param name="clientIdent">Link this RemactPortClient to the remote service.</param>
+    internal RemactClient (RemactPortClient clientIdent)
     {
-      m_OutstandingRequests = new Dictionary<int, ActorMessage>();
+      m_OutstandingRequests = new Dictionary<int, RemactMessage>();
       ClientIdent = clientIdent;
-      ServiceIdent = new ActorInput(); // not yet defined
+      ServiceIdent = new RemactPortService(); // not yet defined
       ServiceIdent.IsServiceName = true;
       ServiceIdent.PassResponsesTo (ClientIdent); // ServiceIdent.PostInput will send to our client
     }
@@ -121,7 +121,7 @@ namespace Remact.Net.Remote
     /// </summary>
     /// <param name="serviceName">A unique name of the service. This service may run on any host that has been registered at the Remact.CatalogService.</param>
     /// <param name="clientConfig">Plugin your own client configuration instead of RemactDefaults.ClientConfiguration.</param>
-    internal void LinkToService(string serviceName, IActorOutputConfiguration clientConfig = null)
+    internal void LinkToService(string serviceName, IClientConfiguration clientConfig = null)
     {
         _connectViaCatalog = true;
         m_ClientConfig = clientConfig;
@@ -135,7 +135,7 @@ namespace Remact.Net.Remote
     /// </summary>
     /// <param name="websocketUri">The uri of the remote service.</param>
     /// <param name="clientConfig">Plugin your own client configuration instead of RemactDefaults.ClientConfiguration.</param>
-    internal void LinkToService(Uri websocketUri, IActorOutputConfiguration clientConfig = null)
+    internal void LinkToService(Uri websocketUri, IClientConfiguration clientConfig = null)
     {
       // this link method does not read the App.config file (it is running on mono also).
       if (!IsDisconnected) Disconnect ();
@@ -236,7 +236,7 @@ namespace Remact.Net.Remote
         m_boFirstResponseReceived = false;
         m_boTimeout = false;
         ServiceIdent.m_isOpen = false; // internal, from ServiceIdent to ClientIdent
-        ClientIdent.m_isOpen = false; // internal, from ActorOutput to RemactClient
+        ClientIdent.m_isOpen = false; // internal, from RemactPortClient to RemactClient
 
     }// Disconnect
 
@@ -258,7 +258,7 @@ namespace Remact.Net.Remote
 
 
     /// <summary>
-    /// Accept the binding configuration provided when linking the ActorOutput or set in RemactDefaults.ClientConfiguration.
+    /// Accept the binding configuration provided when linking the RemactPortClient or set in RemactDefaults.ClientConfiguration.
     /// </summary>
     /// <param name="serviceUri">The URI to connect to. Parts of the URI may be changed depending on the binding configuration.</param>
     /// <param name="forCatalog">True, when the connection is to a Remact.Catalog.</param>
@@ -289,7 +289,7 @@ namespace Remact.Net.Remote
             ServiceIdent.IsMultithreaded = ClientIdent.IsMultithreaded;
             ServiceIdent.TryConnect(); // internal, from ServiceIdent to ClientIdent
             ClientIdent.PickupSynchronizationContext();
-            ClientIdent.m_isOpen = true; // internal, from ActorOutput to RemactClient
+            ClientIdent.m_isOpen = true; // internal, from RemactPortClient to RemactClient
             m_boFirstResponseReceived = false;
             m_boTimeout = false;
             m_boConnecting = true;
@@ -304,7 +304,7 @@ namespace Remact.Net.Remote
                 throw new InvalidOperationException("cannot open " + ClientIdent.Name + ", RemactCatalogClient is disabled");
             }
 
-            Task<ActorMessage<ActorInfo>> task = RemactCatalogClient.Instance.LookupInput(m_ServiceNameToLookup);
+            Task<RemactMessage<ActorInfo>> task = RemactCatalogClient.Instance.LookupInput(m_ServiceNameToLookup);
             task.ContinueWith(t =>
             {
                 if (t.Status != TaskStatus.RanToCompletion)
@@ -498,10 +498,10 @@ namespace Remact.Net.Remote
     //----------------------------------------------------------------------------------------------
     #region IRemactService implementation
 
-    public Task<ActorMessage<ActorInfo>> Remact_ActorInfo_ClientConnectRequest(ActorInfo actorOutput)
+    public Task<RemactMessage<ActorInfo>> Remact_ActorInfo_ClientConnectRequest(ActorInfo client)
     {
-        actorOutput.IsOpen = true;
-        ActorMessage sentMessage;
+        client.IsOpen = true;
+        RemactMessage sentMessage;
         bool traceSend = ClientIdent.TraceSend;
         if (ClientIdent.TraceConnect)
         {
@@ -511,7 +511,7 @@ namespace Remact.Net.Remote
         ClientIdent.OutputClientId = 0;
         ClientIdent.LastRequestIdSent = 9;
         LastRequestIdReceived = 9;
-        var task = ClientIdent.Ask<ActorInfo>(RemactService.ConnectMethodName, actorOutput, out sentMessage, throwException: false);
+        var task = ClientIdent.Ask<ActorInfo>(RemactService.ConnectMethodName, client, out sentMessage, throwException: false);
 
         if (ClientIdent.TraceConnect)
         {
@@ -522,13 +522,13 @@ namespace Remact.Net.Remote
         return task;
     }
 
-    public void Remact_ActorInfo_ClientDisconnectNotification(ActorInfo actorOutput)
+    public void Remact_ActorInfo_ClientDisconnectNotification(ActorInfo client)
     {
-        actorOutput.IsOpen = false;
+        client.IsOpen = false;
         bool traceSend = ClientIdent.TraceSend;
         ClientIdent.TraceSend = ClientIdent.TraceConnect;
-        var msg = new ActorMessage(ClientIdent, ClientIdent.OutputClientId, 0, // creates a notification
-                                   ServiceIdent, RemactService.DisconnectMethodName, actorOutput, null);
+        var msg = new RemactMessage(ClientIdent, ClientIdent.OutputClientId, 0, // creates a notification
+                                   ServiceIdent, RemactService.DisconnectMethodName, client, null);
         PostInput(msg);
         ClientIdent.TraceSend = traceSend;
         Thread.Sleep(30);
@@ -569,7 +569,7 @@ namespace Remact.Net.Remote
     }
 
 
-    private bool TryGetResponseMessage(int id, out ActorMessage msg)
+    private bool TryGetResponseMessage(int id, out RemactMessage msg)
     {
         if (!m_OutstandingRequests.TryGetValue(id, out msg))
         {
@@ -607,13 +607,13 @@ namespace Remact.Net.Remote
     {
         m_boTimeout = true;
         var copy = m_OutstandingRequests;
-        m_OutstandingRequests = new Dictionary<int, ActorMessage>();
+        m_OutstandingRequests = new Dictionary<int, RemactMessage>();
 
         foreach (var msg in copy.Values)
         {
             var lower = new LowerProtocolMessage
             {
-                Type = ActorMessageType.Error,
+                Type = RemactMessageType.Error,
                 RequestId = msg.RequestId,
                 Payload = new ErrorMessage(ErrorMessage.Code.CouldNotSend, "web socket disconnected")
             };
@@ -642,11 +642,11 @@ namespace Remact.Net.Remote
         {
             var lower = (LowerProtocolMessage)obj;
 
-            ActorMessage msg;
+            RemactMessage msg;
 
             switch (lower.Type)
             {
-                case ActorMessageType.Response:
+                case RemactMessageType.Response:
                     {
                         if (!TryGetResponseMessage(lower.RequestId, out msg))
                         {
@@ -656,11 +656,11 @@ namespace Remact.Net.Remote
                     }
                     break;
 
-                case ActorMessageType.Error:
+                case RemactMessageType.Error:
                     {
                         if (!TryGetResponseMessage(lower.RequestId, out msg))
                         {
-                            msg = new ActorMessage(ServiceIdent, ClientIdent.OutputClientId, lower.RequestId,
+                            msg = new RemactMessage(ServiceIdent, ClientIdent.OutputClientId, lower.RequestId,
                                                    ClientIdent, string.Empty, lower.Payload);
                         }
                     }
@@ -668,18 +668,18 @@ namespace Remact.Net.Remote
 
                 default:
                     {
-                        msg = new ActorMessage(ServiceIdent, ClientIdent.OutputClientId, 0,
+                        msg = new RemactMessage(ServiceIdent, ClientIdent.OutputClientId, 0,
                                                ClientIdent, string.Empty, lower.Payload);
                     }
                     break;
             }
 
-            msg.Type = lower.Type;
+            msg.MessageType = lower.Type;
             msg.Payload = lower.Payload;
 
             if (!m_boTimeout)
             {
-                var m = msg.Payload as IExtensibleActorMessage;
+                var m = msg.Payload as IExtensibleRemactMessage;
                 if (!ClientIdent.IsMultithreaded)
                 {
                     if (m != null) m.BoundSyncContext = SynchronizationContext.Current;
@@ -744,8 +744,8 @@ namespace Remact.Net.Remote
     /// Post a request to the input of the remote partner. It will be sent over the network.
     /// Called from ClientIdent, when SendOut a message to remote partner.
     /// </summary>
-    /// <param name="msg">A <see cref="ActorMessage"/></param>
-    public void PostInput (ActorMessage msg)
+    /// <param name="msg">A <see cref="RemactMessage"/></param>
+    public void PostInput (RemactMessage msg)
     {
         if (m_boTimeout || m_protocolClient == null || m_protocolClient.PortState != PortState.Ok)
         {
@@ -755,7 +755,7 @@ namespace Remact.Net.Remote
         // PostInput() may be used during connection buildup as well
         if (ClientIdent.TraceSend) RaLog.Info(msg.CltSndId, msg.ToString(), ClientIdent.Logger);
 
-        ActorMessage lost;
+        RemactMessage lost;
         if (m_OutstandingRequests.TryGetValue(msg.RequestId, out lost))
         {
             m_OutstandingRequests.Remove(msg.RequestId);

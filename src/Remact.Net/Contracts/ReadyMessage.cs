@@ -13,13 +13,13 @@ using System.Net;                  // IPAddress
 namespace Remact.Net
 {
   //----------------------------------------------------------------------------------------------
-  #region == class IExtensibleActorMessage ==
+  #region == class IExtensibleRemactMessage ==
 
   /// <summary>
   /// Represents the interface used for the base message class.
   /// It is provided for library users wishing to write their own base message implementation.
   /// </summary>
-  public interface IExtensibleActorMessage : IExtensibleDataObject
+  public interface IExtensibleRemactMessage : IExtensibleDataObject
   {
       /// <summary>
       /// This SynchronizationContext is currently allowed to modify the message members. 

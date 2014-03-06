@@ -22,7 +22,7 @@ namespace Remact.Net.Remote
     /// <summary>
     /// Detailed information about this service
     /// </summary>
-    public ActorInput  ServiceIdent {get; private set;}
+    public RemactPortService  ServiceIdent {get; private set;}
     
     /// <summary>
     /// The count of known clients of this service (connected or disconnected)
@@ -62,7 +62,7 @@ namespace Remact.Net.Remote
 
     private int                        _tcpPort;
     private bool                       _publishToCatalog;
-    private IActorInputConfiguration   _serviceConfig;
+    private IServiceConfiguration      _serviceConfig;
     private WebSocketPortManager       _networkPortManager;
 
     private static int                 ms_nSharedTcpPort;
@@ -110,16 +110,16 @@ namespace Remact.Net.Remote
     /// <para>Initializes a new instance of the RemactService class.</para>
     /// <para>The service is uniquely identified by the service name.</para>
     /// </summary>
-    /// <param name="serviceIdent">This ActorInput is linked to network.</param>
+    /// <param name="serviceIdent">This RemactPortService is linked to network.</param>
     /// <param name="tcpPort">The TCP port for the service or 0, when automatic port allocation may be used.</param>
     /// <param name="publishToCatalog">True(=default): The servicename will be published to the Remact.Catalog on localhost.</param>
     /// <param name="serviceConfig">Plugin your own service configuration instead of RemactDefaults.ServiceConfiguration.</param>
-    internal RemactService(ActorInput serviceIdent, int tcpPort = 0, bool publishToCatalog = true,
-                           IActorInputConfiguration serviceConfig = null )
+    internal RemactService(RemactPortService serviceIdent, int tcpPort = 0, bool publishToCatalog = true,
+                           IServiceConfiguration serviceConfig = null )
     {
         ServiceIdent = serviceIdent;
         ServiceIdent.IsServiceName = true;
-        ServiceIdent.InputClientList = new List<ActorOutput>(20);
+        ServiceIdent.InputClientList = new List<RemactPortClient>(20);
         m_FirstClientId = 1;
         _tcpPort = tcpPort;
         _publishToCatalog = publishToCatalog;
@@ -132,26 +132,11 @@ namespace Remact.Net.Remote
     
 
     /// <summary>
-    /// <para>** IsMultithreaded==FALSE **  = default on ActorPort</para>
-    /// <para>Create and open a Service running a threadsafe singleton service.</para>
-    /// <para>These services must be very fast and may only access memory. No file- or database-access and no other synchronous calls are allowed.</para>
-    /// <para>Calls to the message handler are made from the same thread (synchronization context) that is used now to open the service.</para>
-    /// <para>An exception is thrown, when your opening thread has no message queue.</para>
-    /// <para></para>
-    /// <para>** IsMultithreaded==TRUE **</para>
-    /// <para>Create and open a Service.</para>
-    /// <para>These services may be relativly slow, when accessing files, databases or doing other synchronous calls.</para>
-    /// <para>Calls to the message handler are made from different threads, several clients may run in parallel</para>
-    /// <para>but only one thread at a time is accessing the client and user context.</para>
-    /// <para></para>
-    /// <para></para>
-    /// <para>When there exists no [service name="ConcreteTypeOfServiceInstance"] entry in the App.config file,</para>
-    /// <para>or the entry has no endpoint (apart from a possible "mex" endpoint),</para>
-    /// <para>the RemactService creates a standard service URI containig the next free TCP port and the service name.</para>
-    /// <para>E.g. "http://host:1234/Remact/ServiceName"</para>
-    /// <para>It registeres the service with Remact.CatalogService, so clients can find the dynamically generated TCP port.</para>
+    /// Opens the service for communication.
+    /// When linked to network, a shared TCP listener port is opened.
+    /// When linked to notwork and not CatalogClient.IsDisabled, the service name and uri are registered at the catalog service.
     /// </summary>
-    /// <returns>true if successfully open</returns>
+    /// <returns>true if successfully open.</returns>
     internal bool OpenService()
     {
         try
@@ -167,18 +152,11 @@ namespace Remact.Net.Remote
                     IPEndPoint endpoint = new IPEndPoint (0, 0);   // Local Address, dynamic port assignment
                     socket.Bind (endpoint);
                     endpoint = socket.LocalEndPoint as IPEndPoint; // a free port has been assigned by windows
-            //#if !MONO
                     ms_nSharedTcpPort = endpoint.Port; // a free dynamic assigned, local port
-            //#else
-            //        // Portsharing does not work for Mono, last checked on Mono 2.10.8.1
-            //        _tcpPort = endpoint.Port;
-            //#endif
                     socket.Close(); // socket.Shutdown is not allowed as we are not yet connected
                 }
-            //#if !MONO
                 _tcpPort = ms_nSharedTcpPort;
                 ms_nSharedTcpPortCount++;
-            //#endif
             }
 
             Uri uri = new Uri ("ws://"
@@ -254,7 +232,7 @@ namespace Remact.Net.Remote
     /// </summary>
     internal void AbortUserNotificationChannels()
     {
-        foreach (ActorOutput clt in ServiceIdent.InputClientList)
+        foreach (RemactPortClient clt in ServiceIdent.InputClientList)
         {
             if (clt.SvcUser != null) clt.SvcUser.AbortNotificationChannel();
         }
@@ -266,7 +244,7 @@ namespace Remact.Net.Remote
     #region Client connect / disconnect
 
 
-    // Internally called to create an ActorOutput as client stub.
+    // Internally called to create a RemactServiceUser as client stub.
     internal virtual RemactServiceUser AddNewSvcUser (ActorInfo receivedClientMsg, int index, RemactServiceUser svcUser)
     {
       if (index < 0) // add a new element
@@ -287,13 +265,13 @@ namespace Remact.Net.Remote
 
 
     /// <summary>
-    /// Connect / Reconnect a client to this service
+    /// Connect / Reconnect a client to this service.
     /// </summary>
-    /// <param name="client">ActorMessage message</param>
-    /// <param name="req">the ActorMessage to be used for responses.</param>
-    /// <param name="svcUser">Output the user object containing a "ClientIdent.UserContext" object for free application use</param>
-    /// <returns>Service info as response</returns>
-    private object ConnectPartner(ActorInfo client, ActorMessage req, ref RemactServiceUser svcUser, ref bool connectEvent)
+    /// <param name="client">An ActorInfo message.</param>
+    /// <param name="req">The RemactMessage to be used for responses.</param>
+    /// <param name="svcUser">Output the user object containing a "ClientIdent.UserContext" object for free application use.</param>
+    /// <returns>Service info as response.</returns>
+    private object ConnectPartner(ActorInfo client, RemactMessage req, ref RemactServiceUser svcUser, ref bool connectEvent)
     {
       if (req.ClientId != 0)
       {// Client war schon mal verbunden
@@ -400,11 +378,11 @@ namespace Remact.Net.Remote
     /// <summary>
     /// Mark a client as (currently) disconnected
     /// </summary>
-    /// <param name="client">ActorMessage message</param>
-    /// <param name="req">the ActorMessage to be used for responses.</param>
-    /// <param name="svcUser">Output the user object containing a "ClientIdent.UserContext" object for free application use</param>
-    /// <returns>Service info as response</returns>
-    private object DisconnectPartner(ActorInfo client, ActorMessage req, ref RemactServiceUser svcUser, ref bool disconnectEvent)
+    /// <param name="client">The ActorInfo message.</param>
+    /// <param name="req">The RemactMessage to be used for responses.</param>
+    /// <param name="svcUser">Output the user object containing a "ClientIdent.UserContext" object for free application use.</param>
+    /// <returns>Dummy response.</returns>
+    private object DisconnectPartner(ActorInfo client, RemactMessage req, ref RemactServiceUser svcUser, ref bool disconnectEvent)
     {
       int i = req.ClientId - m_FirstClientId;
       if (i >= 0 && i < ServiceIdent.InputClientList.Count)
@@ -447,10 +425,10 @@ namespace Remact.Net.Remote
     /// <summary>
     /// Set client info into the message, call it once for each request to check the connection.
     /// </summary>
-    /// <param name="req">ActorMessage message</param>
+    /// <param name="req">RemactMessage.</param>
     /// <param name="svcUser">Output the user object containing a "ClientIdent.UserContext" object for free application use.</param>
     /// <returns>True, when the client has been found. False, when no client has been found and an error message must be generated.</returns>
-    internal bool FindPartnerAndCheck (ActorMessage req, ref RemactServiceUser svcUser)
+    internal bool FindPartnerAndCheck (RemactMessage req, ref RemactServiceUser svcUser)
     {
       if (svcUser == null)
       {
@@ -499,7 +477,7 @@ namespace Remact.Net.Remote
     /// <summary>
     /// Check if response can be generated by library or if an application message is required.
     /// </summary>
-    /// <param name="req">The ActorMessage contains the request. It is used for the response also.</param>
+    /// <param name="req">The RemactMessage contains the request. It is used for the response also.</param>
     /// <param name="svcUser">
     /// input: null --> create a new RemactServiceUser as protocol independent client proxy
     ///        not null --> use this RemactServiceUser as protocol independent client proxy
@@ -509,7 +487,7 @@ namespace Remact.Net.Remote
     /// <param name="disconnectEvent">Set to true, when the disconnect method was called.</param>
     /// <returns><para> null when the response has to be generated by the application.</para>
     ///          <para>!null if the response already has been generated by this class.</para></returns>
-    internal object CheckRemactInternalResponse(ActorMessage req, ref RemactServiceUser svcUser, ref bool connectEvent, ref bool disconnectEvent)
+    internal object CheckRemactInternalResponse(RemactMessage req, ref RemactServiceUser svcUser, ref bool connectEvent, ref bool disconnectEvent)
     {
         if (m_boCurrentlyCalled)
         {
@@ -543,13 +521,13 @@ namespace Remact.Net.Remote
             // no internal response generated
             if (FindPartnerAndCheck (req, ref svcUser))
             {
-                LastAction = "ActorMessage";// response must be generated by service-application, request.ClientIdent has been set
+                LastAction = "RemactMessage";// response must be generated by service-application, request.ClientIdent has been set
             }
             else
             {
                 response = new ErrorMessage (ErrorMessage.Code.ClientIdNotFoundOnService, "Service cannot find client " + req.ClientId);
                 RaLog.Error( req.SvcRcvId, (response as ErrorMessage).Message, ServiceIdent.Logger );
-                LastAction = "ActorMessage from unknown client";
+                LastAction = "RemactMessage from unknown client";
             }
         }
 

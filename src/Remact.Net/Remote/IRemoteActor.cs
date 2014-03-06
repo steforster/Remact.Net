@@ -20,7 +20,7 @@ namespace Remact.Net.Remote
     /// <summary>
     /// Connect or reconnect output to the previously linked partner.
     /// </summary>
-    /// <returns>A task. When this task is run to completion, the task.Result corresponds to ActorPort.IsOpen.</returns>
+    /// <returns>A task. When this task is run to completion, the task.Result is either true or an exception.</returns>
     Task<bool> TryConnect();
 
     /// <summary>
@@ -33,12 +33,12 @@ namespace Remact.Net.Remote
     /// Post a request or response message to the input of this partner.
     /// ** Usage **
     /// Remote:                                  Post a message into this partners input queue.
-    /// ActorOutput (client):                      Post a response into this clients input queue.
-    /// ActorOutput.m_OutputClient (server-proxy): Send a request to the connected remote service.
-    /// Serviceside:                               Source.PostInput() sends a response from client-stub to the remote client.
+    ///   RemactPortClient:                      Post a response into this clients input queue.
+    ///   RemactPortClient.m_OutputClient (server-proxy): Send a request to the connected remote service.
+    /// Serviceside:                             Source.PostInput() sends a response from client-stub to the remote client.
     /// </summary>
-    /// <param name="msg">A <see cref="ActorMessage"/> the 'Source' property references the sending partner.</param>
-    void PostInput(ActorMessage msg);
+    /// <param name="msg">A <see cref="RemactMessage"/> the 'Source' property references the sending partner.</param>
+    void PostInput(RemactMessage msg);
 
     /// <summary>
     /// Universal resource identifier for the service or client.

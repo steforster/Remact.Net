@@ -28,23 +28,23 @@ namespace Remact.Catalog
   /// The Catalog Class is used to Create and Dispose the CatalogService.
   /// It has to be called periodically to do checks on all connections and update the statusdisplay.
   /// </summary>
-  class Catalog : IActorInputConfiguration, IActorOutputConfiguration
+  class Catalog : IServiceConfiguration, IClientConfiguration
   {
     //----------------------------------------------------------------------------------------------
     #region Fields
     
-    private ActorInput     m_RemactService;
+    private RemactPortService m_RemactService;
     private CatalogService m_CatalogService;
-    private int            m_knownServiceCount;
+    private int m_knownServiceCount;
 
     #endregion
     //----------------------------------------------------------------------------------------------
     #region Properties
 
-    public  IActorPort Service { get{ return m_RemactService;} }
+    public  IRemactPort Service { get{ return m_RemactService;} }
     public  ActorInfoList SvcRegister;
     public  bool SvcRegisterChanged = true;
-    public  List<ActorOutput<SvcDat>> PeerCatalogs;
+    public  List<RemactPortClient<SvcDat>> PeerCatalogs;
 
     #endregion
     //----------------------------------------------------------------------------------------------
@@ -56,7 +56,7 @@ namespace Remact.Catalog
     public Catalog()
     {
       SvcRegister = new ActorInfoList();
-      PeerCatalogs = new List<ActorOutput<SvcDat>>(Properties.Settings.Default.PeerHosts.Count);
+      PeerCatalogs = new List<RemactPortClient<SvcDat>>(Properties.Settings.Default.PeerHosts.Count);
     }
 
     /// <summary>
@@ -168,7 +168,7 @@ namespace Remact.Catalog
         m_knownServiceCount = SvcRegister.Item.Count;
 
         int connectedPeerCatalogs = 0;
-        foreach( ActorOutput<SvcDat> p in PeerCatalogs )
+        foreach( RemactPortClient<SvcDat> p in PeerCatalogs )
         {
             if( !p.IsOutputConnected )
             {
@@ -281,8 +281,8 @@ namespace Remact.Catalog
         m_CatalogService = new CatalogService();
 
         // Open the service
-        m_RemactService = new ActorInput(RemactConfigDefault.Instance.CatalogServiceName, m_CatalogService.OnUnknownRequest);
-        m_RemactService.Dispatcher.AddActorInterface(typeof(IRemactCatalog), m_CatalogService);
+        m_RemactService = new RemactPortService(RemactConfigDefault.Instance.CatalogServiceName, m_CatalogService.OnUnknownRequest);
+        m_RemactService.InputDispatcher.AddActorInterface(typeof(IRemactCatalog), m_CatalogService);
         m_RemactService.OnInputConnected    += m_CatalogService.OnClientConnectedOrDisconnected;
         m_RemactService.OnInputDisconnected += m_CatalogService.OnClientConnectedOrDisconnected;
         m_RemactService.LinkInputToNetwork( null, RemactConfigDefault.Instance.CatalogPort, publishToCatalog: false, serviceConfig: this ); // calls our DoServiceConfiguration
@@ -294,7 +294,7 @@ namespace Remact.Catalog
         {
             if (host != null && host.Trim().Length > 0)
             {
-                var output = new ActorOutput<SvcDat>("Clt>"+host, OnResponseFromPeerCatalog);
+                var output = new RemactPortClient<SvcDat>("Clt>"+host, OnResponseFromPeerCatalog);
                 output.LinkOutputToRemoteService(new Uri("ws://" + host + ':' + RemactConfigDefault.Instance.CatalogPort
                                  + "/" + RemactConfigDefault.WsNamespace + "/" + RemactConfigDefault.Instance.CatalogServiceName),// no catalog lookup as uri is given.
                                  this ); // calls our DoClientConfiguration
@@ -308,21 +308,21 @@ namespace Remact.Catalog
     }// Open
 
 
-    // implement IActorInputConfiguration
+    // implement IServiceConfiguration
     public WebSocketPortManager DoServiceConfiguration(RemactService service, ref Uri uri, bool isCatalog)
     {
         return RemactConfigDefault.Instance.DoServiceConfiguration(service, ref uri, isCatalog:true);
     }
 
 
-    // implement IActorOutputConfiguration
+    // implement IClientConfiguration
     public void DoClientConfiguration(object clientBase, ref Uri uri, bool forCatalog)
     {
         RemactConfigDefault.Instance.DoClientConfiguration(clientBase, ref uri, forCatalog:true);
     }
     
 
-    private void OnResponseFromPeerCatalog(ActorMessage id, SvcDat svcDat)
+    private void OnResponseFromPeerCatalog(RemactMessage id, SvcDat svcDat)
     {
       if (
           id.On<ActorInfo>(partner=>

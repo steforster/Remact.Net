@@ -110,7 +110,7 @@ namespace Remact.Net.Protocol.Wamp
         }
 
 
-        public void MessageFromClient(ActorMessage msg)
+        public void MessageFromClient(RemactMessage msg)
         {
             string callId = msg.RequestId.ToString();
 
@@ -136,11 +136,11 @@ namespace Remact.Net.Protocol.Wamp
             }
 
             var error = new ErrorMessage(ErrorMessage.Code.ResponseNotDeserializableOnClient, errorDesc);
-            var message = new ActorMessage(null, 0, id, null, null, error);
+            var message = new RemactMessage(null, 0, id, null, null, error);
             ErrorFromClient(message);
         }
 
-        public void ErrorFromClient(ActorMessage message)
+        public void ErrorFromClient(RemactMessage message)
         {
             string callId = message.RequestId.ToString();
             string errorUri;
@@ -208,7 +208,7 @@ namespace Remact.Net.Protocol.Wamp
                 if (wampType == (int)WampMessageType.v1CallResult)
                 {
                     // eg. CALLRESULT message with 'null' result: [3, "CcDnuI2bl2oLGBzO", null]
-                    msg.Type = ActorMessageType.Response;
+                    msg.Type = RemactMessageType.Response;
                     msg.RequestId = int.Parse((string)wamp[1]);
                     msg.Payload = wamp[2]; // JToken
                     _callback.OnMessageFromService(msg);
@@ -216,7 +216,7 @@ namespace Remact.Net.Protocol.Wamp
                 else if (wampType == (int)WampMessageType.v1CallError)
                 {
                     // eg. CALLERROR message with generic error: [4, "gwbN3EDtFv6JvNV5", "http://autobahn.tavendo.de/error#generic", "math domain error"]
-                    msg.Type = ActorMessageType.Error;
+                    msg.Type = RemactMessageType.Error;
                     var requestId = (string)wamp[1];
                     var errorUri  = (string)wamp[2];
                     var errorDesc = (string)wamp[3];
@@ -228,7 +228,7 @@ namespace Remact.Net.Protocol.Wamp
 
                     if (wamp.Count > 4)
                     {
-                        msg.Payload = ActorMessage.Convert(wamp[4], errorUri); // errorUri is assemblyQualifiedTypeName
+                        msg.Payload = RemactMessage.Convert(wamp[4], errorUri); // errorUri is assemblyQualifiedTypeName
                     }
                     else
                     {
@@ -241,9 +241,9 @@ namespace Remact.Net.Protocol.Wamp
                 {
                     // eg. EVENT message with 'null' as payload: [8, "http://example.com/simple", null]
 
-                    msg.Type = ActorMessageType.Notification;
+                    msg.Type = RemactMessageType.Notification;
                     var notifyUri = (string)wamp[1];
-                    msg.Payload = ActorMessage.Convert(wamp[2], notifyUri); // eventUri is assemblyQualifiedTypeName
+                    msg.Payload = RemactMessage.Convert(wamp[2], notifyUri); // eventUri is assemblyQualifiedTypeName
                     _callback.OnMessageFromService(msg);
                 }
                 else
@@ -253,7 +253,7 @@ namespace Remact.Net.Protocol.Wamp
             }
             catch (Exception ex)
             {
-                if (msg.Type != ActorMessageType.Error) ResponseNotDeserializable(msg.RequestId, ex.Message);
+                if (msg.Type != RemactMessageType.Error) ResponseNotDeserializable(msg.RequestId, ex.Message);
             }
         }
 

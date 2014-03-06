@@ -9,13 +9,13 @@ using Remact.Net.Remote;
 namespace Remact.Net
 {
     //----------------------------------------------------------------------------------------------
-    #region == class ActorMessageExtensions ==
+    #region == class RemactMessageExtensions ==
 
     /// <summary>
-    /// Contains extension methods for ActorMessages.
+    /// Contains extension methods for RemactMessages.
     /// To use extension methods you need to reference assembly 'System.Core'
     /// </summary>
-    public static class ActorMessageExtensions
+    public static class RemactMessageExtensions
     {
         /// <summary>
         /// <para>Execute code, when message type matches the template parameter. Used to add lambda expressions, e.g.</para>
@@ -28,7 +28,7 @@ namespace Remact.Net
         /// <returns>The same request, for chained calls.</returns>
         // inspired by http://blogs.infosupport.com/blogs/frankb/archive/2008/02/02/Using-C_2300_-3.0-Extension-methods-and-Lambda-expressions-to-avoid-nasty-Null-Checks.aspx
 
-        public static ActorMessage On<T> (this ActorMessage msg, Action<T> handle) where T : class
+        public static RemactMessage On<T> (this RemactMessage msg, Action<T> handle) where T : class
         {
             if (msg != null)
             {
@@ -45,7 +45,7 @@ namespace Remact.Net
     }
 
 
-    public enum ActorMessageType
+    public enum RemactMessageType
     {
         Request, // default
         Response,
@@ -55,23 +55,23 @@ namespace Remact.Net
 
     #endregion
     //----------------------------------------------------------------------------------------------
-    #region == class ActorMessage ==
+    #region == class RemactMessage ==
 
     /// <summary>
     /// <para>All data for a message sent through Remact.</para>
-    /// <para>Contains the Payload itself as well as some request identification and a reference to the sending ActorPort.</para>
-    /// <para>The class may be used to send a response to the sender and to log unique message identification.</para>
+    /// <para>Contains the Payload itself as well as a request identification and a reference to the sending RemactPort.</para>
+    /// <para>The object may be used to send a response to the sender and to log unique message identification.</para>
     /// </summary>
-    public class ActorMessage
+    public class RemactMessage
     {
         /// <summary>
         /// The message type (request, response, notification, error).
         /// </summary>
-        public ActorMessageType Type { get; internal set; }
+        public RemactMessageType MessageType { get; internal set; }
 
         /// <summary>
         /// Requests and responses carry a reference to the payload data. Only the payload is transferred over the wire.
-        /// The payload itself may be sent to several internal partners. It will then be referenced by several ActorMessage objects.
+        /// The payload itself may be sent to several internal partners. It will then be referenced by several RemactMessage objects.
         /// Be careful, use the payload as unmutable, readonly for application internal communication!
         /// </summary>
         public object Payload { get; internal set; }
@@ -90,18 +90,18 @@ namespace Remact.Net
         public int RequestId;
     
         /// <summary>
-        /// ActorMessage carry a reference to the ActorPort that has sent the message.
-        /// Service side: Source is the client or client-stub   (ActorOutput) that has sent the request. 
-        /// Client side : Source is the service or service-proxy (ActorInput) that has sent the response or notification.
+        /// RemactMessages carry a reference to the RemactPort that has sent the message.
+        /// Service side: Source is the client or client-stub    (RemactPortClient) that has sent the request. 
+        /// Client side : Source is the service or service-proxy (RemactPortService) that has sent the response or notification.
         /// </summary>
-        public ActorPort Source {get; internal set;}
+        public RemactPort Source {get; internal set;}
     
         /// <summary>
-        /// ActorMessage carry a reference to the ActorPort that is receiving the message. 
-        /// Service side: Destination is the service (ActorInput) that is receiving a request. 
-        /// Client side : Destination is the client (ActorOutput) that is receiving a response.
+        /// RemactMessages carry a reference to the RemactPort that is receiving the message. 
+        /// Service side: Destination is the service (RemactPortService) that is receiving a request. 
+        /// Client side : Destination is the client  (RemactPortClient) that is receiving a response.
         /// </summary>
-        public ActorPort Destination  {get; internal set;}
+        public RemactPort Destination  {get; internal set;}
 
         /// <summary>
         /// The method to be called on the destination actor. Defines the data type of Payload for requests and notifications.
@@ -111,13 +111,13 @@ namespace Remact.Net
         /// <summary>
         /// For local and remote requests the send operation may specify a lambda expression handling the response.
         /// </summary>
-        internal AsyncResponseHandler   SourceLambda;      // delegate ActorMessage  AsyncResponseHandler (ActorMessage msg);
-        internal AsyncResponseHandler   DestinationLambda; // copied from source, when returning the message
+        internal AsyncResponseHandler    SourceLambda;
+        internal AsyncResponseHandler    DestinationLambda; // copied from source, when returning the message
 
-        internal ActorMessage           Response;          // to check whether a response has been sent
+        internal RemactMessage           Response;          // to check whether a response has been sent
 
         /// <summary>
-        /// Creates a new ActorMessage.
+        /// Creates a new RemactMessage.
         /// </summary>
         /// <param name="source">The sending partner.</param>
         /// <param name="clientId">The ClientId used on the service.</param>
@@ -126,8 +126,8 @@ namespace Remact.Net
         /// <param name="destinationMethod">The receiving method defines the payload type.</param>
         /// <param name="payload">The user payload to send.</param>
         /// <param name="responseHandler">null or a lamda expression to be called, when a response is aynchronously received (valid on client side requests/responses).</param>
-        internal ActorMessage(ActorPort source, int clientId, int requestId, 
-                              ActorPort destination, string destinationMethod, object payload, 
+        internal RemactMessage(RemactPort source, int clientId, int requestId, 
+                              RemactPort destination, string destinationMethod, object payload, 
                               AsyncResponseHandler responseHandler = null)
         {
             Source = source;
@@ -137,10 +137,10 @@ namespace Remact.Net
             RequestId = requestId;
             if (requestId == 0)
             {
-                Type = ActorMessageType.Notification;
+                MessageType = RemactMessageType.Notification;
             }
 
-            var m = payload as IExtensibleActorMessage;
+            var m = payload as IExtensibleRemactMessage;
             if (m != null)
             {
                 m.BoundSyncContext = null;
@@ -153,12 +153,12 @@ namespace Remact.Net
 
         
         /// <summary>
-        /// Copies an ActorMessage.
+        /// Copies a RemactMessage.
         /// </summary>
-        /// <param name="msg">An ActorMessage to copy all information from.</param>
-        internal ActorMessage(ActorMessage msg)
+        /// <param name="msg">A RemactMessage to copy all information from.</param>
+        internal RemactMessage(RemactMessage msg)
         {
-            Type = msg.Type;
+            MessageType = msg.MessageType;
             Payload = msg.Payload;
             ClientId = msg.ClientId;
             RequestId = msg.RequestId;
@@ -224,25 +224,26 @@ namespace Remact.Net
 
 
         /// <summary>
-        /// Notification is sent from service to client without a matching request.
+        /// Source does not expect to receive a reply to this message.
         /// </summary>
-        public bool IsNotification { get { return Type == ActorMessageType.Notification; } }
+        public bool IsNotification { get { return MessageType == RemactMessageType.Notification; } }
 
         /// <summary>
-        /// ActorMessage is sent from client to service (new messages are requests by default).
+        /// Source expects to receive a reply to this message (new messages are requests by default).
         /// </summary>
-        public bool IsRequest { get { return Type == ActorMessageType.Request; } }
+        public bool IsRequest { get { return MessageType == RemactMessageType.Request; } }
 
         /// <summary>
-        /// Response is sent from service to client as answer to a request.
+        /// Response to a request.
         /// </summary>
-        public bool IsResponse { get { return Type == ActorMessageType.Response; } }
+        public bool IsResponse { get { return MessageType == RemactMessageType.Response; } }
 
         /// <summary>
         /// Error messages may be sent from server to client or from client to server. 
-        /// Errors do not match the expected response type. There is never a response to a error.
+        /// Errors do not match the expected response type. There is never a response to an error.
+        /// Remact specially supports 'ErrorMessage' as payload type when IsError is true.
         /// </summary>
-        public bool IsError { get { return Type == ActorMessageType.Error; } }
+        public bool IsError { get { return MessageType == RemactMessageType.Error; } }
 
 
         /// <summary>
@@ -258,9 +259,9 @@ namespace Remact.Net
 
 
         // Return a response to the sender.
-        internal void SendResponseFrom(ActorPort service, object payload, AsyncResponseHandler responseHandler)
+        internal void SendResponseFrom(RemactPort service, object payload, AsyncResponseHandler responseHandler)
         {
-            var m = payload as IExtensibleActorMessage;
+            var m = payload as IExtensibleRemactMessage;
             if (m != null && m.BoundSyncContext != null && m.BoundSyncContext != SynchronizationContext.Current)
             {
                 string name = service == null ? "null" : service.Name;
@@ -268,17 +269,17 @@ namespace Remact.Net
             }
 
             // return same request ID for first call to SendResponse
-            if (Type == ActorMessageType.Request && Response == null)
+            if (MessageType == RemactMessageType.Request && Response == null)
             {
-                Response = new ActorMessage(service, ClientId, RequestId, 
+                Response = new RemactMessage(service, ClientId, RequestId, 
                                             Source, null, payload, responseHandler);
                 if (payload is ErrorMessage)
                 {
-                    Response.Type = ActorMessageType.Error;
+                    Response.MessageType = RemactMessageType.Error;
                 }
                 else
                 {
-                    Response.Type = ActorMessageType.Response;
+                    Response.MessageType = RemactMessageType.Response;
                 }
 
                 Response.DestinationLambda = SourceLambda; // SourceLambda will be called later on for the first response only
@@ -288,15 +289,15 @@ namespace Remact.Net
             }
             else
             {
-                var msg = new ActorMessage(service, ClientId, 0,
+                var msg = new RemactMessage(service, ClientId, 0,
                                            Source, null, payload, responseHandler);
                 if (payload is ErrorMessage)
                 {
-                    msg.Type = ActorMessageType.Error;
+                    msg.MessageType = RemactMessageType.Error;
                 }
                 else
                 {
-                    msg.Type = ActorMessageType.Notification;
+                    msg.MessageType = RemactMessageType.Notification;
                 }
 
                 if (service.TraceSend) RaLog.Info(msg.SvcSndId, msg.ToString(), service.Logger);
@@ -311,33 +312,8 @@ namespace Remact.Net
         /// <returns>The message in readable text form.</returns>
         public override string ToString ()
         {
-            string name = DestinationMethod;
-            if (string.IsNullOrEmpty(name))
-            {
-                name = PayloadType;
-            }
-
-            return string.Concat(Type.ToString(), '<', name, '>');
+            return string.Concat(MessageType.ToString(), '<', DestinationMethod, '>');
         }
-
-        /// <summary>
-        /// The full qualified .net data type of the Payload.
-        /// </summary>
-        public string PayloadType 
-        {
-            get
-            {
-                if (Payload != null)
-                {
-                    return Payload.GetType().FullName;
-                }
-                else
-                {
-                    return "<null> payload";
-                }
-            }
-        }
-
 
         /// <summary>
         /// Generates part of a standardised mark for log output on client side.
@@ -418,45 +394,25 @@ namespace Remact.Net
 
     #endregion
     //----------------------------------------------------------------------------------------------
-    #region == class ActorMessage<T> ==
+    #region == class RemactMessage<T> ==
 
     /// <summary>
     /// <para>All data for a message sent through Remact.</para>
-    /// <para>Contains a Payload of type T as well as some request identification and a reference to the sending ActorPort.</para>
-    /// <para>The class may be used to send a response to the sender and to log unique message identification.</para>
+    /// <para>Contains a Payload of type T as well as a request identification and a reference to the sending RemactPort.</para>
+    /// <para>The object may be used to send a response to the sender and to log unique message identification.</para>
     /// </summary>
-    public class ActorMessage<T> : ActorMessage
+    public class RemactMessage<T> : RemactMessage
     {
         /// <summary>
-        /// Creates a new ActorMessage for payloads of type T.
+        /// Creates a new RemactMessage for payloads of type T.
         /// </summary>
         /// <param name="payload">The converted payload.</param>
-        /// <param name="msg">An ActorMessage to copy all information from.</param>
-        internal ActorMessage(T payload, ActorMessage msg)
-
+        /// <param name="msg">A RemactMessage to copy all information from.</param>
+        internal RemactMessage(T payload, RemactMessage msg)
             :base(msg)
         {
             Payload = payload;
         }
-/*
-        /// <summary>
-        /// Creates a new ActorMessage for payloads of type T.
-        /// </summary>
-        /// <param name="source">The sending partner.</param>
-        /// <param name="clientId">The ClientId used on the service.</param>
-        /// <param name="requestId">The RequestId is incremented by the client.</param>
-        /// <param name="destination">The receiving partner.</param>
-        /// <param name="destinationMethod">The receiving method defines the payload type.</param>
-        /// <param name="payload">The user payload to send.</param>
-        /// <param name="responseHandler">null or a lamda expression to be called, when a response is aynchronously received (valid on client side requests/responses).</param>
-        internal ActorMessage(ActorPort source, int clientId, int requestId,
-            ActorPort destination, string destinationMethod, T payload,
-            AsyncResponseHandler responseHandler = null)
-
-            : base(source, clientId, requestId, destination, destinationMethod, payload, responseHandler)
-        {
-            Payload = payload;
-        }*/
 
         public new T Payload { get; internal set; }
 

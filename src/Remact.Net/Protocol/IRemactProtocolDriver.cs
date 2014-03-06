@@ -33,7 +33,7 @@ namespace Remact.Net.Protocol
         /// <summary>
         /// Occurs when a client calls a service.
         /// </summary>
-        void MessageFromClient(ActorMessage message);
+        void MessageFromClient(RemactMessage message);
 
         /// <summary>
         /// Closes connection and frees resources.
@@ -82,7 +82,7 @@ namespace Remact.Net.Protocol
 
     public class LowerProtocolMessage
     {
-        public ActorMessageType Type;
+        public RemactMessageType Type;
         public int RequestId;
         public object Payload;
     }

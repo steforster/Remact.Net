@@ -10,7 +10,7 @@ For a v1Call, Remact supports only ONE argument.
 This means, there are a maximum of 4 JTokens in the JArray of a v1Call-message.  
 
 Event notifications do not have to be subscribed in Remact. A server can send notifications to each connected client.  
-'Publish to all' means, an ActorInput will notify a **v1Event** message to all its connected client actors.  
+'Publish to all' means, an RemactPortService will notify a **v1Event** message to all its connected client actors.  
 
 **v1CallError** is sent from server to client when the request cannot be processed on the server side.  
 Additionally in Remact, a v1CallError can be sent from client to server when the response or the notification cannot   
@@ -24,7 +24,7 @@ be processed on the client side.
     b) Remact.ActorInfo.<Use-enum>  
 	c) <Type.AssemblyQualifiedTypeName>  
 
-Variant (a) is used for v1Call. The method name is registered in the Dispatcher of the receiving ActorInput.  
+Variant (a) is used for v1Call. The method name is registered in the InputDispatcher of the receiving RemactPortService.  
 Variant (b) is used for messages to be processed by the RemactService or the RemactCatalog (v1Call, v1CallResult).  
 Variant (c) is used in v1CallError messages to transfer the .NET type of error detail.  
 Variant (c) is used in v1Event messages to transfer the .NET type of the payload.  

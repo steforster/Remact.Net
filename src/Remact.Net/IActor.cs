@@ -7,9 +7,6 @@ using System.Net;                  // Dns
 using System.Threading;            // SynchronizationContext
 using Remact.Net.Remote;
 using Remact.Net.Protocol;
-#if !BEFORE_NET45
-    using System.Threading.Tasks;
-#endif
 
 namespace Remact.Net
 {
@@ -17,7 +14,7 @@ namespace Remact.Net
   #region == enum PortState ==
 
   /// <summary>
-  /// Communication state for ActorPorts
+  /// Communication state for RemactPort
   /// </summary>
   public enum PortState
   {
@@ -49,13 +46,16 @@ namespace Remact.Net
 
   #endregion
   //----------------------------------------------------------------------------------------------
-  #region == interface IActorPort ==
+  #region == interface IRemactPort ==
 
   /// <summary>
-  /// The public interface of ActorPort for inputs and outputs.
-  /// Actors may have several outgoing connection to other actors. An incoming connection may receive messages from several actors.
+  /// IRemactPort is a public interface of an actor. It may be called from any thread.
+  /// Actors may have several connections to other actors.
+  /// A connnection consists of a client and a service port.
+  /// Messages of any type may flow in both directions.
+  /// Messages types are request, response, notification an error.
   /// </summary>
-  public interface IActorPort
+  public interface IRemactPort
   {
     /// <summary>
     /// Identification in logs and name of endpoint address in App.config file.
@@ -167,12 +167,12 @@ namespace Remact.Net
 
   #endregion
   //----------------------------------------------------------------------------------------------
-  #region == interface IActorInputConfiguration ==
+  #region == interface IServiceConfiguration ==
 
   /// <summary>
   /// The configuration interface is implemented by RemactDefaults. It may be provided by the library user.
   /// </summary>
-  public interface IActorInputConfiguration
+  public interface IServiceConfiguration
   {
       /// <summary>
       /// Sets the service configuration, when no endpoint in app.config is found.
@@ -186,12 +186,12 @@ namespace Remact.Net
 
   #endregion
   //----------------------------------------------------------------------------------------------
-  #region == interface IActorOutputConfiguration ==
+  #region == interface IClientConfiguration ==
 
   /// <summary>
   /// The configuration interface is implemented by RemactDefaults. It may be provided by the library user.
   /// </summary>
-  public interface IActorOutputConfiguration
+  public interface IClientConfiguration
   {
       /// <summary>
       /// Sets the default client configuration, when connecting without app.config. Must match to ServiceConfiguration of the connected service.
@@ -204,13 +204,12 @@ namespace Remact.Net
 
   #endregion
   //----------------------------------------------------------------------------------------------
-  #region == interface IActorInput ==
+  #region == interface IRemactPortService ==
 
   /// <summary>
-  /// The public input interface of an actor. It may be called from any thread.
-  /// The members of IActorPort represent the actor receiving the incoming messages.
+  /// A public service interface of an actor. It may be called from any thread.
   /// </summary>
-  public interface IActorInput: IActorPort
+  public interface IRemactPortService: IRemactPort
   {
     /// <summary>
     /// Add a service und publish Uri to Remact.Catalog.
@@ -220,28 +219,13 @@ namespace Remact.Net
     /// <param name="publishToCatalog">True(=default): The servicename will be published to the Remact.Catalog on localhost.</param>
     /// <param name="serviceConfig">Plugin your own service configuration instead of RemactDefaults.DoServiceConfiguration.</param>
     void LinkInputToNetwork(string serviceName = null, int tcpPort = 0, bool publishToCatalog = true, 
-                             IActorInputConfiguration serviceConfig = null );
+                            IServiceConfiguration serviceConfig = null );
 
     /// <summary>
     /// Anonymous sender: Threadsafe enqueue payload at the receiving partner. No response is expected.
     /// </summary>
     /// <param name="payload">The message payload to enqueue.</param>
     void PostFromAnonymous(object payload);
-
-    /// <summary>
-    /// Threadsafe enqueue message at the receiving partner.
-    /// </summary>
-    /// <param name="sender">The source partner sending the message <see cref="ActorPort"/>. Its default message handler will receive the response.</param>
-    /// <param name="payload">The message payload to enqueue.</param>
-    //void PostInputFrom(ActorOutput sender, object payload);
-
-    /// <summary>
-    /// Threadsafe enqueue message at the receiving partner.
-    /// </summary>
-    /// <param name="sender">The source partner sending the message <see cref="ActorPort"/></param>
-    /// <param name="payload">The message to enqueue.</param>
-    /// <param name="responseHandler">The lambda expression executed at the source partner, when a response arrives.</param>
-    //void PostInputFrom(ActorOutput sender, object payload, AsyncResponseHandler responseHandler);
 
     /// <summary>
     /// <para>Gets or sets the state of the incoming service connection from the network.</para>
@@ -256,19 +240,18 @@ namespace Remact.Net
 
   #endregion
   //----------------------------------------------------------------------------------------------
-  #region == interface IActorOutput ==
+  #region == interface IRemactPortClient ==
 
   /// <summary>
-  /// The public output interface of an actor may be called from any thread.
-  /// The members of IActorPort represent the actor sending the outgoing messages.
+  /// A public client interface of an actor. It may be called from any thread.
   /// </summary>
-  public interface IActorOutput: IActorPort
+  public interface IRemactPortClient: IRemactPort
   {
     /// <summary>
     /// Link to application-internal partner.
     /// </summary>
     /// <param name="output">a ActorInput</param>
-    void LinkOutputTo (IActorInput output);
+    void LinkOutputTo (IRemactPortService output);
 
     /// <summary>
     /// Add a RemactClient and lookup the service Uri at Remact.Catalog (catalog uri is defined by RemactConfigDefault).
@@ -276,14 +259,14 @@ namespace Remact.Net
     /// </summary>
     /// <param name="serviceName">The unique service name to connect to.</param>
     /// <param name="clientConfig">Plugin your own client configuration instead of RemactDefaults.DoClientConfiguration.</param>
-    void LinkOutputToRemoteService (string serviceName, IActorOutputConfiguration clientConfig = null);
+    void LinkOutputToRemoteService (string serviceName, IClientConfiguration clientConfig = null);
 
     /// <summary>
     /// Add a RemactClient. No lookup at Remact.Catalog is needed as we know the TCP portnumber.
     /// </summary>
     /// <param name="serviceUri">The uri of the remote service.</param>
     /// <param name="clientConfig">Plugin your own client configuration instead of RemactDefaults.DoClientConfiguration.</param>
-    void LinkOutputToRemoteService (Uri serviceUri, IActorOutputConfiguration clientConfig = null);
+    void LinkOutputToRemoteService (Uri serviceUri, IClientConfiguration clientConfig = null);
 
     /// <summary>
     /// The request id given to the last message sent from this client.
@@ -301,7 +284,7 @@ namespace Remact.Net
     /// OutputSidePartner is the identification of the partner that is linked to our output.
     /// It returns null, as long as we are not linked (OutputState==PortState.Unlinked).
     /// </summary>
-    IActorPort OutputSidePartner { get; }
+    IRemactPort OutputSidePartner { get; }
 
     /// <summary>
     /// The OutputClientId is used on the connected service to identify this client.

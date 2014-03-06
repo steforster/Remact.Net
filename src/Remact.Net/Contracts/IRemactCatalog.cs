@@ -17,32 +17,32 @@ namespace Remact.Net.Contracts
         /// <summary>
         /// Periodically called when an actor has its input open for remote access.
         /// </summary>
-        /// <param name="actorInput">The <see cref="ActorInfo"/> of the opened service (ActorInput).</param>
-        Task<ActorMessage<ReadyMessage>> InputIsOpen(ActorInfo actorInput);
+        /// <param name="actorInput">The <see cref="ActorInfo"/> of the opened service (RemactPortService).</param>
+        Task<RemactMessage<ReadyMessage>> InputIsOpen(ActorInfo actorInput);
 
         /// <summary>
         /// Called before an actor closes its remotly accessable input.
         /// </summary>
-        /// <param name="actorInput">The <see cref="ActorInfo"/> of the closing service (ActorInput).</param>
-        Task<ActorMessage<ReadyMessage>> InputIsClosed(ActorInfo actorInput);
+        /// <param name="actorInput">The <see cref="ActorInfo"/> of the closing service (RemactPortService).</param>
+        Task<RemactMessage<ReadyMessage>> InputIsClosed(ActorInfo actorInput);
 
         /// <summary>
-        /// Called when a client looks up an ActorInput (service) at the catalog.
+        /// Called when a client looks up a remotly accessible RemactPortService at the catalog.
         /// </summary>
-        /// <param name="actorInputName">The name of the ActorInput.
+        /// <param name="serviceName">The name of the RemactPortService.
         /// An actor input name must be unique in the plant, independent of host or application.
         /// When several actors have opened inputs with the same name, the lookup returns the actor with the longest running time.
         /// This allows to start 'backup' actors that will come into play, when the longest running actor is shut down 
         /// and the clients try to reconnnect the lost connection.
         /// </param>
-        /// <returns>The <see cref="ActorInfo"/> of an opened ActorInput (service). Null, when no such ActorInput is found.</returns>
-        Task<ActorMessage<ActorInfo>> LookupInput(string actorInputName);
+        /// <returns>The <see cref="ActorInfo"/> of an opened RemactPortService. Null, when no such service is found.</returns>
+        Task<RemactMessage<ActorInfo>> LookupInput(string serviceName);
 
         /// <summary>
         /// Synchronization request by peer catalog. Incoming ActorInfo with larger hop count should be discarded.
         /// </summary>
         /// <param name="serviceList">The list of services known by the peer catalog.</param>
         /// <returns>The list of services registered in our catalog.</returns>
-        Task<ActorMessage<ActorInfoList>> SynchronizeCatalog(ActorInfoList serviceList);
+        Task<RemactMessage<ActorInfoList>> SynchronizeCatalog(ActorInfoList serviceList);
     }
 }

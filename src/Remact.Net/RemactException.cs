@@ -6,43 +6,38 @@ using System;
 namespace Remact.Net
 {
     //----------------------------------------------------------------------------------------------
-    #region == class ActorException ==
+    #region == class RemactException ==
 
     /// <summary>
-    /// An exceptional ActorMessage.
+    /// An unexpected RemactMessage is converted to and thrown as a RemactException on the receiving side.
+    /// When the RemactMessage type is 'Error' and the payload is 'ErrorMessage', the payload is converted to a inner exception.
+    /// In all other cases, the payload is a raw Newtonsoft.Json.Linq.JToken. The user may inspect its content.
     /// </summary>
-    public class ActorException : Exception
+    public class RemactException : Exception
     {
-        public ActorException (ActorMessage actorMsg, string message = null, Exception innerEx = null)
+        /// <summary>
+        /// Initializes a RemactException.
+        /// </summary>
+        /// <param name="msg">The received RemactMessage.</param>
+        /// <param name="message">A textual exeption message.</param>
+        /// <param name="innerEx">In case an ErrorMessage is received as payload, it can be converted and added as inner exception.</param>
+        /// <param name="sourceStackTrace">Additional data from the ErrorMessage.</param>
+        public RemactException (RemactMessage msg, string message = null, Exception innerEx = null, string sourceStackTrace = null)
             : base (message, innerEx)
         {
-            ActorMessage = actorMsg;
+            RemactMessage = msg;
+            SourceStackTrace = sourceStackTrace;
         }
 
-        public ActorMessage ActorMessage { get; protected set; }
-    }
+        /// <summary>
+        /// The received RemactMessage.
+        /// </summary>
+        public RemactMessage RemactMessage { get; protected set; }
 
-    #endregion
-    //----------------------------------------------------------------------------------------------
-    #region == class ActorException<T> ==
-
-    /// <summary>
-    /// An exceptional typed ActorMessage.
-    /// <typeparam name="T">The type of the payload.</typeparam>.
-    /// </summary>
-    public class ActorException<T> : ActorException
-    {
-        public ActorException(ActorMessage<T> actorMsg, string message = null, Exception innerEx = null)
-            : base(actorMsg, message, innerEx)
-        {
-            ActorMessage = actorMsg;
-        }
-
-        public new ActorMessage<T> ActorMessage 
-        { 
-            get {return (ActorMessage<T>)base.ActorMessage; }
-            protected set {base.ActorMessage = value; }
-        }
+        /// <summary>
+        /// In case a InnerException represents an ErrorMessage, the SourceStackTrace may contain additional information from the sending side.
+        /// </summary>
+        public string SourceStackTrace { get; protected set; }
     }
 
     #endregion

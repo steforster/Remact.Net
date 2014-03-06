@@ -13,12 +13,12 @@ namespace Test2.Service
   /// </summary>
   class Test2Service
   {
-    public  IActorInput  Input      { get { return m_Input; } } // just the ActorInput interface is public
+    public  IRemactPortService Input { get { return m_Input; } } // just the RemactPortService interface is public
     public  int          Seconds;
     public  volatile int Requests;
     
     private int          m_UpdateIndex = 0;
-    private ActorInput   m_Input;
+    private RemactPortService   m_Input;
     
 
     /// <summary>
@@ -26,10 +26,10 @@ namespace Test2.Service
     /// </summary>
     public Test2Service ()
     {
-        m_Input = new ActorInput ("NEW", OnUnhandledRequest);
+        m_Input = new RemactPortService ("NEW", OnUnhandledRequest);
         m_Input.OnInputConnected += OnConnectDisconnect;
         m_Input.OnInputDisconnected += OnConnectDisconnect;
-        m_Input.Dispatcher.AddActorInterface(typeof(ITest2Service), this);
+        m_Input.InputDispatcher.AddActorInterface(typeof(ITest2Service), this);
         //m_Input.TraceSend = true;
     }
 
@@ -50,14 +50,14 @@ namespace Test2.Service
     }
 
     // Remact service method for connect and disconnect requests
-    public void OnConnectDisconnect(ActorMessage msg)
+    public void OnConnectDisconnect(RemactMessage msg)
     {
         // nothing to do, connect-logging is switched on
     }
 
 
     // Remact service method for unknown messages
-    void OnUnhandledRequest(ActorMessage msg)
+    void OnUnhandledRequest(RemactMessage msg)
     {
         // will send ErrorMessage.Code.NotImplementedOnService
         throw new NotImplementedException("unknown message on service "+msg.ToString());
@@ -65,7 +65,7 @@ namespace Test2.Service
 
       
     // Remact service method
-    Test2Rsp GetSomeData(ReadyMessage req, ActorMessage msg)
+    Test2Rsp GetSomeData(ReadyMessage req, RemactMessage msg)
     {
         Requests++;
         RaLog.Info(msg.SvcRcvId, string.Format("{0}, thd={1}",
@@ -85,14 +85,14 @@ namespace Test2.Service
     }
 
     // Remact service method
-    ReadyMessage SpeedTest1(Test2Req req, ActorMessage msg)
+    ReadyMessage SpeedTest1(Test2Req req, RemactMessage msg)
     {
         Requests++;
         return new ReadyMessage();
     }
 
     // Remact service method
-    Test2Rsp SpeedTest2(Test2Req req, ActorMessage msg)
+    Test2Rsp SpeedTest2(Test2Req req, RemactMessage msg)
     {
         Requests++;
         var rsp = new Test2Rsp();

@@ -74,7 +74,7 @@ namespace Test2.Service
       try
       {
         timer1.Stop ();
-        ActorPort.DisconnectAll (); // Close+Dispose the ServiceHost and CatalogClient.
+        RemactPort.DisconnectAll (); // Close+Dispose the ServiceHost and CatalogClient.
         m_Service = null;
       }
       catch (Exception ex)

@@ -17,38 +17,38 @@ namespace Remact.Catalog
   /// </summary>
   class CatalogService
   {
-    public void OnClientConnectedOrDisconnected (ActorMessage id)
+    public void OnClientConnectedOrDisconnected (RemactMessage id)
     {
         Program.Catalog.SvcRegisterChanged = true;
     }
 
-    public void OnUnknownRequest (ActorMessage msg)
+    public void OnUnknownRequest (RemactMessage msg)
     {
         RaLog.Warning(msg.SvcRcvId, "Unknown request or no service: " + msg.Payload.ToString());
         msg.SendResponse(new ErrorMessage(ErrorMessage.Code.AppRequestNotAcceptedByService, "Remact.CatalogService"));
     }
 
     // service request method implements IRemactCatalog
-    private ReadyMessage InputIsOpen(ActorInfo actorInput, ActorMessage msg)
+    private ReadyMessage InputIsOpen(ActorInfo service, RemactMessage msg)
     {
-        Program.Catalog.RegisterService(actorInput, msg.SvcRcvId);
+        Program.Catalog.RegisterService(service, msg.SvcRcvId);
         return new ReadyMessage();
     }
 
     // service request method implements IRemactCatalog
-    ReadyMessage InputIsClosed(ActorInfo actorInput, ActorMessage msg)
+    ReadyMessage InputIsClosed(ActorInfo service, RemactMessage msg)
     {
-        Program.Catalog.RegisterService(actorInput, msg.SvcRcvId);
+        Program.Catalog.RegisterService(service, msg.SvcRcvId);
         return new ReadyMessage();
     }
 
     // service request method implements IRemactCatalog
-    ActorInfo LookupInput(string actorInputName, ActorMessage msg)
+    ActorInfo LookupInput(string serviceName, RemactMessage msg)
     {
         ActorInfo found = null;
         foreach (ActorInfo s in Program.Catalog.SvcRegister.Item)
         {
-            if (s.Name == actorInputName && s.IsServiceName)
+            if (s.Name == serviceName && s.IsServiceName)
             {
                 found = new ActorInfo(s); // create a copy in order not to change the SvcRegister
                 break;
@@ -58,14 +58,14 @@ namespace Remact.Catalog
         if (found == null)
         {
             msg.SendResponse(new ErrorMessage(ErrorMessage.Code.AppDataNotAvailableInService,
-              "Service name = '" + actorInputName + "' not registered in '" + Program.Catalog.Service.Uri + "'"));
+              "Service name = '" + serviceName + "' not registered in '" + Program.Catalog.Service.Uri + "'"));
         }
 
         return found;
     }
 
     // service request method implements IRemactCatalog
-    ActorInfoList SynchronizeCatalog(ActorInfoList serviceList, ActorMessage msg)
+    ActorInfoList SynchronizeCatalog(ActorInfoList serviceList, RemactMessage msg)
     {
         RaLog.Info(msg.SvcRcvId, "Peer catalog sends list containing " + serviceList.Item.Count + " services.");
         foreach (ActorInfo s in serviceList.Item)

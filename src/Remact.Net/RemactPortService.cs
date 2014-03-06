@@ -8,20 +8,17 @@ using System.Net;                  // Dns
 using System.Threading;            // SynchronizationContext
 using Remact.Net.Remote;
 using System.Threading.Tasks;
-#if !BEFORE_NET45
-    using System.Threading.Tasks;
-#endif
 
 namespace Remact.Net
 {
   //----------------------------------------------------------------------------------------------
-  #region == class ActorInput ==
+  #region == class RemactPortService ==
 
   /// <summary>
   /// <para>This class represents a communication partner (service).</para>
   /// <para>It is the destination of a request message and the source of a response message.</para>
   /// </summary>
-  public class ActorInput: ActorPort, IActorInput, IRemoteActor
+  public class RemactPortService: RemactPort, IRemactPortService, IRemoteActor
   {
     #region Constructor
 
@@ -30,7 +27,7 @@ namespace Remact.Net
     /// </summary>
     /// <param name="name">The unique name of this service.</param>
     /// <param name="requestHandler">The method to be called when a request is received.</param>
-    public ActorInput (string name, MessageHandler requestHandler)
+    public RemactPortService (string name, MessageHandler requestHandler)
          : base (name, requestHandler)
     {
         IsServiceName = true;
@@ -40,30 +37,17 @@ namespace Remact.Net
     /// <para>Creates an input port without handler method for internal purpose.</para>
     /// </summary>
     /// <param name="name">The unique name of this service.</param>
-    internal ActorInput(string name)
+    internal RemactPortService(string name)
         : base(name, (MessageHandler)null)
     {
         IsServiceName = true;
     }// CTOR2
 
-#if !BEFORE_NET45
-    /// <summary>
-    /// <para>Creates an awaitable input port for an actor running in the current application on the local host.</para>
-    /// </summary>
-    /// <param name="name">The unique name of this service.</param>
-    /// <param name="requestHandlerAsync">The awaitable method to be called when a request is received.</param>
-    public ActorInput( string name, ActorMessageHandlerAsync requestHandlerAsync )
-        : base(name, requestHandlerAsync)
-    {
-        IsServiceName = true;
-    }// CTOR3
-#endif
-
     
     /// <summary>
     /// <para>Creates a service proxy. Used internally by the client.</para>
     /// </summary>
-    internal ActorInput ()
+    internal RemactPortService ()
         : base()
     {
         IsServiceName = true;
@@ -74,7 +58,7 @@ namespace Remact.Net
     //----------------------------------------------------------------------------------------------
     #region Destination linking, service creation
 
-    private ActorOutput        m_Anonymous; // each input may have one anonymous partner carrying one TSC (sender context)
+    private RemactPortClient        m_Anonymous; // each input may have one anonymous partner carrying one TSC (sender context)
     private RemactService      m_MyInputService;
 
     // prepare for tracing of connect-process
@@ -104,7 +88,7 @@ namespace Remact.Net
     /// <param name="publishToCatalog">True(=default): The servicename will be published to the Remact.Catalog on localhost.</param>
     /// <param name="serviceConfig">Plugin your own service configuration instead of RemactDefaults.ServiceConfiguration.</param>
     public void LinkInputToNetwork( string serviceName = null, int tcpPort = 0, bool publishToCatalog = true,
-                                    IActorInputConfiguration serviceConfig = null )
+                                    IServiceConfiguration serviceConfig = null )
     {
       if (serviceName != null) this.Name = serviceName;
       this.IsServiceName = true;
@@ -167,11 +151,11 @@ namespace Remact.Net
       return changed;
     }
 
-    private ActorOutput GetAnonymousPartner ()
+    private RemactPortClient GetAnonymousPartner ()
     {
       if (m_Anonymous == null)
       {
-        m_Anonymous = new ActorOutput ("anonymous");
+        m_Anonymous = new RemactPortClient ("anonymous");
         m_Anonymous.IsMultithreaded = true;
         m_Anonymous.LinkOutputTo(this);
         m_Anonymous.TryConnect();
@@ -181,13 +165,13 @@ namespace Remact.Net
 
     /// <summary>
     /// The event is risen, when a client is connected to this service.
-    /// The response to the ActorMessage is sent by the subsystem. No further response is required. 
+    /// The response to the RemactMessage is sent by the subsystem. No further response is required. 
     /// </summary>
     public event MessageHandler OnInputConnected;
     
     /// <summary>
     /// The event is risen, when a client is disconnected from this service.
-    /// The response to the ActorMessage is sent by the subsystem. No further response is required. 
+    /// The response to the RemactMessage is sent by the subsystem. No further response is required. 
     /// </summary>
     public event MessageHandler OnInputDisconnected;
 
@@ -197,9 +181,8 @@ namespace Remact.Net
     #region IRemoteActor implementation
 
     /// <summary>
-    /// Opens the service for incomming connections (same as TryConnect).
-    /// The method is accessible only by the owner of this ActorInput object. No interface exposes the method.
-    /// - Incoming connections from network: Opens a RemactService.
+    /// Opens the service for incomming (network) connections (same as TryConnect).
+    /// The method is accessible only by the owner of this RemactPortService object. No interface exposes the method.
     /// Open picks up the synchronization context and must be called on the receiving thread only!
     /// A ActorInfo message is received, when the connection is established.
     /// The connect-process runs asynchronous and does involve an address registration at the Remact.Catalog (when CatalogClient is not disabled).
@@ -220,7 +203,7 @@ namespace Remact.Net
             ok = m_MyInputService.OpenService();
         }
         m_isOpen = ok;
-        return ActorPort.TrueTask;
+        return RemactPort.TrueTask;
     }
 
     /// <summary>
@@ -235,7 +218,7 @@ namespace Remact.Net
     // may be called on any thread
     internal virtual object GetNewSenderContext()
     {
-        return null; // is overridden by ActorInput<TSC>
+        return null; // is overridden by RemactPortService<TSC>
     }
 
     #endregion
@@ -258,7 +241,7 @@ namespace Remact.Net
     public void PostFromAnonymous(object payload)
     {
         var sender = GetAnonymousPartner();
-        ActorMessage msg = new ActorMessage(sender, 0, sender.NextRequestId,
+        RemactMessage msg = new RemactMessage(sender, 0, sender.NextRequestId,
                                             this, payload.GetType().FullName, payload, null);
         base.PostInput(msg);
     }
@@ -267,9 +250,9 @@ namespace Remact.Net
     /// <summary>
     /// Message is passed to users connect/disconnect event handler, may be overloaded and call a MessageHandler;TSC>
     /// </summary>
-    /// <param name="msg">ActorMessage containing Payload and Source.</param>
+    /// <param name="msg">RemactMessage containing Payload and Source.</param>
     /// <returns>True when handled.</returns>
-    protected override bool OnConnectDisconnect (ActorMessage msg)
+    protected override bool OnConnectDisconnect (RemactMessage msg)
     {
         if (msg.DestinationMethod == RemactService.ConnectMethodName)
         {
@@ -292,63 +275,63 @@ namespace Remact.Net
     #region InputClientList
 
     // used in RemactService (TODO move it)
-    internal List<ActorOutput> InputClientList;
-    private  object            m_inputClientLock = new Object();
+    internal List<RemactPortClient> InputClientList;
+    private  object m_inputClientLock = new Object();
 
     /// <summary>
-    /// Add a local or remote ActorPort
+    /// Add a local or remote RemactPort.
     /// </summary>
-    /// <param name="clt">the local ActorOutput</param>
-    internal void AddInputClient (ActorOutput clt)
+    /// <param name="client">the local RemactPortClient</param>
+    internal void AddInputClient (RemactPortClient client)
     {
       lock (m_inputClientLock)
       {
-        if (InputClientList == null) InputClientList = new List<ActorOutput>(10);
-        InputClientList.Add (clt);
+        if (InputClientList == null) InputClientList = new List<RemactPortClient>(10);
+        InputClientList.Add (client);
       }
     }
 
 
     /// <summary>
-    /// Remove a local or remote ActorPort while Disconnecting.
+    /// Remove a local or remote RemactPort while Disconnecting.
     /// </summary>
-    /// <param name="clt">the local ActorOutput</param>
-    internal void RemoveInputClient (ActorOutput clt)
+    /// <param name="client">the local RemactPortClient</param>
+    internal void RemoveInputClient (RemactPortClient client)
     {
       lock (m_inputClientLock)
       {
         if (InputClientList == null) return;
-        int n = InputClientList.IndexOf (clt);
+        int n = InputClientList.IndexOf (client);
         if (n < 0) return; // already removed
         InputClientList.RemoveAt (n);
       }
     }
 
     #endregion
-  }// class ActorInput
+  }// class RemactPortService
 
 
   #endregion
   //----------------------------------------------------------------------------------------------
-  #region == class ActorInput<TSC> ==
+  #region == class RemactPortService<TSC> ==
 
   /// <summary>
   /// <para>This class represents an incoming connection from a client to an actor (service).</para>
   /// <para>It is the destination of requests and contains additional data representing the session and the sending actor (client).</para>
   /// </summary>
   /// <typeparam name="TSC">Additional data (source context) representing the communication session and the sending actor.</typeparam>
-  public class ActorInput<TSC>: ActorInput where TSC: class, new ()
+  public class RemactPortService<TSC>: RemactPortService where TSC: class, new ()
   {
     /// <summary>
     /// The event is risen, when a client is connected to this service.
-    /// The response to the ActorMessage is sent the subsystem. No further response is required. 
+    /// The response to the RemactMessage is sent the subsystem. No further response is required. 
     /// </summary>
     public new event MessageHandler<TSC> OnInputConnected;
 
 
     /// <summary>
     /// The event is risen, when a client is disconnected from this service.
-    /// The response to the ActorMessage is sent by the subsystem. No further response is required. 
+    /// The response to the RemactMessage is sent by the subsystem. No further response is required. 
     /// </summary>
     public new event MessageHandler<TSC> OnInputDisconnected;
 
@@ -357,11 +340,11 @@ namespace Remact.Net
 
 
     /// <summary>
-    /// Creates a ActorInput using a handler method with TSC object for each client.
+    /// Creates a RemactPortService using a handler method with TSC object for each client.
     /// </summary>
     /// <param name="name">The application internal name of this service or client</param>
     /// <param name="requestHandler">The method to be called when a request is received. See <see cref="MessageHandler{TSC}"/>.</param>
-    public ActorInput(string name, MessageHandler<TSC> requestHandler)
+    public RemactPortService(string name, MessageHandler<TSC> requestHandler)
         : base(name)
     {
       DefaultInputHandler      = OnDefaultInput;
@@ -379,9 +362,9 @@ namespace Remact.Net
     /// <summary>
     /// Message is passed to users connect/disconnect event handler.
     /// </summary>
-    /// <param name="msg">ActorMessage containing Payload and Source.</param>
+    /// <param name="msg">RemactMessage containing Payload and Source.</param>
     /// <returns>True when handled.</returns>
-    protected override bool OnConnectDisconnect (ActorMessage msg)
+    protected override bool OnConnectDisconnect (RemactMessage msg)
     {
         TSC senderCtx = GetSenderContext(msg);
 
@@ -402,13 +385,13 @@ namespace Remact.Net
     }
 
 
-    internal static TSC GetSenderContext (ActorMessage msg)
+    internal static TSC GetSenderContext (RemactMessage msg)
     {
-        // We are peer   : SendingP is an ActorOutput. It has only one Output and therefore only one (our) SenderContext. 
-        // We are service: SendingP is the client  proxy (RemactServiceUser). It has our SenderContext.
+        // We are peer   : SendingP is a RemactPortClient. It has only one Output and therefore only one (our) SenderContext. 
+        // We are service: SendingP is the client proxy (RemactServiceUser). It has our SenderContext.
         // We NEVER are client : SendingP is ServiceIdent of RemactClient. It's SenderContext is the same as its ClientIdent.SenderContext. 
         TSC senderCtx = null;
-        var sender = msg.Source as ActorOutput;
+        var sender = msg.Source as RemactPortClient;
         if (sender != null)
         {
             senderCtx = sender.GetSenderContext() as TSC;  // base does not create a new ctx
@@ -425,8 +408,8 @@ namespace Remact.Net
     /// <summary>
     /// Message is passed to users default handler.
     /// </summary>
-    /// <param name="msg">ActorMessage containing Payload and Source.</param>
-    private void OnDefaultInput(ActorMessage msg)
+    /// <param name="msg">RemactMessage containing Payload and Source.</param>
+    private void OnDefaultInput(RemactMessage msg)
     {
         TSC senderCtx = GetSenderContext(msg);
 
@@ -439,7 +422,7 @@ namespace Remact.Net
             RaLog.Error("Remact", "Unhandled request: " + msg.Payload, Logger);
         }
     }
-  }// class ActorInput<TSC>
+  }// class RemactPortService<TSC>
 
   #endregion
 }// namespace

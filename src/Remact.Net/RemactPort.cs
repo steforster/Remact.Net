@@ -12,10 +12,10 @@ namespace Remact.Net
 {
   //----------------------------------------------------------------------------------------------
   /// <summary>
-  /// <para>The base class of ActorInput and ActorOutput.</para>
+  /// <para>The base class of RemactPortService and RemactPortClient.</para>
   /// <para>It is the source or destination of message exchange.</para>
   /// </summary>
-  public class ActorPort: IActorPort
+  public class RemactPort: IRemactPort
   {
     #region Identification and Constructor
     
@@ -97,7 +97,7 @@ namespace Remact.Net
     /// </summary>
     /// <param name="name">The application internal name of this service or client.</param>
     /// <param name="defaultMessageHandler">The method to be called when a request or response is received and no other handler is applicatable.</param>
-    public ActorPort ( string name, MessageHandler defaultMessageHandler=null )
+    public RemactPort ( string name, MessageHandler defaultMessageHandler=null )
     {
       AppName          = RemactConfigDefault.Instance.ApplicationName;
       AppVersion       = RemactConfigDefault.Instance.ApplicationVersion;
@@ -123,23 +123,11 @@ namespace Remact.Net
       }
     }// CTOR1
 
-#if !BEFORE_NET45
-    /// <summary>
-    /// <para>Creates an I/O port for an awaitable service or client running in the current application on the local host.</para>
-    /// </summary>
-    /// <param name="name">The unique name of a service or the application internal name of a client.</param>
-    /// <param name="defaultMessageHandlerAsync">The awaitable method to be called when a request or response is received and no other handler is applicatable.</param>
-    public ActorPort( string name, MessageHandlerAsync defaultMessageHandlerAsync )
-    : this( name )
-    {
-        DefaultInputHandlerAsync = defaultMessageHandlerAsync;
-    }// CTOR2
-#endif
 
     /// <summary>
     /// <para>Creates a dummy address for a client or service not running yet.</para>
     /// </summary>
-    public ActorPort ()
+    public RemactPort ()
     {
       AppName          = string.Empty;
       AppVersion       = new Version ();
@@ -162,7 +150,7 @@ namespace Remact.Net
     /// <param name="p">Copy data from partner p</param>
     internal void UseDataFrom (ActorInfo p)
     {
-      // copy ActorPort members from a remote Actor:
+      // get RemactPort members from a remote Actor:
       AppName     = p.AppName;
       AppVersion  = p.AppVersion;
       AppInstance = p.AppInstance;
@@ -284,8 +272,8 @@ namespace Remact.Net
     /// Serviceside: Source.PostInput() sends a response from client-stub to the remote client.
     /// Clientside:  Post a response into this clients input queue.
     /// </summary>
-    /// <param name="msg">A <see cref="ActorMessage"/> the 'Source' property references the sending partner.</param>
-    public void PostInput(ActorMessage msg)
+    /// <param name="msg">A <see cref="RemactMessage"/> the 'Source' property references the sending partner.</param>
+    public void PostInput(RemactMessage msg)
     {
         if( !m_isOpen )
         {
@@ -321,7 +309,7 @@ namespace Remact.Net
     //----------------------------------------------------------------------------------------------
     #region Sending notification messages to the connected actor port (service or client)
 
-    protected IRemoteActor m_BasicOutput;    // ActorInput, BasicClientAsync or BasicServiceUser
+    protected IRemoteActor m_BasicOutput;    // RemactPortService, BasicClientAsync or BasicServiceUser
 
     /// <summary>
     /// The OutputClientId used on the connected service to identify this client.
@@ -331,7 +319,7 @@ namespace Remact.Net
     public int OutputClientId { get; internal set; }
 
     /// <summary>
-    /// Send a notification message to the partner ActorPort.
+    /// Send a notification message to the partner RemactPort.
     /// Invoke the specified remote method and pass the payload as parameter.
     /// Do not wait for a response.
     /// </summary>
@@ -339,21 +327,20 @@ namespace Remact.Net
     /// <param name="payload">The message payload to send. It must be of a type acceptable for the called method.</param>
     public void Notify(string method, object payload)
     {
-        ActorMessage msg = new ActorMessage(this, OutputClientId, 0,
+        RemactMessage msg = new RemactMessage(this, OutputClientId, 0,
                                             this, method, payload);
         PostInput(msg);
     }
 
     /// <summary>
     /// Send a request or notification message to the partner on the outgoing connection.
-    /// At least a ReadyMessage will asynchronously be received through 'PostInput', when the partner has processed the request.
     /// Usage:
     /// Clientside:  Send a request to the connected remote service.
     /// Internal:    Send a message to the connected partner running on another thread synchronization context.
     /// Serviceside: Source.SendOut() sends a request from client-proxy to the internal service.
     /// </summary>
-    /// <param name="msg">A <see cref="ActorMessage"/>the 'Source' property references the sending partner, where the response is expected.</param>
-    public void SendOut(ActorMessage msg)
+    /// <param name="msg">A <see cref="RemactMessage"/>the 'Source' property references the sending partner, where the response is expected.</param>
+    public void SendOut(RemactMessage msg)
     {
         if (m_BasicOutput == null) throw new InvalidOperationException("Remact: Output of '" + Name + "' has not been linked. Cannot send message.");
 
@@ -381,7 +368,7 @@ namespace Remact.Net
     #region Sending request messages to the connected actor port (service or client) and awaiting a response payload.
 
     /// <summary>
-    /// Ask: send a request message to the partner ActorPort.
+    /// Ask: send a request message to the partner RemactPort.
     /// Invokes the specified remote method and pass the payload as parameter.
     /// The remote method has to return a payload of type TRsp.
     /// The asynchronous responseHandler expects a payload of type TRsp.
@@ -389,19 +376,18 @@ namespace Remact.Net
     /// </summary>
     /// <param name="method">The name of the method to be called.</param>
     /// <param name="payload">The message payload to send. It must be of a type acceptable for the called method.</param>
-    /// <param name="sentMessage">The message that has been sent. Useful for tracing.</param>
     /// <param name="responseHandler">A method or lambda expression handling the asynchronous response.</param>
     /// <typeparam name="TRsp">The expected type of the response payload. When receiving other types, the message will be passed to the default message handler.</typeparam>
-    public void Ask<TRsp>(string method, object payload, Action<TRsp, ActorMessage> responseHandler) where TRsp : class
+    public void Ask<TRsp>(string method, object payload, Action<TRsp, RemactMessage> responseHandler) where TRsp : class
     {
-        ActorMessage msg = new ActorMessage(this, OutputClientId, NextRequestId,
+        RemactMessage msg = new RemactMessage(this, OutputClientId, NextRequestId,
                                             this, method, payload,
 
-                                            delegate(ActorMessage rsp)
+                                            delegate(RemactMessage rsp)
                                             {
                                                 TRsp response;
                                                 if (responseHandler != null
-                                                 && rsp.Type == ActorMessageType.Response
+                                                 && rsp.MessageType == RemactMessageType.Response
                                                  && rsp.TryConvertPayload(out response))
                                                 {
                                                     responseHandler(response, rsp);
@@ -414,7 +400,7 @@ namespace Remact.Net
 
 
     /// <summary>
-    /// Ask: sends a request message to the partner ActorPort.
+    /// Ask: sends a request message to the partner RemactPort.
     /// Invokes the specified remote method and passes the payload as parameter.
     /// The remote method has to return a payload of type TRsp.
     /// The returned asynchronous Task.Result is of type TRsp.
@@ -422,16 +408,16 @@ namespace Remact.Net
     /// <param name="method">The name of the method to be called.</param>
     /// <param name="payload">The message payload to send. It must be of a type acceptable for the called method.</param>
     /// <typeparam name="TRsp">The expected type of the response payload. 
-    ///    When receiving a payload of OtherType, an ActorException{OtherType} will be thrown.</typeparam>
+    ///    When receiving a payload of other type, an RemactException will be thrown.</typeparam>
     /// <returns>A Task to track the asynchronous completion of the request.</returns>
-    public Task<ActorMessage<TRsp>> Ask<TRsp>(string method, object payload) where TRsp : class
+    public Task<RemactMessage<TRsp>> Ask<TRsp>(string method, object payload) where TRsp : class
     {
-        ActorMessage sentMessage;
+        RemactMessage sentMessage;
         return Ask<TRsp> (method, payload, out sentMessage, true);
     }
 
     /// <summary>
-    /// Ask: sends a request message to the partner ActorPort.
+    /// Ask: sends a request message to the partner RemactPort.
     /// Invokes the specified remote method and passes the payload as parameter.
     /// The remote method has to return a payload of type TRsp.
     /// The returned asynchronous Task.Result is of type TRsp.
@@ -439,38 +425,38 @@ namespace Remact.Net
     /// <param name="method">The name of the method to be called.</param>
     /// <param name="payload">The message payload to send. It must be of a type acceptable for the called method.</param>
     /// <param name="sentMessage">The message that has been sent. Useful for tracing.</param>
-    /// <param name="throwException">When set to true, a response with unexpected type (e.g. an ErrorMessage) will be thrown as an ActorException{OtherType}.
+    /// <param name="throwException">When set to true, a response with unexpected type (e.g. an ErrorMessage) will be thrown as a RemactException.
     ///                              When set to false, a message with unexpected response type will be sent to the default message handler.</param>
     /// <typeparam name="TRsp">The expected type of the response payload.</typeparam>
     /// <returns>A Task to track the asynchronous completion of the request.</returns>
-    public Task<ActorMessage<TRsp>> Ask<TRsp>(string method, object payload, out ActorMessage sentMessage, bool throwException = true) where TRsp : class
+    public Task<RemactMessage<TRsp>> Ask<TRsp>(string method, object payload, out RemactMessage sentMessage, bool throwException = true) where TRsp : class
     {
-        var tcs = new TaskCompletionSource<ActorMessage<TRsp>>();
+        var tcs = new TaskCompletionSource<RemactMessage<TRsp>>();
 
-        sentMessage = new ActorMessage(this, OutputClientId, NextRequestId, this, method, payload,
+        sentMessage = new RemactMessage(this, OutputClientId, NextRequestId, this, method, payload,
 
-                        delegate(ActorMessage rsp) // the response handler
+                        delegate(RemactMessage rsp) // the response handler
                         {
                             TRsp typedPayload;
-                            if (rsp.Type == ActorMessageType.Response && rsp.TryConvertPayload(out typedPayload))
+                            if (rsp.MessageType == RemactMessageType.Response && rsp.TryConvertPayload(out typedPayload))
                             {
-                                var typedRsp = new ActorMessage<TRsp>(typedPayload, rsp);
+                                var typedRsp = new RemactMessage<TRsp>(typedPayload, rsp);
                                 tcs.SetResult(typedRsp);
                                 return null;
                             }
                             else if (throwException)
                             {
-                                //var dynamicRsp = new ActorMessage<dynamic>((dynamic)rsp.Payload, rsp);
-                                //var ex = new ActorException<dynamic>(dynamicRsp, "unexpected response type '" + rsp.Payload.GetType().FullName + "' from method '" + method + "'");
+                                //var dynamicRsp = new RemactMessage<dynamic>((dynamic)rsp.Payload, rsp);
+                                //var ex = new RemactException<dynamic>(dynamicRsp, "unexpected response type '" + rsp.Payload.GetType().FullName + "' from method '" + method + "'");
                                 Exception ex;
                                 ErrorMessage error;
-                                if (rsp.Type == ActorMessageType.Error && rsp.TryConvertPayload(out error))
+                                if (rsp.MessageType == RemactMessageType.Error && rsp.TryConvertPayload(out error))
                                 {
-                                    ex = new ActorException(rsp, "error response from method '" + method + "'", ReconstructedException(error));
+                                    ex = new RemactException(rsp, "error response from method '" + method + "'", ReconstructedException(error), error.StackTrace);
                                 }
                                 else
                                 {
-                                    ex = new ActorException(rsp, "unexpected response type '" + rsp.Payload.GetType().FullName + "' from method '" + method + "'");
+                                    ex = new RemactException(rsp, "unexpected response type '" + rsp.Payload.GetType().FullName + "' from method '" + method + "'");
                                 }
                                 
                                 tcs.SetException(ex);
@@ -509,13 +495,13 @@ namespace Remact.Net
     #region Message dispatching
 
     /// <summary>
-    /// Get the dispatcher for incoming messages. The user must call Dispatcher.AddActorInterface() to make the dispatcher ready for incoming messages.
+    /// Get the dispatcher for incoming messages. The user must call RemactDispatcher.AddActorInterface() to make the dispatcher ready for incoming messages.
     /// </summary>
-    public Dispatcher Dispatcher
+    public RemactDispatcher InputDispatcher
     {
         get
         {
-            if (m_Dispatcher == null) m_Dispatcher = new Dispatcher();
+            if (m_Dispatcher == null) m_Dispatcher = new RemactDispatcher();
             return m_Dispatcher;
         }
     }
@@ -598,14 +584,14 @@ namespace Remact.Net
     /// False when not connected or disconnected. Prevents message passing during shutdown.
     /// </summary>
     internal protected bool          m_isOpen;
-    private  Dispatcher              m_Dispatcher;
-    private  ActorMessage            m_CurrentReq;
+    private  RemactDispatcher        m_Dispatcher;
+    private  RemactMessage            m_CurrentReq;
     internal SynchronizationContext  SyncContext;
     internal int                     ManagedThreadId;
     internal MessageHandler          DefaultInputHandler;
 
 
-    private void DispatchingError( ActorMessage msg, ErrorMessage err )
+    private void DispatchingError( RemactMessage msg, ErrorMessage err )
     {
         try
         {
@@ -650,14 +636,14 @@ namespace Remact.Net
             SynchronizationContext currentThreadSyncContext = SynchronizationContext.Current;
             if( currentThreadSyncContext == null )
             {
-                throw new Exception( "Remact: Thread connecting ActorPort '" + Name + "' has no message queue. Set ActorPort.IsMultithreaded=true, when your message handlers are threadsafe!" );
+                throw new Exception("Thread connecting RemactPort '" + Name + "' has no message queue. Set RemactPort.IsMultithreaded=true, when your message handlers are threadsafe!");
             }
             else
             {
                 int threadId = Thread.CurrentThread.ManagedThreadId;
                 if (SyncContext != null && ManagedThreadId != threadId && m_isOpen)
                 {
-                    RaLog.Error( "Remact", "Thread connecting ActorPort '" + Name + "' has changed. Only one synchronization context is supported!", Logger );
+                    RaLog.Error("Remact", "Thread connecting RemactPort '" + Name + "' has changed. Only one synchronization context is supported!", Logger);
                 }
                 ManagedThreadId = threadId;
                 SyncContext = currentThreadSyncContext;
@@ -671,21 +657,21 @@ namespace Remact.Net
     {
         try
         {
-            DispatchMessage( userState as ActorMessage );
+            DispatchMessage( userState as RemactMessage );
         }
         catch( Exception ex )
         {
-            DispatchingError( userState as ActorMessage, new ErrorMessage( ErrorMessage.Code.CouldNotDispatch, ex ) );
+            DispatchingError( userState as RemactMessage, new ErrorMessage( ErrorMessage.Code.CouldNotDispatch, ex ) );
         }
     }
 
 
     // Message is passed to the lambda functions of the sending context or to the default response handler
-    internal void DispatchMessage (ActorMessage msg)
+    internal void DispatchMessage (RemactMessage msg)
     {
         if( !m_isOpen )
         {
-            RaLog.Warning( "Remact", "ActorPort '" + Name + "' is not connected. Cannot dispatch message!", Logger );
+            RaLog.Warning("Remact", "RemactPort '" + Name + "' is not connected. Cannot dispatch message!", Logger);
             return;
         }
 
@@ -697,7 +683,7 @@ namespace Remact.Net
 
         if (!IsMultithreaded)
         {
-            var m = msg.Payload as IExtensibleActorMessage;
+            var m = msg.Payload as IExtensibleRemactMessage;
             if( m != null ) m.BoundSyncContext = SyncContext;
         }
 
@@ -742,7 +728,7 @@ namespace Remact.Net
                 }
                 else
                 {
-                    //No trace for anonymous ActorOutput
+                    //No logging for anonymous RemactPortClient
                     //RaLog.Error( "Remact", "Unhandled response: " + id.Payload, Logger );
                 }
             }
@@ -760,11 +746,11 @@ namespace Remact.Net
 
 
     /// <summary>
-    /// Message is passed to users connect/disconnect event handler, may be overloaded and call a MessageHandler;TSC>
+    /// Message is passed to users connect/disconnect event handler, may be overloaded and call a MessageHandler{TSC}
     /// </summary>
-    /// <param name="msg">ActorMessage containing Payload and Source.</param>
+    /// <param name="msg">RemactMessage containing Payload and Source.</param>
     /// <returns>True when handled.</returns>
-    protected virtual bool OnConnectDisconnect(ActorMessage msg)
+    protected virtual bool OnConnectDisconnect(RemactMessage msg)
     {
          return false;
     }

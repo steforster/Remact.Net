@@ -13,7 +13,7 @@ namespace Remact.Net
   /// Common definitions for all interacting actors.
   /// Library users may plug in their own implementation of this class to RemactDefaults.Instance.
   /// </summary>
-  public interface IRemactConfig : IActorInputConfiguration, IActorOutputConfiguration
+  public interface IRemactConfig : IServiceConfiguration, IClientConfiguration
   {
     //----------------------------------------------------------------------------------------------
     #region == Remact.Catalog configuration ==
@@ -40,12 +40,12 @@ namespace Remact.Net
     #region == Remact partner identification ==
     
     /// <summary>
-    /// the name of this application is used for tracing and for identifying an ActorOutput
+    /// The name of this application is used for logging and for identifying a RemactPortClient.
     /// </summary>
     string  ApplicationName      {get;}
 
     /// <summary>
-    /// The version of this application is used for information in ActorPort
+    /// The version of this application.
     /// </summary>
     Version ApplicationVersion   {get;}
 
@@ -55,13 +55,14 @@ namespace Remact.Net
     Assembly CifAssembly         {get;}
 
     /// <summary>
-    /// Library users may change here how to get an application instance id.
+    /// Library users may implement how to get an application instance id.
     /// </summary>
     int     ApplicationInstance  {get;}
 
     /// <summary>
-    /// Library users may change here whether an application instance is unique in plant or on host.
     /// Applications with unique id in plant may be moved from one host to another without configuration change.
+    /// By default, ApplicationInstance id's below 100 are not unique in plant. 
+    /// Library users may change the logic of this property.
     /// </summary>
     bool    IsAppIdUniqueInPlant (int appId);
 

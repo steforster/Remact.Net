@@ -31,7 +31,7 @@ namespace Test1.Service
                         +"   ServiceTcpPort="+tcpPort+"\r\n");
 
         Test1Service  test = new Test1Service();
-        ActorInput service = new ActorInput("Test1.Service", test.OnMessageReceived);
+        RemactPortService service = new RemactPortService("Test1.Service", test.OnMessageReceived);
         service.IsMultithreaded = true; // we have no message queue in a console application
 
         // The clients may connect without Remact.Catalog. They know our TCP port. 
@@ -74,7 +74,7 @@ namespace Test1.Service
     #region == Requesting thread ==
 
     // receive a message from client...
-    public void OnMessageReceived (ActorMessage req)
+    public void OnMessageReceived (RemactMessage req)
     {
         object response;
         Test1CommandMessage testMessage;

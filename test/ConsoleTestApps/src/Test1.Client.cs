@@ -13,8 +13,8 @@ namespace Test1.Client
 
   class Test1Client
   {
-    public static ActorInput  TestInput;
-    public static ActorOutput Test;
+    public static RemactPortService  TestInput;
+    public static RemactPortClient Test;
 
     static void Main (string[] args)
     {
@@ -29,8 +29,8 @@ namespace Test1.Client
         if (args.Length > 1 && args[1].Length > 0) host = args[1];
         string serviceUri = "ws://"+host+"/Remact/Test1.Service";
 
-        TestInput = new ActorInput ("NitoIn", OnMessageReceived);
-        Test      = new ActorOutput("Nito",   OnMessageReceived);
+        TestInput = new RemactPortService ("NitoIn", OnMessageReceived);
+        Test      = new RemactPortClient("Nito",   OnMessageReceived);
         Test.LinkOutputToRemoteService (new Uri(serviceUri));
         Test.TraceSend = true;
         ActionThread actionThread = new ActionThread();
@@ -90,9 +90,9 @@ namespace Test1.Client
     }
 
     // receive a message from main or from service
-    static void OnMessageReceived (ActorMessage msg)
+    static void OnMessageReceived (RemactMessage msg)
     {
-        Console.Write ("\n\r Thread="+Thread.CurrentThread.ManagedThreadId+", received: " + msg.PayloadType);
+        Console.Write ("\n\r Thread="+Thread.CurrentThread.ManagedThreadId+", received: " + msg.ToString());
 
         Test1CommandMessage testMessage;
         ErrorMessage errorMessage;
@@ -112,7 +112,7 @@ namespace Test1.Client
                 int sendContextNumber = Test.LastRequestIdSent + 1000;
                 Test.Ask("OnMessageReceived", testMessage, 
 
-                        delegate (ReadyMessage response, ActorMessage rsp)
+                        delegate (ReadyMessage response, RemactMessage rsp)
                         {
                             Console.Write ("\n\r Thread="+Thread.CurrentThread.ManagedThreadId);
                             Console.WriteLine (", received idle message in sending context #"+sendContextNumber);

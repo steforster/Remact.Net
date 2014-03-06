@@ -12,13 +12,13 @@ using System.Threading.Tasks;
 namespace Remact.Net
 {
   //----------------------------------------------------------------------------------------------
-  #region == class ActorOutput ==
+  #region == class RemactPortClient ==
 
   /// <summary>
   /// <para>This class represents a communication partner (client).</para>
   /// <para>It is the source of a request message and the destination of the response.</para>
   /// </summary>
-  public class ActorOutput: ActorPort, IActorOutput, IRemoteActor
+  public class RemactPortClient: RemactPort, IRemactPortClient, IRemoteActor
   {
     #region Constructor
 
@@ -27,7 +27,7 @@ namespace Remact.Net
     /// </summary>
     /// <param name="name">The application internal name of this output port.</param>
     /// <param name="defaultResponseHandler">The method to be called when a response is received and no other handler is applicatable.</param>
-    public ActorOutput (string name, MessageHandler defaultResponseHandler=null)
+    public RemactPortClient (string name, MessageHandler defaultResponseHandler=null)
         : base(name, defaultResponseHandler)
     {
     }// CTOR1
@@ -36,7 +36,7 @@ namespace Remact.Net
     /// <summary>
     /// <para>Creates a client stub, used internally by a service.</para>
     /// </summary>
-    internal ActorOutput()
+    internal RemactPortClient()
         : base()
     {
     }// default CTOR
@@ -45,10 +45,10 @@ namespace Remact.Net
     //----------------------------------------------------------------------------------------------
     #region Output-linking, proxy creation
 
-    private   object             m_SenderCtx;      // TSC created by the connected ActorInput<TSC>
-    private   IActorInput        m_Output;         // ActorInput, BasicClientAsync.ServiceIdent or BasicServiceUser.ServiceIdent
-    private   RemactClient       m_MyOutputProxy;
-    internal  RemactServiceUser  SvcUser;          // used by RemactService
+    private object m_SenderCtx;           // TSC created by the connected RemactPortService<TSC>
+    private IRemactPortService m_Output;  // RemactPortService, BasicClientAsync.ServiceIdent or BasicServiceUser.ServiceIdent
+    private RemactClient m_MyOutputProxy;
+    internal RemactServiceUser  SvcUser;  // used by RemactService
 
     internal object GetSenderContext()
     {
@@ -58,15 +58,15 @@ namespace Remact.Net
     /// <summary>
     /// Link output to application-internal service.
     /// </summary>
-    /// <param name="partner">a ActorInput</param>
-    public void LinkOutputTo (IActorInput partner)
+    /// <param name="partner">a RemactPortService</param>
+    public void LinkOutputTo (IRemactPortService partner)
     {
       Disconnect();
       m_Output      = partner;
       m_BasicOutput = partner as IRemoteActor;
       m_MyOutputProxy = null;
 
-      var input = partner as ActorInput;
+      var input = partner as RemactPortService;
       m_SenderCtx = null;
       if (input != null)
       {
@@ -80,7 +80,7 @@ namespace Remact.Net
     /// </summary>
     /// <param name="serviceName">The unique service name.</param>
     /// <param name="clientConfig">Plugin your own client configuration instead of RemactDefaults.Instance.DoClientConfiguration.</param>
-    public void LinkOutputToRemoteService (string serviceName, IActorOutputConfiguration clientConfig = null)
+    public void LinkOutputToRemoteService (string serviceName, IClientConfiguration clientConfig = null)
     {
       Disconnect();
       if (!string.IsNullOrEmpty(serviceName))
@@ -98,7 +98,7 @@ namespace Remact.Net
     /// </summary>
     /// <param name="serviceUri">The uri of the remote service.</param>
     /// <param name="clientConfig">Plugin your own client configuration instead of RemactDefaults.DoClientConfiguration.</param>
-    public void LinkOutputToRemoteService (Uri serviceUri, IActorOutputConfiguration clientConfig = null)
+    public void LinkOutputToRemoteService (Uri serviceUri, IClientConfiguration clientConfig = null)
     {
       Disconnect();
       if (serviceUri != null)
@@ -121,16 +121,16 @@ namespace Remact.Net
     public bool MustConnectOutput {get {PortState s=OutputState; return s==PortState.Disconnected || s==PortState.Faulted; } }
 
     /// <summary>
-    /// OutputSidePartner is an IActorPort interface to the service (or its proxy) that is linked to this output.
+    /// OutputSidePartner is an IRemactPort interface to the service (or its proxy) that is linked to this output.
     /// It returns null, as long as we are not linked (OutputState==PortState.Unlinked).
-    /// It is used to return identification data like Uri, AppVersion... (see IActorPort).
+    /// It is used to return identification data like Uri, AppVersion... (see IRemactPort).
     /// </summary>
-    public IActorPort OutputSidePartner
+    public IRemactPort OutputSidePartner
     {
       get
       {
         if (m_Output != null) return m_Output;
-        else return null;// GetAnonymousPartner();
+        else return null;
       }
     }
 
@@ -167,7 +167,7 @@ namespace Remact.Net
 
     /// <summary>
     /// 'TryConnect' opens the outgoing connection to the previously linked partner.
-    /// The method is accessible by the owner of this ActorOutput object only. No interface exposes the method.
+    /// The method is accessible by the owner of this RemactPortClient object only. No interface exposes the method.
     /// TryConnect picks up the synchronization context and must be called on the sending thread only!
     /// The connect-process runs asynchronous and may involve an address lookup at the Remact.Catalog.
     /// An ActorInfo message is received, after the connection has been established.
@@ -177,10 +177,10 @@ namespace Remact.Net
     public Task<bool> TryConnect()
     {
         if( m_MyOutputProxy != null ) return m_MyOutputProxy.TryConnect(); // calls PickupSynchronizationContext and sets m_Connected
-        if( m_BasicOutput == null )   throw new InvalidOperationException("ActorOutput is not linked");
+        if (m_BasicOutput == null) throw new InvalidOperationException("RemactPortClient is not linked");
         PickupSynchronizationContext();
         m_isOpen = true;
-        return ActorPort.TrueTask;
+        return RemactPort.TrueTask;
     }
 
     /// <summary>
@@ -203,20 +203,20 @@ namespace Remact.Net
     }}
 
     #endregion
-  }// class ActorPort
+  }// class RemactPort
 
 
 
   #endregion
   //----------------------------------------------------------------------------------------------
-  #region == class ActorOutput<TSC> ==
+  #region == class RemactPortClient<TOC> ==
 
   /// <summary>
   /// <para>This class represents an outgoing (client) connection to an actor (service).</para>
   /// <para>It is the destination of responses and contains additional data representing the session and the remote service.</para>
   /// </summary>
   /// <typeparam name="TOC">Additional data (output context) representing the communication session and the remote service.</typeparam>
-  public class ActorOutput<TOC> : ActorOutput where TOC : class
+  public class RemactPortClient<TOC> : RemactPortClient where TOC : class
   {
       /// <summary>
       /// <para>OutputContext is an object of type TOC defined by the application.</para>
@@ -243,7 +243,7 @@ namespace Remact.Net
       /// </summary>
       /// <param name="name">The application internal name of this output port.</param>
       /// <param name="defaultTocResponseHandler">The method to be called when a response is received and no other handler is applicatable. May be null.</param>
-      public ActorOutput (string name, MessageHandler<TOC> defaultTocResponseHandler = null)
+      public RemactPortClient (string name, MessageHandler<TOC> defaultTocResponseHandler = null)
           : base(name)
       {
           DefaultInputHandler = OnDefaultInput;
@@ -259,14 +259,14 @@ namespace Remact.Net
       /// <param name="payload">The message payload to send.</param>
       /// <param name="responseHandler">A method or lambda expression handling the asynchronous response.</param>
       /// <typeparam name="TRsp">The expected type of the response payload. Other types and errors are sent to the default message handler.</typeparam>
-      public void SendOut<TRsp>(object payload, Action<TRsp, ActorMessage, TOC> responseHandler) where TRsp : class
+      public void SendOut<TRsp>(object payload, Action<TRsp, RemactMessage, TOC> responseHandler) where TRsp : class
       {
-          ActorMessage msg = new ActorMessage(this, OutputClientId, NextRequestId,
+          RemactMessage msg = new RemactMessage(this, OutputClientId, NextRequestId,
                                               this, null, payload,
                                               (rsp) =>
                                               {
                                                   TRsp response;
-                                                  if (rsp.Type == ActorMessageType.Response
+                                                  if (rsp.MessageType == RemactMessageType.Response
                                                    && rsp.TryConvertPayload(out response))
                                                   {
                                                       responseHandler(response, rsp, m_outputCtx);
@@ -281,8 +281,8 @@ namespace Remact.Net
       /// <summary>
       /// Message is passed to users default handler.
       /// </summary>
-      /// <param name="msg">ActorMessage containing Payload and Source.</param>
-      private void OnDefaultInput (ActorMessage msg)
+      /// <param name="msg">RemactMessage containing Payload and Source.</param>
+      private void OnDefaultInput (RemactMessage msg)
       {
           if (m_defaultTocResponseHandler != null)
           {
@@ -294,6 +294,6 @@ namespace Remact.Net
           }
       }
 
-  }// class ActorOutput<TOC>
+  }// class RemactPortClient<TOC>
   #endregion
 }

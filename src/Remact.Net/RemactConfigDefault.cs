@@ -71,15 +71,15 @@ namespace Remact.Net
     public const string  WsNamespace = "Remact";
 
     /// <summary>
-    /// Configures and sets up a new service for a remotly accessible ActorInput.
+    /// Configures and sets up a new service for a remotly accessible RemactPortService.
     /// Feel free to overwrite this default implementation.
     /// Here we set up a WAMP WebSocket with TCP portsharing.
-    /// The 'path' part of the uri addresses the ActorInput.
+    /// The 'path' part of the uri addresses the RemactPortService.
     /// </summary>
-    /// <param name="service">The new service for an ActorInput.</param>
+    /// <param name="service">The new service for an RemactPortService.</param>
     /// <param name="uri">The dynamically generated URI for this service.</param>
     /// <param name="isCatalog">true if used for Remact.Catalog service.</param>
-    /// <returns>The network port manager. It must be called, when the ActorInput is disconnected from network.</returns>
+    /// <returns>The network port manager. It must be called, when the RemactPortService is disconnected from network.</returns>
     public virtual WebSocketPortManager DoServiceConfiguration(RemactService service, ref Uri uri, bool isCatalog)
     {
         var portManager = WebSocketPortManager.GetWebSocketPortManager(uri.Port);
@@ -99,7 +99,7 @@ namespace Remact.Net
 
         portManager.RegisterService(uri.AbsolutePath, service);
         portManager.WebSocketServer.Start(); // Listen for client connections
-        return portManager; // will be called, when this ActorInput is disconnected.
+        return portManager; // will be called, when this RemactPortService is disconnected.
     }
 
     // Do this for every new client connecting to a WebSocketPort:
@@ -171,12 +171,12 @@ namespace Remact.Net
     protected Assembly m_cifAssembly;
 
     /// <summary>
-    /// the name of this application is used for tracing and for identifying an ActorOutput
+    /// The name of this application is used for logging and for identifying a RemactPortClient.
     /// </summary>
     public virtual string  ApplicationName { get { return m_appAssembly.GetName().Name; } }
 
     /// <summary>
-    /// The version of this application is used for information in ActorPort
+    /// The version of this application.
     /// </summary>
     public virtual Version ApplicationVersion { get { return m_appAssembly.GetName().Version; } }
 
@@ -198,13 +198,14 @@ namespace Remact.Net
     }
 
     /// <summary>
-    /// Library users may change here how to get an application instance id.
+    /// Library users may implement how to get an application instance id.
     /// </summary>
     public virtual int     ApplicationInstance {get{return RaLog.ApplicationInstance;}}
 
     /// <summary>
-    /// Library users may change here whether an application instance is unique in plant or on host.
     /// Applications with unique id in plant may be moved from one host to another without configuration change.
+    /// By default, ApplicationInstance id's below 100 are not unique in plant. 
+    /// Library users may change the logic of this property.
     /// </summary>
     public virtual bool    IsAppIdUniqueInPlant (int appId) {return appId >= 100;}
 
@@ -323,7 +324,7 @@ namespace Remact.Net
     /// </summary>
     public virtual void Shutdown()
     {
-        ActorPort.DisconnectAll();
+        RemactPort.DisconnectAll();
         Alchemy.WebSocketClient.Shutdown();
         Alchemy.WebSocketServer.Shutdown();
     }

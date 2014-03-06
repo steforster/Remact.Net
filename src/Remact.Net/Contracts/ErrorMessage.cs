@@ -140,7 +140,7 @@ namespace Remact.Net
       ResponseNotDeserializableOnClient,
       
       /// <summary>
-      /// ActorMessage with unknown client id.
+      /// RemactMessage with unknown client id.
       /// </summary>
       ClientIdNotFoundOnService,
 

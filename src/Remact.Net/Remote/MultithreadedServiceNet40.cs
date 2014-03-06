@@ -35,7 +35,7 @@ namespace Remact.Net.Remote
         /// <summary>
         /// Occurs when a WampClientProxy calls a service.
         /// </summary>
-        void IRemactProtocolDriverService.MessageFromClient(ActorMessage message)
+        void IRemactProtocolDriverService.MessageFromClient(RemactMessage message)
         {
             object response = null;
             bool connectEvent = false;
@@ -54,7 +54,7 @@ namespace Remact.Net.Remote
                 {
                     if (connectEvent || disconnectEvent) // no error
                     {
-                        var reqCopy = new ActorMessage(message);
+                        var reqCopy = new RemactMessage(message);
                         reqCopy.Response = reqCopy; // do not reply a ReadyMessage
                         var task = DoRequestAsync(reqCopy); // call event OnInputConnected or OnInputDisconnected on the correct thread.
                         if (disconnectEvent)
@@ -98,9 +98,9 @@ namespace Remact.Net.Remote
 
 
 
-        private Task<ActorMessage> DoRequestAsync( ActorMessage msg )
+        private Task<RemactMessage> DoRequestAsync( RemactMessage msg )
         {
-            var tcs = new TaskCompletionSource<ActorMessage>();
+            var tcs = new TaskCompletionSource<RemactMessage>();
 
             if( msg.Destination.IsMultithreaded
                 || msg.Destination.SyncContext == null
@@ -133,7 +133,7 @@ namespace Remact.Net.Remote
                         }
                         catch( Exception ex )
                         {
-                            RaLog.Exception( "ActorMessage to " + msg.Destination.Name + " cannot be handled by application", ex );
+                            RaLog.Exception("RemactMessage to '" + msg.Destination.Name + "' cannot be handled by application", ex);
                             tcs.SetException( ex );
                         }
                     }, null )); // obj

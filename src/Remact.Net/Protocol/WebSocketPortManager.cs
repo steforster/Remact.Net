@@ -11,9 +11,9 @@ namespace Remact.Net.Protocol
     /// <summary>
     /// The WebSocketPortManager is used on server side. 
     /// For each WebSocketServer TCP port a WebSocketPortManager is created.
-    /// Several ActorInput ports may be registered for the single TCP port (portsharing)
-    /// When clients connect, the PortManager is used for finding the addressed ActorInput.
-    /// The path part of an uri is used to address the ActorInput: ws://{host}:{tcpPort}/{path}.
+    /// Several RemactPortService may be registered for the single TCP port (portsharing)
+    /// When a clients connect, the PortManager is used for finding the addressed RemactPortService.
+    /// The path part of an uri is used to address the RemactPortService: ws://{host}:{tcpPort}/{path}.
     /// </summary>
     public class WebSocketPortManager : IDisposable
     {

@@ -26,8 +26,8 @@ namespace Remact.Net.Remote
     /// <para>Contains the "UserContext" object that may be used freely by the service application.</para>
     /// <para>Output is linked to this service.</para>
     /// </summary>
-    public   ActorOutput               ClientIdent {get; private set;}
-    private  ActorInput                _serviceIdent;
+    public   RemactPortClient               ClientIdent {get; private set;}
+    private  RemactPortService                _serviceIdent;
 
     /// <summary>
     /// Set to 0 when a message has been received or sent. Incremented by milliseconds in TestNotificationChannel().
@@ -46,10 +46,10 @@ namespace Remact.Net.Remote
     /// Internally called to create a RemactServiceUser object
     /// </summary>
     /// <param name="serviceIdent">client using this service</param>
-    public RemactServiceUser(ActorInput serviceIdent)
+    public RemactServiceUser(RemactPortService serviceIdent)
     {
         _serviceIdent = serviceIdent;
-        ClientIdent = new ActorOutput()
+        ClientIdent = new RemactPortClient()
         {
             SvcUser = this,
             IsMultithreaded = serviceIdent.IsMultithreaded,
@@ -59,7 +59,7 @@ namespace Remact.Net.Remote
             Logger = serviceIdent.Logger,
         };
 
-        ClientIdent.LinkOutputTo(serviceIdent); // requests are posted to our service. Also creates a new TSC object if ServiceIdent is ActorInput<TSC>
+        ClientIdent.LinkOutputTo(serviceIdent); // requests are posted to our service. Also creates a new TSC object if ServiceIdent is RemactPortService<TSC>
         ClientIdent.PassResponsesTo(this);  // the service posts notifications to svcUser, we will pass it to the remote client
     }// CTOR
 
@@ -193,8 +193,8 @@ namespace Remact.Net.Remote
             }
             else
             {
-                var msg = new ActorMessage(null, 0, 0, null, null, notification);
-                msg.Type = ActorMessageType.Notification;
+                var msg = new RemactMessage(null, 0, 0, null, null, notification);
+                msg.MessageType = RemactMessageType.Notification;
                 PostInput(msg);
             }
         }
@@ -224,14 +224,14 @@ namespace Remact.Net.Remote
     /// <returns>true</returns>
     Task<bool> IRemoteActor.TryConnect()
     {
-        return ActorPort.TrueTask;
+        return RemactPort.TrueTask;
     }
 
     /// <summary>
     /// Send a response, error or notification to the remote client belonging to this client-stub.
     /// </summary>
-    /// <param name="msg">A <see cref="ActorMessage"/>.</param>
-    public void PostInput(ActorMessage msg)
+    /// <param name="msg">A <see cref="RemactMessage"/>.</param>
+    public void PostInput(RemactMessage msg)
     {
         if (_protocolCallback == null)
         {
@@ -241,7 +241,7 @@ namespace Remact.Net.Remote
         {
             var lower = new LowerProtocolMessage
             {
-                Type = msg.Type,
+                Type = msg.MessageType,
                 RequestId = msg.RequestId,
                 Payload = msg.Payload
             };

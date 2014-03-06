@@ -18,7 +18,7 @@ namespace Test2.Client
 
     public event Action UpdateView;
     public StringBuilder Log;
-    public IActorOutput Output   { get { return _proxy.Output; } }  // just return the IActorOutput interface
+    public IRemactPortClient Output { get { return _proxy.Output; } }  // just return the IRemactPortClient interface
     public int LastRequestIdSent { get { return _proxy.Output.LastRequestIdSent; } }
     public int ResponseCount;
     public bool SpeedTest;
@@ -31,7 +31,7 @@ namespace Test2.Client
     {
         _proxy = new Proxy
         {
-            Output = new ActorOutput("Client1", OnUnhandledResponse) {TraceSend = true, TraceReceive = false}
+            Output = new RemactPortClient("Client1", OnUnhandledResponse) {TraceSend = true, TraceReceive = false}
         };
         Log = new StringBuilder(11000);
     }
@@ -58,7 +58,7 @@ namespace Test2.Client
 
 
     // Remact client method for unknown responses
-    private void OnUnhandledResponse(ActorMessage msg)
+    private void OnUnhandledResponse(RemactMessage msg)
     {
         ResponseCount++;
         Log.AppendFormat("{0} {1}, thd={2}", msg.CltRcvId, msg.Payload.ToString(), Thread.CurrentThread.ManagedThreadId.ToString());
@@ -83,7 +83,7 @@ namespace Test2.Client
 
 
     // Remact client method
-    private void OnSpeed1Response(ReadyMessage response, ActorMessage msg)
+    private void OnSpeed1Response(ReadyMessage response, RemactMessage msg)
     {
         ResponseCount++;
         if (SpeedTest)
@@ -102,7 +102,7 @@ namespace Test2.Client
 
 
     // Remact client method
-    private void OnDataResponse(Test2Rsp response, ActorMessage msg)
+    private void OnDataResponse(Test2Rsp response, RemactMessage msg)
     {
         ResponseCount++;
         Log.AppendFormat("{0} {1}, thd={2}", msg.CltRcvId, msg.Payload.ToString(), Thread.CurrentThread.ManagedThreadId.ToString());
@@ -127,19 +127,19 @@ namespace Test2.Client
     // implementation of the service interface for type safety
     private class Proxy : ITest2Service
     {
-        public ActorOutput Output;
+        public RemactPortClient Output;
 
-        public Task<ActorMessage<Test2Rsp>> GetSomeData(ReadyMessage req)
+        public Task<RemactMessage<Test2Rsp>> GetSomeData(ReadyMessage req)
         {
             return Output.Ask<Test2Rsp>("GetSomeData", req);
         }
 
-        public Task<ActorMessage<ReadyMessage>> SpeedTest1(Test2Req req)
+        public Task<RemactMessage<ReadyMessage>> SpeedTest1(Test2Req req)
         {
             return Output.Ask<ReadyMessage>("SpeedTest1", req);
         }
 
-        public Task<ActorMessage<Test2Rsp>> SpeedTest2(Test2Req req)
+        public Task<RemactMessage<Test2Rsp>> SpeedTest2(Test2Req req)
         {
             return Output.Ask<Test2Rsp>("SpeedTest2", req);
         }

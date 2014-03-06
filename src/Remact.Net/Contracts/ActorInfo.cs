@@ -113,10 +113,10 @@ namespace Remact.Net
     public const string MethodNamePrefix = "Remact.ActorInfo.";
 
     /// <summary>
-    /// <para>Create a message from a ActorPort.</para>
+    /// <para>Create a ActorInfo message from a IRemactPort.</para>
     /// </summary>
     /// <param name="p">Copy data from partner p.</param>
-    public ActorInfo (IActorPort p)
+    public ActorInfo (IRemactPort p)
     {
       AppName     = p.AppName;
       AppVersion  = p.AppVersion;
@@ -208,7 +208,7 @@ namespace Remact.Net
     /// </summary>
     /// <param name="p">second partner</param>
     /// <returns>true if AppName + AppInstance + Client- or ServiceName are equal</returns>
-    public bool IsEqualTo (IActorPort p)
+    public bool IsEqualTo (IRemactPort p)
     {
       if (p == null || IsServiceName != p.IsServiceName) return false;
 
