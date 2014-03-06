@@ -68,7 +68,7 @@ namespace Remact.Net.Remote
         set 
         {
             ms_DisableCatalogClient = value;
-            if (!ms_DisableCatalogClient)
+            if (!ms_DisableCatalogClient && ms_Instance != null)
             {
                 ms_Instance.m_Timer.Change (0, 1000);// connect in Timer thread
             }

@@ -118,6 +118,7 @@ namespace Test2.Client
             {
                 RaLog.PluginConsole.AppendFullMessage(_client.Log, _connectionTask.Exception);
                 _client.Log.AppendLine();
+                _client.SpeedTest = checkBoxSpeedTest.Checked;
                 OnUpdateView();
             }
         }
@@ -161,7 +162,7 @@ namespace Test2.Client
             labelState.Text = "CltReq="+_client.LastRequestIdSent;
 
             // In speed test mode: Every second an additional request is injected into the request/response stream
-            _client.SpeedTest = ccheckBoxSpeedTest.Checked;
+            _client.SpeedTest = checkBoxSpeedTest.Checked;
             _client.Output.TraceSend = !_client.SpeedTest;
             _client.SendPeriodicMessage();
         }

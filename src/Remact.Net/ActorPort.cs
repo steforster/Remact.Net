@@ -452,8 +452,7 @@ namespace Remact.Net
                         delegate(ActorMessage rsp) // the response handler
                         {
                             TRsp typedPayload;
-                            if (rsp.Type == ActorMessageType.Response
-                             && rsp.TryConvertPayload(out typedPayload))
+                            if (rsp.Type == ActorMessageType.Response && rsp.TryConvertPayload(out typedPayload))
                             {
                                 var typedRsp = new ActorMessage<TRsp>(typedPayload, rsp);
                                 tcs.SetResult(typedRsp);
@@ -463,7 +462,17 @@ namespace Remact.Net
                             {
                                 //var dynamicRsp = new ActorMessage<dynamic>((dynamic)rsp.Payload, rsp);
                                 //var ex = new ActorException<dynamic>(dynamicRsp, "unexpected response type '" + rsp.Payload.GetType().FullName + "' from method '" + method + "'");
-                                var ex = new ActorException(rsp, "unexpected response type '" + rsp.Payload.GetType().FullName + "' from method '" + method + "'");
+                                Exception ex;
+                                ErrorMessage error;
+                                if (rsp.Type == ActorMessageType.Error && rsp.TryConvertPayload(out error))
+                                {
+                                    ex = new ActorException(rsp, "error response from method '" + method + "'", ReconstructedException(error));
+                                }
+                                else
+                                {
+                                    ex = new ActorException(rsp, "unexpected response type '" + rsp.Payload.GetType().FullName + "' from method '" + method + "'");
+                                }
+                                
                                 tcs.SetException(ex);
                                 return null;
                             }
@@ -472,6 +481,27 @@ namespace Remact.Net
 
         SendOut (sentMessage);
         return tcs.Task;
+    }
+    
+    private Exception ReconstructedException (ErrorMessage err)
+    {
+        Exception inner = null;
+        if (!string.IsNullOrEmpty (err.InnerMessage))
+        {
+            inner = new Exception(err.InnerMessage);
+        }
+        
+        switch (err.Error)
+        {
+            case ErrorMessage.Code.NotImplementedOnService:
+                return new NotImplementedException(err.Message, inner);
+                
+            case ErrorMessage.Code.ArgumentExceptionOnService:
+                return new ArgumentException(err.Message, inner);
+                
+            default:
+                return new Exception(err.Error.ToString() + " " + err.Message, inner);
+        }
     }
 
     #endregion

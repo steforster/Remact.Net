@@ -69,8 +69,11 @@ public partial class RaLog
         sb.AppendLine(text);
         sb.Append("  ");
         PluginConsole.AppendFullMessage(sb, ex);
-        sb.AppendLine();
-        sb.Append(ex.StackTrace);
+        if (ex.StackTrace != null)
+        {
+            sb.AppendLine();
+            sb.Append(ex.StackTrace);
+        }
         Log("##", "EXCEPT", sb.ToString());
     }
 

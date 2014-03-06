@@ -33,7 +33,7 @@ namespace Test2.Client
             this.labelService = new System.Windows.Forms.Label();
             this.textBoxService = new System.Windows.Forms.TextBox();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
-            this.ccheckBoxSpeedTest = new System.Windows.Forms.CheckBox();
+            this.checkBoxSpeedTest = new System.Windows.Forms.CheckBox();
             this.labelState = new System.Windows.Forms.Label();
             this.checkBoxService = new System.Windows.Forms.CheckBox();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
@@ -89,7 +89,7 @@ namespace Test2.Client
             // 
             // splitContainer1.Panel2
             // 
-            this.splitContainer1.Panel2.Controls.Add(this.ccheckBoxSpeedTest);
+            this.splitContainer1.Panel2.Controls.Add(this.checkBoxSpeedTest);
             this.splitContainer1.Panel2.Controls.Add(this.labelState);
             this.splitContainer1.Panel2.Controls.Add(this.labelService);
             this.splitContainer1.Panel2.Controls.Add(this.textBoxService);
@@ -100,16 +100,16 @@ namespace Test2.Client
             // 
             // cbSpeedTest1
             // 
-            this.ccheckBoxSpeedTest.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.ccheckBoxSpeedTest.AutoSize = true;
-            this.ccheckBoxSpeedTest.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.ccheckBoxSpeedTest.Location = new System.Drawing.Point(397, 36);
-            this.ccheckBoxSpeedTest.Margin = new System.Windows.Forms.Padding(2);
-            this.ccheckBoxSpeedTest.Name = "cbSpeedTest1";
-            this.ccheckBoxSpeedTest.Size = new System.Drawing.Size(81, 17);
-            this.ccheckBoxSpeedTest.TabIndex = 6;
-            this.ccheckBoxSpeedTest.Text = "Speed Test";
-            this.ccheckBoxSpeedTest.UseVisualStyleBackColor = true;
+            this.checkBoxSpeedTest.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.checkBoxSpeedTest.AutoSize = true;
+            this.checkBoxSpeedTest.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.checkBoxSpeedTest.Location = new System.Drawing.Point(397, 36);
+            this.checkBoxSpeedTest.Margin = new System.Windows.Forms.Padding(2);
+            this.checkBoxSpeedTest.Name = "cbSpeedTest1";
+            this.checkBoxSpeedTest.Size = new System.Drawing.Size(81, 17);
+            this.checkBoxSpeedTest.TabIndex = 6;
+            this.checkBoxSpeedTest.Text = "Speed Test";
+            this.checkBoxSpeedTest.UseVisualStyleBackColor = true;
             // 
             // lbState1
             // 
@@ -191,7 +191,7 @@ namespace Test2.Client
     private System.Windows.Forms.CheckBox checkBoxService;
     private System.Windows.Forms.Timer timer1;
     private System.Windows.Forms.Label labelState;
-    private System.Windows.Forms.CheckBox ccheckBoxSpeedTest;
+    private System.Windows.Forms.CheckBox checkBoxSpeedTest;
     private System.Windows.Forms.Label label1;
     private System.Windows.Forms.TextBox textBoxCatalogHost;
   }
