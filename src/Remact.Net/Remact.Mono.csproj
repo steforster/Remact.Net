@@ -47,7 +47,6 @@
     <Compile Include="Contracts\IRemactService.cs" />
     <Compile Include="Contracts\IRemactCatalog.cs" />
     <Compile Include="Contracts\ErrorMessage.cs" />
-    <Compile Include="IRemactConfig.cs" />
     <Compile Include="Protocol\IRemactProtocolDriver.cs" />
     <Compile Include="Protocol\Wamp\WampClient.cs" />
     <Compile Include="Protocol\Wamp\WampClientProxy.cs" />
@@ -57,6 +56,7 @@
     <Compile Include="RemactDelegates.cs" />
     <Compile Include="RemactDispatcher.cs" />
     <Compile Include="RemactException.cs" />
+    <Compile Include="RemactInterfaces.cs" />
     <Compile Include="RemactMessage.cs" />
     <Compile Include="RemactPort.cs" />
     <Compile Include="RemactPortClient.cs" />
@@ -71,7 +71,6 @@
     <Compile Include="Util\RaLogPluginConsole.cs" />
     <Compile Include="Util\RaLogPluginFile.cs" />
     <Compile Include="Util\RemactApplication.cs" />
-    <Compile Include="IActor.cs" />
     <Compile Include="Properties\AssemblyInfoCommon.cs" />
     <Compile Include="Properties\AssemblyInfo.Mono.cs" />
   </ItemGroup>
