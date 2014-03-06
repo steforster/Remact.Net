@@ -354,7 +354,7 @@ namespace Remact.Net.Remote
     /// <param name="clt">the local RemactClient</param>
     internal void AddClient (RemactClient clt)
     {
-        if (clt.ClientIdent == m_CatalogClient) return; // do not add the CatalogClient itself
+        if (clt.PortClient == m_CatalogClient) return; // do not add the CatalogClient itself
         lock (ms_Lock)
         {
             m_ClientList.Add (clt);
