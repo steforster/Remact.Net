@@ -215,11 +215,11 @@ namespace Remact.Net.Remote
     {
         if (svc.IsOpen)
         {   // actually all members of the m_ServiceList should be open
-            ((IRemactCatalog)this).InputIsOpen(svc);
+            ((IRemactCatalog)this).ServiceOpened(svc);
         }
         else
         {
-            ((IRemactCatalog)this).InputIsClosed(svc);
+            ((IRemactCatalog)this).ServiceClosed(svc);
         }
     }
 
@@ -339,7 +339,7 @@ namespace Remact.Net.Remote
             {
                 ActorInfo info = new ActorInfo (m_ServiceList[n].ServiceIdent);
                 info.IsOpen = false;
-                ((IRemactCatalog)this).InputIsClosed(info);
+                ((IRemactCatalog)this).ServiceClosed(info);
                 RaLog.Info(_latestSentMessage.CltSndId, "Disabled " + info.ToString(), RemactApplication.Logger);
                 m_ServiceList[n].IsServiceRegistered = false;
             }
@@ -382,14 +382,14 @@ namespace Remact.Net.Remote
 
     private RemactMessage _latestSentMessage;
 
-    Task<RemactMessage<ReadyMessage>> IRemactCatalog.InputIsOpen(ActorInfo actorInput)
+    Task<RemactMessage<ReadyMessage>> IRemactCatalog.ServiceOpened(ActorInfo actorInput)
     {
-        return m_CatalogClient.Ask<ReadyMessage>("InputIsOpen", actorInput, out _latestSentMessage, false);
+        return m_CatalogClient.Ask<ReadyMessage>("ServiceOpened", actorInput, out _latestSentMessage, false);
     }
 
-    Task<RemactMessage<ReadyMessage>> IRemactCatalog.InputIsClosed(ActorInfo actorInput)
+    Task<RemactMessage<ReadyMessage>> IRemactCatalog.ServiceClosed(ActorInfo actorInput)
     {
-        return m_CatalogClient.Ask<ReadyMessage>("InputIsClosed", actorInput, out _latestSentMessage, false);
+        return m_CatalogClient.Ask<ReadyMessage>("ServiceClosed", actorInput, out _latestSentMessage, false);
     }
 
     Task<RemactMessage<ActorInfoList>> IRemactCatalog.SynchronizeCatalog(ActorInfoList serviceList)
@@ -402,7 +402,7 @@ namespace Remact.Net.Remote
     /// </summary>
     /// <param name="serviceName">The name.</param>
     /// <returns>A task resulting in the looked up ActorInfo.</returns>
-    public Task<RemactMessage<ActorInfo>> LookupInput(string serviceName)
+    public Task<RemactMessage<ActorInfo>> LookupService(string serviceName)
     {
         if (m_CatalogClient.IsOutputConnected)
         {
@@ -416,7 +416,7 @@ namespace Remact.Net.Remote
 
     private Task<RemactMessage<ActorInfo>> Lookup(string serviceName)
     {
-        return m_CatalogClient.Ask<ActorInfo>("LookupInput", serviceName);
+        return m_CatalogClient.Ask<ActorInfo>("LookupService", serviceName);
     }
 
 

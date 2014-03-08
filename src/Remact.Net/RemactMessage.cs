@@ -285,7 +285,11 @@ namespace Remact.Net
                 Response.DestinationLambda = SourceLambda; // SourceLambda will be called later on for the first response only
                 SourceLambda = null;
                 if (service.TraceSend) RaLog.Info(Response.SvcSndId, Response.ToString(), service.Logger);
-                Source.PostInput(Response);
+
+                // send to the proxy: RemactServiceUser (on service side) or RemactClient (on client side)
+                // TODO does not work for process internal communication !
+                // SendOut checks for the correct synchronization context. But we want to send from threadpool also (exceptions and InternalResponses)
+                Source.m_Output.PostInput(Response);
             }
             else
             {
@@ -301,7 +305,8 @@ namespace Remact.Net
                 }
 
                 if (service.TraceSend) RaLog.Info(msg.SvcSndId, msg.ToString(), service.Logger);
-                Source.PostInput(msg);
+                // TODO
+                Source.m_Output.PostInput(Response);
             }
         }
 

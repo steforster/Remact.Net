@@ -20,7 +20,7 @@ namespace Remact.Net.Remote
   /// <para>Responses are asynchroniously received on the same thread as the request was sent</para>
   /// <para>(only when sent from a thread with message queue (as WinForms), but not when sent from a threadpool-thread).</para>
   /// </summary>
-  internal class RemactClient : IRemoteActor, IRemactProtocolDriverCallbacks, IRemactService
+  internal class RemactClient : IRemactProxy, IRemactProtocolDriverCallbacks, IRemactService
   {
     //----------------------------------------------------------------------------------------------
     #region Identification, fields
@@ -114,7 +114,7 @@ namespace Remact.Net.Remote
       PortClient = portClient;
       ServiceIdent = new RemactPortService(); // not yet defined
       ServiceIdent.IsServiceName = true;
-      ServiceIdent.PassResponsesTo (PortClient); // ServiceIdent.PostInput will send to our client
+      ServiceIdent.RedirectToProxy (this); // ServiceIdent.Ask will send to our remote service
     }
 
 
@@ -124,7 +124,7 @@ namespace Remact.Net.Remote
     /// </summary>
     /// <param name="serviceName">A unique name of the service. This service may run on any host that has been registered at the Remact.CatalogService.</param>
     /// <param name="clientConfig">Plugin your own client configuration instead of RemactDefaults.ClientConfiguration.</param>
-    internal void LinkToService(string serviceName, IClientConfiguration clientConfig = null)
+    internal void LinkToRemoteService(string serviceName, IClientConfiguration clientConfig = null)
     {
         _connectViaCatalog = true;
         m_ClientConfig = clientConfig;
@@ -138,7 +138,7 @@ namespace Remact.Net.Remote
     /// </summary>
     /// <param name="websocketUri">The uri of the remote service.</param>
     /// <param name="clientConfig">Plugin your own client configuration instead of RemactDefaults.ClientConfiguration.</param>
-    internal void LinkToService(Uri websocketUri, IClientConfiguration clientConfig = null)
+    internal void LinkToRemoteService(Uri websocketUri, IClientConfiguration clientConfig = null)
     {
       // this link method does not read the App.config file (it is running on mono also).
       if (!IsDisconnected) Disconnect ();
@@ -307,7 +307,7 @@ namespace Remact.Net.Remote
                 throw new InvalidOperationException("cannot open " + PortClient.Name + ", RemactCatalogClient is disabled");
             }
 
-            Task<RemactMessage<ActorInfo>> task = RemactCatalogClient.Instance.LookupInput(m_ServiceNameToLookup);
+            Task<RemactMessage<ActorInfo>> task = RemactCatalogClient.Instance.LookupService(m_ServiceNameToLookup);
             task.ContinueWith(t =>
             {
                 if (t.Status != TaskStatus.RanToCompletion)
@@ -599,7 +599,7 @@ namespace Remact.Net.Remote
             {
                 Type = RemactMessageType.Error,
                 RequestId = msg.RequestId,
-                Payload = new ErrorMessage(ErrorMessage.Code.CouldNotSend, "web socket disconnected")
+                Payload = new ErrorMessage(ErrorCode.CouldNotSend, "web socket disconnected")
             };
 
             OnIncomingMessageOnActorThread(lower);

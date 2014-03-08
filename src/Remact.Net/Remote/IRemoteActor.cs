@@ -13,9 +13,8 @@ namespace Remact.Net.Remote
 
   /// <summary>
   /// Services and Clients must implement this interface.
-  /// It is used for library internal purposes mainly.
   /// </summary>
-  public interface IRemoteActor
+  internal interface IRemactProxy
   {
     /// <summary>
     /// Connect or reconnect output to the previously linked partner.

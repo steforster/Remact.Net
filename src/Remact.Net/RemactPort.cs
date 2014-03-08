@@ -15,7 +15,7 @@ namespace Remact.Net
   /// <para>The base class of RemactPortService and RemactPortClient.</para>
   /// <para>It is the source or destination of message exchange.</para>
   /// </summary>
-  public class RemactPort: IRemactPort
+    public class RemactPort : IRemactPort, IRemactProxy
   {
     #region Identification and Constructor
     
@@ -236,6 +236,12 @@ namespace Remact.Net
     //----------------------------------------------------------------------------------------------
     #region IRemoteActor implementation
 
+    /// <inheritdoc />
+    public virtual Task<bool> TryConnect()
+    {
+        throw new NotImplementedException(); // implemented in subclass
+    }
+
     /// <summary>
     /// Shutdown the outgoing remote connection. Send a disconnect message to the partner.
     /// Close the incoming network connection.
@@ -266,22 +272,18 @@ namespace Remact.Net
 
 
     /// <summary>
-    /// Used by the library to post a request or response message to the input of this partner. May be called on any thread.
+    /// Used by the library to post a request or response message to the input of this port. May be called on any thread.
     /// Usage:
-    /// Internal:    Post a message into this partners input queue.
+    /// Internal:    Post a message into this ports input queue.
     /// Serviceside: Source.PostInput() sends a response from client-stub to the remote client.
     /// Clientside:  Post a response into this clients input queue.
     /// </summary>
     /// <param name="msg">A <see cref="RemactMessage"/> the 'Source' property references the sending partner.</param>
-    public void PostInput(RemactMessage msg)
+    void IRemactProxy.PostInput(RemactMessage msg)
     {
         if( !m_isOpen )
         {
-            DispatchingError(msg, new ErrorMessage(ErrorMessage.Code.NotConnected, "Cannot post message"));
-        }
-        else if (m_RedirectIncoming != null)
-        {
-            m_RedirectIncoming.PostInput(msg); // to BasicServiceUser (post notification) or to ClientIdent of BasicClientAsync
+            DispatchingError(msg, new ErrorMessage(ErrorCode.NotConnected, "Cannot post message"));
         }
         else if (IsMultithreaded)
         {
@@ -299,17 +301,34 @@ namespace Remact.Net
             }
             catch( Exception ex )
             {
-                DispatchingError(msg, new ErrorMessage(ErrorMessage.Code.CouldNotDispatch, ex));
+                DispatchingError(msg, new ErrorMessage(ErrorCode.CouldNotDispatch, ex));
             }
         }
     }
 
+    /// <summary>
+    /// Returns 0 unless otherwise implemented in subclass.
+    /// </summary>
+    public virtual int OutstandingResponsesCount
+    {
+        get
+        {
+            return 0;
+        }
+    }
 
     #endregion
     //----------------------------------------------------------------------------------------------
     #region Sending notification messages to the connected actor port (service or client)
 
-    protected IRemoteActor m_BasicOutput;    // RemactPortService, BasicClientAsync or BasicServiceUser
+
+    internal IRemactProxy m_Output;    // RemactPortService (app. internal), RemactClient (proxy) or RemactServiceUser (stub)
+
+    // Send requests, notifications and responses to application-internal proxy (used by library only)
+    internal void RedirectToProxy(IRemactProxy proxy)
+    {
+        m_Output = proxy;
+    }
 
     /// <summary>
     /// The OutputClientId used on the connected service to identify this client.
@@ -329,7 +348,7 @@ namespace Remact.Net
     {
         RemactMessage msg = new RemactMessage(this, OutputClientId, 0,
                                             this, method, payload);
-        PostInput(msg);
+        SendOut(msg);
     }
 
     /// <summary>
@@ -342,7 +361,7 @@ namespace Remact.Net
     /// <param name="msg">A <see cref="RemactMessage"/>the 'Source' property references the sending partner, where the response is expected.</param>
     public void SendOut(RemactMessage msg)
     {
-        if (m_BasicOutput == null) throw new InvalidOperationException("Remact: Output of '" + Name + "' has not been linked. Cannot send message.");
+        if (m_Output == null) throw new InvalidOperationException("Remact: Output of '" + Name + "' has not been linked. Cannot send message.");
 
         if (!m_isOpen) throw new InvalidOperationException("Remact: ActorPort '" + Name + "' is not connected. Cannot send message.");
 
@@ -360,7 +379,7 @@ namespace Remact.Net
             }
         }
 
-        m_BasicOutput.PostInput(msg);
+        m_Output.PostInput(msg);
     }
 
     #endregion
@@ -452,11 +471,16 @@ namespace Remact.Net
                                 ErrorMessage error;
                                 if (rsp.MessageType == RemactMessageType.Error && rsp.TryConvertPayload(out error))
                                 {
-                                    ex = new RemactException(rsp, "error response from method '" + method + "'", ReconstructedException(error), error.StackTrace);
+                                    Exception inner = null;
+                                    if (!string.IsNullOrEmpty(error.InnerMessage))
+                                    {
+                                        inner = new Exception(error.InnerMessage);
+                                    }
+                                    ex = new RemactException(rsp, error.Error, error.Message, inner, error.StackTrace);
                                 }
                                 else
                                 {
-                                    ex = new RemactException(rsp, "unexpected response type '" + rsp.Payload.GetType().FullName + "' from method '" + method + "'");
+                                    ex = new RemactException(rsp, ErrorCode.UnexpectedResponsePayloadType, "unexpected response payload type '" + rsp.Payload.GetType().FullName + "' from method '" + method + "'");
                                 }
                                 
                                 tcs.SetException(ex);
@@ -469,7 +493,7 @@ namespace Remact.Net
         return tcs.Task;
     }
     
-    private Exception ReconstructedException (ErrorMessage err)
+/*    private Exception ReconstructedException (ErrorMessage err)
     {
         Exception inner = null;
         if (!string.IsNullOrEmpty (err.InnerMessage))
@@ -479,16 +503,16 @@ namespace Remact.Net
         
         switch (err.Error)
         {
-            case ErrorMessage.Code.NotImplementedOnService:
+            case Code.NotImplementedOnService:
                 return new NotImplementedException(err.Message, inner);
                 
-            case ErrorMessage.Code.ArgumentExceptionOnService:
+            case Code.ArgumentExceptionOnService:
                 return new ArgumentException(err.Message, inner);
                 
             default:
                 return new Exception(err.Error.ToString() + " " + err.Message, inner);
         }
-    }
+    }*/
 
     #endregion
     //----------------------------------------------------------------------------------------------
@@ -576,16 +600,10 @@ namespace Remact.Net
 
 
     /// <summary>
-    /// Incoming messages are directly redirected to this partner (used library intern)
-    /// </summary>
-    internal protected IRemoteActor  m_RedirectIncoming;
-
-    /// <summary>
     /// False when not connected or disconnected. Prevents message passing during shutdown.
     /// </summary>
     internal protected bool          m_isOpen;
     private  RemactDispatcher        m_Dispatcher;
-    private  RemactMessage            m_CurrentReq;
     internal SynchronizationContext  SyncContext;
     internal int                     ManagedThreadId;
     internal MessageHandler          DefaultInputHandler;
@@ -604,7 +622,7 @@ namespace Remact.Net
 
             if (msg.IsRequest)
             {
-                if (err.Error == ErrorMessage.Code.CouldNotDispatch) err.Error = ErrorMessage.Code.UnhandledExceptionOnService;
+                if (err.Error == ErrorCode.CouldNotDispatch) err.Error = ErrorCode.UnhandledExceptionOnService;
                 msg.SendResponseFrom(this, err, null);
             }
             else
@@ -616,12 +634,6 @@ namespace Remact.Net
         {
             RaLog.Exception( "Cannot return dispatching error message", ex, Logger );
         }
-    }
-
-    // Link to application-internal partner (used by library only)
-    internal void PassResponsesTo(IRemoteActor input)
-    {
-        m_RedirectIncoming = input;
     }
 
     internal void PickupSynchronizationContext()
@@ -661,7 +673,7 @@ namespace Remact.Net
         }
         catch( Exception ex )
         {
-            DispatchingError( userState as RemactMessage, new ErrorMessage( ErrorMessage.Code.CouldNotDispatch, ex ) );
+            DispatchingError( userState as RemactMessage, new ErrorMessage( ErrorCode.CouldNotDispatch, ex ) );
         }
     }
 
@@ -675,72 +687,58 @@ namespace Remact.Net
             return;
         }
 
-        if( m_CurrentReq != null )
-        {
-            RaLog.Error( "Remact", "Multithreading not allowed when dispatching a message in " + Name, Logger );
-            Thread.Sleep(0); // let the other thread finish - may be it helps..
-        }
-
         if (!IsMultithreaded)
         {
             var m = msg.Payload as IExtensibleRemactMessage;
             if( m != null ) m.BoundSyncContext = SyncContext;
         }
 
-        try
+        msg.Destination = this;
+
+        if (msg.DestinationLambda == null && IsServiceName && msg.DestinationMethod.StartsWith(ActorInfo.MethodNamePrefix))
         {
-            m_CurrentReq   = msg;
-            msg.Destination = this;
-
-            if (msg.DestinationLambda == null && IsServiceName && msg.DestinationMethod.StartsWith(ActorInfo.MethodNamePrefix))
+            if (TraceConnect)
             {
-                if (TraceConnect)
-                {
-                    RaLog.Info(msg.SvcRcvId, String.Format("{0} to service './{1}'", msg.DestinationMethod, Name), Logger);
-                }
+                RaLog.Info(msg.SvcRcvId, String.Format("{0} to service './{1}'", msg.DestinationMethod, Name), Logger);
+            }
                 
-                OnConnectDisconnect(msg); // may be overloaded
-                return;
-            }// -------
+            OnConnectDisconnect(msg); // may be overloaded
+            return;
+        }// -------
 
-            if (TraceReceive)
+        if (TraceReceive)
+        {
+            if( IsServiceName ) RaLog.Info( msg.SvcRcvId, msg.ToString(), Logger );
+                            else RaLog.Info( msg.CltRcvId, msg.ToString(), Logger );
+        }
+        bool needsResponse = msg.IsRequest;
+
+        if (msg.DestinationLambda != null)
+        {
+            msg = msg.DestinationLambda(msg); // a response to a lambda function, one of the On<T> extension methods may handle the message type
+        }
+
+        if (msg != null && m_Dispatcher != null)
+        {
+            msg = m_Dispatcher.CallMethod(msg, null); // TODO context
+        }
+
+        if (msg != null) // not handled yet
+        { 
+            if (DefaultInputHandler != null)
             {
-                if( IsServiceName ) RaLog.Info( msg.SvcRcvId, msg.ToString(), Logger );
-                               else RaLog.Info( msg.CltRcvId, msg.ToString(), Logger );
+                DefaultInputHandler (msg); // MessageHandlerlegate
             }
-            bool needsResponse = msg.IsRequest;
-
-            if (msg.DestinationLambda != null)
+            else
             {
-                msg = msg.DestinationLambda(msg); // a response to a lambda function, one of the On<T> extension methods may handle the message type
-            }
-
-            if (msg != null && m_Dispatcher != null)
-            {
-                msg = m_Dispatcher.CallMethod(msg, null); // TODO context
-            }
-
-            if (msg != null) // not handled yet
-            { 
-                if (DefaultInputHandler != null)
-                {
-                    DefaultInputHandler (msg); // MessageHandlerlegate
-                }
-                else
-                {
-                    //No logging for anonymous RemactPortClient
-                    //RaLog.Error( "Remact", "Unhandled response: " + id.Payload, Logger );
-                }
-            }
-
-            if (msg != null && needsResponse && msg.Response == null)
-            {
-                msg.SendResponse(new ReadyMessage());
+                //No logging for anonymous RemactPortClient
+                //RaLog.Error( "Remact", "Unhandled response: " + id.Payload, Logger );
             }
         }
-        finally
+
+        if (msg != null && needsResponse && msg.Response == null)
         {
-            m_CurrentReq = null;
+            msg.SendResponse(new ReadyMessage());
         }
     }// DispatchMessage
 

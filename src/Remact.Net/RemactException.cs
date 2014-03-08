@@ -19,10 +19,11 @@ namespace Remact.Net
         /// Initializes a RemactException.
         /// </summary>
         /// <param name="msg">The received RemactMessage.</param>
+        /// <param name="errorcode">The Remact ErrorCode.</param>
         /// <param name="message">A textual exeption message.</param>
         /// <param name="innerEx">In case an ErrorMessage is received as payload, it can be converted and added as inner exception.</param>
         /// <param name="sourceStackTrace">Additional data from the ErrorMessage.</param>
-        public RemactException (RemactMessage msg, string message = null, Exception innerEx = null, string sourceStackTrace = null)
+        public RemactException (RemactMessage msg, ErrorCode errorcode, string message = null, Exception innerEx = null, string sourceStackTrace = null)
             : base (message, innerEx)
         {
             RemactMessage = msg;
@@ -33,6 +34,11 @@ namespace Remact.Net
         /// The received RemactMessage.
         /// </summary>
         public RemactMessage RemactMessage { get; protected set; }
+
+        /// <summary>
+        /// Get the Error-Code
+        /// </summary>
+        public ErrorCode Error { get; protected set; }
 
         /// <summary>
         /// In case a InnerException represents an ErrorMessage, the SourceStackTrace may contain additional information from the sending side.

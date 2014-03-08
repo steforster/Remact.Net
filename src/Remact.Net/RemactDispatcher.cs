@@ -98,8 +98,9 @@ namespace Remact.Net
                 }
                 catch (Exception ex)
                 {
-                    RaLog.Exception("Cannot add interface '" + actorInterface.FullName + "' to '" + implementation.GetType().FullName + "'", ex); // TODO logger + gathering exceptions for all methods
-                    throw;
+                    string s = "Cannot add interface '" + actorInterface.FullName + "' to '" + implementation.GetType().FullName + "'";
+                    RaLog.Exception(s, ex); // TODO log + gather exceptions for all methods
+                    throw new InvalidOperationException(s, ex);
                 }
             }
         }

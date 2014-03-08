@@ -135,7 +135,7 @@ namespace Remact.Net.Protocol.Wamp
                 return; // do not respond endless on erronous error messages
             }
 
-            var error = new ErrorMessage(ErrorMessage.Code.ResponseNotDeserializableOnClient, errorDesc);
+            var error = new ErrorMessage(ErrorCode.ResponseNotDeserializableOnClient, errorDesc);
             var message = new RemactMessage(null, 0, id, null, null, error);
             ErrorFromClient(message);
         }
@@ -232,7 +232,7 @@ namespace Remact.Net.Protocol.Wamp
                     }
                     else
                     {
-                        msg.Payload = new ErrorMessage(ErrorMessage.Code.Undef, errorUri + ": " + errorDesc);
+                        msg.Payload = new ErrorMessage(ErrorCode.Undef, errorUri + ": " + errorDesc);
                     }
 
                     _callback.OnMessageFromService(msg);

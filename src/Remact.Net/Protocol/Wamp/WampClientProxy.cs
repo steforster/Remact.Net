@@ -58,7 +58,7 @@ namespace Remact.Net.Protocol.Wamp
 
         private void RequestNotDeserializable(int id, string errorDesc)
         {
-            var error = new ErrorMessage(ErrorMessage.Code.ReqestNotDeserializableOnService, errorDesc);
+            var error = new ErrorMessage(ErrorCode.ReqestNotDeserializableOnService, errorDesc);
             OnErrorFromService(id, error);
         }
 
@@ -200,7 +200,7 @@ namespace Remact.Net.Protocol.Wamp
                     }
                     else
                     {
-                        message.Payload = new ErrorMessage(ErrorMessage.Code.Undef, errorUri + ": " + errorDesc); // Errormessage from client
+                        message.Payload = new ErrorMessage(ErrorCode.Undef, errorUri + ": " + errorDesc); // Errormessage from client
                     }
 
                     message.MessageType = RemactMessageType.Error;

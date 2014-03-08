@@ -18,7 +18,7 @@ namespace Remact.Net
   /// <para>This class represents a communication partner (service).</para>
   /// <para>It is the destination of a request message and the source of a response message.</para>
   /// </summary>
-  public class RemactPortService: RemactPort, IRemactPortService, IRemoteActor
+  public class RemactPortService: RemactPort, IRemactPortService
   {
     #region Constructor
 
@@ -157,7 +157,7 @@ namespace Remact.Net
       {
         m_Anonymous = new RemactPortClient ("anonymous");
         m_Anonymous.IsMultithreaded = true;
-        m_Anonymous.LinkOutputTo(this);
+        m_Anonymous.LinkToService(this);
         m_Anonymous.TryConnect();
       }
       return m_Anonymous;
@@ -193,7 +193,7 @@ namespace Remact.Net
     }
 
     /// <inheritdoc />
-    public Task<bool> TryConnect()
+    public override Task<bool> TryConnect()
     {
         bool ok = true;
         PickupSynchronizationContext();
@@ -225,14 +225,6 @@ namespace Remact.Net
     //----------------------------------------------------------------------------------------------
     #region Message dispatching
 
-    /// <summary>
-    /// Returns 0 for inputs.
-    /// </summary>
-    public int OutstandingResponsesCount
-    { get {
-        return 0;
-    }}
-
 
     /// <summary>
     /// Anonymous sender: Threadsafe enqueue payload at the receiving partner. No response is expected.
@@ -243,7 +235,7 @@ namespace Remact.Net
         var sender = GetAnonymousPartner();
         RemactMessage msg = new RemactMessage(sender, 0, sender.NextRequestId,
                                             this, payload.GetType().FullName, payload, null);
-        base.PostInput(msg);
+        ((IRemactProxy)this).PostInput(msg);
     }
 
 

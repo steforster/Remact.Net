@@ -25,25 +25,25 @@ namespace Remact.Catalog
     public void OnUnknownRequest (RemactMessage msg)
     {
         RaLog.Warning(msg.SvcRcvId, "Unknown request or no service: " + msg.Payload.ToString());
-        msg.SendResponse(new ErrorMessage(ErrorMessage.Code.AppRequestNotAcceptedByService, "Remact.CatalogService"));
+        msg.SendResponse(new ErrorMessage(ErrorCode.ActorReceivedMessageForUnknownDestinationMethod, "Remact.CatalogService got unknown request: "+msg.ToString()));
     }
 
     // service request method implements IRemactCatalog
-    private ReadyMessage InputIsOpen(ActorInfo service, RemactMessage msg)
+    private ReadyMessage ServiceOpened(ActorInfo service, RemactMessage msg)
     {
         Program.Catalog.RegisterService(service, msg.SvcRcvId);
         return new ReadyMessage();
     }
 
     // service request method implements IRemactCatalog
-    ReadyMessage InputIsClosed(ActorInfo service, RemactMessage msg)
+    ReadyMessage ServiceClosed(ActorInfo service, RemactMessage msg)
     {
         Program.Catalog.RegisterService(service, msg.SvcRcvId);
         return new ReadyMessage();
     }
 
     // service request method implements IRemactCatalog
-    ActorInfo LookupInput(string serviceName, RemactMessage msg)
+    ActorInfo LookupService(string serviceName, RemactMessage msg)
     {
         ActorInfo found = null;
         foreach (ActorInfo s in Program.Catalog.SvcRegister.Item)
@@ -57,7 +57,7 @@ namespace Remact.Catalog
 
         if (found == null)
         {
-            msg.SendResponse(new ErrorMessage(ErrorMessage.Code.AppDataNotAvailableInService,
+            msg.SendResponse(new ErrorMessage(ErrorCode.ServiceNameNotRegisteredInCatalog,
               "Service name = '" + serviceName + "' not registered in '" + Program.Catalog.Service.Uri + "'"));
         }
 

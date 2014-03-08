@@ -15,16 +15,16 @@ namespace Remact.Net.Contracts
     public interface IRemactCatalog
     {
         /// <summary>
-        /// Periodically called when an actor has its input open for remote access.
+        /// Periodically called when a RemactPortServive is open for remote access.
         /// </summary>
         /// <param name="actorInput">The <see cref="ActorInfo"/> of the opened service (RemactPortService).</param>
-        Task<RemactMessage<ReadyMessage>> InputIsOpen(ActorInfo actorInput);
+        Task<RemactMessage<ReadyMessage>> ServiceOpened(ActorInfo actorInput);
 
         /// <summary>
-        /// Called before an actor closes its remotly accessable input.
+        /// Called before a RemactPortServive closes its remotly accessable input.
         /// </summary>
         /// <param name="actorInput">The <see cref="ActorInfo"/> of the closing service (RemactPortService).</param>
-        Task<RemactMessage<ReadyMessage>> InputIsClosed(ActorInfo actorInput);
+        Task<RemactMessage<ReadyMessage>> ServiceClosed(ActorInfo actorInput);
 
         /// <summary>
         /// Called when a client looks up a remotly accessible RemactPortService at the catalog.
@@ -36,7 +36,7 @@ namespace Remact.Net.Contracts
         /// and the clients try to reconnnect the lost connection.
         /// </param>
         /// <returns>The <see cref="ActorInfo"/> of an opened RemactPortService. Null, when no such service is found.</returns>
-        Task<RemactMessage<ActorInfo>> LookupInput(string serviceName);
+        Task<RemactMessage<ActorInfo>> LookupService(string serviceName);
 
         /// <summary>
         /// Synchronization request by peer catalog. Incoming ActorInfo with larger hop count should be discarded.

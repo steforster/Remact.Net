@@ -88,7 +88,7 @@ namespace Test1.Service
         }
         else
         {
-            response = new ErrorMessage (ErrorMessage.Code.AppRequestNotAcceptedByService, "");
+            response = new ErrorMessage (ErrorCode.ActorReceivedMessageForUnknownDestinationMethod, "Test1.Service got unknown request: "+req.ToString());
         }
 
         req.SendResponse (response);

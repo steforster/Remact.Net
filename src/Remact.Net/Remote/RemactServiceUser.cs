@@ -16,7 +16,7 @@ namespace Remact.Net.Remote
   /// <para>Has the possibility to store and forward notifications that are not expected by the client.</para>
   /// <para>This could also be handled by the more cumbersome 'DualHttpBinding'.</para>
   /// </summary>
-  public class RemactServiceUser : IRemoteActor
+  internal class RemactServiceUser : IRemactProxy
   {
     //----------------------------------------------------------------------------------------------
     #region Properties
@@ -26,7 +26,7 @@ namespace Remact.Net.Remote
     /// <para>Contains the "UserContext" object that may be used freely by the service application.</para>
     /// <para>Output is linked to this service.</para>
     /// </summary>
-    public   RemactPortClient               ClientIdent {get; private set;}
+    public   RemactPortClient               PortClient {get; private set;}
     private  RemactPortService                _serviceIdent;
 
     /// <summary>
@@ -49,7 +49,7 @@ namespace Remact.Net.Remote
     public RemactServiceUser(RemactPortService serviceIdent)
     {
         _serviceIdent = serviceIdent;
-        ClientIdent = new RemactPortClient()
+        PortClient = new RemactPortClient()
         {
             SvcUser = this,
             IsMultithreaded = serviceIdent.IsMultithreaded,
@@ -59,8 +59,8 @@ namespace Remact.Net.Remote
             Logger = serviceIdent.Logger,
         };
 
-        ClientIdent.LinkOutputTo(serviceIdent); // requests are posted to our service. Also creates a new TSC object if ServiceIdent is RemactPortService<TSC>
-        ClientIdent.PassResponsesTo(this);  // the service posts notifications to svcUser, we will pass it to the remote client
+        PortClient.LinkToService(serviceIdent); // requests are posted to our service. Also creates a new TSC object if ServiceIdent is RemactPortService<TSC>
+        PortClient.RedirectToProxy(this);  // the service posts notifications to svcUser, we will pass it to the remote client
     }// CTOR
 
     public void SetCallbackHandler(IRemactProtocolDriverCallbacks protocolCallback)
@@ -70,23 +70,23 @@ namespace Remact.Net.Remote
 
     internal void UseDataFrom(ActorInfo remoteClient, int clientId)
     {
-        ClientIdent.UseDataFrom(remoteClient);
-        ClientIdent.OutputClientId = clientId;
-        UriBuilder uri = new UriBuilder (ClientIdent.Uri);
-        uri.Scheme = ClientIdent.OutputSidePartner.Uri.Scheme; // the service's Uri scheme (e.g. http)
-        ClientIdent.Uri = uri.Uri;
+        PortClient.UseDataFrom(remoteClient);
+        PortClient.OutputClientId = clientId;
+        UriBuilder uri = new UriBuilder (PortClient.Uri);
+        uri.Scheme = PortClient.OutputSidePartner.Uri.Scheme; // the service's Uri scheme (e.g. http)
+        PortClient.Uri = uri.Uri;
     }
 
     public void SetConnected()
     {
-        ClientIdent.SyncContext = _serviceIdent.SyncContext;
-        ClientIdent.ManagedThreadId = _serviceIdent.ManagedThreadId;
-        ClientIdent.m_isOpen = true;
+        PortClient.SyncContext = _serviceIdent.SyncContext;
+        PortClient.ManagedThreadId = _serviceIdent.ManagedThreadId;
+        PortClient.m_isOpen = true;
         m_boTimeout = false;
-        if (ClientIdent.Uri == null && _protocolCallback != null)
+        if (PortClient.Uri == null && _protocolCallback != null)
         {
-            ClientIdent.Uri = _protocolCallback.ClientUri;
-            ClientIdent.Name = "anonymous";
+            PortClient.Uri = _protocolCallback.ClientUri;
+            PortClient.Name = "anonymous";
         }
     }
 
@@ -95,7 +95,7 @@ namespace Remact.Net.Remote
     /// </summary>
     public void Disconnect ()
     {
-        ClientIdent.Disconnect();
+        PortClient.Disconnect();
     }
 
     /// <summary>
@@ -104,7 +104,7 @@ namespace Remact.Net.Remote
     public bool IsConnected
     {
       get {
-          return ClientIdent.m_isOpen && !m_boTimeout && _protocolCallback != null;
+          return PortClient.m_isOpen && !m_boTimeout && _protocolCallback != null;
       }
     }
 
@@ -116,7 +116,7 @@ namespace Remact.Net.Remote
     /// <summary>
     /// Used for tracing messages from/to this client.
     /// </summary>
-    public string ClientMark {get{return string.Format("{0}/{1}[{2}]", ClientIdent.HostName, ClientIdent.Name, ClientIdent.OutputClientId);}}
+    public string ClientMark {get{return string.Format("{0}/{1}[{2}]", PortClient.HostName, PortClient.Name, PortClient.OutputClientId);}}
 
     /// <summary>
     /// Internally called by DoPeriodicTasks(), notifies idle messages and disconnects the client connection in case of failure.
@@ -128,15 +128,15 @@ namespace Remact.Net.Remote
         {
             try
             {
-                if (ClientIdent.TimeoutSeconds > 0 
-                 && ChannelTestTimer > ((ClientIdent.TimeoutSeconds+i_nMillisecondsPassed)*400)) // 2 messages per TimeoutSeconds-period
+                if (PortClient.TimeoutSeconds > 0 
+                 && ChannelTestTimer > ((PortClient.TimeoutSeconds+i_nMillisecondsPassed)*400)) // 2 messages per TimeoutSeconds-period
                 {
                     SendNotification (new ReadyMessage());
                 }
             }
             catch (Exception ex)
             {
-                RaLog.Exception( "Cannot test '" + ClientMark + "' from service", ex, ClientIdent.Logger );
+                RaLog.Exception( "Cannot test '" + ClientMark + "' from service", ex, PortClient.Logger );
                 m_boTimeout = true;
                 return true; // changed
             }
@@ -144,7 +144,7 @@ namespace Remact.Net.Remote
 
         if (IsConnected)
         {
-            if (ClientIdent.TimeoutSeconds > 0 && ChannelTestTimer > ClientIdent.TimeoutSeconds*1000)
+            if (PortClient.TimeoutSeconds > 0 && ChannelTestTimer > PortClient.TimeoutSeconds*1000)
             {
                 m_boTimeout = true; // Client has not sent a request for longer than the specified timeout
                 Disconnect();
@@ -173,7 +173,7 @@ namespace Remact.Net.Remote
         catch (Exception ex)
         {
             _protocolCallback = null;
-            RaLog.Exception( "Cannot abort '" + ClientMark + "' from service", ex, ClientIdent.Logger );
+            RaLog.Exception( "Cannot abort '" + ClientMark + "' from service", ex, PortClient.Logger );
         }
     }
 
@@ -189,7 +189,7 @@ namespace Remact.Net.Remote
         {
             if (_protocolCallback == null)
             {
-                RaLog.Error( "RemactService", "Closed notification channel to " + ClientMark, ClientIdent.Logger );
+                RaLog.Error( "RemactService", "Closed notification channel to " + ClientMark, PortClient.Logger );
             }
             else
             {
@@ -200,7 +200,7 @@ namespace Remact.Net.Remote
         }
         catch (Exception ex)
         {
-            RaLog.Exception( "Cannot notify '" + ClientMark + "' from service", ex, ClientIdent.Logger );
+            RaLog.Exception( "Cannot notify '" + ClientMark + "' from service", ex, PortClient.Logger );
             m_boTimeout = true;
         }
     }// SendNotification
@@ -222,7 +222,7 @@ namespace Remact.Net.Remote
     /// Dummy implementation. Client stub is always connected to the service.
     /// </summary>
     /// <returns>true</returns>
-    Task<bool> IRemoteActor.TryConnect()
+    Task<bool> IRemactProxy.TryConnect()
     {
         return RemactPort.TrueTask;
     }
@@ -235,7 +235,7 @@ namespace Remact.Net.Remote
     {
         if (_protocolCallback == null)
         {
-            RaLog.Warning("RemactService", "Closed channel to " + ClientMark, ClientIdent.Logger);
+            RaLog.Warning("RemactService", "Closed channel to " + ClientMark, PortClient.Logger);
         }
         else
         {
@@ -253,7 +253,7 @@ namespace Remact.Net.Remote
     /// <summary>
     /// Gets the Uri of a linked client.
     /// </summary>
-    public Uri Uri {get{return ClientIdent.Uri;}}
+    public Uri Uri {get{return PortClient.Uri;}}
 
 
     #endregion

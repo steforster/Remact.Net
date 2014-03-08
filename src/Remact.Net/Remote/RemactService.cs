@@ -259,7 +259,7 @@ namespace Remact.Net.Remote
       }
 
       svcUser.UseDataFrom (receivedClientMsg, index + m_FirstClientId);
-      ServiceIdent.InputClientList[index] = svcUser.ClientIdent;
+      ServiceIdent.InputClientList[index] = svcUser.PortClient;
       return svcUser;
     }
 
@@ -287,16 +287,16 @@ namespace Remact.Net.Remote
               svcUser = AddNewSvcUser(client, i, svcUser);
               LastAction = "Reconnect after service restart";
           }
-          else if (!client.IsEqualTo (svcUser.ClientIdent))
+          else if (!client.IsEqualTo (svcUser.PortClient))
           {
-              RaLog.Warning( req.SvcRcvId, svcUser.ClientIdent.ToString( "ClientId already used", 0 ), ServiceIdent.Logger );
+              RaLog.Warning( req.SvcRcvId, svcUser.PortClient.ToString( "ClientId already used", 0 ), ServiceIdent.Logger );
               req.ClientId = 0; // eine neue ID vergeben, kann passieren, wenn Service, aber nicht alle Clients durchgestartet werden
               m_ConnectedClientCount -= 2; // wird sofort 2 mal inkrementiert
           }
           else if (svcUser.IsConnected)
           {
               LastAction = "Reconnect, no disconnect";
-              RaLog.Warning( req.SvcRcvId, svcUser.ClientIdent.ToString( LastAction, 0 ), ServiceIdent.Logger );
+              RaLog.Warning( req.SvcRcvId, svcUser.PortClient.ToString( LastAction, 0 ), ServiceIdent.Logger );
               //TODO
               svcUser.UseDataFrom(client, req.ClientId);
               m_ConnectedClientCount--; // wird sofort wieder inkrementiert
@@ -304,23 +304,23 @@ namespace Remact.Net.Remote
           else if (svcUser.IsFaulted)
           {
               LastAction = "Reconnect after network failure";
-              RaLog.Warning( req.SvcRcvId, svcUser.ClientIdent.ToString( LastAction, 0 ), ServiceIdent.Logger );
+              RaLog.Warning( req.SvcRcvId, svcUser.PortClient.ToString( LastAction, 0 ), ServiceIdent.Logger );
               //TODO
               svcUser.UseDataFrom(client, req.ClientId);
-              if (RemactConfigDefault.Instance.IsProcessIdUsed (svcUser.ClientIdent.ProcessId)) m_UnusedClientCount--;
+              if (RemactConfigDefault.Instance.IsProcessIdUsed (svcUser.PortClient.ProcessId)) m_UnusedClientCount--;
           }
           else
           {
               //TODO
               svcUser.UseDataFrom(client, req.ClientId);
               LastAction = "Reconnect after client disconnect";
-              if (RemactConfigDefault.Instance.IsProcessIdUsed (svcUser.ClientIdent.ProcessId)) m_UnusedClientCount--;
+              if (RemactConfigDefault.Instance.IsProcessIdUsed (svcUser.PortClient.ProcessId)) m_UnusedClientCount--;
           }
           m_ConnectedClientCount++;
         }
         else
         {
-          ErrorMessage rsp = new ErrorMessage (ErrorMessage.Code.ClientIdNotFoundOnService, "Service cannot find client " + req.ClientId + " to connect");
+          ErrorMessage rsp = new ErrorMessage (ErrorCode.ClientIdNotFoundOnService, "Service cannot find client " + req.ClientId + " to connect");
           RaLog.Error( req.SvcRcvId, rsp.Message, ServiceIdent.Logger );
           LastAction = "ClientId mismatch while connecting";
           return rsp;
@@ -369,8 +369,8 @@ namespace Remact.Net.Remote
       
       // reply ServiceIdent
       ActorInfo response = new ActorInfo (ServiceIdent);
-      response.ClientId = svcUser.ClientIdent.OutputClientId;
-      req.Source   = svcUser.ClientIdent;
+      response.ClientId = svcUser.PortClient.OutputClientId;
+      req.Source   = svcUser.PortClient;
       return response;
     }// Connect
 
@@ -389,13 +389,13 @@ namespace Remact.Net.Remote
       {
         svcUser = ServiceIdent.InputClientList[i].SvcUser;
         svcUser.ChannelTestTimer = 0;
-        req.Source = svcUser.ClientIdent;
+        req.Source = svcUser.PortClient;
         HasConnectionStateChanged = true;
-        if (client.IsEqualTo (svcUser.ClientIdent))
+        if (client.IsEqualTo (svcUser.PortClient))
         {
           svcUser.Disconnect();
           LastAction = "Disconnect";
-          if (RemactConfigDefault.Instance.IsProcessIdUsed (svcUser.ClientIdent.ProcessId))
+          if (RemactConfigDefault.Instance.IsProcessIdUsed (svcUser.PortClient.ProcessId))
           {
             m_UnusedClientCount++;
             ServiceIdent.InputClientList[i] = null; // will never be used again, the client has been shutdown
@@ -417,7 +417,7 @@ namespace Remact.Net.Remote
       }
 
       // Note: This response will normally not be sent to the client. The disconnect message is a notification.
-      var response = new ErrorMessage(ErrorMessage.Code.CouldNotDisconnect, LastAction);
+      var response = new ErrorMessage(ErrorCode.CouldNotDisconnect, LastAction);
       return response;
     }// Disconnect
 
@@ -444,7 +444,7 @@ namespace Remact.Net.Remote
       } 
             
       svcUser.ChannelTestTimer = 0;
-      req.Source = svcUser.ClientIdent;
+      req.Source = svcUser.PortClient;
     
       if (!svcUser.IsConnected)
       {
@@ -456,14 +456,14 @@ namespace Remact.Net.Remote
         }
         else
         {
-            LastAction = "Client '" + svcUser.ClientIdent.Uri.ToString() + "' connected without ConnectRequest";
+            LastAction = "Client '" + svcUser.PortClient.Uri.ToString() + "' connected without ConnectRequest";
             if (ServiceIdent.TraceConnect)
             {
                 RaLog.Info(req.SvcRcvId, String.Format("{0} to service './{0}'", LastAction, ServiceIdent.Name), ServiceIdent.Logger);
             }
         }
 
-        if (RemactConfigDefault.Instance.IsProcessIdUsed (svcUser.ClientIdent.ProcessId)) 
+        if (RemactConfigDefault.Instance.IsProcessIdUsed (svcUser.PortClient.ProcessId)) 
         {
             m_UnusedClientCount--;
         }
@@ -525,7 +525,7 @@ namespace Remact.Net.Remote
             }
             else
             {
-                response = new ErrorMessage (ErrorMessage.Code.ClientIdNotFoundOnService, "Service cannot find client " + req.ClientId);
+                response = new ErrorMessage (ErrorCode.ClientIdNotFoundOnService, "Service cannot find client " + req.ClientId);
                 RaLog.Error( req.SvcRcvId, (response as ErrorMessage).Message, ServiceIdent.Logger );
                 LastAction = "RemactMessage from unknown client";
             }
@@ -565,9 +565,9 @@ namespace Remact.Net.Remote
           boChange = true;
           if (u.IsFaulted)
           {
-              RaLog.Warning("Svc=" + ServiceIdent.Name, u.ClientIdent.ToString("Timeout=" + u.ClientIdent.TimeoutSeconds 
-                  + " sec. no message from clt[" + u.ClientIdent.OutputClientId + "]", 0), ServiceIdent.Logger);
-            if (RemactConfigDefault.Instance.IsProcessIdUsed(u.ClientIdent.ProcessId))
+              RaLog.Warning("Svc=" + ServiceIdent.Name, u.PortClient.ToString("Timeout=" + u.PortClient.TimeoutSeconds 
+                  + " sec. no message from clt[" + u.PortClient.OutputClientId + "]", 0), ServiceIdent.Logger);
+            if (RemactConfigDefault.Instance.IsProcessIdUsed(u.PortClient.ProcessId))
             {
               m_UnusedClientCount++;
               ServiceIdent.InputClientList[i] = null;// will never be used again, the client has been shutdown
@@ -578,7 +578,7 @@ namespace Remact.Net.Remote
         
         if (u.IsConnected) {
           nConnected++;
-        } else if (RemactConfigDefault.Instance.IsProcessIdUsed(u.ClientIdent.ProcessId)) {
+        } else if (RemactConfigDefault.Instance.IsProcessIdUsed(u.PortClient.ProcessId)) {
           nUnused++;
         } 
       }

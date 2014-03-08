@@ -21,7 +21,7 @@ namespace Remact.Net.Remote
     /// <summary>
     /// This is the Service Entrypoint. It dispatches requests and returns a response.
     /// </summary>
-    public class MultithreadedServiceNet40 : IRemactProtocolDriverService
+    internal class MultithreadedServiceNet40 : IRemactProtocolDriverService
     {
         private RemactService _service;
         private RemactServiceUser _svcUser;
@@ -46,7 +46,7 @@ namespace Remact.Net.Remote
                 // Several threads may access the common RemactService. TODO: is the lock really needed ?
                 lock (_service)
                 {
-                    response = _service.CheckRemactInternalResponse (message, ref _svcUser, ref connectEvent, ref disconnectEvent);
+                    response = _service.CheckRemactInternalResponse(message, ref _svcUser, ref connectEvent, ref disconnectEvent);
                 }
 
                 // multithreaded access, several requests may run in parallel. They will be scheduled for execution on the right synchronization context.
@@ -72,25 +72,30 @@ namespace Remact.Net.Remote
                     return;
                 }
             }
+            catch (RemactException ex)
+            {
+                RaLog.Exception(message.SvcRcvId, ex, _service.ServiceIdent.Logger);
+                response = new ErrorMessage(ex);
+            }
             catch (NotImplementedException ex)
             {
                 RaLog.Exception(message.SvcRcvId, ex, _service.ServiceIdent.Logger);
-                response = new ErrorMessage(ErrorMessage.Code.NotImplementedOnService, ex);
+                response = new ErrorMessage(ErrorCode.NotImplementedOnService, ex);
             }
             catch (NotSupportedException ex)
             {
                 RaLog.Exception(message.SvcRcvId, ex, _service.ServiceIdent.Logger);
-                response = new ErrorMessage(ErrorMessage.Code.NotImplementedOnService, ex);
+                response = new ErrorMessage(ErrorCode.NotImplementedOnService, ex);
             }
             catch (ArgumentException ex)
             {
                 RaLog.Exception(message.SvcRcvId, ex, _service.ServiceIdent.Logger);
-                response = new ErrorMessage(ErrorMessage.Code.ArgumentExceptionOnService, ex);
+                response = new ErrorMessage(ErrorCode.ArgumentExceptionOnService, ex);
             }
             catch (Exception ex)
             {
                 RaLog.Exception(message.SvcRcvId, ex, _service.ServiceIdent.Logger);
-                response = new ErrorMessage(ErrorMessage.Code.UnhandledExceptionOnService, ex);
+                response = new ErrorMessage(ErrorCode.UnhandledExceptionOnService, ex);
             }
 
             message.SendResponse(response);

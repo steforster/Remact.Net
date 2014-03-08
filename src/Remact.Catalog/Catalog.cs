@@ -235,6 +235,7 @@ namespace Remact.Catalog
             else //if (svc.CatalogHopCount > 1)
             { // will be removed from all registers after some time
                 RaLog.Info( mark, "Backup    " + svc.Uri.ToString() );
+                throw new RemactException(null, ErrorCode.ServiceIsBackup, "Service '" + registered.Uri + "' is already active. Service '" + svc.Uri + "' may be used as backup.");
             }
           }
         }

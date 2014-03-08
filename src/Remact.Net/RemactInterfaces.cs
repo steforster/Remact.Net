@@ -317,7 +317,7 @@ namespace Remact.Net
       /// Link to application-internal partner.
       /// </summary>
       /// <param name="output">a ActorInput</param>
-      void LinkOutputTo(IRemactPortService output);
+      void LinkToService(IRemactPortService output);
 
       /// <summary>
       /// Add a RemactClient and lookup the service Uri at Remact.Catalog (catalog uri is defined by RemactConfigDefault).

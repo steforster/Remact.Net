@@ -117,7 +117,7 @@ namespace Remact.Net
             var svcUser = new RemactServiceUser(service.ServiceIdent);
             var handler = new MultithreadedServiceNet40(service, svcUser);
             // in future, the new WampClientProxy will handle the OnReceive and OnDisconnect events for this connection
-            var wampProxy = new WampClientProxy(svcUser.ClientIdent, service.ServiceIdent, handler, userContext);
+            var wampProxy = new WampClientProxy(svcUser.PortClient, service.ServiceIdent, handler, userContext);
             svcUser.SetCallbackHandler(wampProxy);
         }
         else

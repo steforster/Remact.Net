@@ -18,7 +18,7 @@ namespace Remact.Net
   /// <para>This class represents a communication partner (client).</para>
   /// <para>It is the source of a request message and the destination of the response.</para>
   /// </summary>
-  public class RemactPortClient: RemactPort, IRemactPortClient, IRemoteActor
+  public class RemactPortClient: RemactPort, IRemactPortClient
   {
     #region Constructor
 
@@ -46,8 +46,8 @@ namespace Remact.Net
     #region Output-linking, proxy creation
 
     private object m_SenderCtx;           // TSC created by the connected RemactPortService<TSC>
-    private IRemactPortService m_Output;  // RemactPortService, BasicClientAsync.ServiceIdent or BasicServiceUser.ServiceIdent
-    private RemactClient m_MyOutputProxy;
+    private IRemactPortService m_Service; // RemactPortService, BasicClientAsync.ServiceIdent or BasicServiceUser.ServiceIdent
+    private RemactClient m_ClientProxy;
     internal RemactServiceUser  SvcUser;  // used by RemactService
 
     internal object GetSenderContext()
@@ -58,19 +58,19 @@ namespace Remact.Net
     /// <summary>
     /// Link output to application-internal service.
     /// </summary>
-    /// <param name="partner">a RemactPortService</param>
-    public void LinkOutputTo (IRemactPortService partner)
+    /// <param name="service">a RemactPortService</param>
+    public void LinkToService (IRemactPortService service)
     {
       Disconnect();
-      m_Output      = partner;
-      m_BasicOutput = partner as IRemoteActor;
-      m_MyOutputProxy = null;
+      m_Service = service;
+      m_Output = service as IRemactProxy;
+      m_ClientProxy = null;
 
-      var input = partner as RemactPortService;
       m_SenderCtx = null;
-      if (input != null)
+      var srv = service as RemactPortService;
+      if (srv != null)
       {
-          m_SenderCtx = input.GetNewSenderContext();
+          m_SenderCtx = srv.GetNewSenderContext();
       }
     }
 
@@ -85,11 +85,10 @@ namespace Remact.Net
       Disconnect();
       if (!string.IsNullOrEmpty(serviceName))
       {
-        var clt = new RemactClient(this);
-        clt.LinkToService(serviceName, clientConfig);
-        m_Output        = clt.ServiceIdent;
-        m_BasicOutput   = clt;
-        m_MyOutputProxy = clt;
+          m_ClientProxy = new RemactClient(this);
+          m_ClientProxy.LinkToRemoteService(serviceName, clientConfig);
+          m_Output = m_ClientProxy;
+          m_Service = m_ClientProxy.ServiceIdent;
       }
     }
 
@@ -103,10 +102,10 @@ namespace Remact.Net
       Disconnect();
       if (serviceUri != null)
       {
-        m_MyOutputProxy = new RemactClient(this);
-        m_MyOutputProxy.LinkToService( serviceUri, clientConfig );
-        m_BasicOutput = m_MyOutputProxy;
-        m_Output      = m_MyOutputProxy.ServiceIdent;
+          m_ClientProxy = new RemactClient(this);
+          m_ClientProxy.LinkToRemoteService( serviceUri, clientConfig );
+          m_Output = m_ClientProxy;
+          m_Service = m_ClientProxy.ServiceIdent;
       }
     }
 
@@ -125,14 +124,7 @@ namespace Remact.Net
     /// It returns null, as long as we are not linked (OutputState==PortState.Unlinked).
     /// It is used to return identification data like Uri, AppVersion... (see IRemactPort).
     /// </summary>
-    public IRemactPort OutputSidePartner
-    {
-      get
-      {
-        if (m_Output != null) return m_Output;
-        else return null;
-      }
-    }
+    public IRemactPort OutputSidePartner  { get { return m_Service; }}
 
     /// <summary>
     /// <para>Gets or sets the state of the outgoing connection.</para>
@@ -146,8 +138,8 @@ namespace Remact.Net
     {
       get
       {
-        if (m_MyOutputProxy != null) return m_MyOutputProxy.OutputState; // proxy for remote actor
-        if( m_BasicOutput != null )
+        if (m_ClientProxy != null) return m_ClientProxy.OutputState; // proxy for remote actor
+        if( m_Output != null )
         {   // internal actor
             if( m_isOpen ) return PortState.Ok;
             return PortState.Disconnected; 
@@ -157,7 +149,7 @@ namespace Remact.Net
 
       set
       {
-        if (m_MyOutputProxy != null) m_MyOutputProxy.OutputState = value;
+        if (m_ClientProxy != null) m_ClientProxy.OutputState = value;
       }
     }
 
@@ -174,10 +166,10 @@ namespace Remact.Net
     /// An ErrorMessage is received, when the partner is not reachable.
     /// </summary>
     /// <returns>A task. When this task is run to completion, the task.Result corresponds to IsOpen.</returns>
-    public Task<bool> TryConnect()
+    public override Task<bool> TryConnect()
     {
-        if( m_MyOutputProxy != null ) return m_MyOutputProxy.TryConnect(); // calls PickupSynchronizationContext and sets m_Connected
-        if (m_BasicOutput == null) throw new InvalidOperationException("RemactPortClient is not linked");
+        if( m_ClientProxy != null ) return m_ClientProxy.TryConnect(); // calls PickupSynchronizationContext and sets m_Connected
+        if (m_Output == null) throw new InvalidOperationException("RemactPortClient is not linked");
         PickupSynchronizationContext();
         m_isOpen = true;
         return RemactPort.TrueTask;
@@ -188,7 +180,7 @@ namespace Remact.Net
     /// </summary>
     public override void Disconnect ()
     {
-      if( m_MyOutputProxy != null ) m_MyOutputProxy.Disconnect ();
+      if( m_ClientProxy != null ) m_ClientProxy.Disconnect ();
       base.Disconnect();
     }
 
@@ -196,10 +188,10 @@ namespace Remact.Net
     /// <summary>
     /// The number of requests not yet responded by the service connected to this output.
     /// </summary>
-    public int OutstandingResponsesCount
+    public override int OutstandingResponsesCount
     { get {
-            if (m_BasicOutput == null) return 0;
-            return m_BasicOutput.OutstandingResponsesCount;
+            if (m_Output == null) return 0;
+            return m_Output.OutstandingResponsesCount;
     }}
 
     #endregion
