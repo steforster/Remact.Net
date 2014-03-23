@@ -83,7 +83,8 @@ namespace Remact.Net.Protocol
     public class LowerProtocolMessage
     {
         public RemactMessageType Type;
-        public int RequestId;
+        public int RequestId; // when receiving responses
+        public string DestinationMethod; // when receiving notifications or requests
         public object Payload;
     }
 }

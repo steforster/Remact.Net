@@ -361,8 +361,8 @@ public partial class RaLog
                                    
         string[] arg = Environment.GetCommandLineArgs();
         s += "\r\n|";
-        s += "\r\n|   Current dir\t: " + Environment.CurrentDirectory;
         s += "\r\n|   Executable \t: " + arg[0];   // = Application.ExecutablePath
+        s += "\r\n|   Current dir\t: " + Environment.CurrentDirectory;
         for (int i=1; i < arg.GetLength(0); i++)
         {
           if (i == 1) s += "\r\n|   Commandline\t: ";

@@ -47,6 +47,7 @@
     <Compile Include="Contracts\IRemactService.cs" />
     <Compile Include="Contracts\IRemactCatalog.cs" />
     <Compile Include="Contracts\ErrorMessage.cs" />
+    <Compile Include="RemactPortProxy.cs" />
     <Compile Include="Protocol\IRemactProtocolDriver.cs" />
     <Compile Include="Protocol\Wamp\WampClient.cs" />
     <Compile Include="Protocol\Wamp\WampClientProxy.cs" />
@@ -61,7 +62,7 @@
     <Compile Include="RemactPort.cs" />
     <Compile Include="RemactPortClient.cs" />
     <Compile Include="RemactPortService.cs" />
-    <Compile Include="Remote\IRemoteActor.cs" />
+    <Compile Include="Remote\IRemotePort.cs" />
     <Compile Include="Remote\MultithreadedServiceNet40.cs" />
     <Compile Include="Remote\RemactCatalogClient.cs" />
     <Compile Include="Remote\RemactClient.cs" />

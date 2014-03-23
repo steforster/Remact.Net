@@ -117,27 +117,24 @@ namespace Remact.Net
         internal RemactMessage           Response;          // to check whether a response has been sent
 
         /// <summary>
-        /// Creates a new RemactMessage.
+        /// Creates a new RemactMessage to send from client to service.
         /// </summary>
-        /// <param name="source">The sending partner.</param>
-        /// <param name="clientId">The ClientId used on the service.</param>
-        /// <param name="requestId">The RequestId is incremented by the client. When 0 is passed, a notification is created.</param>
-        /// <param name="destination">The receiving partner.</param>
+        /// <param name="proxy">The proxy of the destination service.</param>
         /// <param name="destinationMethod">The receiving method defines the payload type.</param>
         /// <param name="payload">The user payload to send.</param>
+        /// <param name="messageType">The type of the message.</param>
         /// <param name="responseHandler">null or a lamda expression to be called, when a response is aynchronously received (valid on client side requests/responses).</param>
-        internal RemactMessage(RemactPort source, int clientId, int requestId, 
-                              RemactPort destination, string destinationMethod, object payload, 
-                              AsyncResponseHandler responseHandler = null)
+        internal RemactMessage(RemactPortProxy proxy, string destinationMethod, object payload, RemactMessageType messageType,
+                               AsyncResponseHandler responseHandler)
         {
-            Source = source;
-            Destination = destination;
+            Destination = proxy;
             DestinationMethod = destinationMethod;
-            ClientId = clientId;
-            RequestId = requestId;
-            if (requestId == 0)
+            Source = proxy.Client;
+            ClientId = proxy.Client.ClientId;
+            MessageType = messageType;
+            if (messageType == RemactMessageType.Request)
             {
-                MessageType = RemactMessageType.Notification;
+                RequestId = proxy.NextRequestId;
             }
 
             var m = payload as IExtensibleRemactMessage;
@@ -151,7 +148,71 @@ namespace Remact.Net
             SourceLambda = responseHandler;
         }// CTOR1
 
-        
+
+        /// <summary>
+        /// Creates a new RemactMessage to send from service to client.
+        /// </summary>
+        /// <param name="client">The destination client.</param>
+        /// <param name="destinationMethod">The receiving method defines the payload type.</param>
+        /// <param name="payload">The user payload to send.</param>
+        /// <param name="messageType">The type of the message.</param>
+        /// <param name="responseHandler">null or a lamda expression to be called, when a response is aynchronously received (valid on client side requests/responses).</param>
+        internal RemactMessage(RemactPortClient client, string destinationMethod, object payload, RemactMessageType messageType,
+                               AsyncResponseHandler responseHandler)
+        {
+            Destination = client;
+            DestinationMethod = destinationMethod;
+            Source = client.ServiceIdent;
+            ClientId = client.ClientId;
+            MessageType = messageType;
+            if (messageType == RemactMessageType.Request)
+            {
+                RequestId = client.NextRequestId;
+            }
+
+            var m = payload as IExtensibleRemactMessage;
+            if (m != null)
+            {
+                m.BoundSyncContext = null;
+                m.IsSent = true;
+            }
+
+            Payload = payload;
+            SourceLambda = responseHandler;
+        }// CTOR2
+
+
+        /// <summary>
+        /// Creates a new RemactMessage to send from service user (client) to service.
+        /// </summary>
+        /// <param name="svcUser">The sending service user.</param>
+        /// <param name="clientId">The ClientId used on the service.</param>
+        /// <param name="requestId">The RequestId is incremented by the client. When 0 is passed, a notification is created.</param>
+        /// <param name="destination">The receiving partner.</param>
+        /// <param name="destinationMethod">The receiving method defines the payload type.</param>
+        /// <param name="payload">The user payload to send.</param>
+        /// <param name="responseHandler">null or a lamda expression to be called, when a response is aynchronously received (valid on client side requests/responses).</param>
+        internal RemactMessage(RemactPort destination, string destinationMethod, object payload, RemactMessageType messageType,
+                               RemactPort sender, int clientId, int requestId)
+        {
+            Destination = destination;
+            DestinationMethod = destinationMethod;
+            Source = sender;
+            ClientId = clientId;
+            MessageType = messageType;
+            RequestId = requestId;
+
+            var m = payload as IExtensibleRemactMessage;
+            if (m != null)
+            {
+                m.BoundSyncContext = null;
+                m.IsSent = true;
+            }
+
+            Payload = payload;
+        }// CTOR3
+
+
         /// <summary>
         /// Copies a RemactMessage.
         /// </summary>
@@ -168,7 +229,7 @@ namespace Remact.Net
             SourceLambda = msg.SourceLambda;
             DestinationLambda = msg.DestinationLambda;
             Response = msg.Response;
-        }// CTOR2
+        }// CTOR4
 
         
         public bool TryConvertPayload<T>(out T result) where T : class
@@ -258,55 +319,55 @@ namespace Remact.Net
         }
 
 
-        // Return a response to the sender.
-        internal void SendResponseFrom(RemactPort service, object payload, AsyncResponseHandler responseHandler)
+        // Return a response to the source of the message.
+        internal void SendResponseFrom(RemactPort sender, object payload, AsyncResponseHandler responseHandler)
         {
             var m = payload as IExtensibleRemactMessage;
             if (m != null && m.BoundSyncContext != null && m.BoundSyncContext != SynchronizationContext.Current)
             {
-                string name = service == null ? "null" : service.Name;
+                string name = sender == null ? "null" : sender.Name;
                 throw new Exception("Remact: wrong thread synchronization context when responding from '" + name + "'");
             }
 
             // return same request ID for first call to SendResponse
             if (MessageType == RemactMessageType.Request && Response == null)
             {
-                Response = new RemactMessage(service, ClientId, RequestId, 
-                                            Source, null, payload, responseHandler);
+                RemactMessageType type = RemactMessageType.Response;
                 if (payload is ErrorMessage)
                 {
-                    Response.MessageType = RemactMessageType.Error;
-                }
-                else
-                {
-                    Response.MessageType = RemactMessageType.Response;
+                    type = RemactMessageType.Error;
                 }
 
+                Response = new RemactMessage(Source, null, payload, type, sender, ClientId, RequestId);
+                Response.SourceLambda = responseHandler;
                 Response.DestinationLambda = SourceLambda; // SourceLambda will be called later on for the first response only
                 SourceLambda = null;
-                if (service.TraceSend) RaLog.Info(Response.SvcSndId, Response.ToString(), service.Logger);
+                if (sender.TraceSend) RaLog.Info(Response.SvcSndId, Response.ToString(), sender.Logger);
 
-                // send to the proxy: RemactServiceUser (on service side) or RemactClient (on client side)
-                // TODO does not work for process internal communication !
-                // SendOut checks for the correct synchronization context. But we want to send from threadpool also (exceptions and InternalResponses)
-                Source.m_Output.PostInput(Response);
+                // Local : Destination = RemactPortClient  (when on service side) or RemactPortProxy (when on client side)
+                // Remote: send via      RemactServiceUser (when on service side) or RemactClient    (when on client side)
+
+                //         Sending on service side                  Sending on client side
+                //         Source          RedirectIncoming         Source             RedirectIncoming
+                //         ------------    ----------------         ------------       ----------------
+                // Local : PortClient      RemactPortProxy          RemactPortProxy    RemactPortService
+                // Remote: PortClient      RemactServiceUser        RemactPortProxy    RemactClient
+
+                // PostInput does not check for the correct synchronization context. We want to send from threadpool also (exceptions and InternalResponses)
+                Source.RedirectIncoming.PostInput(Response);
             }
             else
             {
-                var msg = new RemactMessage(service, ClientId, 0,
-                                           Source, null, payload, responseHandler);
+                RemactMessageType type = RemactMessageType.Notification;
                 if (payload is ErrorMessage)
                 {
-                    msg.MessageType = RemactMessageType.Error;
-                }
-                else
-                {
-                    msg.MessageType = RemactMessageType.Notification;
+                    type = RemactMessageType.Error;
                 }
 
-                if (service.TraceSend) RaLog.Info(msg.SvcSndId, msg.ToString(), service.Logger);
-                // TODO
-                Source.m_Output.PostInput(Response);
+                var msg = new RemactMessage(Source, null, payload, type, sender, ClientId, 0);
+                msg.SourceLambda = responseHandler;
+                if (sender.TraceSend) RaLog.Info(msg.SvcSndId, msg.ToString(), sender.Logger);
+                Source.RedirectIncoming.PostInput(msg);
             }
         }
 

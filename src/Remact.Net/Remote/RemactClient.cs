@@ -20,7 +20,7 @@ namespace Remact.Net.Remote
   /// <para>Responses are asynchroniously received on the same thread as the request was sent</para>
   /// <para>(only when sent from a thread with message queue (as WinForms), but not when sent from a threadpool-thread).</para>
   /// </summary>
-  internal class RemactClient : IRemactProxy, IRemactProtocolDriverCallbacks, IRemactService
+  internal class RemactClient : IRemotePort, IRemactProtocolDriverCallbacks, IRemactService
   {
     //----------------------------------------------------------------------------------------------
     #region Identification, fields
@@ -38,7 +38,7 @@ namespace Remact.Net.Remote
     /// <summary>
     /// Detailed information about the connected service. Contains a "UserContext" object for free use by the client application.
     /// </summary>
-    public RemactPortService ServiceIdent {get; private set;}
+    public RemactPortProxy PortProxy {get; private set;}
 
     /// <summary>
     /// The lower level client.
@@ -106,15 +106,15 @@ namespace Remact.Net.Remote
     /// <summary>
     /// Create the proxy for a remote service.
     /// </summary>
-    /// <param name="portClient">Link this RemactPortClient to the remote service.</param>
-    internal RemactClient (RemactPortClient portClient)
+    /// <param name="portProxy">Link this RemactPortProxy to the remote service.</param>
+    /// <param name="portClient">The internally used client identification.</param>
+    internal RemactClient (RemactPortProxy portProxy, RemactPortClient portClient)
     {
       _OutstandingRequests = new Dictionary<int, RemactMessage>();
       _lock = new object();
       PortClient = portClient;
-      ServiceIdent = new RemactPortService(); // not yet defined
-      ServiceIdent.IsServiceName = true;
-      ServiceIdent.RedirectToProxy (this); // ServiceIdent.Ask will send to our remote service
+      PortProxy = portProxy; // not yet defined
+      PortProxy.IsServiceName = true;
     }
 
 
@@ -129,7 +129,7 @@ namespace Remact.Net.Remote
         _connectViaCatalog = true;
         m_ClientConfig = clientConfig;
         m_ServiceNameToLookup = serviceName;
-        ServiceIdent.PrepareServiceName(RemactConfigDefault.Instance.CatalogHost, m_ServiceNameToLookup);
+        PortProxy.PrepareServiceName(RemactConfigDefault.Instance.CatalogHost, m_ServiceNameToLookup);
     }// LinkToService (URI)
 
 
@@ -231,15 +231,15 @@ namespace Remact.Net.Remote
         }
         catch (Exception ex)
         {
-            RaLog.Exception("cannot abort Remact connection", ex, PortClient.Logger);
+            RaLog.Exception("cannot abort Remact connection", ex, PortProxy.Logger);
         }
       
         m_protocolClient = null;
         m_boConnecting = false;
         m_boFirstResponseReceived = false;
         m_boTimeout = false;
-        ServiceIdent.m_isOpen = false; // internal, from ServiceIdent to ClientIdent
-        PortClient.m_isOpen = false; // internal, from RemactPortClient to RemactClient
+        PortProxy.m_isOpen = false; // internal, from Proxy to RemactClient
+        PortClient.m_isOpen = false; // internal, from Client to Proxy
 
     }// Disconnect
 
@@ -289,10 +289,8 @@ namespace Remact.Net.Remote
                 throw new InvalidOperationException("cannot connect " + PortClient.Name + ", state = " + OutputState);
             }
 
-            ServiceIdent.IsMultithreaded = PortClient.IsMultithreaded;
-            ServiceIdent.TryConnect(); // internal, from ServiceIdent to ClientIdent
             PortClient.PickupSynchronizationContext();
-            PortClient.m_isOpen = true; // internal, from RemactPortClient to RemactClient
+            PortClient.m_isOpen = true;
             m_boFirstResponseReceived = false;
             m_boTimeout = false;
             m_boConnecting = true;
@@ -316,8 +314,8 @@ namespace Remact.Net.Remote
                     return;
                 }
 
-                ServiceIdent.UseDataFrom(t.Result.Payload);
-                if (PortClient.TraceSend)
+                PortProxy.UseDataFrom(t.Result.Payload);
+                if (PortProxy.TraceSend)
                 {
                     string s = string.Empty;
                     if (t.Result.Payload.AddressList != null)
@@ -329,7 +327,7 @@ namespace Remact.Net.Remote
                             delimiter = ", ";
                         }
                     }
-                    RaLog.Info(t.Result.CltRcvId, "ServiceAddressResponse: " + t.Result.Payload.Uri + s, PortClient.Logger);
+                    RaLog.Info(t.Result.CltRcvId, "ServiceAddressResponse: " + t.Result.Payload.Uri + s, PortProxy.Logger);
                 }
 
                 m_addressesTried = 0;
@@ -355,23 +353,23 @@ namespace Remact.Net.Remote
 
         if (error != null)
         {
-            if (ServiceIdent.AddressList == null) return EndOfConnectionTries(tcs, "one address tried." , error); // connect without lookup a catalog
+            if (PortProxy.AddressList == null) return EndOfConnectionTries(tcs, "one address tried." , error); // connect without lookup a catalog
 
             m_addressNumber++; // connection failed, next time try next address. 
-            if (m_addressesTried > ServiceIdent.AddressList.Count) return EndOfConnectionTries(tcs, "all addresses tried." , error);
+            if (m_addressesTried > PortProxy.AddressList.Count) return EndOfConnectionTries(tcs, "all addresses tried." , error);
             if (!m_boConnecting) return EndOfConnectionTries(tcs, "wrong state." , error);
             m_addressesTried++;
         }
 
-        UriBuilder b = new UriBuilder(ServiceIdent.Uri);
-        if (m_addressNumber <= 0 || ServiceIdent.AddressList == null || m_addressNumber > ServiceIdent.AddressList.Count)
+        UriBuilder b = new UriBuilder(PortProxy.Uri);
+        if (m_addressNumber <= 0 || PortProxy.AddressList == null || m_addressNumber > PortProxy.AddressList.Count)
         {
             m_addressNumber = 0; // the hostname
-            b.Host = ServiceIdent.HostName;
+            b.Host = PortProxy.HostName;
         }
         else
         {
-            b.Host = ServiceIdent.AddressList[m_addressNumber - 1].ToString(); // an IP address
+            b.Host = PortProxy.AddressList[m_addressNumber - 1].ToString(); // an IP address
         }
 
         b.Host = b.Uri.DnsSafeHost;
@@ -389,7 +387,7 @@ namespace Remact.Net.Remote
         // By default RemactDefaults.OnClientConfiguration is called.
         var websocketUri = m_RequestedServiceUri;
         DoClientConfiguration(ref websocketUri, forCatalog: false);
-        ServiceIdent.PrepareServiceName(websocketUri);
+        PortProxy.PrepareServiceName(websocketUri);
 
         m_protocolClient.OpenAsync(new OpenAsyncState {Tcs = tcs}, this);
         // Callback to OnOpenCompleted when channel has been opened locally (no TCP connection opened on mono).
@@ -426,11 +424,11 @@ namespace Remact.Net.Remote
 
                         if (t.Result.Payload.IsServiceName && t.Result.Payload.IsOpen)
                         { // First message received from Service
-                            t.Result.Payload.Uri = ServiceIdent.Uri; // keep the Uri stored here (maybe IP address instead of hostname used)
-                            ServiceIdent.UseDataFrom (t.Result.Payload);
-                            PortClient.OutputClientId = t.Result.Payload.ClientId; // defined by server
+                            t.Result.Payload.Uri = PortProxy.Uri; // keep the Uri stored here (maybe IP address instead of hostname used)
+                            PortProxy.UseDataFrom (t.Result.Payload);
+                            PortClient.ClientId = t.Result.Payload.ClientId; // defined by server
                             t.Result.ClientId = t.Result.Payload.ClientId;
-                            if (PortClient.TraceConnect) RaLog.Info(t.Result.CltRcvId, ServiceIdent.ToString("Connected  svc", 0), PortClient.Logger);
+                            if (PortProxy.TraceConnect) RaLog.Info(t.Result.CltRcvId, PortProxy.ToString("Connected  svc", 0), PortProxy.Logger);
 
                             m_boConnecting = false;
                             m_boFirstResponseReceived = true; // IsConnected --> true !
@@ -458,7 +456,7 @@ namespace Remact.Net.Remote
         if (m_boTimeout)
         {
             if (ex == null) ex = new OperationCanceledException(reason);
-            RaLog.Exception("Remact cannot connect '" + PortClient.Name + "', " + reason, ex, PortClient.Logger);
+            RaLog.Exception("Remact cannot connect '" + PortClient.Name + "', " + reason, ex, PortProxy.Logger);
             tcs.SetException(ex);
         }
         else
@@ -477,27 +475,28 @@ namespace Remact.Net.Remote
     public Task<RemactMessage<ActorInfo>> Remact_ActorInfo_ClientConnectRequest(ActorInfo client)
     {
         client.IsOpen = true;
-        bool traceSend = PortClient.TraceSend;
-        if (PortClient.TraceConnect)
+        bool traceSend = PortProxy.TraceSend;
+        if (PortProxy.TraceConnect)
         {
-            PortClient.TraceSend = false;
+            PortProxy.TraceSend = false;
         }
 
-        bool multithreaded = PortClient.IsMultithreaded;
-        PortClient.IsMultithreaded = true;
+        bool multithreaded = PortProxy.IsMultithreaded;
+        PortProxy.IsMultithreaded = true;
 
-        PortClient.OutputClientId = 0;
-        PortClient.LastRequestIdSent = 9;
+        PortClient.ClientId = 0;
+        PortProxy.LastRequestIdSent = 9;
+        PortProxy.m_isOpen = true; // internal, from Proxy to RemactClient
         LastRequestIdReceived = 9;
         RemactMessage sentMessage;
-        var task = PortClient.Ask<ActorInfo>(RemactService.ConnectMethodName, client, out sentMessage, throwException: false);
+        var task = PortProxy.Ask<ActorInfo>(RemactService.ConnectMethodName, client, out sentMessage, throwException: false);
 
-        PortClient.IsMultithreaded = multithreaded;
-        if (PortClient.TraceConnect)
+        PortProxy.IsMultithreaded = multithreaded;
+        if (PortProxy.TraceConnect)
         {
-            PortClient.TraceSend = traceSend;
+            PortProxy.TraceSend = traceSend;
             string serviceAddr = GetSetServiceAddress();
-            RaLog.Info(sentMessage.CltSndId, string.Concat("Connecting svc: '", serviceAddr, "'"), PortClient.Logger);
+            RaLog.Info(sentMessage.CltSndId, string.Concat("Connecting svc: '", serviceAddr, "'"), PortProxy.Logger);
         }
         return task;
     }
@@ -505,12 +504,11 @@ namespace Remact.Net.Remote
     public void Remact_ActorInfo_ClientDisconnectNotification(ActorInfo client)
     {
         client.IsOpen = false;
-        bool traceSend = PortClient.TraceSend;
-        PortClient.TraceSend = PortClient.TraceConnect;
-        var msg = new RemactMessage(PortClient, PortClient.OutputClientId, 0, // creates a notification
-                                   ServiceIdent, RemactService.DisconnectMethodName, client, null);
+        bool traceSend = PortProxy.TraceSend;
+        PortProxy.TraceSend = PortProxy.TraceConnect;
+        var msg = new RemactMessage(PortProxy, RemactService.DisconnectMethodName, client, RemactMessageType.Notification, null);
         PostInput(msg);
-        PortClient.TraceSend = traceSend;
+        PortProxy.TraceSend = traceSend;
         Thread.Sleep(30);
     }
 
@@ -543,29 +541,32 @@ namespace Remact.Net.Remote
         // mono:
         // ClientIdent.Uri = new Uri ("http://"+ClientIdent.HostName+"/"+RemactDefaults.WsNamespace
         //                              +string.Format ("/{0}/{1}", ClientIdent.AppIdentification, ClientIdent.Name));
-        ServiceIdent.Uri = m_protocolClient.ServiceUri;
+        PortProxy.Uri = m_protocolClient.ServiceUri;
         return m_protocolClient.ServiceUri.ToString();
 #endif
     }
 
 
-    private bool TryGetResponseMessage(int id, out RemactMessage msg)
+    private bool TryGetResponseMessage(LowerProtocolMessage lower, out RemactMessage msg)
     {
         lock (_lock)
         {
-            if (!_OutstandingRequests.TryGetValue(id, out msg))
+            if (!_OutstandingRequests.TryGetValue(lower.RequestId, out msg))
             {
                 return false;
             }
 
-            _OutstandingRequests.Remove(id);
+            _OutstandingRequests.Remove(lower.RequestId);
         }
 
         msg.DestinationLambda = msg.SourceLambda;
         msg.SourceLambda = null;
-        msg.Source = ServiceIdent;
+        msg.Source = PortProxy;
         msg.Destination = PortClient;
-        msg.ClientId = PortClient.OutputClientId;
+        msg.ClientId = PortClient.ClientId;
+
+        msg.Payload = lower.Payload;
+        msg.MessageType = lower.Type;
         return true;
     }
 
@@ -576,13 +577,13 @@ namespace Remact.Net.Remote
     // sent from m_protocolClient
     void IRemactProtocolDriverCallbacks.OnServiceDisconnect()
     {
-        if (PortClient.IsMultithreaded || PortClient.SyncContext == null)
+        if (PortProxy.IsMultithreaded || PortProxy.SyncContext == null)
         {
             OnServiceDisconnectOnActorThread(null);
         }
         else
         {
-            PortClient.SyncContext.Post(OnServiceDisconnectOnActorThread, null);
+            PortProxy.SyncContext.Post(OnServiceDisconnectOnActorThread, null);
         }
     }
 
@@ -609,13 +610,13 @@ namespace Remact.Net.Remote
     // sent from m_protocolClient
     void IRemactProtocolDriverCallbacks.OnMessageFromService(LowerProtocolMessage msg)
     {
-        if (PortClient.IsMultithreaded || PortClient.SyncContext == null)
+        if (PortProxy.IsMultithreaded || PortProxy.SyncContext == null)
         {
             OnIncomingMessageOnActorThread(msg);
         }
         else
         {
-            PortClient.SyncContext.Post(OnIncomingMessageOnActorThread, msg);
+            PortProxy.SyncContext.Post(OnIncomingMessageOnActorThread, msg);
         }
     }
 
@@ -632,9 +633,9 @@ namespace Remact.Net.Remote
             {
                 case RemactMessageType.Response:
                     {
-                        if (!TryGetResponseMessage(lower.RequestId, out msg))
+                        if (!TryGetResponseMessage(lower, out msg))
                         {
-                            RaLog.Warning(PortClient.Name, "skipped unexpected response with id " + lower.RequestId);
+                            RaLog.Warning(PortClient.Name, "skipped unexpected response with id " + lower.RequestId, PortProxy.Logger);
                             return;
                         }
                     }
@@ -642,29 +643,27 @@ namespace Remact.Net.Remote
 
                 case RemactMessageType.Error:
                     {
-                        if (!TryGetResponseMessage(lower.RequestId, out msg))
+                        if (!TryGetResponseMessage(lower, out msg))
                         {
-                            msg = new RemactMessage(ServiceIdent, PortClient.OutputClientId, lower.RequestId,
-                                                   PortClient, string.Empty, lower.Payload);
+                            msg = new RemactMessage(PortClient, lower.DestinationMethod, lower.Payload, RemactMessageType.Error, null);
+                            msg.RequestId = lower.RequestId;
                         }
                     }
                     break;
 
                 default:
                     {
-                        msg = new RemactMessage(ServiceIdent, PortClient.OutputClientId, 0,
-                                               PortClient, string.Empty, lower.Payload);
+                        msg = new RemactMessage(PortClient, lower.DestinationMethod, lower.Payload, RemactMessageType.Notification, null);
+                        msg.RequestId = lower.RequestId;
+                        msg.MessageType = lower.Type; // initially set to notification as we do not want to increment our clients requestId
                     }
                     break;
             }
 
-            msg.MessageType = lower.Type;
-            msg.Payload = lower.Payload;
-
             if (!m_boTimeout)
             {
                 var m = msg.Payload as IExtensibleRemactMessage;
-                if (!PortClient.IsMultithreaded)
+                if (!PortProxy.IsMultithreaded)
                 {
                     if (m != null) m.BoundSyncContext = SynchronizationContext.Current;
                 }
@@ -673,11 +672,11 @@ namespace Remact.Net.Remote
                 if (msg.DestinationMethod == null) msg.DestinationMethod = string.Empty;
             }
 
-            PortClient.DispatchMessage(msg);
+            PortProxy.DispatchMessage(msg);
         }
         catch (Exception ex)
         {
-            RaLog.Exception( "Message for " + PortClient.Name + " cannot be handled by application", ex, PortClient.Logger );
+            RaLog.Exception( "Message for " + PortClient.Name + " cannot be handled by application", ex, PortProxy.Logger );
         }
     }// OnIncomingMessageOnActorThread
 
@@ -699,11 +698,12 @@ namespace Remact.Net.Remote
         if (IsFaulted)      return PortState.Faulted;
         return PortState.Connecting;
       }
+
       set
       {
         if (value == PortState.Connecting || value == PortState.Ok)
         {
-          if (PortClient.IsMultithreaded || PortClient.SyncContext != null)
+          if (PortProxy.IsMultithreaded || PortProxy.SyncContext != null)
           {
             TryConnect();
           }
@@ -737,7 +737,7 @@ namespace Remact.Net.Remote
         }
             
         // PostInput() may be used during connection buildup as well
-        if (PortClient.TraceSend) RaLog.Info(msg.CltSndId, msg.ToString(), PortClient.Logger);
+        if (PortProxy.TraceSend) RaLog.Info(msg.CltSndId, msg.ToString(), PortProxy.Logger);
 
         lock (_lock)
         {
@@ -745,7 +745,7 @@ namespace Remact.Net.Remote
             if (_OutstandingRequests.TryGetValue(msg.RequestId, out lost))
             {
                 _OutstandingRequests.Remove(msg.RequestId);
-                RaLog.Error(lost.CltSndId, "response was never received");
+                RaLog.Error(lost.CltSndId, "response was never received", PortProxy.Logger);
             }
 
             _OutstandingRequests.Add(msg.RequestId, msg);
@@ -757,7 +757,7 @@ namespace Remact.Net.Remote
     /// <summary>
     /// Gets the Uri of a linked service.
     /// </summary>
-    public Uri Uri {get{return ServiceIdent.Uri;}}
+    public Uri Uri {get{return PortProxy.Uri;}}
 
 
     #endregion

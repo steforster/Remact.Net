@@ -18,7 +18,7 @@ namespace Test2.Client
 
     public event Action UpdateView;
     public StringBuilder Log;
-    public IRemactPortClient Output { get { return _proxy.Output; } }  // just return the IRemactPortClient interface
+    public IRemactPortProxy Output { get { return _proxy.Output; } }  // just return the IRemactPortClient interface
     public int LastRequestIdSent { get { return _proxy.Output.LastRequestIdSent; } }
     public int ResponseCount;
     public bool SpeedTest;
@@ -31,7 +31,7 @@ namespace Test2.Client
     {
         _proxy = new Proxy
         {
-            Output = new RemactPortClient("Client1", OnUnhandledResponse) {TraceSend = true, TraceReceive = false}
+            Output = new RemactPortProxy("Client1", OnUnhandledResponse) {TraceSend = true, TraceReceive = false}
         };
         Log = new StringBuilder(11000);
     }
@@ -127,7 +127,7 @@ namespace Test2.Client
     // implementation of the service interface for type safety
     private class Proxy : ITest2Service
     {
-        public RemactPortClient Output;
+        public RemactPortProxy Output;
 
         public Task<RemactMessage<Test2Rsp>> GetSomeData(ReadyMessage req)
         {

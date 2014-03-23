@@ -8,8 +8,10 @@ It runs in Microsoft .NET and Linux-Mono environments.
 
 The [Actor model](http://en.wikipedia.org/wiki/Actor_model) is inspired by physics and by nature.  
 It brings order to multithread, multicore, multihost systems.  
-These days many systems have such requirements. But industrial control systems with dynamically connected  
-and movable intelligent subsystems have been in focus of emact.Net's design.  
+These days many systems have such requirements.
+The [Reactive Manifesto](http://www.reactivemanifesto.org/) explains it in detail.  
+
+Industrial control systems with dynamically connected and movable intelligent subsystems have been in focus of Remact.Net's design.  
 Therefore, this library supports many instances of the same application running on one or on distributed hosts.  
 It also supports dynamic discovery of actors and does not require configuration of host names and TCP ports.  
 
@@ -35,14 +37,14 @@ The next development steps will be:
 
 The following goals have been reached:
 
-- [*] Small and clean API allows to dynamically create lightweight actors
-- [*] Local actors (message passing between threads)
-- [*] Remote actors (message passing between hosts or processes)
-- [*] WebSockets, Json and other open standards are used to link Remact actors
-- [*] High throughput on Linux and Windows: More than 5000 request/respose pairs per second between processes
+* Small and clean API allows to dynamically create lightweight actors
+* Local actors (message passing between threads)
+* Remote actors (message passing between hosts or processes)
+* WebSockets, Json and other open standards are used to link Remact actors
+* High throughput on Linux and Windows: More than 5000 request/respose pairs per second between processes
 
 [AsyncWcfLib](http://sourceforge.net/projects/asyncwcflib/) is the predecessor of Remact.Net.  
-Remact.Net is much faster on Linux and much more interoperable. It now has full support for the bidirectional model  
+Remact.Net is much faster on Linux and much more interoperable. It now has full support for the bidirectional model
 and for strong typed interface documentation.  
 
 
@@ -89,43 +91,33 @@ I would like to thank all who built these components for their contribution to t
 
 Documentation
 -------------
-The folder **src/Remact.Net/Contracts** and **test/SpeedTestApp/src/Contracts** contains interfaces for remotely callable methods and their
-corresponding request- and response messages. These definitions and their XML comments form the basic interface definition of actors.
-
-These contracts must be present on both sides of the communication channel.
-For actors not written in a .NET programming language (e.g. Java Script), the interface contract must be translated. 
-
-Receiving of messages is done in the following steps:
-* Dispatch the received WebSocket message text string to the addressed RemactPort 
-* Interprete the string according to the protocol (WAMP or Json-RPC) and extract the payload
-* Deserialize the payload to a [Newtonsoft.Json.Linq.JToken](http://weblog.west-wind.com/posts/2012/Aug/30/Using-JSONNET-for-dynamic-JSON-parsing)
-* Switch to the thread bound to the receiving actor
-* Find the addressed method name in the list of supported contract interfaces
-* Convert the payload to the .NET type defined as first parameter of the addressed method
-* Call the addressed method. Pass the strong typed payload, the RemactMessage and the session data as parameters
-* Convert the return type of the called method to Json and send it as a response.
-* The called method may accept a Newtonsoft.Json.Linq.JToken or a [dynamic object](http://msdn.microsoft.com/en-us/library/dd264736%28v=vs.110%29.aspx)
-* When the addressed method could not be found or the received Json could not be converted to the correct .NET type,  
-  a default message handler is called.
 
 
-Conceptual parts
-----------------
+###Conceptual parts###
+
 
 **Actors and ports**
 
-An actor is a group of objects that are accessed by one thread. Data inside an actor is consistant.  
-An actor may feature several ports. These ports are connected to other actors on the same or on a remote process.  
-The actor contains one message queue. All incoming messages pass this queue (incoming requests, responses, notifications or errors).  
+Think of an actor as a room with several ports.  
+Only one person - the worker - is walking (running) around in the room and handles all stored goods.
+The worker also sends packets out through the ports or gets packets sent in through the ports.
+
+In software, the actor is a group of objects that are accessed by one worker thread only.
+Data inside an actor is as consistant as the incoming events allow it to be.
+No other threads may access the objects of an actor, therefore the actor itself has no critical sections (locks).  
+
+The actor has ports. These are linked to other actors on the same or on a remote process.  
+All incoming events are received as messages passed through one of the ports. 
+The actor has one message queue that queues all incoming messages (requests, responses, notifications or errors).  
 
 
 **Client ports**
 
-An client port is connected to an service port of another actor.  
-Messages are sent by the client to the connected service. Sending is a non blocking operation.  
+A client port is built of a RemactPortProxy that is connected to a RemactPortService of another actor.  
+Messages are sent by the actor to the proxy of the connected service port. Sending is a non blocking operation.  
 Optionally the remote actor may send a reply message. It is handled as an asynchronous callback event  
-in a lambda expression or in a task continuation.  
-Contrary to the normal client/server pattern, the RemactPortService may send notification and request messages to a client. 
+in a lambda expression or in a task continuation of the origin actor.  
+Contrary to the normal client/server pattern, the service port may send notification and request messages to a client. 
 These messages are handled in a method defined by the contract interface.  
 Disconnecting the client is signaled to the service. A disconnect signal may also be issued by the service.  
 
@@ -143,7 +135,7 @@ Periodic messages should be exchanged by the actors to check the communication c
 
 The RemactMessage class addresses source and destination ports. It is used to route the payload data through the system.  
 The payload may be of any serializable object type.  
-Serialization is done by Newtonsoft.Json. Therefore, attributes like [JsonProperty] and [JsonIgnore] may be used to   
+Serialization is done by Newtonsoft.Json. Therefore, attributes like [JsonProperty] and [JsonIgnore] may be used to
 control the serialization process. By default all public properties and fields are serialized.  
 
 
@@ -152,20 +144,26 @@ control the serialization process. By default all public properties and fields a
 Messages are sent to the method that handles the message payload type as a single input parameter.  
 The method also defines the reply payload as the return type.  
 A void method will normally not reply a message.  
-In case of error or exception, methods will reply an ErrorMessage.  
+But in case of error or exception, also void methods will reply an ErrorMessage.  
 
 
 **Contract interface**
 
-A contract interface defines the set of methods and the corresponding request and response message types that are available  
+A contract interface defines the set of methods and the corresponding request and response message types that are available
 on a certain client or service port.  
-On the receiving side the methods will have the specified, single message payload parameter and additional parameters  
+On the receiving side the methods will have the specified, single message payload parameter and additional parameters
 for message source identification and session data.  
 
+The folder **src/Remact.Net/Contracts** and **test/SpeedTestApp/src/Contracts** contains interfaces for remotely callable methods and their
+corresponding request- and response messages. These definitions and their XML comments form the basic interface definition of actors.
+
+These contracts must be present on both sides of the communication channel.
+For actors not written in a .NET programming language (e.g. Java Script), the interface contract must be translated. 
 
 
-Communication models
---------------------
+
+###Communication models###
+
 
 **Client / Service**
 
@@ -176,25 +174,40 @@ The output (client) sends a request to the input (service) of another actor and 
 **Notifications**
 
 The service port may send a callback notification to the client port.  
-The client port may send a notification to the service port.  
+Also, the client port may send a notification to the service port.  
 Notifications are defined as parameter of a void method of the receiving port contract interface.  
 There is no reply message to notifications.  
 
 
 **Service / Client**
 
-In Remact, communication is symmetrical. Therefore services may also send requests to a method of the connected client port  
+In Remact, communication is symmetrical. Therefore services may also send requests to a method of the connected client port
 and get a response from it. The difference between service and client lies in the 1 : many relationship  
 and in the active part the client is playing during connection buildup.  
 
 
 **Publish / Subscribe**
 
-An service port can send messages to all its connected client ports.  
+A service port can send messages to all its connected client ports.  
 Connecting to such a service in fact means - subscribing to its publications.  
 The publisher knows who received its publications because all communication is done through reliable  
 TCP connections to known partners.  
 
+
+**Communication stack**
+
+Remact uses the following layers when receiving a message from a remote actor:
+* The .NET TCP layer raises an event on a threadpool thread
+* The Alchemy.WebSocketClient or -Service interpretes the data frame and dispatches a text string to the protocol layer
+* The Wamp- or Json.RPC protocol layer deserializes the payload to a [Newtonsoft.Json.Linq.JToken](http://weblog.west-wind.com/posts/2012/Aug/30/Using-JSONNET-for-dynamic-JSON-parsing)
+* The RemactClient or -Service switches to the correct actor thread, builds a RemactMessage and and handles Remact internal messages 
+* Other messages are handled by the RemactDispatcher. It finds the addressed method name in the list of supported contract interfaces,
+  converts the payload to the .NET type defined as first parameter of the addressed method and
+  invokes the addressed method by passing the strong typed payload, the RemactMessage and the session data as parameters
+* The called method may accept any serializable payload type, a Newtonsoft.Json.Linq.JToken or a [dynamic object](http://msdn.microsoft.com/en-us/library/dd264736%28v=vs.110%29.aspx)
+* When the addressed method could not be found or the received Json could not be converted to the correct .NET type,  
+  a default message handler is called
+* The protocol layer converts the return type of the called method to Json and send it as a response
 
 
 How to build and test Remact.Net

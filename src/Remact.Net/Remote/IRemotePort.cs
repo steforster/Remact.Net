@@ -14,7 +14,7 @@ namespace Remact.Net.Remote
   /// <summary>
   /// Services and Clients must implement this interface.
   /// </summary>
-  internal interface IRemactProxy
+  internal interface IRemotePort
   {
     /// <summary>
     /// Connect or reconnect output to the previously linked partner.

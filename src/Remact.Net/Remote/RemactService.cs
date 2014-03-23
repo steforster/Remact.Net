@@ -70,6 +70,7 @@ namespace Remact.Net.Remote
 
     internal const string ConnectMethodName    = ActorInfo.MethodNamePrefix + "ClientConnectRequest";
     internal const string DisconnectMethodName = ActorInfo.MethodNamePrefix + "ClientDisconnectNotification";
+    internal const string KeepAliveMethodName  = ActorInfo.MethodNamePrefix + "KeepAliveNotification";
 
     /// <summary>
     /// Returns true, when service is ready to receive requests.
@@ -369,7 +370,7 @@ namespace Remact.Net.Remote
       
       // reply ServiceIdent
       ActorInfo response = new ActorInfo (ServiceIdent);
-      response.ClientId = svcUser.PortClient.OutputClientId;
+      response.ClientId = svcUser.PortClient.ClientId;
       req.Source   = svcUser.PortClient;
       return response;
     }// Connect
@@ -566,7 +567,7 @@ namespace Remact.Net.Remote
           if (u.IsFaulted)
           {
               RaLog.Warning("Svc=" + ServiceIdent.Name, u.PortClient.ToString("Timeout=" + u.PortClient.TimeoutSeconds 
-                  + " sec. no message from clt[" + u.PortClient.OutputClientId + "]", 0), ServiceIdent.Logger);
+                  + " sec. no message from clt[" + u.PortClient.ClientId + "]", 0), ServiceIdent.Logger);
             if (RemactConfigDefault.Instance.IsProcessIdUsed(u.PortClient.ProcessId))
             {
               m_UnusedClientCount++;

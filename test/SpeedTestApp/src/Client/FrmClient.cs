@@ -84,8 +84,8 @@ namespace Test2.Client
 
             if (labelService.Text.Length == 0)
             {
-                labelClient.Text = _client.Output.ToString("Client", 20);
-                labelService.Text = _client.Output.OutputSidePartner.ToString("Service", 20);
+                labelClient.Text = _client.Output.ClientIdent.ToString("Client", 20);
+                labelService.Text = _client.Output.ToString("Service", 20);
             }
         }
     }

@@ -1,8 +1,8 @@
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using Nito.Async;              // Copyright (c) 2009, Nito Programs, <http://nitoasync.codeplex.com>
 using Remact.Net;              // Copyright (c) 2014, <http://github.com/steforster/Remact.Net>
-
 using Test1.Messages;
 
 
@@ -13,8 +13,8 @@ namespace Test1.Client
 
   class Test1Client
   {
-    public static RemactPortService  TestInput;
-    public static RemactPortClient Test;
+    public static RemactPortService TestInput;
+    public static RemactPortProxy TestOutput;
 
     static void Main (string[] args)
     {
@@ -29,16 +29,17 @@ namespace Test1.Client
         if (args.Length > 1 && args[1].Length > 0) host = args[1];
         string serviceUri = "ws://"+host+"/Remact/Test1.Service";
 
-        TestInput = new RemactPortService ("NitoIn", OnMessageReceived);
-        Test      = new RemactPortClient("Nito",   OnMessageReceived);
-        Test.LinkOutputToRemoteService (new Uri(serviceUri));
-        Test.TraceSend = true;
+        // define the input and output ports of our test actor
+        TestInput  = new RemactPortService ("NitoIn", OnMessageReceived);
+        TestOutput = new RemactPortProxy   ("Nito",   OnMessageReceived);
+        TestOutput.LinkOutputToRemoteService (new Uri(serviceUri));
+        TestOutput.TraceSend = true;
         ActionThread actionThread = new ActionThread();
 
-        Console.Title = Test.AppIdentification;
+        Console.Title = TestOutput.AppIdentification;
         Console.WriteLine ("Commandline arguments:   ClientInstance="+RemactConfigDefault.Instance.ApplicationInstance
-                        +"   ServiceHostname:Port='"+host+"'\r\n");
-        Console.WriteLine ("Starting client '"+Test.Name+"' for service '"+Test.OutputSidePartner.Uri+"'\r\n");
+                       +"   ServiceHostname:Port='"+host+"'\r\n");
+        Console.WriteLine ("Starting client '"+TestOutput.ClientIdent.Name+"' for service '"+TestOutput.ClientIdent.Uri+"'\r\n");
         Console.WriteLine ("Press 'q' to quit.");
         Console.WriteLine ("The client is using Nito.Async.ActionThread to queue and synchronize responses on the same thread as the request was sent.\r\n");
 
@@ -82,23 +83,28 @@ namespace Test1.Client
   #region == Nito.Async.ActionThread ==
 
     // picks up this thread synchronization context and builds connection to service
-    static void OnStartup ()
+    static void OnStartup()
     {
-        Console.Write ("\n\r Thread="+Thread.CurrentThread.ManagedThreadId+", is connecting...");
+        Console.Write("\n\r Thread=" + Thread.CurrentThread.ManagedThreadId + ", is connecting...");
         TestInput.Open();
-        Test.TryConnect();
+        var task = TestOutput.TryConnect();
+        task.ContinueWith(t =>
+            {
+                Console.WriteLine("\n\r Thread=" + Thread.CurrentThread.ManagedThreadId + ", connected.");
+                Console.Write("\n\r\n\rSend command > ");
+            }, TaskContinuationOptions.ExecuteSynchronously);
     }
 
-    // receive a message from main or from service
+    // receive a message from main thread or from remote service
     static void OnMessageReceived (RemactMessage msg)
     {
         Console.Write ("\n\r Thread="+Thread.CurrentThread.ManagedThreadId+", received: " + msg.ToString());
 
         Test1CommandMessage testMessage;
         ErrorMessage errorMessage;
-        if (msg.IsRequest && msg.TryConvertPayload(out testMessage))
+        if (msg.IsNotification && msg.TryConvertPayload(out testMessage))
         {
-            PortState s = Test.OutputState;
+            PortState s = TestOutput.OutputState;
             if (s == PortState.Disconnected || s == PortState.Faulted)
             {
                 OnStartup();
@@ -109,13 +115,13 @@ namespace Test1.Client
             }
             else
             {
-                int sendContextNumber = Test.LastRequestIdSent + 1000;
-                Test.Ask("OnMessageReceived", testMessage, 
+                int sendContextNumber = TestOutput.LastRequestIdSent + 1000;
+                TestOutput.Ask("OnMessageReceived", testMessage, 
 
                         delegate (ReadyMessage response, RemactMessage rsp)
                         {
                             Console.Write ("\n\r Thread="+Thread.CurrentThread.ManagedThreadId);
-                            Console.WriteLine (", received idle message in sending context #"+sendContextNumber);
+                            Console.WriteLine (", received ready message in sending context #"+sendContextNumber);
                             Console.Write ("\n\r\n\rSend command > ");
                         });
   

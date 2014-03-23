@@ -23,7 +23,7 @@ namespace Remact.Net.Remote
     private static object               ms_Lock = new Object();
     private static bool                 ms_DisableCatalogClient;
 
-    private        RemactPortClient          m_CatalogClient;
+    private        RemactPortProxy      m_CatalogProxy;
     private        List<RemactClient>   m_ClientList;
     private        List<RemactService>  m_ServiceList;
     private        int                  m_nCurrentSvc;
@@ -79,7 +79,7 @@ namespace Remact.Net.Remote
     /// <summary>
     /// Gets a value indicating the client is connected to the catalog service.
     /// </summary>
-    public bool IsConnected { get { return m_CatalogClient.IsOutputConnected; } }
+    public bool IsConnected { get { return m_CatalogProxy.IsOutputConnected; } }
 
 
     /// <summary>
@@ -87,7 +87,7 @@ namespace Remact.Net.Remote
     /// </summary>
     public void Reconnect()
     {
-        m_CatalogClient.Disconnect();
+        m_CatalogProxy.Disconnect();
         m_Timer.Change(20, 1000); // wait 20 ms for restart
     }
 
@@ -101,7 +101,7 @@ namespace Remact.Net.Remote
     {
         if (m_Running) return;
         m_Running = true;
-        var state = m_CatalogClient.OutputState;
+        var state = m_CatalogProxy.OutputState;
         try
         { //-------------------------------
             if (m_nCurrentSvc == -100) // Disconnect all services and clients
@@ -129,14 +129,14 @@ namespace Remact.Net.Remote
             else if (state == PortState.Faulted)
             {
                 if (m_nConnectTries < 0) RaLog.Error("Remact", "Catalog client in fault state !", RemactApplication.Logger);
-                m_CatalogClient.Disconnect();
+                m_CatalogProxy.Disconnect();
                 m_Timer.Change (15000, 1000); // wait 15 s before next connect approach
             }//-------------------------------
             else if (state == PortState.Disconnected || state == PortState.Unlinked)
             {
                 ConnectToCatalog();
             }//-------------------------------
-            else if (m_CatalogClient.IsOutputConnected)
+            else if (m_CatalogProxy.IsOutputConnected)
             {
                 m_nConnectTries = -1;
                 if (m_ServiceList.Count <= m_nCurrentSvc)
@@ -188,13 +188,13 @@ namespace Remact.Net.Remote
             m_nConnectTries++;
             m_nCurrentSvc = 0;
             var uri = new Uri(string.Format("ws://{0}:{1}/{2}/{3}", RemactConfigDefault.Instance.CatalogHost, RemactConfigDefault.Instance.CatalogPort, RemactConfigDefault.WsNamespace, RemactConfigDefault.Instance.CatalogServiceName));
-            m_CatalogClient.LinkOutputToRemoteService(uri);
+            m_CatalogProxy.LinkOutputToRemoteService(uri);
             if (m_connectToCatalogTask == null)
             {
                 m_connectToCatalogTask = new Task<bool>[1];
             }
 
-            m_connectToCatalogTask[0] = m_CatalogClient.TryConnect();
+            m_connectToCatalogTask[0] = m_CatalogProxy.TryConnect();
             m_connectToCatalogTask[0].ContinueWith(t =>
                 {
                     if (t.Status == TaskStatus.RanToCompletion)
@@ -254,11 +254,11 @@ namespace Remact.Net.Remote
     /// </summary>
     internal RemactCatalogClient ()
     {
-      m_ServiceList   = new List<RemactService> (20);
-      m_ClientList    = new List<RemactClient> (20);
-      m_CatalogClient = new RemactPortClient("Remact.CatalogClient", OnMessageReceived);
-      m_CatalogClient.IsMultithreaded = true; // all other clients will send LookupInput requests through this client
-      m_CatalogClient.TraceConnect = false;
+      m_ServiceList  = new List<RemactService> (20);
+      m_ClientList   = new List<RemactClient> (20);
+      m_CatalogProxy = new RemactPortProxy("Remact.CatalogClient", OnMessageReceived);
+      m_CatalogProxy.IsMultithreaded = true; // all other clients will send LookupInput requests through this client
+      m_CatalogProxy.TraceConnect = false;
       m_Timer = new Timer (OnTimerTick, this, 0, 1000); // start immediately, period=1s
     }// CTOR
 
@@ -290,16 +290,16 @@ namespace Remact.Net.Remote
         if (m_Timer != null)
         {
             m_Timer.Dispose();
-            int n = m_CatalogClient.OutstandingResponsesCount;
-            if (!ms_DisableCatalogClient || n != 0 || m_CatalogClient.OutputState != PortState.Disconnected)
+            int n = m_CatalogProxy.OutstandingResponsesCount;
+            if (!ms_DisableCatalogClient || n != 0 || m_CatalogProxy.OutputState != PortState.Disconnected)
             {
-                m_CatalogClient.Disconnect(); // send last messages, contrary to AbortCommunication();
-                m_CatalogClient = null;
+                m_CatalogProxy.Disconnect(); // send last messages, contrary to AbortCommunication();
+                m_CatalogProxy = null;
                 RaLog.Info("Remact", "Catalog client disconnected.", RemactApplication.Logger);
             }
         
             m_Timer = null;
-            m_CatalogClient = null;
+            m_CatalogProxy = null;
             m_ServiceList.Clear();
             m_ServiceList = null;
             ms_Instance = null;
@@ -335,7 +335,7 @@ namespace Remact.Net.Remote
         {
             int n = m_ServiceList.IndexOf (svc);
             if (n < 0) return; // already removed
-            if (m_CatalogClient != null && m_CatalogClient.IsOutputConnected)
+            if (m_CatalogProxy != null && m_CatalogProxy.IsOutputConnected)
             {
                 ActorInfo info = new ActorInfo (m_ServiceList[n].ServiceIdent);
                 info.IsOpen = false;
@@ -354,7 +354,7 @@ namespace Remact.Net.Remote
     /// <param name="clt">the local RemactClient</param>
     internal void AddClient (RemactClient clt)
     {
-        if (clt.PortClient == m_CatalogClient) return; // do not add the CatalogClient itself
+        if (object.ReferenceEquals (clt.PortProxy, m_CatalogProxy)) return; // do not add the CatalogClient itself
         lock (ms_Lock)
         {
             m_ClientList.Add (clt);
@@ -384,12 +384,12 @@ namespace Remact.Net.Remote
 
     Task<RemactMessage<ReadyMessage>> IRemactCatalog.ServiceOpened(ActorInfo actorInput)
     {
-        return m_CatalogClient.Ask<ReadyMessage>("ServiceOpened", actorInput, out _latestSentMessage, false);
+        return m_CatalogProxy.Ask<ReadyMessage>("ServiceOpened", actorInput, out _latestSentMessage, false);
     }
 
     Task<RemactMessage<ReadyMessage>> IRemactCatalog.ServiceClosed(ActorInfo actorInput)
     {
-        return m_CatalogClient.Ask<ReadyMessage>("ServiceClosed", actorInput, out _latestSentMessage, false);
+        return m_CatalogProxy.Ask<ReadyMessage>("ServiceClosed", actorInput, out _latestSentMessage, false);
     }
 
     Task<RemactMessage<ActorInfoList>> IRemactCatalog.SynchronizeCatalog(ActorInfoList serviceList)
@@ -404,7 +404,7 @@ namespace Remact.Net.Remote
     /// <returns>A task resulting in the looked up ActorInfo.</returns>
     public Task<RemactMessage<ActorInfo>> LookupService(string serviceName)
     {
-        if (m_CatalogClient.IsOutputConnected)
+        if (m_CatalogProxy.IsOutputConnected)
         {
             return Lookup(serviceName);
         }
@@ -416,7 +416,7 @@ namespace Remact.Net.Remote
 
     private Task<RemactMessage<ActorInfo>> Lookup(string serviceName)
     {
-        return m_CatalogClient.Ask<ActorInfo>("LookupService", serviceName);
+        return m_CatalogProxy.Ask<ActorInfo>("LookupService", serviceName);
     }
 
 

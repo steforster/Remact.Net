@@ -136,7 +136,7 @@ namespace Remact.Net.Protocol.Wamp
             }
 
             var error = new ErrorMessage(ErrorCode.ResponseNotDeserializableOnClient, errorDesc);
-            var message = new RemactMessage(null, 0, id, null, null, error);
+            var message = new RemactMessage(null, null, error, RemactMessageType.Error, null, 0, id);
             ErrorFromClient(message);
         }
 

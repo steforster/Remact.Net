@@ -21,15 +21,15 @@ namespace Remact.Net.Remote
     /// <summary>
     /// This is the Service Entrypoint. It dispatches requests and returns a response.
     /// </summary>
-    internal class MultithreadedServiceNet40 : IRemactProtocolDriverService
+    public class MultithreadedServiceNet40 : IRemactProtocolDriverService
     {
         private RemactService _service;
         private RemactServiceUser _svcUser;
 
-        public MultithreadedServiceNet40(RemactService service, RemactServiceUser svcUser)
+        public MultithreadedServiceNet40(RemactServiceUser svcUser, RemactService service)
         {
-            _service = service;
             _svcUser = svcUser;
+            _service = service;
         }
 
         /// <summary>

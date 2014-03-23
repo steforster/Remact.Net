@@ -44,7 +44,7 @@ namespace Remact.Catalog
     public  IRemactPort Service { get{ return m_RemactService;} }
     public  ActorInfoList SvcRegister;
     public  bool SvcRegisterChanged = true;
-    public  List<RemactPortClient<SvcDat>> PeerCatalogs;
+    public  List<RemactPortProxy<SvcDat>> PeerCatalogs;
 
     #endregion
     //----------------------------------------------------------------------------------------------
@@ -56,7 +56,7 @@ namespace Remact.Catalog
     public Catalog()
     {
       SvcRegister = new ActorInfoList();
-      PeerCatalogs = new List<RemactPortClient<SvcDat>>(Properties.Settings.Default.PeerHosts.Count);
+      PeerCatalogs = new List<RemactPortProxy<SvcDat>>(Properties.Settings.Default.PeerHosts.Count);
     }
 
     /// <summary>
@@ -168,7 +168,7 @@ namespace Remact.Catalog
         m_knownServiceCount = SvcRegister.Item.Count;
 
         int connectedPeerCatalogs = 0;
-        foreach( RemactPortClient<SvcDat> p in PeerCatalogs )
+        foreach( RemactPortProxy<SvcDat> p in PeerCatalogs )
         {
             if( !p.IsOutputConnected )
             {
@@ -295,7 +295,7 @@ namespace Remact.Catalog
         {
             if (host != null && host.Trim().Length > 0)
             {
-                var output = new RemactPortClient<SvcDat>("Clt>"+host, OnResponseFromPeerCatalog);
+                var output = new RemactPortProxy<SvcDat>("Clt>"+host, OnResponseFromPeerCatalog);
                 output.LinkOutputToRemoteService(new Uri("ws://" + host + ':' + RemactConfigDefault.Instance.CatalogPort
                                  + "/" + RemactConfigDefault.WsNamespace + "/" + RemactConfigDefault.Instance.CatalogServiceName),// no catalog lookup as uri is given.
                                  this ); // calls our DoClientConfiguration

@@ -58,26 +58,26 @@ namespace Remact.Net
     //----------------------------------------------------------------------------------------------
     #region Destination linking, service creation
 
-    private RemactPortClient        m_Anonymous; // each input may have one anonymous partner carrying one TSC (sender context)
-    private RemactService      m_MyInputService;
+    private RemactPortProxy m_Anonymous; // each service may have one anonymous client carrying one TSC (sender context)
+    private RemactService   m_MyInputService;
 
-    // prepare for tracing of connect-process
-    internal void PrepareServiceName(string catalogHost, string serviceName)
-    {
-      IsServiceName = true;
-      HostName = catalogHost;
-      Name = serviceName;
-      Uri = new Uri("routed://" + catalogHost + "/" + RemactConfigDefault.WsNamespace + "/" + serviceName);
-    }
+    //// prepare for tracing of connect-process
+    //internal void PrepareServiceName(string catalogHost, string serviceName)
+    //{
+    //  IsServiceName = true;
+    //  HostName = catalogHost;
+    //  Name = serviceName;
+    //  Uri = new Uri("routed://" + catalogHost + "/" + RemactConfigDefault.WsNamespace + "/" + serviceName);
+    //}
 
-    // prepare for tracing of connect-process
-    internal void PrepareServiceName (Uri uri)
-    {
-      IsServiceName = true;
-      HostName = uri.Host;
-      Name = uri.AbsolutePath;
-      Uri = uri;
-    }
+    //// prepare for tracing of connect-process
+    //internal void PrepareServiceName (Uri uri)
+    //{
+    //  IsServiceName = true;
+    //  HostName = uri.Host;
+    //  Name = uri.AbsolutePath;
+    //  Uri = uri;
+    //}
 
     /// <summary>
     /// Link this input to the network. Remote clients will be able to connect to this service after Open() has been called.
@@ -151,11 +151,11 @@ namespace Remact.Net
       return changed;
     }
 
-    private RemactPortClient GetAnonymousPartner ()
+    private RemactPortProxy GetAnonymousProxy()
     {
       if (m_Anonymous == null)
       {
-        m_Anonymous = new RemactPortClient ("anonymous");
+        m_Anonymous = new RemactPortProxy ("anonymous");
         m_Anonymous.IsMultithreaded = true;
         m_Anonymous.LinkToService(this);
         m_Anonymous.TryConnect();
@@ -232,10 +232,8 @@ namespace Remact.Net
     /// <param name="payload">The message to enqueue.</param>
     public void PostFromAnonymous(object payload)
     {
-        var sender = GetAnonymousPartner();
-        RemactMessage msg = new RemactMessage(sender, 0, sender.NextRequestId,
-                                            this, payload.GetType().FullName, payload, null);
-        ((IRemactProxy)this).PostInput(msg);
+        var proxy = GetAnonymousProxy();
+        proxy.Notify(payload.GetType().FullName, payload);
     }
 
 
@@ -266,7 +264,7 @@ namespace Remact.Net
     //----------------------------------------------------------------------------------------------
     #region InputClientList
 
-    // used in RemactService (TODO move it)
+    // used in RemactService TODO move it
     internal List<RemactPortClient> InputClientList;
     private  object m_inputClientLock = new Object();
 
@@ -274,13 +272,14 @@ namespace Remact.Net
     /// Add a local or remote RemactPort.
     /// </summary>
     /// <param name="client">the local RemactPortClient</param>
-    internal void AddInputClient (RemactPortClient client)
+    internal void TryAddClient (RemactPortClient client)
     {
-      lock (m_inputClientLock)
-      {
-        if (InputClientList == null) InputClientList = new List<RemactPortClient>(10);
-        InputClientList.Add (client);
-      }
+        lock (m_inputClientLock)
+        {
+            if (InputClientList == null) InputClientList = new List<RemactPortClient>(10);
+            if (InputClientList.Contains(client)) return; // already added
+            InputClientList.Add (client);
+        }
     }
 
 
@@ -288,15 +287,15 @@ namespace Remact.Net
     /// Remove a local or remote RemactPort while Disconnecting.
     /// </summary>
     /// <param name="client">the local RemactPortClient</param>
-    internal void RemoveInputClient (RemactPortClient client)
+    internal void TryRemoveClient (RemactPortClient client)
     {
-      lock (m_inputClientLock)
-      {
-        if (InputClientList == null) return;
-        int n = InputClientList.IndexOf (client);
-        if (n < 0) return; // already removed
-        InputClientList.RemoveAt (n);
-      }
+        lock (m_inputClientLock)
+        {
+            if (InputClientList == null) return;
+            int n = InputClientList.IndexOf (client);
+            if (n < 0) return; // already removed
+            InputClientList.RemoveAt (n);
+        }
     }
 
     #endregion
@@ -386,7 +385,7 @@ namespace Remact.Net
         var sender = msg.Source as RemactPortClient;
         if (sender != null)
         {
-            senderCtx = sender.GetSenderContext() as TSC;  // base does not create a new ctx
+            senderCtx = sender.SenderCtx as TSC;  // base does not create a new ctx
         }
 
         //if (senderCtx == null && msg.Source.Uri == null) // anonymous partner

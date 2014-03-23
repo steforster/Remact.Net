@@ -9,6 +9,7 @@ using Alchemy.Classes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Remact.Net.Contracts;
+using Remact.Net.Remote;
 
 namespace Remact.Net.Protocol.Wamp
 {
@@ -19,10 +20,10 @@ namespace Remact.Net.Protocol.Wamp
     {
         private UserContext _wsChannel;
         private IRemactProtocolDriverService _requestHandler;
-        private RemactPortClient _clientIdent;
+        private RemactServiceUser _svcUser;
         private RemactPortService _serviceIdent;
 
-        public WampClientProxy(RemactPortClient clientIdent, RemactPortService serviceIdent, IRemactProtocolDriverService requestHandler, UserContext websocketChannel)
+        public WampClientProxy(RemactServiceUser svcUser, RemactPortService serviceIdent, IRemactProtocolDriverService requestHandler, UserContext websocketChannel)
         {
             _wsChannel = websocketChannel;
                 //OnSend = OnSend,
@@ -31,7 +32,7 @@ namespace Remact.Net.Protocol.Wamp
                 //OnConnected = OnConnected,
             _wsChannel.SetOnDisconnect(OnDisconnect);
 
-            _clientIdent = clientIdent;
+            _svcUser = svcUser;
             _serviceIdent = serviceIdent;
             _requestHandler = requestHandler;
             Connected = true;
@@ -174,10 +175,9 @@ namespace Remact.Net.Protocol.Wamp
                         payload = wamp[3];
                     }
 
-                    var message = new RemactMessage(_clientIdent, _clientIdent.OutputClientId, id,
-                                                   _serviceIdent, (string)wamp[2], payload);
-
-                    _requestHandler.MessageFromClient(message);
+                    var msg = new RemactMessage(_serviceIdent, (string)wamp[2], payload, RemactMessageType.Request,
+                                                _svcUser.PortClient, _svcUser.ClientId, id);
+                    _requestHandler.MessageFromClient(msg);
                 }
                 else if (wampType == (int)WampMessageType.v1CallError)
                 {
@@ -192,31 +192,29 @@ namespace Remact.Net.Protocol.Wamp
                         id = int.Parse(requestId);
                     }
 
-                    var message = new RemactMessage(_clientIdent, _clientIdent.OutputClientId, id,
-                                                   _serviceIdent, null, null);
+                    object pld;
                     if (wamp.Count > 4)
                     {
-                        message.Payload = RemactMessage.Convert(wamp[4], errorUri); // errorUri is assemblyQualifiedTypeName
+                        pld = RemactMessage.Convert(wamp[4], errorUri); // errorUri is assemblyQualifiedTypeName
                     }
                     else
                     {
-                        message.Payload = new ErrorMessage(ErrorCode.Undef, errorUri + ": " + errorDesc); // Errormessage from client
+                        pld = new ErrorMessage(ErrorCode.Undef, errorUri + ": " + errorDesc); // Errormessage from client
                     }
 
-                    message.MessageType = RemactMessageType.Error;
-                    _requestHandler.MessageFromClient(message);
+                    var msg = new RemactMessage(_serviceIdent, null, pld, RemactMessageType.Error, 
+                                                _svcUser.PortClient, _svcUser.ClientId, id);
+                    _requestHandler.MessageFromClient(msg);
                 }
                 else if (wampType == (int)WampMessageType.v1Event)
                 {
                     // eg. EVENT message with 'null' as payload: [8, "http://example.com/simple", null]
 
                     var eventUri = (string)wamp[1];
-                    var payload = RemactMessage.Convert(wamp[2], eventUri); // eventUri is assemblyQualifiedTypeName
-                    var message = new RemactMessage(_clientIdent, _clientIdent.OutputClientId, 0,
-                                                   _serviceIdent, null, payload);
-
-                    message.MessageType = RemactMessageType.Notification;
-                    _requestHandler.MessageFromClient(message);
+                    var pld = RemactMessage.Convert(wamp[2], eventUri); // eventUri is assemblyQualifiedTypeName
+                    var msg = new RemactMessage(_serviceIdent, null, pld, RemactMessageType.Notification, 
+                                                _svcUser.PortClient, _svcUser.ClientId, 0);
+                    _requestHandler.MessageFromClient(msg);
                 }
                 else
                 {
