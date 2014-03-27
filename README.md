@@ -161,6 +161,24 @@ These contracts must be present on both sides of the communication channel.
 For actors not written in a .NET programming language (e.g. Java Script), the interface contract must be translated. 
 
 
+**Remact.Catalog application**
+
+Remact.Catalog is an application containing the catalog actor. The catalog is informed about all Remact service ports in a network.  
+The catalog knows all coordinates like service name, version, host and TCP portnumber.  
+The catalog actor synchronizes itself with partner catalog actors on other hosts.  
+
+Normally each host runs a catalog actor. To add a new host into a Remact network, just reference a running catalog host.
+Then, all actors including those on the new host are informed about the status of all Remact service ports.  
+The catalog actor is for actors what a DNS server is for hosts.
+
+
+**Anonymous client applications**
+
+Applications that have only client functionality can run in a browser (using Java Script) or as a .NET application.
+These applications are not registered in the catalog but they can use a catalog actor to get coordinates of 
+open service ports. 
+
+
 
 ###Communication models###
 
@@ -205,7 +223,7 @@ Remact uses the following layers when receiving a message from a remote actor:
   converts the payload to the .NET type defined as first parameter of the addressed method and
   invokes the addressed method by passing the strong typed payload, the RemactMessage and the session data as parameters
 * The called method may accept any serializable payload type, a Newtonsoft.Json.Linq.JToken or a [dynamic object](http://msdn.microsoft.com/en-us/library/dd264736%28v=vs.110%29.aspx)
-* When the addressed method could not be found or the received Json could not be converted to the correct .NET type,  
+* When the addressed method could not be found or the received Json could not be converted to the correct .NET type,
   a default message handler is called
 * The protocol layer converts the return type of the called method to Json and send it as a response
 
