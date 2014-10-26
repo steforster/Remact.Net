@@ -240,8 +240,6 @@ Remact uses the following layers when receiving a message from a remote actor:
 
 How to build and test Remact.Net
 --------------------------------
-The Remact.Mono solution is used for VisualStudio 2012 under Windows and for MonoDevelop 4.0.12 under Ubuntu 14.04.  
-It targets the Mono/.NET 4.0 frameworks. Source projects of other git repositories are referenced.  
 You have to clone these (small) repos to be able to build:  
 
       $ git clone https://github.com/steforster/Remact.Net.git  
@@ -254,9 +252,15 @@ Afterwards your project folder should look like this:
       Alchemy-Websockets  Newtonsoft.Json  Remact.Net  ...  
 
 
-Then you should be able to create the release build of "Remact.Mono.sln" in MonoDevelop or in VS2012.  
-Under Ubuntu you will start  "test\SpeedTestApp\Mono\_startTest2.sh",  
-under Windows you will start "test\SpeedTestApp\Mono\_startTest2.cmd".  
+The Remact.VS2012 solution is used for VisualStudio 2012 under Windows.  
+Use Remact.Mono.sln for MonoDevelop 4.0.12 under Ubuntu 14.04.
+
+Both solutions currently reference the same projects, target the Mono/.NET 4.0 frameworks 
+and generate their output into a 'Mono' folder.  
+
+To test under Windows you may start "test\SpeedTestApp\Mono\_startTest2.cmd",  
+under Ubuntu you may start "test\SpeedTestApp\Mono\_startTest2.sh".
+
 
 
 License
