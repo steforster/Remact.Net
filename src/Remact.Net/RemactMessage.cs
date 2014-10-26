@@ -185,13 +185,6 @@ namespace Remact.Net
         /// <summary>
         /// Creates a new RemactMessage to send from service user (client) to service.
         /// </summary>
-        /// <param name="svcUser">The sending service user.</param>
-        /// <param name="clientId">The ClientId used on the service.</param>
-        /// <param name="requestId">The RequestId is incremented by the client. When 0 is passed, a notification is created.</param>
-        /// <param name="destination">The receiving partner.</param>
-        /// <param name="destinationMethod">The receiving method defines the payload type.</param>
-        /// <param name="payload">The user payload to send.</param>
-        /// <param name="responseHandler">null or a lamda expression to be called, when a response is aynchronously received (valid on client side requests/responses).</param>
         internal RemactMessage(RemactPort destination, string destinationMethod, object payload, RemactMessageType messageType,
                                RemactPort sender, int clientId, int requestId)
         {

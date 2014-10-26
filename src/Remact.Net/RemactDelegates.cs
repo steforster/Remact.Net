@@ -21,7 +21,6 @@ namespace Remact.Net
 
     /// <summary>
     /// Extension method On implements this delegate for handling messages directly in a Send context.
-    /// <see cref="RemactMessageExtensions.On&lt;T>(ActRemactMessagetion&lt;T>)"/>, <see cref="RemactPortClient.SendOut(object, AsyncResponseHandler)"/>
     /// </summary>
     /// <param name="msg">the received response or errormessage from the connected service</param>
     public delegate RemactMessage AsyncResponseHandler (RemactMessage msg);

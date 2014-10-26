@@ -268,10 +268,6 @@ namespace Remact.Net.Remote
     /// <summary>
     /// Connect / Reconnect a client to this service.
     /// </summary>
-    /// <param name="client">An ActorInfo message.</param>
-    /// <param name="req">The RemactMessage to be used for responses.</param>
-    /// <param name="svcUser">Output the user object containing a "ClientIdent.UserContext" object for free application use.</param>
-    /// <returns>Service info as response.</returns>
     private object ConnectPartner(ActorInfo client, RemactMessage req, ref RemactServiceUser svcUser, ref bool connectEvent)
     {
       if (req.ClientId != 0)
@@ -379,9 +375,6 @@ namespace Remact.Net.Remote
     /// <summary>
     /// Mark a client as (currently) disconnected
     /// </summary>
-    /// <param name="client">The ActorInfo message.</param>
-    /// <param name="req">The RemactMessage to be used for responses.</param>
-    /// <param name="svcUser">Output the user object containing a "ClientIdent.UserContext" object for free application use.</param>
     /// <returns>Dummy response.</returns>
     private object DisconnectPartner(ActorInfo client, RemactMessage req, ref RemactServiceUser svcUser, ref bool disconnectEvent)
     {
