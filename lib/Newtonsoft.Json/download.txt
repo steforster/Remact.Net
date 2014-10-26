@@ -1,9 +1,0 @@
-Json50r8.zip was downloaded from <http://james.newtonking.com/json>
-
-Copy the Portable40 folder and reference it in the Mono project.
-
-Currently (2013-12-28) the Portable40 and the Net40 solutions cannot be built with Monodevelop.
-There will be a runtime error, when deserializing BigIntegers
-{
-	numberValue = BigInteger.Parse(number, CultureInfo.InvariantCulture);
-}

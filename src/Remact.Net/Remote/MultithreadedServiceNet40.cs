@@ -67,7 +67,7 @@ namespace Remact.Net.Remote
                 }
                 else
                 {
-                    var task = DoRequestAsync(message);
+                    DoRequestAsync(message);
                     // Response and optional notifications have been returned to the client already
                     return;
                 }

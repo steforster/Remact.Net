@@ -41,16 +41,19 @@ The following goals have been reached:
 * Local actors (message passing between threads)
 * Remote actors (message passing between hosts or processes)
 * WebSockets, Json and other open standards are used to link Remact actors
-* High throughput on Linux and Windows: More than 5000 request/respose pairs per second between processes
-
-[AsyncWcfLib](http://sourceforge.net/projects/asyncwcflib/) is the predecessor of Remact.Net.  
-Remact.Net is much faster on Linux and much more interoperable. It now has full support for the bidirectional model
-and for strong typed interface documentation.  
+* Peer to peer communication using distributed actor catalogs avoid single point of failure
+* Fully support bidirectional models: client-server / server-client / publish-subscribe
+* Strongly typed interfaces
+* High throughput on Linux and Windows: More than 5000 request/respose pairs per second between processes.
+  Remact.Net is much faster on Linux and much more interoperable than its predecesor [AsyncWcfLib](http://sourceforge.net/projects/asyncwcflib/). 
 
 
 ### Related work
 
-Some programming languages have built in support for remote actors:
+The [Robot Operating System ROS](http://www.ros.org) is a popular framework that uses the actor model.
+There, a new messaging subsystem [DDS](http://design.ros2.org/articles/ros_on_dds.html) is considered. 
+
+Some programming languages have built-in support for remote actors:
 
 * [Scala](http://www.scala-lang.org/).RemoteActors
 * [Erlang](http://www.erlang.org/)
@@ -60,6 +63,14 @@ For other languages there are libraries to help programming remote actors:
 * [Java and Scala: The Akka library](http://akka.io/)
 * [C#: The Stact library](https://github.com/phatboyg/Stact)
 * [C#: AsyncWcfLib](http://sourceforge.net/projects/asyncwcflib/)
+
+Serialization is still an evolving theme. I'm looking for a simple solution for interoperable, binary
+serialization that supports inheritance and extensibility (lax versioning).
+Interesting developments are:
+
+* [WampSharp](https://github.com/darkl/WampSharp), I have lent some ideas from this WAMP implementation
+* [MessagePack](http://msgpack.org)
+* [Protobuf-Net](https://code.google.com/p/protobuf-net/) and [Google protocol buffers](https://developers.google.com/protocol-buffers)
 
 
 
@@ -85,7 +96,6 @@ I would like to thank all who built these components for their contribution to t
 
 * [Nito.Async.ActionThread](http://nitoasync.codeplex.com/) is used for testing console applications
 
-* [WampSharp](https://github.com/darkl/WampSharp) is not used as a component, but I have lent some ideas from this WAMP implementation
 
 
 
@@ -230,9 +240,9 @@ Remact uses the following layers when receiving a message from a remote actor:
 
 How to build and test Remact.Net
 --------------------------------
-The Remact.Mono solution is used for VisualStudio 2012 and for MonoDevelop 2.8.6.3.  
-Source projects of other git repositories are referenced from Remact.Mono.sln.  
-You have to clone all these (small) repos to be able to build Remact:  
+The Remact.Mono solution is used for VisualStudio 2012 under Windows and for MonoDevelop 4.0.12 under Ubuntu 14.04.  
+It targets the Mono/.NET 4.0 frameworks. Source projects of other git repositories are referenced.  
+You have to clone these (small) repos to be able to build:  
 
       $ git clone https://github.com/steforster/Remact.Net.git  
       $ git clone https://github.com/steforster/Alchemy-Websockets.git  
@@ -243,10 +253,10 @@ Afterwards your project folder should look like this:
       $ ls  
       Alchemy-Websockets  Newtonsoft.Json  Remact.Net  ...  
 
-Newtonsoft.Json needs some small adaptions to run under Mono. I copied "Newtonsoft.Json.Net40.csproj" to 
-"Newtonsoft.Json.Mono.csproj" and switched the target framework to 4.0 (not client profile).
 
-Then you should be able to compile in VS2010 or VS2012 the "Remact.Mono.sln" (Release) and start "test\SpeedTestApp\Mono\_startTest2.cmd".
+Then you should be able to create the release build of "Remact.Mono.sln" in MonoDevelop or in VS2012.  
+Under Ubuntu you will start  "test\SpeedTestApp\Mono\_startTest2.sh",  
+under Windows you will start "test\SpeedTestApp\Mono\_startTest2.cmd".  
 
 
 License
