@@ -45,7 +45,7 @@ The following goals have been reached:
 * Fully support bidirectional models: client-server / server-client / publish-subscribe
 * Strongly typed interfaces
 * High throughput on Linux and Windows: More than 5000 request/respose pairs per second between processes.
-  Remact.Net is much faster on Linux and much more interoperable than its predecesor [AsyncWcfLib](http://sourceforge.net/projects/asyncwcflib/). 
+  Remact.Net is much faster on Linux and much more interoperable than its predecessor [AsyncWcfLib](http://sourceforge.net/projects/asyncwcflib/). 
 
 
 ### Related work
@@ -62,7 +62,6 @@ For other languages there are libraries to help programming remote actors:
 
 * [Java and Scala: The Akka library](http://akka.io/)
 * [C#: The Stact library](https://github.com/phatboyg/Stact)
-* [C#: AsyncWcfLib](http://sourceforge.net/projects/asyncwcflib/)
 
 Serialization is still an evolving theme. I'm looking for a simple solution for interoperable, binary
 serialization that supports inheritance and extensibility (lax versioning).

@@ -1,0 +1,103 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{9DC114F4-F328-4770-B1EA-2BD4D0FA5A5A}</ProjectGuid>
+    <ProductVersion>9.0.30729</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <OutputType>Library</OutputType>
+    <NoStandardLibraries>false</NoStandardLibraries>
+    <AssemblyName>Remact.Net</AssemblyName>
+    <FileAlignment>512</FileAlignment>
+    <RootNamespace>Remact.Net</RootNamespace>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Debug.Net45\</OutputPath>
+    <DefineConstants>DEBUG;TRACE;MONO;BEFORE_NET45</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Debug.Net45\Remact.Net.XML</DocumentationFile>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release.Net45\</OutputPath>
+    <DefineConstants>TRACE;MONO;BEFORE_NET45</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Release.Net45\Remact.Net.XML</DocumentationFile>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Mono.Posix">
+      <HintPath>..\..\lib\Mono\Mono.Posix.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Contracts\ActorInfo.cs" />
+    <Compile Include="Contracts\ReadyMessage.cs" />
+    <Compile Include="Contracts\IRemactService.cs" />
+    <Compile Include="Contracts\IRemactCatalog.cs" />
+    <Compile Include="Contracts\ErrorMessage.cs" />
+    <Compile Include="RemactPortProxy.cs" />
+    <Compile Include="Protocol\IRemactProtocolDriver.cs" />
+    <Compile Include="Protocol\Wamp\WampClient.cs" />
+    <Compile Include="Protocol\Wamp\WampClientProxy.cs" />
+    <Compile Include="Protocol\Wamp\WampRpcV1.cs" />
+    <Compile Include="Protocol\WebSocketPortManager.cs" />
+    <Compile Include="RemactConfigDefault.cs" />
+    <Compile Include="RemactDelegates.cs" />
+    <Compile Include="RemactDispatcher.cs" />
+    <Compile Include="RemactException.cs" />
+    <Compile Include="RemactInterfaces.cs" />
+    <Compile Include="RemactMessage.cs" />
+    <Compile Include="RemactPort.cs" />
+    <Compile Include="RemactPortClient.cs" />
+    <Compile Include="RemactPortService.cs" />
+    <Compile Include="Remote\IRemotePort.cs" />
+    <Compile Include="Remote\MultithreadedServiceNet40.cs" />
+    <Compile Include="Remote\RemactCatalogClient.cs" />
+    <Compile Include="Remote\RemactClient.cs" />
+    <Compile Include="Remote\RemactService.cs" />
+    <Compile Include="Remote\RemactServiceUser.cs" />
+    <Compile Include="Util\RaLog.cs" />
+    <Compile Include="Util\RaLogPluginConsole.cs" />
+    <Compile Include="Util\RaLogPluginFile.cs" />
+    <Compile Include="Util\RemactApplication.cs" />
+    <Compile Include="Properties\AssemblyInfoCommon.cs" />
+    <Compile Include="Properties\AssemblyInfo.Net45.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ProjectExtensions>
+    <VisualStudio AllowExistingFolder="true" />
+  </ProjectExtensions>
+  <PropertyGroup>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="Protocol\Wamp\WampNotes.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Alchemy-Websockets\src\Alchemy\Alchemy.csproj">
+      <Project>{45486cde-86a3-4769-952f-e0821bf79493}</Project>
+      <Name>Alchemy</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\Newtonsoft.Json\Src\Newtonsoft.Json\Newtonsoft.Json.Net40.csproj">
+      <Project>{a9ae40ff-1a21-414a-9fe7-3be13644cc6d}</Project>
+      <Name>Newtonsoft.Json.Net40</Name>
+    </ProjectReference>
+  </ItemGroup>
+</Project>

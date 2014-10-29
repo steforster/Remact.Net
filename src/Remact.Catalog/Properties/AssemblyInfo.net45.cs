@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 
 // General Information about this assembly:
-[assembly: AssemblyTitle         ("Actor catalog for .NET 4.0")]
+[assembly: AssemblyTitle         ("Actor catalog for .NET 4.5")]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("fc503f4f-5d21-4c12-b5cb-cf6e6f315f38")]
