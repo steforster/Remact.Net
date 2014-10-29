@@ -5,8 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Linq;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System.Threading.Tasks;
 
 namespace Remact.Net
@@ -143,12 +141,10 @@ namespace Remact.Net
             }
 
             param[1] = msg;
-            param[0] = msg.Payload; // raw
-
-            var jToken = msg.Payload as JToken;
-            if (jToken != null)
+            param[0] = msg.SerializationPayload.TryReadAs(this.PayloadType);
+            if (param[0] == null)
             {
-                param[0] = jToken.ToObject(this.PayloadType); // deserialized
+                param[0] = msg.Payload; // raw
             }
 
             return param;

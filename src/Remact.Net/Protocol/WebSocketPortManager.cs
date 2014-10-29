@@ -115,7 +115,13 @@ namespace Remact.Net.Protocol
         /// </summary>
         public void Dispose()
         {
-            if (_wsServer != null)
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing && _wsServer != null)
             {
                 _wsServer.Stop();
                 _wsServer = null;

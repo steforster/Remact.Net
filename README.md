@@ -68,9 +68,9 @@ serialization that supports inheritance and extensibility (lax versioning).
 Interesting developments are:
 
 * [WampSharp](https://github.com/darkl/WampSharp), I have lent some ideas from this WAMP implementation
-* [MessagePack](http://msgpack.org)
+* [MessagePack](http://msgpack.org) for [CLI](https://github.com/msgpack/msgpack-cli), for [Json.Net](https://github.com/Code-Sharp/Newtonsoft.Msgpack)
 * [Protobuf-Net](https://code.google.com/p/protobuf-net/) and [Google protocol buffers](https://developers.google.com/protocol-buffers)
-
+* [A good overview](http://spin.atomicobject.com/2011/11/23/binary-serialization-tour-guide/)
 
 
 Dependencies and standards
@@ -100,6 +100,23 @@ I would like to thank all who built these components for their contribution to t
 
 Documentation
 -------------
+
+###High level design###
+
+
+On a high level a Remact system is split in three parts:
+
+* **Contracts**: Shared interfaces and data structures are delivered in their own assembly.
+  The datastructures may have a dependency to Nowtonsoft.Json because of serialization attributes.
+  The interfaces currently do have a dependency to Remact.Net.RemactMessage.
+
+* **Actors**: Actors use contracts to communicate. Actors do not have a direct dependency to other actors.
+  An actor is programmed without having to know its location in the system.
+
+* **System wiring**: This third part of the system places the actor into its location during runtime.
+  It defines the process and the host to run on. It also connects client and service ports of the actors.
+  The wiring may use dynamic features like actor location at runtime, m:n relationship and backup actors.
+
 
 
 ###Conceptual parts###
@@ -144,8 +161,10 @@ Periodic messages should be exchanged by the actors to check the communication c
 
 The RemactMessage class addresses source and destination ports. It is used to route the payload data through the system.  
 The payload may be of any serializable object type.  
-Serialization is done by Newtonsoft.Json. Therefore, attributes like [JsonProperty] and [JsonIgnore] may be used to
-control the serialization process. By default all public properties and fields are serialized.  
+By default serialization is done by Newtonsoft.Json. Therefore, attributes like [JsonProperty] and [JsonIgnore] may be used to
+control the serialization process.  
+Other serializers like msgpack-cli or a dynamic switching serializer are pluggable.
+The folder **Remact.Net.Protocol** contains the currently implemented combinations of protocols and serializers.
 
 
 **Methods**
@@ -232,9 +251,10 @@ Remact uses the following layers when receiving a message from a remote actor:
   converts the payload to the .NET type defined as first parameter of the addressed method and
   invokes the addressed method by passing the strong typed payload, the RemactMessage and the session data as parameters
 * The called method may accept any serializable payload type, a Newtonsoft.Json.Linq.JToken or a [dynamic object](http://msdn.microsoft.com/en-us/library/dd264736%28v=vs.110%29.aspx)
-* When the addressed method could not be found or the received Json could not be converted to the correct .NET type,
+* When the addressed method could not be found or the received stream could not be converted to the correct .NET type,
   a default message handler is called
-* The protocol layer converts the return type of the called method to Json and send it as a response
+* The protocol layer serializes the return type of the called method and send it as a response
+
 
 
 How to build and test Remact.Net
@@ -244,11 +264,13 @@ You have to clone these (small) repos to be able to build:
       $ git clone https://github.com/steforster/Remact.Net.git  
       $ git clone https://github.com/steforster/Alchemy-Websockets.git  
       $ git clone https://github.com/JamesNK/Newtonsoft.Json.git  
+      $ git clone https://github.com/Code-Sharp/Newtonsoft.Msgpack.git  
+      $ git clone https://github.com/msgpack/msgpack-cli.git  
 
-Afterwards your project folder should look like this:
+Afterwards your git project folder should look like this:
 
       $ ls  
-      Alchemy-Websockets  Newtonsoft.Json  Remact.Net  ...  
+      Alchemy-Websockets  msgpack-cli  Newtonsoft.Json  Newtonsoft.MsgPack  Remact.Net  ...  
 
 
 The Remact.VS2012 solution is used for VisualStudio 2012 under Windows.  

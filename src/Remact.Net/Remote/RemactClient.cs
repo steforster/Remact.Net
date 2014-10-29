@@ -5,7 +5,6 @@ using System;
 using System.Net;            // Dns
 using System.Threading;
 using System.ComponentModel; // AsyncOperation
-using Newtonsoft.Json.Linq;
 using Remact.Net.Protocol;
 using Remact.Net.Protocol.Wamp;
 using System.Collections.Generic;
@@ -261,21 +260,6 @@ namespace Remact.Net.Remote
 
 
     /// <summary>
-    /// Accept the binding configuration provided when linking the RemactPortClient or set in RemactDefaults.ClientConfiguration.
-    /// </summary>
-    /// <param name="serviceUri">The URI to connect to. Parts of the URI may be changed depending on the binding configuration.</param>
-    /// <param name="forCatalog">True, when the connection is to a Remact.Catalog.</param>
-    protected internal void DoClientConfiguration(ref Uri serviceUri, bool forCatalog)
-    {
-        if (m_ClientConfig == null)
-        {
-            m_ClientConfig = RemactConfigDefault.Instance;
-        }
-        m_ClientConfig.DoClientConfiguration(m_protocolClient, ref serviceUri, forCatalog);
-    }
-
-
-    /// <summary>
     /// Connect or reconnect output to the previously linked partner.
     /// </summary>
     /// <returns>A task. When this task is run to completion, the task.Result corresponds to IsOpen.</returns>
@@ -381,12 +365,14 @@ namespace Remact.Net.Remote
     // Open the connection to the service, running on user- or threadpool thread
     private Task<bool> OpenConnectionAsync(TaskCompletionSource<bool> tcs, Uri uri)
     {
-        m_RequestedServiceUri = NormalizeHostName(uri);
-        m_protocolClient = new WampClient(m_RequestedServiceUri);
+        var websocketUri = m_RequestedServiceUri = NormalizeHostName(uri);
         // TODO: Let now the library user change binding and security credentials.
         // By default RemactDefaults.OnClientConfiguration is called.
-        var websocketUri = m_RequestedServiceUri;
-        DoClientConfiguration(ref websocketUri, forCatalog: false);
+        if (m_ClientConfig == null)
+        {
+            m_ClientConfig = RemactConfigDefault.Instance;
+        }
+        m_protocolClient = m_ClientConfig.DoClientConfiguration(ref websocketUri, forCatalog: false);
         PortProxy.PrepareServiceName(websocketUri);
 
         m_protocolClient.OpenAsync(new OpenAsyncState {Tcs = tcs}, this);
@@ -566,6 +552,7 @@ namespace Remact.Net.Remote
         msg.ClientId = PortClient.ClientId;
 
         msg.Payload = lower.Payload;
+        msg.SerializationPayload = lower.SerializationPayload;
         msg.MessageType = lower.Type;
         return true;
     }
@@ -588,7 +575,7 @@ namespace Remact.Net.Remote
     }
 
 
-    private void OnServiceDisconnectOnActorThread(object obj)
+    private void OnServiceDisconnectOnActorThread(object dummy)
     {
         m_boTimeout = true;
         var copy = _OutstandingRequests;
@@ -646,6 +633,7 @@ namespace Remact.Net.Remote
                         if (!TryGetResponseMessage(lower, out msg))
                         {
                             msg = new RemactMessage(PortClient, lower.DestinationMethod, lower.Payload, RemactMessageType.Error, null);
+                            msg.SerializationPayload = lower.SerializationPayload;
                             msg.RequestId = lower.RequestId;
                         }
                     }
@@ -654,6 +642,7 @@ namespace Remact.Net.Remote
                 default:
                     {
                         msg = new RemactMessage(PortClient, lower.DestinationMethod, lower.Payload, RemactMessageType.Notification, null);
+                        msg.SerializationPayload = lower.SerializationPayload;
                         msg.RequestId = lower.RequestId;
                         msg.MessageType = lower.Type; // initially set to notification as we do not want to increment our clients requestId
                     }

@@ -10,6 +10,7 @@ using Remact.Net.Protocol;
 using Remact.Net.Protocol.Wamp;
 using Alchemy;
 using Alchemy.Classes;
+using Alchemy.Handlers.WebSocket;
 
 namespace Remact.Net
 {
@@ -87,12 +88,9 @@ namespace Remact.Net
         if (portManager.WebSocketServer == null)
         {
             // this TCP port has to be opened
-            portManager.WebSocketServer = new WebSocketServer()
+            portManager.WebSocketServer = new WebSocketServer(false, uri.Port)
                 {
-                    Port = uri.Port,
-                    FlashAccessPolicyEnabled = false,
                     SubProtocols = new string[] { "wamp" },
-
                     OnConnected = (userContext) => OnClientConnected(portManager, userContext)
                 };
         }
@@ -129,12 +127,13 @@ namespace Remact.Net
     /// <summary>
     /// Sets the default client configuration, when connecting without app.config.
     /// </summary>
-    /// <param name="clientBase">The ClientBase object to modify the endpoint and security credentials.</param>
     /// <param name="uri">The endpoint URI to connect.</param>
     /// <param name="forCatalog">true if used for Remact.Catalog service.</param>
-    public virtual void DoClientConfiguration(object clientBase, ref Uri uri, bool forCatalog)
+    /// <returns>The protocol driver including serializer.</returns>
+    public virtual IRemactProtocolDriverService DoClientConfiguration(ref Uri uri, bool forCatalog)
     {
-        // TODO !
+        // Protocol = WAMP, serializer = Newtonsoft.Json.
+        return new WampClient(uri);
     }
 
     #endregion

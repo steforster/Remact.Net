@@ -3,13 +3,12 @@
 
 using System;
 using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
 
 namespace Remact.Net.Protocol
 {
     /// <summary>
-    /// Interface for protocol level clients (client side, lower level).
-    /// and also interface for service handlers (server side, higher level).
+    /// Interface for protocol level clients (client side, lower level outgoing interface).
+    /// and also interface for service handlers (server side, higher level incoming interface).
     /// </summary>
     public interface IRemactProtocolDriverService
     {
@@ -42,8 +41,8 @@ namespace Remact.Net.Protocol
     }
 
     /// <summary>
-    /// Interface for RemactClient (client side, higher level).
-    /// and also interface for client proxies (server side, lower protocol level).
+    /// Interface for RemactClient (client side, higher level incoming interface).
+    /// and also interface for client proxies (server side, lower protocol level outgoing interface).
     /// </summary>
     public interface IRemactProtocolDriverCallbacks
     {
@@ -86,5 +85,18 @@ namespace Remact.Net.Protocol
         public int RequestId; // when receiving responses
         public string DestinationMethod; // when receiving notifications or requests
         public object Payload;
+        public ISerializationPayload SerializationPayload;
+
+        public LowerProtocolMessage()
+        {}
+
+        public LowerProtocolMessage(RemactMessage msg)
+        {
+            Type = msg.MessageType;
+            RequestId = msg.RequestId;
+            DestinationMethod = msg.DestinationMethod;
+            Payload = msg.Payload;
+            SerializationPayload = msg.SerializationPayload;
+        }
     }
 }

@@ -15,18 +15,14 @@ namespace Remact.Net.Protocol.Wamp
 {
     /// <summary>
     /// Implements the protocol level for a WAMP client. See http://wamp.ws/spec/.
+    /// Uses the Newtonsoft.Json serializer.
     /// </summary>
-    public class WampClient : IRemactProtocolDriverService
+    public class WampClient : ProtocolDriverClientBase, IRemactProtocolDriverService
     {
-        private WebSocketClient _wsClient;
-        private IRemactProtocolDriverCallbacks _callback;
-        private int _lowLevelErrorCount;
-        private bool _faulted;
-        private bool _disposed;
-
         public WampClient(Uri websocketUri)
         {
             ServiceUri = websocketUri;
+            _onReceiveAction = OnReceived;
             _wsClient = new WebSocketClient(websocketUri.ToString())
             {
                 //OnSend = OnSend,// Message has been dequeued and passed to the socket buffer
@@ -37,78 +33,13 @@ namespace Remact.Net.Protocol.Wamp
         }
 
         #region IRemactProtocolDriverService proxy implementation
+        
+        public PortState PortState {get {return BasePortState;}}
 
-
-        public Uri ServiceUri { get; private set; }
-
-        public PortState PortState 
-        { 
-            get 
-            {
-                if (_faulted)
-                {
-                    return PortState.Faulted;
-                }
-                else if (_wsClient.ReadyState == WebSocketClient.ReadyStates.CONNECTING)
-                {
-                    return PortState.Connecting;
-                }
-                else if (_wsClient.ReadyState == WebSocketClient.ReadyStates.OPEN)
-                {
-                    return PortState.Ok;
-                }
-                else
-                {
-                    return PortState.Disconnected;
-                }
-            } 
-        }
-
-        // Asynchronous open the connection
         public void OpenAsync(OpenAsyncState state, IRemactProtocolDriverCallbacks callback)
         {
-            _callback = callback;
-            _wsClient.OnConnected = OnConnected;
-            _wsClient.OnDisconnect = OnConnectFailure;
-            _wsClient.BeginConnect(state);
+            base.BaseOpenAsync(state, callback);
         }
-
-        private void OnConnected(UserContext context)
-        {
-            var state = (OpenAsyncState)context.Data;
-            state.Error = null;
-            if (_wsClient.ReadyState != WebSocketClient.ReadyStates.OPEN)
-            {
-                _faulted = true;
-                state.Error = new IOException("WebSocketClient not open.");
-            }
-            else
-            {
-                context.SetOnReceive(OnReceived);
-                context.SetOnDisconnect(OnDisconnect);
-            }
-
-            _callback.OnOpenCompleted(state);
-        }
-
-        private void OnConnectFailure(UserContext context)
-        {
-            _faulted = true;
-            var state = (OpenAsyncState)context.Data;
-            state.Error = context.LatestException;
-            _callback.OnOpenCompleted(state);
-        }
-
-        public void Dispose()
-        {
-            try
-            {
-                _disposed = true;
-                _wsClient.Disconnect();
-            }
-            catch { }
-        }
-
 
         public void MessageFromClient(RemactMessage msg)
         {
@@ -127,6 +58,8 @@ namespace Remact.Net.Protocol.Wamp
 
             _wsClient.Send(wamp.ToString(Formatting.None));
         }
+
+        private int _lowLevelErrorCount;
 
         private void ResponseNotDeserializable(int id, string errorDesc)
         {
@@ -211,6 +144,7 @@ namespace Remact.Net.Protocol.Wamp
                     msg.Type = RemactMessageType.Response;
                     msg.RequestId = int.Parse((string)wamp[1]);
                     msg.Payload = wamp[2]; // JToken
+                    msg.SerializationPayload = new NewtonsoftJsonPayload(wamp[2]);
                     _callback.OnMessageFromService(msg);
                 }
                 else if (wampType == (int)WampMessageType.v1CallError)
@@ -228,7 +162,9 @@ namespace Remact.Net.Protocol.Wamp
 
                     if (wamp.Count > 4)
                     {
-                        msg.Payload = RemactMessage.Convert(wamp[4], errorUri); // errorUri is assemblyQualifiedTypeName
+                        var pld = new NewtonsoftJsonPayload(wamp[4]); // JToken
+                        msg.Payload = pld.TryReadAs(errorUri); // errorUri is assemblyQualifiedTypeName
+                        msg.SerializationPayload = pld;
                     }
                     else
                     {
@@ -243,7 +179,9 @@ namespace Remact.Net.Protocol.Wamp
 
                     msg.Type = RemactMessageType.Notification;
                     var notifyUri = (string)wamp[1];
-                    msg.Payload = RemactMessage.Convert(wamp[2], notifyUri); // eventUri is assemblyQualifiedTypeName
+                    var pld = new NewtonsoftJsonPayload(wamp[2]); // JToken
+                    msg.Payload = pld.TryReadAs(notifyUri); // notifyUri is assemblyQualifiedTypeName
+                    msg.SerializationPayload = pld; 
                     _callback.OnMessageFromService(msg);
                 }
                 else
@@ -255,19 +193,6 @@ namespace Remact.Net.Protocol.Wamp
             {
                 if (msg.Type != RemactMessageType.Error) ResponseNotDeserializable(msg.RequestId, ex.Message);
             }
-        }
-
-
-        // Connect failure or disposing context 
-        private void OnDisconnect(UserContext context)
-        {
-            _faulted = true;
-            if (_disposed)
-            {
-                return;
-            }
-
-            _callback.OnServiceDisconnect();
         }
 
         #endregion

@@ -11,7 +11,7 @@ namespace Remact.Net
     /// <summary>
     /// An unexpected RemactMessage is converted to and thrown as a RemactException on the receiving side.
     /// When the RemactMessage type is 'Error' and the payload is 'ErrorMessage', the payload is converted to a inner exception.
-    /// In all other cases, the payload is a raw Newtonsoft.Json.Linq.JToken. The user may inspect its content.
+    /// In all other cases, the payload is a dynamic, serialized object e.g. Newtonsoft.Json.Linq.JToken. The user may inspect its content.
     /// </summary>
     public class RemactException : Exception
     {

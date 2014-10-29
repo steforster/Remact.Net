@@ -169,14 +169,16 @@ namespace Remact.Net.Protocol.Wamp
                 {
                     // eg. CALL message for RPC with no arguments: [2, "7DK6TdN4wLiUJgNM", "http://example.com/api#howdy"]
                     id = int.Parse((string)wamp[1]);
-                    JToken payload = null;
+                    JToken jToken = null;
                     if (wamp.Count > 3)
                     {
-                        payload = wamp[3];
+                        jToken = wamp[3];
                     }
+                    var pld = new NewtonsoftJsonPayload(jToken);
 
-                    var msg = new RemactMessage(_serviceIdent, (string)wamp[2], payload, RemactMessageType.Request,
+                    var msg = new RemactMessage(_serviceIdent, (string)wamp[2], jToken, RemactMessageType.Request,
                                                 _svcUser.PortClient, _svcUser.ClientId, id);
+                    msg.SerializationPayload = pld;
                     _requestHandler.MessageFromClient(msg);
                 }
                 else if (wampType == (int)WampMessageType.v1CallError)
@@ -192,18 +194,22 @@ namespace Remact.Net.Protocol.Wamp
                         id = int.Parse(requestId);
                     }
 
-                    object pld;
+                    NewtonsoftJsonPayload pld;
+                    object payload;
                     if (wamp.Count > 4)
                     {
-                        pld = RemactMessage.Convert(wamp[4], errorUri); // errorUri is assemblyQualifiedTypeName
+                        pld = new NewtonsoftJsonPayload(wamp[4]); // JToken
+                        payload = pld.TryReadAs(errorUri); // errorUri is assemblyQualifiedTypeNamewamp[4]
                     }
                     else
                     {
-                        pld = new ErrorMessage(ErrorCode.Undef, errorUri + ": " + errorDesc); // Errormessage from client
+                        pld = null;
+                        payload = new ErrorMessage(ErrorCode.Undef, errorUri + ": " + errorDesc); // Errormessage from client
                     }
 
-                    var msg = new RemactMessage(_serviceIdent, null, pld, RemactMessageType.Error, 
+                    var msg = new RemactMessage(_serviceIdent, null, payload, RemactMessageType.Error, 
                                                 _svcUser.PortClient, _svcUser.ClientId, id);
+                    msg.SerializationPayload = pld;
                     _requestHandler.MessageFromClient(msg);
                 }
                 else if (wampType == (int)WampMessageType.v1Event)
@@ -211,9 +217,11 @@ namespace Remact.Net.Protocol.Wamp
                     // eg. EVENT message with 'null' as payload: [8, "http://example.com/simple", null]
 
                     var eventUri = (string)wamp[1];
-                    var pld = RemactMessage.Convert(wamp[2], eventUri); // eventUri is assemblyQualifiedTypeName
-                    var msg = new RemactMessage(_serviceIdent, null, pld, RemactMessageType.Notification, 
+                    var pld = new NewtonsoftJsonPayload(wamp[2]); // JToken
+                    var payload = pld.TryReadAs(eventUri); // eventUri is assemblyQualifiedTypeName
+                    var msg = new RemactMessage(_serviceIdent, null, payload, RemactMessageType.Notification, 
                                                 _svcUser.PortClient, _svcUser.ClientId, 0);
+                    msg.SerializationPayload = pld;
                     _requestHandler.MessageFromClient(msg);
                 }
                 else

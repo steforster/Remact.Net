@@ -4,7 +4,6 @@
 using System;
 using System.Net;                  // Dns
 using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
 using Remact.Net.Protocol;
 using Remact.Net.Protocol.Wamp;
 
