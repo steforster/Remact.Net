@@ -140,12 +140,12 @@ namespace Remact.Net
   public interface IClientConfiguration
   {
       /// <summary>
-      /// Sets the default client configuration, when connecting without app.config. Must match to ServiceConfiguration of the connected service.
+      /// Sets up the client, when connecting. Must match the ServiceConfiguration of the connected service.
       /// </summary>
-      /// <param name="clientBase">The ClientBase object to modify the endpoint and security credentials. TODO public interface!</param>
       /// <param name="uri">The endpoint URI to connect.</param>
       /// <param name="forCatalog">true if used for Remact.Catalog service.</param>
-      void DoClientConfiguration( object clientBase, ref Uri uri, bool forCatalog );
+      /// <returns>The protocol driver including serializer.</returns>
+      IRemactProtocolDriverService DoClientConfiguration(ref Uri uri, bool forCatalog );
   }
 
   #endregion
@@ -153,7 +153,7 @@ namespace Remact.Net
   #region == enum PortState ==
 
   /// <summary>
-  /// Communication state for RemactPort
+  /// Communication state for RemactPort.
   /// </summary>
   public enum PortState
   {
@@ -188,11 +188,11 @@ namespace Remact.Net
   #region == interface IRemactPort ==
 
   /// <summary>
-  /// IRemactPort is a public interface of an actor. It may be called from any thread.
+  /// IRemactPort is one of the public interface of an actor. It may be called from any thread.
   /// Actors may have several connections to other actors.
   /// A connnection consists of a client and a service port.
   /// Messages of any type may flow in both directions.
-  /// Messages types are request, response, notification an error.
+  /// Messages types are request, response, notification and error.
   /// </summary>
   public interface IRemactPort
   {

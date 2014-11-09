@@ -15,6 +15,7 @@ namespace Remact.Net.Protocol.Wamp
 {
     /// <summary>
     /// Implements the protocol level for a WAMP client. See http://wamp.ws/spec/.
+    /// Uses the Newtonsoft.Json serializer.
     /// </summary>
     public class WampClient : IRemactProtocolDriverService
     {
@@ -211,6 +212,7 @@ namespace Remact.Net.Protocol.Wamp
                     msg.Type = RemactMessageType.Response;
                     msg.RequestId = int.Parse((string)wamp[1]);
                     msg.Payload = wamp[2]; // JToken
+                    msg.SerializationPayload = new NewtonsoftJsonPayload(wamp[2]);
                     _callback.OnMessageFromService(msg);
                 }
                 else if (wampType == (int)WampMessageType.v1CallError)
@@ -228,7 +230,9 @@ namespace Remact.Net.Protocol.Wamp
 
                     if (wamp.Count > 4)
                     {
-                        msg.Payload = RemactMessage.Convert(wamp[4], errorUri); // errorUri is assemblyQualifiedTypeName
+                        var pld = new NewtonsoftJsonPayload(wamp[4]); // JToken
+                        msg.Payload = pld.TryReadAs(errorUri); // errorUri is assemblyQualifiedTypeName
+                        msg.SerializationPayload = pld;
                     }
                     else
                     {
@@ -243,7 +247,9 @@ namespace Remact.Net.Protocol.Wamp
 
                     msg.Type = RemactMessageType.Notification;
                     var notifyUri = (string)wamp[1];
-                    msg.Payload = RemactMessage.Convert(wamp[2], notifyUri); // eventUri is assemblyQualifiedTypeName
+                    var pld = new NewtonsoftJsonPayload(wamp[2]); // JToken
+                    msg.Payload = pld.TryReadAs(notifyUri); // notifyUri is assemblyQualifiedTypeName
+                    msg.SerializationPayload = pld; 
                     _callback.OnMessageFromService(msg);
                 }
                 else

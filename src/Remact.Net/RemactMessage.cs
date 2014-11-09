@@ -3,7 +3,6 @@
 
 using System;
 using System.Threading;            // SynchronizationContext
-using Newtonsoft.Json.Linq;
 using Remact.Net.Remote;
 
 namespace Remact.Net
@@ -75,6 +74,12 @@ namespace Remact.Net
         /// Be careful, use the payload as unmutable, readonly for application internal communication!
         /// </summary>
         public object Payload { get; internal set; }
+
+        /// <summary>
+        /// Incoming remote messages carry a reference to the serialization payload.
+        /// Its concrete implementation depends on the serializer used.
+        /// </summary>
+        internal ISerializationPayload SerializationPayload { get; set; }
 
         /// <summary>
         /// <para>Identifies the client sending the request on the remote service.</para>
@@ -240,42 +245,18 @@ namespace Remact.Net
                 return true;
             }
 
-            var jToken = Payload as JToken;
-            if (jToken != null)
+            if (SerializationPayload != null)
             {
-                try
+                result = (T)SerializationPayload.TryReadAs(typeof(T));
+                if (result != null)
                 {
-                    result = jToken.ToObject<T>(); 
                     Payload = result; // keep converted result
                     return true;
                 }
-                catch { }
             }
 
             return false;
         }
-
-        
-        public static object Convert(JToken jToken, string assemblyQualifiedTypeName)
-        {
-            if (string.IsNullOrEmpty(assemblyQualifiedTypeName))
-            {
-                return jToken;
-            }
-
-            try
-            {
-                var type = System.Type.GetType(assemblyQualifiedTypeName);
-                object payload = jToken.ToObject(type);
-                return payload;
-            }
-            catch (Exception ex)
-            {
-                RaLog.Exception("could not convert payload type '" + assemblyQualifiedTypeName + "'", ex);
-                return jToken;
-            }
-        }
-
 
         /// <summary>
         /// Source does not expect to receive a reply to this message.

@@ -74,6 +74,8 @@
     <Compile Include="Util\RemactApplication.cs" />
     <Compile Include="Properties\AssemblyInfoCommon.cs" />
     <Compile Include="Properties\AssemblyInfo.Mono.cs" />
+    <Compile Include="Serialization\NewtonsoftJsonPayload.cs" />
+    <Compile Include="Serialization\ISerializationPayload.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
@@ -95,5 +97,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Protocol\Wamp\WampNotes.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Serialization\" />
   </ItemGroup>
 </Project>
