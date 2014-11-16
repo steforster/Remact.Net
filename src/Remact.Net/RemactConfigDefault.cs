@@ -88,12 +88,9 @@ namespace Remact.Net
         if (portManager.WebSocketServer == null)
         {
             // this TCP port has to be opened
-            portManager.WebSocketServer = new WebSocketServer()
+            portManager.WebSocketServer = new WebSocketServer(false, uri.Port)
                 {
-                    Port = uri.Port,
-                    FlashAccessPolicyEnabled = false,
                     SubProtocols = new string[] { "wamp" },
-
                     OnConnected = (userContext) => OnClientConnected(portManager, userContext)
                 };
         }

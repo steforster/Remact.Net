@@ -90,7 +90,6 @@ namespace Remact.Net
         /// <summary>
         /// <para>RequestId is incremented by RemactClient for remote connections only. Remote service returns the same number.</para>
         /// <para>0=Notification, 11...=remote requests</para>
-        /// It is used to detect programming errors.
         /// </summary>
         public int RequestId;
     

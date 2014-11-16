@@ -22,15 +22,7 @@
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Debug.Mono\Remact.Net.XML</DocumentationFile>
     <UseVSHostingProcess>false</UseVSHostingProcess>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release.Mono|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release.Mono\</OutputPath>
-    <DefineConstants>TRACE;MONO;BEFORE_NET45</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Release.Mono\Remact.Net.XML</DocumentationFile>
+    <GenerateDocumentation>true</GenerateDocumentation>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
@@ -76,6 +68,12 @@
     <Compile Include="Properties\AssemblyInfo.Mono.cs" />
     <Compile Include="Serialization\NewtonsoftJsonPayload.cs" />
     <Compile Include="Serialization\ISerializationPayload.cs" />
+    <Compile Include="Serialization\MsgPackPayload.cs" />
+    <Compile Include="Protocol\JsonRpc\JsonRpcMsgPackClient.cs" />
+    <Compile Include="Protocol\JsonRpc\JsonRpcV2.cs" />
+    <Compile Include="Protocol\ProtocolDriverClientBase.cs" />
+    <Compile Include="Protocol\JsonRpc\JsonRpcMsgPackClientBase.cs" />
+    <Compile Include="Protocol\JsonRpc\JsonRpcMsgPackClientStub.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
@@ -84,6 +82,15 @@
   <PropertyGroup>
     <PostBuildEvent>
     </PostBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release.Mono\</OutputPath>
+    <DefineConstants>TRACE;MONO;BEFORE_NET45</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Release.Mono\Remact.Net.XML</DocumentationFile>
+    <GenerateDocumentation>true</GenerateDocumentation>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\Alchemy-Websockets\src\Alchemy\Alchemy.csproj">
@@ -94,11 +101,17 @@
       <Project>{A9AE40FF-1A21-414A-9FE7-3BE13644CC6D}</Project>
       <Name>Newtonsoft.Json.Net40</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\..\msgpack-cli\src\MsgPack.Net40\MsgPack.Net40.csproj">
+      <Project>{D45D4CBE-AFE7-4E2A-945D-47AED564C39D}</Project>
+      <Name>MsgPack.Net40</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="Protocol\Wamp\WampNotes.md" />
+    <None Include="Protocol\JsonRpc\JsonRpcNotes.md" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Serialization\" />
+    <Folder Include="Protocol\JsonRpc\" />
   </ItemGroup>
 </Project>

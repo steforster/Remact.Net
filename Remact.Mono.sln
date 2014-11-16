@@ -62,8 +62,8 @@ Global
 		{72A84AD5-213F-4DBD-8890-2B1B7CEEFC08}.Release|Any CPU.Build.0 = Release|Any CPU
 		{9DC114F4-F328-4770-B1EA-2BD4D0FA5A5A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{9DC114F4-F328-4770-B1EA-2BD4D0FA5A5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9DC114F4-F328-4770-B1EA-2BD4D0FA5A5A}.Release|Any CPU.ActiveCfg = Release.Mono|Any CPU
-		{9DC114F4-F328-4770-B1EA-2BD4D0FA5A5A}.Release|Any CPU.Build.0 = Release.Mono|Any CPU
+		{9DC114F4-F328-4770-B1EA-2BD4D0FA5A5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9DC114F4-F328-4770-B1EA-2BD4D0FA5A5A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A748B855-6AC6-4F89-BEBA-094E97AEB2C0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{A748B855-6AC6-4F89-BEBA-094E97AEB2C0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A748B855-6AC6-4F89-BEBA-094E97AEB2C0}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -113,6 +113,8 @@ Global
 	GlobalSection(MonoDevelopProperties) = preSolution
 		StartupItems = $0
 		$0.Item = test\SpeedTestApp\Mono\Test2.Client.Mono.csproj
+		$0.Item = test\SpeedTestApp\Mono\Test2.Service.Mono.csproj
+		$0.Item = src\Remact.Catalog\Remact.Catalog.Mono.csproj
 		Policies = $1
 		$1.DotNetNamingPolicy = $2
 		$2.DirectoryNamespaceAssociation = None
@@ -127,7 +129,6 @@ Global
 		$1.TextStylePolicy = $5
 		$5.FileWidth = 120
 		$5.NoTabsAfterNonTabs = True
-		$5.EolMarker = Windows
 		$5.inheritsSet = VisualStudio
 		$5.inheritsScope = text/plain
 		$5.scope = text/plain

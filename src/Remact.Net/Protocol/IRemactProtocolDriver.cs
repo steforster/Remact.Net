@@ -86,5 +86,17 @@ namespace Remact.Net.Protocol
         public string DestinationMethod; // when receiving notifications or requests
         public object Payload;
         public ISerializationPayload SerializationPayload;
+
+        public LowerProtocolMessage()
+        {}
+
+        public LowerProtocolMessage(RemactMessage msg)
+        {
+            Type = msg.MessageType;
+            RequestId = msg.RequestId;
+            DestinationMethod = msg.DestinationMethod;
+            Payload = msg.Payload;
+            SerializationPayload = msg.SerializationPayload;
+        }
     }
 }
