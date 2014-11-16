@@ -2,14 +2,10 @@
 // Copyright (c) 2014, github.com/steforster/Remact.Net
 
 using System;
-using System.Threading;
-using System.Collections.Concurrent;
 using Alchemy;
 using Alchemy.Classes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Remact.Net.Protocol;
-using System.IO;
 
 namespace Remact.Net.Protocol.Wamp
 {

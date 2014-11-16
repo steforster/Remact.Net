@@ -1,94 +1,71 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Newtonsoft.Json;
-using Remact.Net;
 
 namespace Test2.Contracts
 {
-  /// <summary>
-  /// 
-  /// </summary>
-  public class Test2Rsp
-  {
-    //----------------------------------------------------------------------------------------------
-    #region Payload DataMember
+    /// <summary>
+    /// The response message for the speed test application.
+    /// </summary>
+    public class Test2Rsp
+    {
+        /// <summary>
+        /// This member is serialized to be transferred over network.
+        /// </summary>
+        public List<Test2MessageItem> Items;
 
-    public List<Test2MessageItem>  Items;
-    
-    #endregion
-    //----------------------------------------------------------------------------------------------
-    #region Public Data
+        /// <summary>
+        /// This member is not serialized.
+        /// </summary>
+        [JsonIgnore]
+        public int Index = 0;
 
-    [JsonIgnore]
-    public int Index = 0;
-    
-    #endregion
-    //----------------------------------------------------------------------------------------------
-    #region Constructors
+        /// <summary>
+        /// Initializes a new instance of the Test2Rsp class.
+        /// </summary>
+        public Test2Rsp()
+        {
+            Items = new List<Test2MessageItem>(20);
+        }
+
+
+        public void AddItem(string name, int p1, int p2, int p3, string p4)
+        {
+            Items.Add(new Test2MessageItem(++Index, name, p1, p2, p3, p4));
+        }
+
+   }// Test2Rsp
+
 
     /// <summary>
-    /// Initializes a new instance of the Test2Rsp class.
+    /// One item contained in Test2Rsp. To demonstrate a more complex message type.
     /// </summary>
-    public Test2Rsp ()
+    public class Test2MessageItem
     {
-      Items = new List<Test2MessageItem>(20);
-    }
+        // These 3 public members are serialized.
+        public int Index;
+        public string ItemName;
+        public List<object> Parameter;
 
-    #endregion
-    //----------------------------------------------------------------------------------------------
-    #region Public Methods
-    
-    public void AddItem (string name, int p1, int p2, int p3, string p4)
-    {
-      Items.Add(new Test2MessageItem (++Index, name, p1, p2, p3, p4));
-    }
-    
-    #endregion
-  }// Test2Rsp
-  
-  
-  /// <summary>
-  /// One item contained in Test2Rsp. To demonstrate a more complex message type.
-  /// </summary>
-  public class Test2MessageItem
-  {
-    //----------------------------------------------------------------------------------------------
-    #region Payload DataMember
+        /// <summary>
+        /// Initializes a new instance of the Test2MessageItem class.
+        /// </summary>
+        public Test2MessageItem(int index, string itemName, params object[] parameterList)
+        {
+            Index = index;
+            ItemName = itemName;
+            if (parameterList != null)
+            {
+                Parameter = new List<object>(parameterList.Length);
 
-    public int          Index;
-    public string       ItemName;
-    public List<object> Parameter;
-    
-    #endregion
-    //----------------------------------------------------------------------------------------------
-    #region Constructors
-
-    /// <summary>
-    /// Initializes a new instance of the Test2MessageItem class.
-    /// </summary>
-    public Test2MessageItem (int index, string itemName, params object[] parameterList)
-    {
-      Index  = index;
-      ItemName = itemName;
-      if (parameterList != null)
-      {
-          Parameter = new List<object>(parameterList.Length);
-
-          foreach (object p in parameterList)
-          {
-              Parameter.Add(p);
-          }
-      }
-      else
-      {
-          Parameter = new List<object>();
-      }
-    }
-
-    #endregion
-
-  }// Test2MessageItem
-  
-}// namespace
+                foreach (object p in parameterList)
+                {
+                    Parameter.Add(p);
+                }
+            }
+            else
+            {
+                Parameter = new List<object>();
+            }
+        }
+    }// Test2MessageItem
+}

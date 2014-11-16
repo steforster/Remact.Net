@@ -2,7 +2,6 @@
 // Copyright (c) 2014, github.com/steforster/Remact.Net
 
 using System;
-using System.Diagnostics;   // Trace Listener, Trace...
 using System.Reflection;
 using System.Text;    // Assembly, Attributes
 

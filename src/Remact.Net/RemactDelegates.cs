@@ -1,9 +1,6 @@
 
 // Copyright (c) 2014, github.com/steforster/Remact.Net
 
-using System;
-using System.Collections.Generic;
-
 namespace Remact.Net
 {
     /// <summary>

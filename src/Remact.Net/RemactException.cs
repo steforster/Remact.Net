@@ -5,9 +5,6 @@ using System;
 
 namespace Remact.Net
 {
-    //----------------------------------------------------------------------------------------------
-    #region == class RemactException ==
-
     /// <summary>
     /// An unexpected RemactMessage is converted to and thrown as a RemactException on the receiving side.
     /// When the RemactMessage type is 'Error' and the payload is 'ErrorMessage', the payload is converted to a inner exception.
@@ -45,7 +42,4 @@ namespace Remact.Net
         /// </summary>
         public string SourceStackTrace { get; protected set; }
     }
-
-    #endregion
-    //----------------------------------------------------------------------------------------------
 }

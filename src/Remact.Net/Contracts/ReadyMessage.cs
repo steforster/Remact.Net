@@ -1,25 +1,19 @@
 
 // Copyright (c) 2014, github.com/steforster/Remact.Net
 
-using System;
 using System.Runtime.Serialization;// IExtensibleDataObject
-using System.Collections.Generic;  // List
-using System.Reflection;           // Assembly
-using System.Text;                 // StringBuilder
-using Remact.Net.Remote;
 using System.Threading;
-using System.Net;                  // IPAddress
 
 namespace Remact.Net
 {
-  //----------------------------------------------------------------------------------------------
-  #region == class IExtensibleRemactMessage ==
+    //----------------------------------------------------------------------------------------------
+    #region == class IExtensibleRemactMessage ==
 
-  /// <summary>
-  /// Represents the interface used for the base message class.
-  /// It is provided for library users wishing to write their own base message implementation.
-  /// </summary>
-  public interface IExtensibleRemactMessage : IExtensibleDataObject
+    /// <summary>
+    /// Represents the interface used for the base message class.
+    /// It is provided for library users wishing to write their own base message implementation.
+    /// </summary>
+    public interface IExtensibleRemactMessage : IExtensibleDataObject
   {
       /// <summary>
       /// This SynchronizationContext is currently allowed to modify the message members. 

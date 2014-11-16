@@ -1,8 +1,6 @@
 ﻿
 // Copyright (c) 2014, github.com/steforster/Remact.Net
 
-using Newtonsoft.Json.Linq;
-
 namespace Remact.Net.Protocol.Wamp
 {
 #pragma warning disable 1591

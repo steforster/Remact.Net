@@ -3,7 +3,6 @@
 
 using System;
 using System.Threading;            // SynchronizationContext
-using Remact.Net.Remote;
 
 namespace Remact.Net
 {
@@ -42,6 +41,10 @@ namespace Remact.Net
             return null; // already handled
         }
     }
+
+    #endregion
+    //----------------------------------------------------------------------------------------------
+    #region == class RemactMessageType ==
 
     /// <summary>
     /// The communication type of a <see cref="RemactMessage"/>

@@ -2,6 +2,7 @@
 // Copyright (c) 2014, github.com/steforster/Remact.Net
 
 using System.Threading.Tasks;
+
 namespace Remact.Net.Contracts
 {
     /// <summary>
