@@ -18,15 +18,15 @@ namespace Remact.Net.Protocol
         Uri ServiceUri { get; }
 
         /// <summary>
-        /// Gets the connection port state.
+        /// The state of the connection to the service.
         /// </summary>
         PortState PortState { get; }
 
         /// <summary>
-        /// Opens the connection.
+        /// Opens the connection to the service.
         /// </summary>
-        /// <param name="state">The state will be returned.</param>
-        /// <param name="callback">Callback handler for OnOpenCompleted and MessageFromService.</param>
+        /// <param name="state">The state is passed to OnOpenCompleted.</param>
+        /// <param name="callback">Called when the open has finished or messages have been received.</param>
         void OpenAsync(OpenAsyncState state, IRemactProtocolDriverCallbacks callback);
 
         /// <summary>
@@ -73,23 +73,62 @@ namespace Remact.Net.Protocol
         void OnServiceDisconnect();
     }
 
+    /// <summary>
+    /// Asynchronous state is passed ny the protocol driver from method OpenAsync to OnOpenCompleted.
+    /// </summary>
     public class OpenAsyncState
     {
+        /// <summary>
+        /// The task completion source.
+        /// </summary>
         public TaskCompletionSource<bool> Tcs;
+
+        /// <summary>
+        /// The exception in case of error while opening.
+        /// </summary>
         public Exception Error;
     }
 
+    /// <summary>
+    /// Message content used by the protocol drivers.
+    /// </summary>
     public class LowerProtocolMessage
     {
+        /// <summary>
+        /// The message type.
+        /// </summary>
         public RemactMessageType Type;
-        public int RequestId; // when receiving responses
-        public string DestinationMethod; // when receiving notifications or requests
+
+        /// <summary>
+        /// The request id matches request and response message pairs.
+        /// </summary>
+        public int RequestId;
+
+        /// <summary>
+        /// The name of the destination mezhod, used for notifications or requests.
+        /// </summary>
+        public string DestinationMethod;
+
+        /// <summary>
+        /// The strong typed message payload to serialize.
+        /// </summary>
         public object Payload;
+
+        /// <summary>
+        /// The message payload when received as a dynamically deserializable type.
+        /// </summary>
         public ISerializationPayload SerializationPayload;
 
+        /// <summary>
+        /// Default constructor.
+        /// </summary>
         public LowerProtocolMessage()
         {}
 
+        /// <summary>
+        /// Creates an instance from a RemactMessage.
+        /// </summary>
+        /// <param name="msg">The RemactMessage.</param>
         public LowerProtocolMessage(RemactMessage msg)
         {
             Type = msg.MessageType;

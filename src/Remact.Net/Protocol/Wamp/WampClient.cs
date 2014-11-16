@@ -19,6 +19,10 @@ namespace Remact.Net.Protocol.Wamp
     /// </summary>
     public class WampClient : ProtocolDriverClientBase, IRemactProtocolDriverService
     {
+        /// <summary>
+        /// Constructor for a client that connects to a service.
+        /// </summary>
+        /// <param name="websocketUri">The uri of the service.</param>
         public WampClient(Uri websocketUri)
         {
             ServiceUri = websocketUri;
@@ -33,14 +37,17 @@ namespace Remact.Net.Protocol.Wamp
         }
 
         #region IRemactProtocolDriverService proxy implementation
-        
+
+        /// <inheritdoc/>
         public PortState PortState {get {return BasePortState;}}
 
+        /// <inheritdoc/>
         public void OpenAsync(OpenAsyncState state, IRemactProtocolDriverCallbacks callback)
         {
             base.BaseOpenAsync(state, callback);
         }
 
+        /// <inheritdoc/>
         public void MessageFromClient(RemactMessage msg)
         {
             string callId = msg.RequestId.ToString();
@@ -73,7 +80,7 @@ namespace Remact.Net.Protocol.Wamp
             ErrorFromClient(message);
         }
 
-        public void ErrorFromClient(RemactMessage message)
+        private void ErrorFromClient(RemactMessage message)
         {
             string callId = message.RequestId.ToString();
             string errorUri;
@@ -108,7 +115,10 @@ namespace Remact.Net.Protocol.Wamp
         #region Alchemy callbacks
 
 
-        // message from web socket
+        /// <summary>
+        /// Called when a message from web socket is received.
+        /// </summary>
+        /// <param name="context">Alchemy connection context.</param>
         private void OnReceived(UserContext context)
         {
             if (_disposed)
@@ -198,55 +208,3 @@ namespace Remact.Net.Protocol.Wamp
         #endregion
     }
 }
-/*
-        internal void HandleSendException(ReceivingState data, Exception ex)
-        {
-            //RaLog.Exception("Could not send to Remact service", ex);
-            ErrorMessage.Code Code;
-            bool onSvc = false;
-
-            if (ex is System.Reflection.TargetInvocationException)
-            {
-                ex = (ex as System.Reflection.TargetInvocationException).InnerException;
-                onSvc = true;
-            }
-
-            if (ex is TimeoutException)
-            {
-                if (onSvc) Code = ErrorMessage.Code.TimeoutOnService;
-                else Code = ErrorMessage.Code.TimeoutOnClient;
-                data.timeout = true;
-            }
-            else if (ex is ProtocolException)
-            {
-                Code = ErrorMessage.Code.RequestTypeUnknownOnService;
-            }
-            else if (ex is FaultException)
-            { // including FaultException<TDetail>
-                Code = ErrorMessage.Code.ReqOrRspNotSerializableOnService;
-                onSvc = true;
-                data.timeout = true; // stop sending, enter Faulted state
-            }
-            else if (ex is CommunicationException)
-            {
-                if (!m_boFirstResponseReceived) Code = ErrorMessage.Code.CouldNotConnect;
-                else Code = ErrorMessage.Code.ReqOrRspNotSerializableOnService; // ???
-                data.timeout = true; // stop sending, enter Faulted state
-            }
-            else if (ex is ObjectDisposedException && !onSvc)
-            {
-                Code = ErrorMessage.Code.CouldNotSend;
-                data.timeout = true;
-                data.disposed = true;
-            }
-            else
-            {
-                if (onSvc) Code = ErrorMessage.Code.ClientDetectedUnhandledExceptionOnService;
-                else Code = ErrorMessage.Code.CouldNotSend;
-                data.timeout = true; // stop sending, enter Faulted state
-            }
-            m_boFirstResponseReceived = true;
-            data.idSnd.Message = null; // Send and Receive normally point to the same id
-            data.idRcv.Message = new ErrorMessage(Code, ex);
-        }
-*/

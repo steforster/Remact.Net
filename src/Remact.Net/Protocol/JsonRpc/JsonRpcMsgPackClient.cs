@@ -2,22 +2,20 @@
 // Copyright (c) 2014, github.com/steforster/Remact.Net
 
 using System;
-using System.Threading;
-using System.Collections.Concurrent;
 using Alchemy;
-using Alchemy.Classes;
-using MsgPack.Serialization;
-using Remact.Net.Protocol;
-using System.IO;
 
 namespace Remact.Net.Protocol.JsonRpc
 {
     /// <summary>
     /// Implements the protocol level for a JSON-RPC client. See http://www.jsonrpc.org/specification.
-    /// Uses the MsgPack-cli serializer.
+    /// Uses the MsgPack-cli serializer. See http://msgpack.org.
     /// </summary>
-    public class JsonRpcMsgPackClient : JsonRpcMsgPackClientBase, IRemactProtocolDriverService
+    public class JsonRpcMsgPackClient : JsonRpcMsgPackDriver, IRemactProtocolDriverService
     {
+        /// <summary>
+        /// Constructor for a client that connects to a service.
+        /// </summary>
+        /// <param name="websocketUri">The uri of the service.</param>
         public JsonRpcMsgPackClient(Uri websocketUri)
         {
             ServiceUri = websocketUri;
@@ -33,13 +31,16 @@ namespace Remact.Net.Protocol.JsonRpc
 
         #region IRemactProtocolDriverService proxy implementation
 
+        /// <inheritdoc/>
         public PortState PortState {get {return BasePortState;}}
 
+        /// <inheritdoc/>
         public void OpenAsync(OpenAsyncState state, IRemactProtocolDriverCallbacks callback)
         {
             base.BaseOpenAsync(state, callback);
         }
 
+        /// <inheritdoc/>
         public void MessageFromClient(RemactMessage msg)
         {
             SendMessage(new LowerProtocolMessage(msg));
@@ -50,6 +51,7 @@ namespace Remact.Net.Protocol.JsonRpc
 
         private int _lowLevelErrorCount;
 
+        /// <inheritdoc/>
         protected override void IncomingMessageNotDeserializable(int id, string errorDesc)
         {
             if (++_lowLevelErrorCount > 100)

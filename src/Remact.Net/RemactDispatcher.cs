@@ -13,10 +13,14 @@ namespace Remact.Net
     #region == class RemactDispatcher ==
 
     /// <summary>
-    /// Dispatches an <see cref="RemactMessage"/> to a <see cref="RemactMethod"/>.
+    /// Dispatches a <see cref="RemactMessage"/> to a matching method and converts the incoming payload.
+    /// Each port has a dispatcher for incoming messages.
     /// </summary>
     public class RemactDispatcher
     {
+        /// <summary>
+        /// Default constructor.
+        /// </summary>
         public RemactDispatcher()
         {
             _methods = new Dictionary<string, RemactMethod>();
@@ -24,7 +28,13 @@ namespace Remact.Net
 
         private Dictionary<string, RemactMethod> _methods;
 
-
+        /// <summary>
+        /// Call the method addressed by <see cref="RemactMessage.DestinationMethod"/> name. Convert the <see cref="RemactMessage.Payload"/> to the type defined by the called methods first parameter. 
+        /// Internally used by Remact.Net.
+        /// </summary>
+        /// <param name="msg">The incoming RemactMessage.</param>
+        /// <param name="context">The context object defined by a <see cref="RemactPortClient{TOC}"/> or <see cref="RemactPortService{TSC}"/></param>
+        /// <returns>Null, when the message has been processed. The unchanged message otherwise.</returns>
         public RemactMessage CallMethod(RemactMessage msg, object context)
         {
             if (string.IsNullOrEmpty(msg.DestinationMethod)) return msg;
@@ -44,7 +54,23 @@ namespace Remact.Net
             return null;
         }
 
-
+        /// <summary>
+        /// Add methods of an interface to the dispatcher.
+        /// A method of the implementation object will be invoked by an incoming RemactMessage.
+        /// The given implementation object must not implement the interface exactly
+        /// but all method names of the interface must be uniquely found in the implementation object.
+        /// All these implemented, remotly callable methods must have 2 or 3 parameters. 
+        /// The first parameter must match the parameter of the equally named method in the interface.
+        /// The second parameter must be of type <see cref="RemactMessage"/>.
+        /// The third parameter is optional. When provided it must match the context type
+        /// of the corresponding <see cref="RemactPortClient{TOC}"/> or <see cref="RemactPortService{TSC}"/>.
+        /// The return type of the implemented method must be equal to the return type T of the interface method.
+        /// When implemented as an asynchronous service, the retun type also may be of type <see cref="Task{M}"/> 
+        /// where M is <see cref="RemactMessage{T}"/> and T is the return type of the interface method.
+        /// All these constraints are checked at runtime, when <see cref="AddActorInterface"/> is called.
+        /// </summary>
+        /// <param name="actorInterface">One of the port input interface contracts (no attributes are needed).</param>
+        /// <param name="implementation">The port implementation for incoming messages.</param>
         public void AddActorInterface(Type actorInterface, object implementation)
         {
             var mTargetList = implementation.GetType().GetMethods(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.FlattenHierarchy

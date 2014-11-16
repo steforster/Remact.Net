@@ -2,12 +2,8 @@
 // Copyright (c) 2014, github.com/steforster/Remact.Net
 
 using System;
-using System.Threading;
-using System.Collections.Concurrent;
-using Alchemy;
 using Alchemy.Classes;
 using MsgPack.Serialization;
-using Remact.Net.Protocol;
 using Remact.Net.Remote; // TODO remove (used for service side)
 using System.IO;
 
@@ -16,12 +12,16 @@ namespace Remact.Net.Protocol.JsonRpc
     /// <summary>
     /// Implements the protocol level for a JSON-RPC client. See http://www.jsonrpc.org/specification.
     /// Uses the MsgPack-cli serializer.
+    /// Is used on client as well as on service side.
     /// </summary>
-    public class JsonRpcMsgPackClientBase : ProtocolDriverClientBase
+    public class JsonRpcMsgPackDriver : ProtocolDriverClientBase
     {
         #region Send messages
 
-
+        /// <summary>
+        /// Send a message in JsonRpc and MsgPack.
+        /// </summary>
+        /// <param name="msg">The message.</param>
         protected void SendMessage(LowerProtocolMessage msg)
         {
             if (msg.Type == RemactMessageType.Error)
@@ -57,13 +57,21 @@ namespace Remact.Net.Protocol.JsonRpc
             _wsClient.Send(stream.GetBuffer(), (int)stream.Length);
         }
 
-
+        /// <summary>
+        /// Called, when an incoming message cannot be deserialized.
+        /// </summary>
+        /// <param name="id">The request id is > 0 when it could be read. Otherwise 0.</param>
+        /// <param name="errorDesc">A description of the error.</param>
         protected virtual void IncomingMessageNotDeserializable(int id, string errorDesc)
         {
             // overloaded
         }
-        
 
+        /// <summary>
+        /// Send an error message in JsonRpc and MsgPack.
+        /// </summary>
+        /// <param name="requestId">The request id is > 0 in case the error is a response to a request. Otherwise 0.</param>
+        /// <param name="payload">The error payload.</param>
         protected void SendError(int requestId, Remact.Net.ErrorMessage payload)
         {
             var rpc = new JsonRpcV2Message
@@ -107,8 +115,11 @@ namespace Remact.Net.Protocol.JsonRpc
         protected IRemactProtocolDriverService _requestHandler;
         protected RemactServiceUser _svcUser;
         protected RemactPortService _serviceIdent;
-        
-        // message from web socket
+
+        /// <summary>
+        /// Called when a message from web socket is received.
+        /// </summary>
+        /// <param name="context">Alchemy connection context.</param>
         protected void OnReceived(UserContext context)
         {
             if (_disposed)

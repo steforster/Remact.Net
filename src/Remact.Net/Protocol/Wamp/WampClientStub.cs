@@ -2,28 +2,32 @@
 // Copyright (c) 2014, github.com/steforster/Remact.Net
 
 using System;
-using System.Net;
-using System.Threading;
-using Alchemy;
 using Alchemy.Classes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Remact.Net.Contracts;
 using Remact.Net.Remote;
 
 namespace Remact.Net.Protocol.Wamp
 {
     /// <summary>
     /// Implements the protocol level for a WAMP server. See http://wamp.ws/spec/.
+    /// Uses the Newtonsoft.Json serializer.
     /// </summary>
-    public class WampClientProxy : IRemactProtocolDriverCallbacks
+    public class WampClientStub : IRemactProtocolDriverCallbacks
     {
         private UserContext _wsChannel;
         private IRemactProtocolDriverService _requestHandler;
         private RemactServiceUser _svcUser;
         private RemactPortService _serviceIdent;
 
-        public WampClientProxy(RemactServiceUser svcUser, RemactPortService serviceIdent, IRemactProtocolDriverService requestHandler, UserContext websocketChannel)
+        /// <summary>
+        /// Constructor for a stub instance that connects from service to client.
+        /// </summary>
+        /// <param name="svcUser">The RemactServiceUser instance for this connection.</param>
+        /// <param name="serviceIdent">The service identification.</param>
+        /// <param name="requestHandler">The interface for callbacks to the service.</param>
+        /// <param name="websocketChannel">The Alchemy channel.</param>
+        public WampClientStub(RemactServiceUser svcUser, RemactPortService serviceIdent, IRemactProtocolDriverService requestHandler, UserContext websocketChannel)
         {
             _wsChannel = websocketChannel;
                 //OnSend = OnSend,
@@ -35,22 +39,21 @@ namespace Remact.Net.Protocol.Wamp
             _svcUser = svcUser;
             _serviceIdent = serviceIdent;
             _requestHandler = requestHandler;
-            Connected = true;
         }
 
-        public bool Connected { get; private set; }
 
+        #region IRemactProtocolDriverCallbacks implementation
+
+        /// <inheritdoc/>
         public Uri ClientUri { get { return new Uri("ws://"+_wsChannel.ClientAddress.ToString()); } }
 
-
+        /// <inheritdoc/>
         public void OnServiceDisconnect()
         {
             _wsChannel = null;
         }
 
-        #region IRemactProtocolDriverCallbacks implementation
-
-
+        /// <inheritdoc/>
         public void OnOpenCompleted(OpenAsyncState state)
         {
             throw new NotImplementedException();
@@ -62,7 +65,6 @@ namespace Remact.Net.Protocol.Wamp
             var error = new ErrorMessage(ErrorCode.ReqestNotDeserializableOnService, errorDesc);
             OnErrorFromService(id, error);
         }
-
 
         /// <inheritdoc/>
         public void OnMessageFromService(LowerProtocolMessage lower)
@@ -147,7 +149,10 @@ namespace Remact.Net.Protocol.Wamp
         #region Alchemy callbacks
 
 
-        // message from web socket
+        /// <summary>
+        /// Called when a message from web socket is received.
+        /// </summary>
+        /// <param name="context">Alchemy connection context.</param>
         private void OnReceived(UserContext context)
         {
             int id = 0;
@@ -235,10 +240,13 @@ namespace Remact.Net.Protocol.Wamp
             }
         }
 
-        // Connect failure or disposing context 
+        /// <summary>
+        /// Occurs, when connection failes or context is disposed.
+        /// </summary>
+        /// <param name="context"></param>
         private void OnDisconnect(UserContext context)
         {
-            Connected = false; // TODO
+            // TODO
         }
 
         #endregion

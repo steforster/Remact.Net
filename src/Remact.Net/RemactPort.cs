@@ -374,7 +374,7 @@ namespace Remact.Net
     #region Sending request messages to the connected actor port (service or client) and awaiting a response payload.
 
     // must be overridden to be able to send messages from the concrete port type.
-    protected virtual RemactMessage NewMessage(string method, object payload, RemactMessageType messageType,
+    internal virtual RemactMessage NewMessage(string method, object payload, RemactMessageType messageType,
                                                AsyncResponseHandler responseHandler)
     {
         throw new NotSupportedException("not allowed to send a message from RemactPortService");

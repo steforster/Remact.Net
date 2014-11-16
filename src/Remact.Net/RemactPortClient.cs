@@ -112,7 +112,7 @@ namespace Remact.Net
     public int ClientId { get; internal set; }
 
     // must be overridden to be able to send messages from the concrete port type.
-    protected override RemactMessage NewMessage(string method, object payload, RemactMessageType messageType, AsyncResponseHandler responseHandler)
+    internal override RemactMessage NewMessage(string method, object payload, RemactMessageType messageType, AsyncResponseHandler responseHandler)
     {
         return new RemactMessage (this, method, payload, messageType, responseHandler);
     }

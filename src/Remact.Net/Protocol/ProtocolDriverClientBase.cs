@@ -25,10 +25,10 @@ namespace Remact.Net.Protocol
 
         #region IRemactProtocolDriverService proxy implementation
 
-
+        /// <inheritdoc/>
         public Uri ServiceUri { get; protected set; }
-        
 
+        /// <inheritdoc/>
         protected PortState BasePortState 
         { 
             get 
@@ -52,7 +52,11 @@ namespace Remact.Net.Protocol
             } 
         }
 
-        // Asynchronous open the connection
+        /// <summary>
+        /// Opens the connection to the service.
+        /// </summary>
+        /// <param name="state">The state is passed to OnOpenCompleted.</param>
+        /// <param name="callback">Called when the open has finished or messages have been received.</param>
         protected void BaseOpenAsync(OpenAsyncState state, IRemactProtocolDriverCallbacks callback)
         {
             _callback = callback;
@@ -87,6 +91,7 @@ namespace Remact.Net.Protocol
             _callback.OnOpenCompleted(state);
         }
 
+        /// <inheritdoc/>
         public void Dispose()
         {
             try

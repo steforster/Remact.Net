@@ -2,14 +2,8 @@
 // Copyright (c) 2014, github.com/steforster/Remact.Net
 
 using System;
-using System.Net;
-using System.Threading;
-using Alchemy;
 using Alchemy.Classes;
-using MsgPack.Serialization;
-using Remact.Net.Contracts;
 using Remact.Net.Remote;
-using System.IO;
 
 namespace Remact.Net.Protocol.JsonRpc
 {
@@ -17,10 +11,17 @@ namespace Remact.Net.Protocol.JsonRpc
     /// Implements the protocol level for a JSON-RPC server. See http://www.jsonrpc.org/specification.
     /// Uses the MsgPack-cli serializer.
     /// </summary>
-    public class JsonRpcMsgPackClientStub : JsonRpcMsgPackClientBase
+    public class JsonRpcMsgPackClientStub : JsonRpcMsgPackDriver, IRemactProtocolDriverCallbacks
     {
         private UserContext _wsChannel;
 
+        /// <summary>
+        /// Constructor for a stub instance that connects from service to client.
+        /// </summary>
+        /// <param name="svcUser">The RemactServiceUser instance for this connection.</param>
+        /// <param name="serviceIdent">The service identification.</param>
+        /// <param name="requestHandler">The interface for callbacks to the service.</param>
+        /// <param name="websocketChannel">The Alchemy channel.</param>
         public JsonRpcMsgPackClientStub(RemactServiceUser svcUser, RemactPortService serviceIdent, IRemactProtocolDriverService requestHandler, UserContext websocketChannel)
         {
             _wsChannel = websocketChannel;
@@ -33,22 +34,21 @@ namespace Remact.Net.Protocol.JsonRpc
             _svcUser = svcUser;
             _serviceIdent = serviceIdent;
             _requestHandler = requestHandler;
-            Connected = true;
         }
 
-        public bool Connected { get; private set; }
 
+        #region IRemactProtocolDriverCallbacks implementation
+
+        /// <inheritdoc/>
         public Uri ClientUri { get { return new Uri("ws://"+_wsChannel.ClientAddress.ToString()); } }
 
-
+        /// <inheritdoc/>
         public void OnServiceDisconnect()
         {
             _wsChannel = null;
         }
 
-        #region IRemactProtocolDriverCallbacks implementation
-
-
+        /// <inheritdoc/>
         public void OnOpenCompleted(OpenAsyncState state)
         {
             throw new NotImplementedException();
@@ -61,7 +61,7 @@ namespace Remact.Net.Protocol.JsonRpc
             SendMessage(msg);
         }
 
-
+        /// <inheritdoc/>
         protected override void IncomingMessageNotDeserializable(int id, string errorDesc)
         {
             var error = new ErrorMessage(ErrorCode.ReqestNotDeserializableOnService, errorDesc);
@@ -72,10 +72,13 @@ namespace Remact.Net.Protocol.JsonRpc
         #endregion
         #region Alchemy callbacks
 
-        // Connect failure or disposing context 
+        /// <summary>
+        /// Occurs, when connection failes or context is disposed.
+        /// </summary>
+        /// <param name="context"></param>
         private void OnDisconnect(UserContext context)
         {
-            Connected = false; // TODO
+            // TODO
         }
 
         #endregion

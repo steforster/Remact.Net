@@ -118,7 +118,10 @@ namespace Remact.Net.Protocol
             Dispose(true);
             GC.SuppressFinalize(this);
         }
-        
+
+        /// <summary>
+        /// Stops the WebSocketServer and closes the TCP port.
+        /// </summary>
         protected virtual void Dispose(bool disposing)
         {
             if (disposing && _wsServer != null)

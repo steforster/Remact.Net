@@ -10,6 +10,7 @@
 *.bak
 *.zip
 
+*.sln.ide/*
 _ReSharper.*
 
 

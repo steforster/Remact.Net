@@ -43,12 +43,29 @@ namespace Remact.Net
         }
     }
 
-
+    /// <summary>
+    /// The communication type of a <see cref="RemactMessage"/>
+    /// </summary>
     public enum RemactMessageType
     {
-        Request, // default
+        /// <summary>
+        /// Ba default a message is a request. For each request a response is expected at the sending port.
+        /// </summary>
+        Request,
+
+        /// <summary>
+        /// The response to a request.
+        /// </summary>
         Response,
+
+        /// <summary>
+        /// Notifications are sent one way, without expecting a response. 
+        /// </summary>
         Notification,
+
+        /// <summary>
+        /// Error messages are sent as response, when a request or a notification could not be correctly handled at the receiving side.
+        /// </summary>
         Error
     }
 
@@ -228,7 +245,13 @@ namespace Remact.Net
             Response = msg.Response;
         }// CTOR4
 
-        
+
+        /// <summary>
+        /// Tries to convert the incoming payload to an object of the given result type.
+        /// </summary>
+        /// <typeparam name="T">The type of the resulting payload object.</typeparam>
+        /// <param name="result">The resulting payload object.</param>
+        /// <returns>True, when successfully converted. False otherwise.</returns>
         public bool TryConvertPayload<T>(out T result) where T : class
         {
             result = null;
@@ -438,7 +461,7 @@ namespace Remact.Net
     /// <summary>
     /// <para>All data for a message sent through Remact.</para>
     /// <para>Contains a Payload of type T as well as a request identification and a reference to the sending RemactPort.</para>
-    /// <para>The object may be used to send a response to the sender and to log unique message identification.</para>
+    /// <para>The RemactMessage may be used to send a response to the sender and to log unique message identification.</para>
     /// </summary>
     public class RemactMessage<T> : RemactMessage
     {
@@ -453,9 +476,15 @@ namespace Remact.Net
             Payload = payload;
         }
 
+        /// <summary>
+        /// Gets the strongly typed payload. <see cref="RemactMessage{T}"/> always contains a successfully converted payload.
+        /// </summary>
         public new T Payload { get; internal set; }
 
-        public object RawPayload { get { return base.Payload; } }
+        /*/ <summary>
+        /// The raw, unconverted payload.
+        /// </summary>
+        public object RawPayload { get { return base.Payload; } }*/
     }
 
     #endregion

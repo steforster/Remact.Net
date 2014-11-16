@@ -1,9 +1,13 @@
 
 // Copyright (c) 2014, github.com/steforster/Remact.Net
+
 using System;
 
 namespace Remact.Net
 {
+    /// <summary>
+    /// The interface abstracts the serializer used for the incoming payload.
+    /// </summary>
     public interface ISerializationPayload
     {
         /// <summary>

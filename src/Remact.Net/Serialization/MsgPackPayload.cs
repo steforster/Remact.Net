@@ -2,11 +2,13 @@
 // Copyright (c) 2014, github.com/steforster/Remact.Net
 
 using System;
-using MsgPack.Serialization;
 using Newtonsoft.Json.Linq;
 
 namespace Remact.Net
 {
+    /// <summary>
+    /// The implementation of <see cref="ISerializationPayload"/> for the binary MsgPack serializer, see http://msgpack.org.
+    /// </summary>
     public class MsgPackPayload : ISerializationPayload
     {
         /// <summary>
@@ -20,6 +22,7 @@ namespace Remact.Net
 
         private JToken _jToken;
 
+        /// <iheritdoc/>
         public object AsDynamic
         {
             get

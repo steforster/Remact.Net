@@ -1,10 +1,14 @@
 
 // Copyright (c) 2014, github.com/steforster/Remact.Net
+
 using System;
 using Newtonsoft.Json.Linq;
 
 namespace Remact.Net
 {
+    /// <summary>
+    /// The implementation of <see cref="ISerializationPayload"/> for the text based Newtonsoft.Json serializer, see https://github.com/JamesNK/Newtonsoft.Json.
+    /// </summary>
     public class NewtonsoftJsonPayload : ISerializationPayload
     {
         /// <summary>
@@ -18,6 +22,7 @@ namespace Remact.Net
 
         private JToken _jToken;
 
+        /// <iheritdoc/>
         public object AsDynamic
         {
             get

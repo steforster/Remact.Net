@@ -2,17 +2,9 @@
 // Copyright (c) 2014, github.com/steforster/Remact.Net
 
 using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Net;         // IPEndPoint
-using System.Net.Sockets; // Socket
 using System.Threading;   // SynchronizationContext
 using System.Threading.Tasks;
-
-using Alchemy;
-using Alchemy.Classes;
 using Remact.Net.Protocol;
-using Remact.Net.Protocol.Wamp;
 
 
 
@@ -21,7 +13,7 @@ namespace Remact.Net.Remote
     /// <summary>
     /// This is the Service Entrypoint. It dispatches requests and returns a response.
     /// </summary>
-    public class MultithreadedServiceNet40 : IRemactProtocolDriverService
+    internal class MultithreadedServiceNet40 : IRemactProtocolDriverService
     {
         private RemactService _service;
         private RemactServiceUser _svcUser;
