@@ -44,7 +44,7 @@ namespace Remact.Net.Protocol.Wamp
         }
 
         /// <inheritdoc/>
-        public void MessageFromClient(RemactMessage msg)
+        public void MessageFromClient(LowerProtocolMessage msg)
         {
             string callId = msg.RequestId.ToString();
 

@@ -155,6 +155,7 @@ namespace Remact.Net.Protocol.JsonRpc
                     
                     msg.DestinationMethod = rpc.method;
                     msg.Payload = rpc.params1;
+                    // TODO msg.SerializationPayload = new MsgPackPayload(rpc.params1); 
                 }
                 else if (rpc.result != null && msg.RequestId >= 0)
                 {
@@ -172,17 +173,14 @@ namespace Remact.Net.Protocol.JsonRpc
                     return;
                 }
                 
-                // TODO same interface on client and service
                 if (_callback != null)
                 {
                     _callback.OnMessageFromService(msg); // client side
                 }
                 else
-                {   // service side
-                    var rm = new RemactMessage(_serviceIdent, msg.DestinationMethod, msg.Payload, msg.Type,
-                                               _svcUser.PortClient, _svcUser.ClientId, msg.RequestId);
-                    rm.SerializationPayload = null;
-                    _requestHandler.MessageFromClient(rm);
+                {   
+                    // TODO msg.SerializationPayload;
+                    _requestHandler.MessageFromClient(msg); // service side
                 }
             }
             catch (Exception ex)

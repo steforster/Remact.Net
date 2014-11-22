@@ -2,32 +2,33 @@
 // Copyright (c) 2014, github.com/steforster/Remact.Net
 
 using System;
-using Newtonsoft.Json.Linq;
+using MsgPack;
+using MsgPack.Serialization;
 
 namespace Remact.Net
 {
     /// <summary>
-    /// The implementation of <see cref="ISerializationPayload"/> for the binary MsgPack serializer, see http://msgpack.org.
+    /// The implementation of <see cref="ISerializationPayload"/> for the binary MsgPack serializer, see https://github.com/msgpack/msgpack-cli/wiki.
     /// </summary>
     public class MsgPackPayload : ISerializationPayload
     {
         /// <summary>
         /// Create a serializer message instance.
         /// </summary>
-        /// <param name="jToken">The incoming payload converted to JToken.</param>
-        public MsgPackPayload (JToken jToken)
+        /// <param name="msgPackObj">The incoming payload converted to JToken.</param>
+        public MsgPackPayload (MessagePackObject[] msgPackObj)
         {
-            _jToken = jToken;
+            _msgPackObj = msgPackObj;
         }
 
-        private JToken _jToken;
+        private MessagePackObject[] _msgPackObj;
 
         /// <iheritdoc/>
         public object AsDynamic
         {
             get
             {
-                return _jToken;
+                return _msgPackObj;
             }
         }
 
@@ -35,7 +36,9 @@ namespace Remact.Net
         {
             try
             {
-                return _jToken.ToObject(payloadType); // deserialized
+                var serializer = MessagePackSerializer.Get(payloadType);
+                //serializer.
+                return null; // TODO _msgPackObj[0]..ToObject(payloadType); // deserialized
             }
             catch
             {
@@ -52,15 +55,15 @@ namespace Remact.Net
         {
             try
             {
-                var type = System.Type.GetType(assemblyQualifiedTypeName);
-                return _jToken.ToObject(type); // deserialized
+                var type = Type.GetType(assemblyQualifiedTypeName);
+                return null; // TODO _msgPackObj.ToObject(type); // deserialized
             }
             catch (Exception ex)
             {
                 RaLog.Exception("could not convert payload type '" + assemblyQualifiedTypeName + "'", ex);
             }
 
-            return _jToken;
+            return _msgPackObj;
         }
     }
 }

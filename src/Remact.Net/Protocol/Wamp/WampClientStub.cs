@@ -179,12 +179,15 @@ namespace Remact.Net.Protocol.Wamp
                     {
                         jToken = wamp[3];
                     }
-                    var pld = new NewtonsoftJsonPayload(jToken);
 
-                    var msg = new RemactMessage(_serviceIdent, (string)wamp[2], jToken, RemactMessageType.Request,
-                                                _svcUser.PortClient, _svcUser.ClientId, id);
-                    msg.SerializationPayload = pld;
-                    _requestHandler.MessageFromClient(msg);
+                    _requestHandler.MessageFromClient(new LowerProtocolMessage
+                    {
+                        DestinationMethod = (string)wamp[2],
+                        Payload = jToken,
+                        SerializationPayload = new NewtonsoftJsonPayload(jToken),
+                        Type = RemactMessageType.Request,
+                        RequestId = id,
+                    });
                 }
                 else if (wampType == (int)WampMessageType.v1CallError)
                 {
@@ -212,10 +215,14 @@ namespace Remact.Net.Protocol.Wamp
                         payload = new ErrorMessage(ErrorCode.Undef, errorUri + ": " + errorDesc); // Errormessage from client
                     }
 
-                    var msg = new RemactMessage(_serviceIdent, null, payload, RemactMessageType.Error, 
-                                                _svcUser.PortClient, _svcUser.ClientId, id);
-                    msg.SerializationPayload = pld;
-                    _requestHandler.MessageFromClient(msg);
+                    _requestHandler.MessageFromClient(new LowerProtocolMessage
+                    {
+                        DestinationMethod = null,
+                        Payload = payload,
+                        SerializationPayload = pld,
+                        Type = RemactMessageType.Error,
+                        RequestId = id,
+                    });
                 }
                 else if (wampType == (int)WampMessageType.v1Event)
                 {
@@ -224,10 +231,15 @@ namespace Remact.Net.Protocol.Wamp
                     var eventUri = (string)wamp[1];
                     var pld = new NewtonsoftJsonPayload(wamp[2]); // JToken
                     var payload = pld.TryReadAs(eventUri); // eventUri is assemblyQualifiedTypeName
-                    var msg = new RemactMessage(_serviceIdent, null, payload, RemactMessageType.Notification, 
-                                                _svcUser.PortClient, _svcUser.ClientId, 0);
-                    msg.SerializationPayload = pld;
-                    _requestHandler.MessageFromClient(msg);
+
+                    _requestHandler.MessageFromClient(new LowerProtocolMessage
+                    {
+                        DestinationMethod = null,
+                        Payload = payload,
+                        SerializationPayload = pld,
+                        Type = RemactMessageType.Notification,
+                        RequestId = 0,
+                    });
                 }
                 else
                 {

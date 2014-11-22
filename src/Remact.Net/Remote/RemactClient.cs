@@ -750,7 +750,7 @@ namespace Remact.Net.Remote
                 _OutstandingRequests.Add(msg.RequestId, msg);
             }
 
-            m_protocolClient.MessageFromClient(msg);
+            m_protocolClient.MessageFromClient(new LowerProtocolMessage(msg));
         }
 
         /// <summary>

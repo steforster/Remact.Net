@@ -38,6 +38,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Newtonsoft.Json.Net40", "..
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MsgPack.Net40", "..\msgpack-cli\src\MsgPack.Net40\MsgPack.Net40.csproj", "{D45D4CBE-AFE7-4E2A-945D-47AED564C39D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Newtonsoft.Msgpack", "src\Newtonsoft.Msgpack\Newtonsoft.Msgpack.csproj", "{39FE4157-2A85-4AEE-8D4A-4B7A1A60B03C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -88,6 +90,10 @@ Global
 		{D45D4CBE-AFE7-4E2A-945D-47AED564C39D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D45D4CBE-AFE7-4E2A-945D-47AED564C39D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D45D4CBE-AFE7-4E2A-945D-47AED564C39D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{39FE4157-2A85-4AEE-8D4A-4B7A1A60B03C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{39FE4157-2A85-4AEE-8D4A-4B7A1A60B03C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{39FE4157-2A85-4AEE-8D4A-4B7A1A60B03C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{39FE4157-2A85-4AEE-8D4A-4B7A1A60B03C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -107,5 +113,6 @@ Global
 		{D8A24025-5596-4391-AF4C-676AA434CADE} = {47111966-694A-4D01-BCBA-A98276B5D440}
 		{A9AE40FF-1A21-414A-9FE7-3BE13644CC6D} = {4E3DF2C1-79B8-4CB6-B5E7-D0DA01AE7751}
 		{D45D4CBE-AFE7-4E2A-945D-47AED564C39D} = {4E3DF2C1-79B8-4CB6-B5E7-D0DA01AE7751}
+		{39FE4157-2A85-4AEE-8D4A-4B7A1A60B03C} = {4E3DF2C1-79B8-4CB6-B5E7-D0DA01AE7751}
 	EndGlobalSection
 EndGlobal

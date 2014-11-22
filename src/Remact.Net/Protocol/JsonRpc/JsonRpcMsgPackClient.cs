@@ -41,9 +41,9 @@ namespace Remact.Net.Protocol.JsonRpc
         }
 
         /// <inheritdoc/>
-        public void MessageFromClient(RemactMessage msg)
+        public void MessageFromClient(LowerProtocolMessage msg)
         {
-            SendMessage(new LowerProtocolMessage(msg));
+            SendMessage(msg);
         }
 
         #endregion

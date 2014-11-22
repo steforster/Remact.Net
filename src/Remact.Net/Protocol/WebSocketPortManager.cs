@@ -116,7 +116,6 @@ namespace Remact.Net.Protocol
         public void Dispose()
         {
             Dispose(true);
-            GC.SuppressFinalize(this);
         }
 
         /// <summary>

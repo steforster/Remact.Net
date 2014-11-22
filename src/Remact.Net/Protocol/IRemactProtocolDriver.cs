@@ -31,8 +31,11 @@ namespace Remact.Net.Protocol
 
         /// <summary>
         /// Occurs when a client calls a service.
+        /// <param name="msg">The message in form of a LowerProtocolMessage. 
+        /// In case of an incoming message (server side), the Payload and the SerializationPayload is a JsonToken.
+        /// The Payload is converted later on to the request type of the called method.</param>
         /// </summary>
-        void MessageFromClient(RemactMessage message);
+        void MessageFromClient(LowerProtocolMessage msg);
 
         /// <summary>
         /// Closes connection and frees resources.
@@ -42,7 +45,7 @@ namespace Remact.Net.Protocol
 
     /// <summary>
     /// Interface for RemactClient (client side, higher level incoming interface).
-    /// and also interface for client proxies (server side, lower protocol level outgoing interface).
+    /// and also interface for client stubs (server side, lower protocol level outgoing interface).
     /// </summary>
     public interface IRemactProtocolDriverCallbacks
     {
@@ -61,10 +64,9 @@ namespace Remact.Net.Protocol
         /// Occurs when a message is received from service.
         /// </summary>
         /// <param name="msg">The message in form of a LowerProtocolMessage. 
-        /// In case of Type==Response, the Payload is a JsonToken.
+        /// In case of an incoming message (client side), the Payload and the SerializationPayload is a JsonToken.
         /// The Payload is converted later on to the return type of the called method.
-        /// The return Payload is null for void methods.
-        /// </param>
+        /// The return Payload is null for void methods.</param>
         void OnMessageFromService(LowerProtocolMessage msg);
 
         /// <summary>

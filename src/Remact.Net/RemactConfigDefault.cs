@@ -24,7 +24,11 @@ namespace Remact.Net
         #region == Instance and plugin ==
 
         private static IRemactConfig _instance;
-        private static bool _useMsgPack = true;
+
+        /// <summary>
+        /// Use experimental MessagePack integration, when set to true.
+        /// </summary>
+        public static bool UseMsgPack { get; set; }
 
         /// <summary>
         /// Library users may plug in their own implementation of IRemactDefault to RemactDefault.Instance.
@@ -95,7 +99,7 @@ namespace Remact.Net
                 {
                     OnConnected = (userContext) => OnClientConnected(portManager, userContext)
                 };
-                if (!_useMsgPack) portManager.WebSocketServer.SubProtocols = new string[] { "wamp" };
+                if (!UseMsgPack) portManager.WebSocketServer.SubProtocols = new string[] { "wamp" };
             }
 
             portManager.RegisterService(uri.AbsolutePath, service);
@@ -122,7 +126,7 @@ namespace Remact.Net
                 var svcUser = new RemactServiceUser(service.ServiceIdent);
                 var handler = new MultithreadedServiceNet40(svcUser, service);
                 // in future, the client stub will handle the OnReceive and OnDisconnect events for this connection
-                if(_useMsgPack)
+                if(UseMsgPack)
                 {
                     var jsonRpcProxy = new JsonRpcMsgPackClientStub(svcUser, service.ServiceIdent, handler, userContext);
                     svcUser.SetCallbackHandler(jsonRpcProxy);
@@ -147,7 +151,7 @@ namespace Remact.Net
         /// <returns>The protocol driver including serializer.</returns>
         public virtual IRemactProtocolDriverService DoClientConfiguration(ref Uri uri, bool forCatalog)
         {
-            if (_useMsgPack)
+            if (UseMsgPack)
             {
                 // Protocol = JsonRpc, binary, serializer = MsgPack.
                 return new JsonRpcMsgPackClient(uri);

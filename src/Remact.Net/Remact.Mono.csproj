@@ -23,6 +23,7 @@
     <DocumentationFile>bin\Debug.Mono\Remact.Net.XML</DocumentationFile>
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <GenerateDocumentation>true</GenerateDocumentation>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <Optimize>true</Optimize>

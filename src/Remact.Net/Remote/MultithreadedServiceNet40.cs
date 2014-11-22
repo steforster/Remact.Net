@@ -25,13 +25,16 @@ namespace Remact.Net.Remote
         }
 
         /// <summary>
-        /// Occurs when a WampClientProxy calls a service.
+        /// Occurs when a client-stub calls a service.
         /// </summary>
-        void IRemactProtocolDriverService.MessageFromClient(RemactMessage message)
+        void IRemactProtocolDriverService.MessageFromClient(LowerProtocolMessage msg)
         {
             object response = null;
             bool connectEvent = false;
             bool disconnectEvent = false;
+            var message = new RemactMessage(_service.ServiceIdent, msg.DestinationMethod, msg.Payload, msg.Type,
+                                            _svcUser.PortClient, _svcUser.ClientId, msg.RequestId);
+            message.SerializationPayload = msg.SerializationPayload;
             try
             {
                 // We are instantiated for each connected client, we know the _svcUser (because of the underlying WebSocket implementation).
