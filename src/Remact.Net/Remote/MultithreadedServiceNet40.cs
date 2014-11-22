@@ -13,7 +13,7 @@ namespace Remact.Net.Remote
     /// <summary>
     /// This is the Service Entrypoint. It dispatches requests and returns a response.
     /// </summary>
-    internal class MultithreadedServiceNet40 : IRemactProtocolDriverService
+    internal class MultithreadedServiceNet40 : IRemactProtocolDriverToService
     {
         private RemactService _service;
         private RemactServiceUser _svcUser;
@@ -27,7 +27,7 @@ namespace Remact.Net.Remote
         /// <summary>
         /// Occurs when a client-stub calls a service.
         /// </summary>
-        void IRemactProtocolDriverService.MessageFromClient(LowerProtocolMessage msg)
+        void IRemactProtocolDriverToService.MessageToService(LowerProtocolMessage msg)
         {
             object response = null;
             bool connectEvent = false;
@@ -142,9 +142,9 @@ namespace Remact.Net.Remote
             return tcs.Task;
         }
 
-        void       IRemactProtocolDriverService.OpenAsync(OpenAsyncState state, IRemactProtocolDriverCallbacks callback) { }
-        Uri        IRemactProtocolDriverService.ServiceUri { get { return null; } }
-        PortState  IRemactProtocolDriverService.PortState { get { return PortState.Ok; } }
-        void       IRemactProtocolDriverService.Dispose() { }
+        void       IRemactProtocolDriverToService.OpenAsync(OpenAsyncState state, IRemactProtocolDriverToClient callback) { }
+        Uri        IRemactProtocolDriverToService.ServiceUri { get { return null; } }
+        PortState  IRemactProtocolDriverToService.PortState { get { return PortState.Ok; } }
+        void       IRemactProtocolDriverToService.Dispose() { }
     }
 }

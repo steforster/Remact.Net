@@ -11,21 +11,27 @@ namespace Remact.Net.Protocol
     /// <summary>
     /// Implements some common protocol level methods for a client.
     /// </summary>
-    public class ProtocolDriverClientBase
+    public class ProtocolDriverClientHelper
     {
-        protected WebSocketClient _wsClient;
-        protected IRemactProtocolDriverCallbacks _callback;
-        protected bool _faulted;
-        protected bool _disposed;        
-        protected OnEventDelegate _onReceiveAction;
+        private WebSocketClient _wsClient;
+        private IRemactProtocolDriverToClient _callback;
+        private bool _faulted;
+        private bool _disposed;
+        private OnEventDelegate _onReceiveAction;
 
-        #region IRemactProtocolDriverService proxy implementation
+        /// <summary>
+        /// Constructor.
+        /// </summary>
+        /// <param name="wsClient">An Alchemy client.</param>
+        public ProtocolDriverClientHelper(WebSocketClient wsClient)
+        {
+            _wsClient = wsClient;
+        }
+
+        #region IRemactProtocolDriverToService implementation
 
         /// <inheritdoc/>
-        public Uri ServiceUri { get; protected set; }
-
-        /// <inheritdoc/>
-        protected PortState BasePortState 
+        public PortState BasePortState 
         { 
             get 
             {
@@ -53,9 +59,11 @@ namespace Remact.Net.Protocol
         /// </summary>
         /// <param name="state">The state is passed to OnOpenCompleted.</param>
         /// <param name="callback">Called when the open has finished or messages have been received.</param>
-        protected void BaseOpenAsync(OpenAsyncState state, IRemactProtocolDriverCallbacks callback)
+        /// <param name="onReceiveAction">Called by the web socket client or service, when a message has been received.</param>
+        public void BaseOpenAsync(OpenAsyncState state, IRemactProtocolDriverToClient callback, OnEventDelegate onReceiveAction)
         {
             _callback = callback;
+            _onReceiveAction = onReceiveAction;
             _wsClient.OnConnected = OnConnected;
             _wsClient.OnDisconnect = OnConnectFailure;
             _wsClient.BeginConnect(state);

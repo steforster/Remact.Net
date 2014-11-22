@@ -143,7 +143,7 @@ namespace Remact.Net
         /// <param name="uri">The endpoint URI to connect.</param>
         /// <param name="forCatalog">true if used for Remact.Catalog service.</param>
         /// <returns>The protocol driver including serializer.</returns>
-        IRemactProtocolDriverService DoClientConfiguration(ref Uri uri, bool forCatalog);
+        IRemactProtocolDriverToService DoClientConfiguration(ref Uri uri, bool forCatalog);
     }
 
     #endregion

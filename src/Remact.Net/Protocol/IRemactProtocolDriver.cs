@@ -7,10 +7,10 @@ using System.Threading.Tasks;
 namespace Remact.Net.Protocol
 {
     /// <summary>
-    /// Interface for protocol level clients (client side, lower level outgoing interface).
-    /// and also interface for service handlers (server side, higher level incoming interface).
+    /// Outgoing interface for protocol level clients (e.g. JsonRpcMsgPackClient) called by RemactClient.
+    /// and also incoming interface for services (e.g. MultithreadedServiceNet40) called by lower level client stub.
     /// </summary>
-    public interface IRemactProtocolDriverService
+    public interface IRemactProtocolDriverToService
     {
         /// <summary>
         /// Gets the endpoint uri of the service
@@ -27,7 +27,7 @@ namespace Remact.Net.Protocol
         /// </summary>
         /// <param name="state">The state is passed to OnOpenCompleted.</param>
         /// <param name="callback">Called when the open has finished or messages have been received.</param>
-        void OpenAsync(OpenAsyncState state, IRemactProtocolDriverCallbacks callback);
+        void OpenAsync(OpenAsyncState state, IRemactProtocolDriverToClient callback);
 
         /// <summary>
         /// Occurs when a client calls a service.
@@ -35,7 +35,7 @@ namespace Remact.Net.Protocol
         /// In case of an incoming message (server side), the Payload and the SerializationPayload is a JsonToken.
         /// The Payload is converted later on to the request type of the called method.</param>
         /// </summary>
-        void MessageFromClient(LowerProtocolMessage msg);
+        void MessageToService(LowerProtocolMessage msg);
 
         /// <summary>
         /// Closes connection and frees resources.
@@ -44,10 +44,10 @@ namespace Remact.Net.Protocol
     }
 
     /// <summary>
-    /// Interface for RemactClient (client side, higher level incoming interface).
-    /// and also interface for client stubs (server side, lower protocol level outgoing interface).
+    /// Incoming interface for RemactClient (called by lower level protocol client like JsonRpcMsgPackClient).
+    /// and also outgoing interface for client stubs on server side (called by higher level RemactServiceUser).
     /// </summary>
-    public interface IRemactProtocolDriverCallbacks
+    public interface IRemactProtocolDriverToClient
     {
         /// <summary>
         /// Occurs when the WebSocketClient has finished connecting to the server.
@@ -67,7 +67,7 @@ namespace Remact.Net.Protocol
         /// In case of an incoming message (client side), the Payload and the SerializationPayload is a JsonToken.
         /// The Payload is converted later on to the return type of the called method.
         /// The return Payload is null for void methods.</param>
-        void OnMessageFromService(LowerProtocolMessage msg);
+        void OnMessageToClient(LowerProtocolMessage msg);
 
         /// <summary>
         /// Occurs when the service disconnects from client.

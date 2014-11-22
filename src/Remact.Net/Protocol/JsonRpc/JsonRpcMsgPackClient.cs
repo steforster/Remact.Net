@@ -10,8 +10,10 @@ namespace Remact.Net.Protocol.JsonRpc
     /// Implements the protocol level for a JSON-RPC client. See http://www.jsonrpc.org/specification.
     /// Uses the MsgPack-cli serializer. See http://msgpack.org.
     /// </summary>
-    public class JsonRpcMsgPackClient : JsonRpcMsgPackDriver, IRemactProtocolDriverService
+    public class JsonRpcMsgPackClient : JsonRpcMsgPackDriver, IRemactProtocolDriverToService
     {
+        private ProtocolDriverClientHelper _clientHelper;
+
         /// <summary>
         /// Constructor for a client that connects to a service.
         /// </summary>
@@ -19,31 +21,45 @@ namespace Remact.Net.Protocol.JsonRpc
         public JsonRpcMsgPackClient(Uri websocketUri)
         {
             ServiceUri = websocketUri;
-            _onReceiveAction = OnReceived;
-            _wsClient = new WebSocketClient(websocketUri.ToString())
+            var wsClient = new WebSocketClient(websocketUri.ToString())
             {
                 //OnSend = OnSend,// Message has been dequeued and passed to the socket buffer
                 //OnConnect = OnConnect,// TCP socket is connected to the server
                 //SubProtocols = new string[]{"wamp"} // null: take all subprotocols
                 //TODO Origin = see rfc6455
             };
+
+            _clientHelper = new ProtocolDriverClientHelper(wsClient);
         }
 
         #region IRemactProtocolDriverService proxy implementation
 
         /// <inheritdoc/>
-        public PortState PortState {get {return BasePortState;}}
+        public Uri ServiceUri { get; private set; }
 
         /// <inheritdoc/>
-        public void OpenAsync(OpenAsyncState state, IRemactProtocolDriverCallbacks callback)
+        public PortState PortState {get {return _clientHelper.BasePortState; }}
+
+        /// <inheritdoc/>
+        public void OpenAsync(OpenAsyncState state, IRemactProtocolDriverToClient callback)
         {
-            base.BaseOpenAsync(state, callback);
+            _clientHelper.BaseOpenAsync(state, callback, OnReceived);
         }
 
         /// <inheritdoc/>
-        public void MessageFromClient(LowerProtocolMessage msg)
+        public void MessageToService(LowerProtocolMessage msg)
         {
             SendMessage(msg);
+        }
+
+        /// <inheritdoc/>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _clientHelper.Dispose();
+            }
+            base.Dispose(disposing);
         }
 
         #endregion

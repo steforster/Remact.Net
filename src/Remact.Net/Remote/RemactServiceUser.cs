@@ -37,7 +37,7 @@ namespace Remact.Net.Remote
         internal int ChannelTestTimer;
         internal object ClientAccessLock = new Object();
 
-        private IRemactProtocolDriverCallbacks _protocolCallback;
+        private IRemactProtocolDriverToClient _protocolCallback;
         private bool m_boTimeout;
 
         #endregion
@@ -69,7 +69,7 @@ namespace Remact.Net.Remote
         /// Sets the protocol driver instance to use for this connection from service to client.
         /// </summary>
         /// <param name="protocolCallback">The protocol driver to use.</param>
-        public void SetCallbackHandler(IRemactProtocolDriverCallbacks protocolCallback)
+        public void SetCallbackHandler(IRemactProtocolDriverToClient protocolCallback)
         {
             _protocolCallback = protocolCallback;
         }
@@ -229,7 +229,7 @@ namespace Remact.Net.Remote
                     Payload = msg.Payload
                 };
 
-                _protocolCallback.OnMessageFromService(lower);
+                _protocolCallback.OnMessageToClient(lower);
             }
         }
 

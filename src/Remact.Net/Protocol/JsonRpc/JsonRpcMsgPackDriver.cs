@@ -4,7 +4,6 @@
 using System;
 using Alchemy.Classes;
 using MsgPack.Serialization;
-using Remact.Net.Remote; // TODO remove (used for service side)
 using System.IO;
 
 namespace Remact.Net.Protocol.JsonRpc
@@ -14,8 +13,35 @@ namespace Remact.Net.Protocol.JsonRpc
     /// Uses the MsgPack-cli serializer.
     /// Is used on client as well as on service side.
     /// </summary>
-    public class JsonRpcMsgPackDriver : ProtocolDriverClientBase
+    public class JsonRpcMsgPackDriver : IDisposable
     {
+        private IRemactProtocolDriverToClient _toClientInterface; // not null on client side
+        private IRemactProtocolDriverToService _toServiceInterface;// not null on service side
+        private Action<byte[], int> _sendAction;
+
+        /// <summary>
+        /// Called on client side.
+        /// </summary>
+        /// <param name="sendAction">Sends to the web socket.</param>
+        /// <param name="toClientInterface">Callback interface.</param>
+        protected void InitOnClientSide(Action<byte[], int> sendAction, IRemactProtocolDriverToClient toClientInterface)
+        {
+            _sendAction = sendAction;
+            _toClientInterface = toClientInterface;
+        }
+
+        /// <summary>
+        /// Called on service side.
+        /// </summary>
+        /// <param name="sendAction">Sends to the web socket.</param>
+        /// <param name="toServiceInterface">Callback interface.</param>
+        protected void InitOnServiceSide(Action<byte[], int> sendAction, IRemactProtocolDriverToService toServiceInterface)
+        {
+            _sendAction = sendAction;
+            _toServiceInterface = toServiceInterface;
+        }
+
+
         #region Send messages
 
         /// <summary>
@@ -54,7 +80,7 @@ namespace Remact.Net.Protocol.JsonRpc
             var stream = new MemoryStream();
             serializer.Pack( stream, rpc );
 
-            _wsClient.Send(stream.GetBuffer(), (int)stream.Length);
+            _sendAction(stream.GetBuffer(), (int)stream.Length);
         }
 
         /// <summary>
@@ -64,7 +90,9 @@ namespace Remact.Net.Protocol.JsonRpc
         /// <param name="errorDesc">A description of the error.</param>
         protected virtual void IncomingMessageNotDeserializable(int id, string errorDesc)
         {
-            // overloaded
+            // overloded on client side to limit error responses to service
+            var error = new ErrorMessage(ErrorCode.ReqestNotDeserializableOnService, errorDesc);
+            SendError(id, error);
         }
 
         /// <summary>
@@ -103,18 +131,13 @@ namespace Remact.Net.Protocol.JsonRpc
             var stream = new MemoryStream();
             serializer.Pack( stream, rpc );
 
-            _wsClient.Send(stream.GetBuffer(), (int)stream.Length);
+            _sendAction(stream.GetBuffer(), (int)stream.Length);
         }
 
 
         #endregion
         #region Receive messages
 
-
-        // members for service side
-        protected IRemactProtocolDriverService _requestHandler;
-        protected RemactServiceUser _svcUser;
-        protected RemactPortService _serviceIdent;
 
         /// <summary>
         /// Called when a message from web socket is received.
@@ -173,14 +196,14 @@ namespace Remact.Net.Protocol.JsonRpc
                     return;
                 }
                 
-                if (_callback != null)
+                if (_toClientInterface != null)
                 {
-                    _callback.OnMessageFromService(msg); // client side
+                    _toClientInterface.OnMessageToClient(msg); // client side
                 }
                 else
                 {   
                     // TODO msg.SerializationPayload;
-                    _requestHandler.MessageFromClient(msg); // service side
+                    _toServiceInterface.MessageToService(msg); // service side
                 }
             }
             catch (Exception ex)
@@ -189,6 +212,28 @@ namespace Remact.Net.Protocol.JsonRpc
             }
         }
 
+
+        #endregion
+        #region IDisposable Support
+
+        private bool _disposed;
+
+        /// <summary>
+        /// When overriding, dont forget to call the base class.
+        /// </summary>
+        /// <param name="disposing">True, when managed resources may be disposed of.</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            _disposed = true;
+        }
+
+        /// <summary>
+        /// Stops incoming calls.
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+        }
         #endregion
     }
 }

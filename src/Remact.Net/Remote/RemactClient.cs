@@ -17,7 +17,7 @@ namespace Remact.Net.Remote
     /// <para>Responses are asynchroniously received on the same thread as the request was sent</para>
     /// <para>(only when sent from a thread with message queue (as WinForms), but not when sent from a threadpool-thread).</para>
     /// </summary>
-    internal class RemactClient : IRemotePort, IRemactProtocolDriverCallbacks, IRemactService
+    internal class RemactClient : IRemotePort, IRemactProtocolDriverToClient, IRemactService
     {
         //----------------------------------------------------------------------------------------------
         #region Identification, fields
@@ -40,7 +40,7 @@ namespace Remact.Net.Remote
         /// <summary>
         /// The lower level client.
         /// </summary>
-        internal IRemactProtocolDriverService m_protocolClient; // internal protected is not allowed ?!
+        internal IRemactProtocolDriverToService m_protocolClient; // internal protected is not allowed ?!
 
         /// <summary>
         /// <para>Set m_boTimeout to true, when the connect operation fails or some errormessages are received.</para>
@@ -393,7 +393,7 @@ namespace Remact.Net.Remote
 
         // Eventhandler, running on threadpool thread, sent from m_protocolClient.
         // No parallel connection attempts and no messages to the user. Therefore, we remain on the threadpool thread.
-        void IRemactProtocolDriverCallbacks.OnOpenCompleted(OpenAsyncState state)
+        void IRemactProtocolDriverToClient.OnOpenCompleted(OpenAsyncState state)
         {
             if (m_protocolClient == null)
             {
@@ -568,11 +568,11 @@ namespace Remact.Net.Remote
         }
 
 
-        Uri IRemactProtocolDriverCallbacks.ClientUri { get { return PortClient.Uri; } }
+        Uri IRemactProtocolDriverToClient.ClientUri { get { return PortClient.Uri; } }
 
 
         // sent from m_protocolClient
-        void IRemactProtocolDriverCallbacks.OnServiceDisconnect()
+        void IRemactProtocolDriverToClient.OnServiceDisconnect()
         {
             if (PortProxy.IsMultithreaded || PortProxy.SyncContext == null)
             {
@@ -605,7 +605,7 @@ namespace Remact.Net.Remote
         }
 
         // sent from m_protocolClient
-        void IRemactProtocolDriverCallbacks.OnMessageFromService(LowerProtocolMessage msg)
+        void IRemactProtocolDriverToClient.OnMessageToClient(LowerProtocolMessage msg)
         {
             if (PortProxy.IsMultithreaded || PortProxy.SyncContext == null)
             {
@@ -750,7 +750,7 @@ namespace Remact.Net.Remote
                 _OutstandingRequests.Add(msg.RequestId, msg);
             }
 
-            m_protocolClient.MessageFromClient(new LowerProtocolMessage(msg));
+            m_protocolClient.MessageToService(new LowerProtocolMessage(msg));
         }
 
         /// <summary>

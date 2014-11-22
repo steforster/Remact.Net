@@ -5,7 +5,6 @@ using System;
 using Alchemy.Classes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Remact.Net.Remote;
 
 namespace Remact.Net.Protocol.Wamp
 {
@@ -13,21 +12,17 @@ namespace Remact.Net.Protocol.Wamp
     /// Implements the protocol level for a WAMP server. See http://wamp.ws/spec/.
     /// Uses the Newtonsoft.Json serializer.
     /// </summary>
-    public class WampClientStub : IRemactProtocolDriverCallbacks
+    public class WampClientStub : IRemactProtocolDriverToClient
     {
         private UserContext _wsChannel;
-        private IRemactProtocolDriverService _requestHandler;
-        private RemactServiceUser _svcUser;
-        private RemactPortService _serviceIdent;
+        private IRemactProtocolDriverToService _requestHandler;
 
         /// <summary>
         /// Constructor for a stub instance that connects from service to client.
         /// </summary>
-        /// <param name="svcUser">The RemactServiceUser instance for this connection.</param>
-        /// <param name="serviceIdent">The service identification.</param>
         /// <param name="requestHandler">The interface for callbacks to the service.</param>
         /// <param name="websocketChannel">The Alchemy channel.</param>
-        public WampClientStub(RemactServiceUser svcUser, RemactPortService serviceIdent, IRemactProtocolDriverService requestHandler, UserContext websocketChannel)
+        public WampClientStub(IRemactProtocolDriverToService requestHandler, UserContext websocketChannel)
         {
             _wsChannel = websocketChannel;
                 //OnSend = OnSend,
@@ -36,8 +31,6 @@ namespace Remact.Net.Protocol.Wamp
                 //OnConnected = OnConnected,
             _wsChannel.SetOnDisconnect(OnDisconnect);
 
-            _svcUser = svcUser;
-            _serviceIdent = serviceIdent;
             _requestHandler = requestHandler;
         }
 
@@ -67,7 +60,7 @@ namespace Remact.Net.Protocol.Wamp
         }
 
         /// <inheritdoc/>
-        public void OnMessageFromService(LowerProtocolMessage lower)
+        public void OnMessageToClient(LowerProtocolMessage lower)
         {
             switch (lower.Type)
             {
@@ -180,7 +173,7 @@ namespace Remact.Net.Protocol.Wamp
                         jToken = wamp[3];
                     }
 
-                    _requestHandler.MessageFromClient(new LowerProtocolMessage
+                    _requestHandler.MessageToService(new LowerProtocolMessage
                     {
                         DestinationMethod = (string)wamp[2],
                         Payload = jToken,
@@ -215,7 +208,7 @@ namespace Remact.Net.Protocol.Wamp
                         payload = new ErrorMessage(ErrorCode.Undef, errorUri + ": " + errorDesc); // Errormessage from client
                     }
 
-                    _requestHandler.MessageFromClient(new LowerProtocolMessage
+                    _requestHandler.MessageToService(new LowerProtocolMessage
                     {
                         DestinationMethod = null,
                         Payload = payload,
@@ -232,7 +225,7 @@ namespace Remact.Net.Protocol.Wamp
                     var pld = new NewtonsoftJsonPayload(wamp[2]); // JToken
                     var payload = pld.TryReadAs(eventUri); // eventUri is assemblyQualifiedTypeName
 
-                    _requestHandler.MessageFromClient(new LowerProtocolMessage
+                    _requestHandler.MessageToService(new LowerProtocolMessage
                     {
                         DestinationMethod = null,
                         Payload = payload,

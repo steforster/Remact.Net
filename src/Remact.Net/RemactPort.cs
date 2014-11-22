@@ -687,7 +687,7 @@ namespace Remact.Net
 
             //msg.Destination = this;
 
-            if (msg.DestinationLambda == null && IsServiceName && msg.DestinationMethod.StartsWith(ActorInfo.MethodNamePrefix))
+            if (msg.DestinationLambda == null && msg.DestinationMethod != null && IsServiceName && msg.DestinationMethod.StartsWith(ActorInfo.MethodNamePrefix))
             {
                 if (TraceConnect)
                 {

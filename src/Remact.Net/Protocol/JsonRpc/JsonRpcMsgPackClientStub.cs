@@ -3,7 +3,6 @@
 
 using System;
 using Alchemy.Classes;
-using Remact.Net.Remote;
 
 namespace Remact.Net.Protocol.JsonRpc
 {
@@ -11,18 +10,16 @@ namespace Remact.Net.Protocol.JsonRpc
     /// Implements the protocol level for a JSON-RPC server. See http://www.jsonrpc.org/specification.
     /// Uses the MsgPack-cli serializer.
     /// </summary>
-    public class JsonRpcMsgPackClientStub : JsonRpcMsgPackDriver, IRemactProtocolDriverCallbacks
+    public class JsonRpcMsgPackClientStub : JsonRpcMsgPackDriver, IRemactProtocolDriverToClient
     {
         private UserContext _wsChannel;
 
         /// <summary>
         /// Constructor for a stub instance that connects from service to client.
         /// </summary>
-        /// <param name="svcUser">The RemactServiceUser instance for this connection.</param>
-        /// <param name="serviceIdent">The service identification.</param>
         /// <param name="requestHandler">The interface for callbacks to the service.</param>
         /// <param name="websocketChannel">The Alchemy channel.</param>
-        public JsonRpcMsgPackClientStub(RemactServiceUser svcUser, RemactPortService serviceIdent, IRemactProtocolDriverService requestHandler, UserContext websocketChannel)
+        public JsonRpcMsgPackClientStub(IRemactProtocolDriverToService requestHandler, UserContext websocketChannel)
         {
             _wsChannel = websocketChannel;
                 //OnSend = OnSend,
@@ -31,9 +28,7 @@ namespace Remact.Net.Protocol.JsonRpc
                 //OnConnected = OnConnected,
             _wsChannel.SetOnDisconnect(OnDisconnect);
 
-            _svcUser = svcUser;
-            _serviceIdent = serviceIdent;
-            _requestHandler = requestHandler;
+            InitOnServiceSide((buf,len)=>_wsChannel.Send(buf,len), requestHandler);
         }
 
 
@@ -56,16 +51,9 @@ namespace Remact.Net.Protocol.JsonRpc
 
 
         /// <inheritdoc/>
-        public void OnMessageFromService(LowerProtocolMessage msg)
+        public void OnMessageToClient(LowerProtocolMessage msg)
         {
             SendMessage(msg);
-        }
-
-        /// <inheritdoc/>
-        protected override void IncomingMessageNotDeserializable(int id, string errorDesc)
-        {
-            var error = new ErrorMessage(ErrorCode.ReqestNotDeserializableOnService, errorDesc);
-            SendError(id, error);
         }
 
 

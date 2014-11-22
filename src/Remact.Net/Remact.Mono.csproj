@@ -81,7 +81,7 @@
     <Compile Include="Serialization\MsgPackPayload.cs" />
     <Compile Include="Protocol\JsonRpc\JsonRpcMsgPackClient.cs" />
     <Compile Include="Protocol\JsonRpc\JsonRpcV2.cs" />
-    <Compile Include="Protocol\ProtocolDriverClientBase.cs" />
+    <Compile Include="Protocol\ProtocolDriverClientHelper.cs" />
     <Compile Include="Protocol\JsonRpc\JsonRpcMsgPackDriver.cs" />
     <Compile Include="Protocol\JsonRpc\JsonRpcMsgPackClientStub.cs" />
   </ItemGroup>

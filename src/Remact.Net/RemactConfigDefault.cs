@@ -39,6 +39,7 @@ namespace Remact.Net
             {
                 if (_instance == null)
                 {
+                    UseMsgPack = false;
                     _instance = new RemactConfigDefault();
                 }
                 return _instance;
@@ -128,12 +129,12 @@ namespace Remact.Net
                 // in future, the client stub will handle the OnReceive and OnDisconnect events for this connection
                 if(UseMsgPack)
                 {
-                    var jsonRpcProxy = new JsonRpcMsgPackClientStub(svcUser, service.ServiceIdent, handler, userContext);
+                    var jsonRpcProxy = new JsonRpcMsgPackClientStub(handler, userContext);
                     svcUser.SetCallbackHandler(jsonRpcProxy);
                 }
                 else
                 {
-                    var wampProxy = new WampClientStub(svcUser, service.ServiceIdent, handler, userContext);
+                    var wampProxy = new WampClientStub(handler, userContext);
                     svcUser.SetCallbackHandler(wampProxy);
                 }
             }
@@ -149,7 +150,7 @@ namespace Remact.Net
         /// <param name="uri">The endpoint URI to connect.</param>
         /// <param name="forCatalog">true if used for Remact.Catalog service.</param>
         /// <returns>The protocol driver including serializer.</returns>
-        public virtual IRemactProtocolDriverService DoClientConfiguration(ref Uri uri, bool forCatalog)
+        public virtual IRemactProtocolDriverToService DoClientConfiguration(ref Uri uri, bool forCatalog)
         {
             if (UseMsgPack)
             {

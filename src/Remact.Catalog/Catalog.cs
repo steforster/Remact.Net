@@ -317,7 +317,7 @@ namespace Remact.Catalog
 
 
     // implement IClientConfiguration
-    public IRemactProtocolDriverService DoClientConfiguration(ref Uri uri, bool forCatalog)
+    public IRemactProtocolDriverToService DoClientConfiguration(ref Uri uri, bool forCatalog)
     {
         return RemactConfigDefault.Instance.DoClientConfiguration(ref uri, forCatalog:true);
     }

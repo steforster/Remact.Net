@@ -13,8 +13,13 @@ namespace Remact.Net.Protocol.Wamp
     /// Implements the protocol level for a WAMP client. See http://wamp.ws/spec/.
     /// Uses the Newtonsoft.Json serializer.
     /// </summary>
-    public class WampClient : ProtocolDriverClientBase, IRemactProtocolDriverService
+    public class WampClient : IRemactProtocolDriverToService
     {
+        private ProtocolDriverClientHelper _clientHelper;
+        private WebSocketClient _wsClient;
+        private IRemactProtocolDriverToClient _callback;
+        private bool _disposed;
+
         /// <summary>
         /// Constructor for a client that connects to a service.
         /// </summary>
@@ -22,7 +27,6 @@ namespace Remact.Net.Protocol.Wamp
         public WampClient(Uri websocketUri)
         {
             ServiceUri = websocketUri;
-            _onReceiveAction = OnReceived;
             _wsClient = new WebSocketClient(websocketUri.ToString())
             {
                 //OnSend = OnSend,// Message has been dequeued and passed to the socket buffer
@@ -30,21 +34,27 @@ namespace Remact.Net.Protocol.Wamp
                 SubProtocols = new string[]{"wamp"} // null: take all subprotocols
                 //TODO Origin = see rfc6455
             };
+
+            _clientHelper = new ProtocolDriverClientHelper(_wsClient);
         }
 
         #region IRemactProtocolDriverService proxy implementation
 
         /// <inheritdoc/>
-        public PortState PortState {get {return BasePortState;}}
+        public Uri ServiceUri { get; private set; }
 
         /// <inheritdoc/>
-        public void OpenAsync(OpenAsyncState state, IRemactProtocolDriverCallbacks callback)
+        public PortState PortState {get {return _clientHelper.BasePortState; }}
+
+        /// <inheritdoc/>
+        public void OpenAsync(OpenAsyncState state, IRemactProtocolDriverToClient callback)
         {
-            base.BaseOpenAsync(state, callback);
+            _callback = callback;
+            _clientHelper.BaseOpenAsync(state, callback, OnReceived);
         }
 
         /// <inheritdoc/>
-        public void MessageFromClient(LowerProtocolMessage msg)
+        public void MessageToService(LowerProtocolMessage msg)
         {
             string callId = msg.RequestId.ToString();
 
@@ -106,6 +116,12 @@ namespace Remact.Net.Protocol.Wamp
             _wsClient.Send(wamp.ToString(Formatting.None));
         }
 
+        /// <inheritdoc/>
+        public void Dispose()
+        {
+            _disposed = true;
+            _clientHelper.Dispose();
+        }
 
         #endregion
         #region Alchemy callbacks
@@ -151,7 +167,7 @@ namespace Remact.Net.Protocol.Wamp
                     msg.RequestId = int.Parse((string)wamp[1]);
                     msg.Payload = wamp[2]; // JToken
                     msg.SerializationPayload = new NewtonsoftJsonPayload(wamp[2]);
-                    _callback.OnMessageFromService(msg);
+                    _callback.OnMessageToClient(msg);
                 }
                 else if (wampType == (int)WampMessageType.v1CallError)
                 {
@@ -177,7 +193,7 @@ namespace Remact.Net.Protocol.Wamp
                         msg.Payload = new ErrorMessage(ErrorCode.Undef, errorUri + ": " + errorDesc);
                     }
 
-                    _callback.OnMessageFromService(msg);
+                    _callback.OnMessageToClient(msg);
                 }
                 else if (wampType == (int)WampMessageType.v1Event)
                 {
@@ -188,7 +204,7 @@ namespace Remact.Net.Protocol.Wamp
                     var pld = new NewtonsoftJsonPayload(wamp[2]); // JToken
                     msg.Payload = pld.TryReadAs(notifyUri); // notifyUri is assemblyQualifiedTypeName
                     msg.SerializationPayload = pld; 
-                    _callback.OnMessageFromService(msg);
+                    _callback.OnMessageToClient(msg);
                 }
                 else
                 {
