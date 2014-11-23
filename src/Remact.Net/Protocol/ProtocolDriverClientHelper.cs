@@ -68,6 +68,11 @@ namespace Remact.Net.Protocol
             _wsClient.BeginConnect(state);
         }
 
+        /// <summary>
+        /// The alchemy user context for this client. Null when not connected.
+        /// </summary>
+        public UserContext UserContext { get; private set; }
+
         private void OnConnected(UserContext context)
         {
             var state = (OpenAsyncState)context.Data;
@@ -81,6 +86,7 @@ namespace Remact.Net.Protocol
             {
                 context.SetOnReceive(_onReceiveAction);
                 context.SetOnDisconnect(OnDisconnect);
+                UserContext = context;
             }
 
             _callback.OnOpenCompleted(state);
@@ -89,6 +95,7 @@ namespace Remact.Net.Protocol
         private void OnConnectFailure(UserContext context)
         {
             _faulted = true;
+            UserContext = null;
             var state = (OpenAsyncState)context.Data;
             state.Error = context.LatestException;
             _callback.OnOpenCompleted(state);
@@ -100,6 +107,7 @@ namespace Remact.Net.Protocol
             try
             {
                 _disposed = true;
+                UserContext = null;
                 if (_wsClient != null) _wsClient.Disconnect();
             }
             catch { }
@@ -118,6 +126,7 @@ namespace Remact.Net.Protocol
                 return;
             }
 
+            UserContext = null;
             _callback.OnServiceDisconnect();
         }
 

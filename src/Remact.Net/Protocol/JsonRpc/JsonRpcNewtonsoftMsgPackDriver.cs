@@ -16,29 +16,25 @@ namespace Remact.Net.Protocol.JsonRpc
     /// </summary>
     public class JsonRpcNewtonsoftMsgPackDriver : IDisposable
     {
+        private int _lowLevelErrorCount;
         private IRemactProtocolDriverToClient _toClientInterface; // not null on client side
         private IRemactProtocolDriverToService _toServiceInterface;// not null on service side
-        private Action<byte[], int> _sendAction;
 
         /// <summary>
         /// Called on client side.
         /// </summary>
-        /// <param name="sendAction">Sends to the web socket.</param>
         /// <param name="toClientInterface">Callback interface.</param>
-        protected void InitOnClientSide(Action<byte[], int> sendAction, IRemactProtocolDriverToClient toClientInterface)
+        protected void InitOnClientSide(IRemactProtocolDriverToClient toClientInterface)
         {
-            _sendAction = sendAction;
             _toClientInterface = toClientInterface;
         }
 
         /// <summary>
         /// Called on service side.
         /// </summary>
-        /// <param name="sendAction">Sends to the web socket.</param>
         /// <param name="toServiceInterface">Callback interface.</param>
-        protected void InitOnServiceSide(Action<byte[], int> sendAction, IRemactProtocolDriverToService toServiceInterface)
+        protected void InitOnServiceSide(IRemactProtocolDriverToService toServiceInterface)
         {
-            _sendAction = sendAction;
             _toServiceInterface = toServiceInterface;
         }
 
@@ -49,24 +45,25 @@ namespace Remact.Net.Protocol.JsonRpc
         /// Send a message in JsonRpc and MsgPack.
         /// </summary>
         /// <param name="msg">The message.</param>
-        protected void SendMessage(LowerProtocolMessage msg)
+        /// <param name="context">Alchemy connection context.</param>
+        protected void SendMessage(LowerProtocolMessage msg, UserContext context)
         {
             if (msg.Type == RemactMessageType.Error)
             {
-                SendError(msg.RequestId, msg.Payload as ErrorMessage);
+                SendError(msg.RequestId, msg.Payload as ErrorMessage, context);
                 return;
             }
-            
+
             var rpc = new JsonRpcV2Message
             {
                 jsonrpc = "2.0",
             };
-            
+
             if (msg.RequestId > 0 && msg.Type != RemactMessageType.Notification)
             {
                 rpc.id = msg.RequestId.ToString();
-            } 
-            
+            }
+
             if (msg.Type == RemactMessageType.Response)
             {
                 rpc.result = msg.Payload;
@@ -77,33 +74,36 @@ namespace Remact.Net.Protocol.JsonRpc
                 rpc.params1 = msg.Payload;
             }
 
-            using (var stream = new MemoryStream())
+            var stream = context.DataFrame.CreateInstance();
+            stream.IsBinary = true;
             using (var writer = new Newtonsoft.Msgpack.MessagePackWriter(stream))
             {
                 var serializer = new JsonSerializer();
                 serializer.Serialize(writer, rpc);
-                _sendAction(stream.GetBuffer(), (int)stream.Length); // FastDirectSendingMode must be switched on
+                stream.Flush();
+                context.Send(stream);
             }
         }
 
-        /// <summary>
-        /// Called, when an incoming message cannot be deserialized.
-        /// </summary>
-        /// <param name="id">The request id is > 0 when it could be read. Otherwise 0.</param>
-        /// <param name="errorDesc">A description of the error.</param>
-        protected virtual void IncomingMessageNotDeserializable(int id, string errorDesc)
+        private void IncomingMessageNotDeserializable(int id, string errorDesc, UserContext context)
         {
-            // overloded on client side to limit error responses to service
+            if (_toClientInterface != null && _lowLevelErrorCount > 100)
+            {
+                return; // on client side do not respond endless on erronous error messages
+            }
+            _lowLevelErrorCount++;
             var error = new ErrorMessage(ErrorCode.ReqestNotDeserializableOnService, errorDesc);
-            SendError(id, error);
+            SendError(id, error, context);
         }
+
 
         /// <summary>
         /// Send an error message in JsonRpc and MsgPack.
         /// </summary>
         /// <param name="requestId">The request id is > 0 in case the error is a response to a request. Otherwise 0.</param>
         /// <param name="payload">The error payload.</param>
-        protected void SendError(int requestId, Remact.Net.ErrorMessage payload)
+        /// <param name="context">Alchemy connection context.</param>
+        protected void SendError(int requestId, ErrorMessage payload, UserContext context)
         {
             var rpc = new JsonRpcV2Message
             {
@@ -111,17 +111,17 @@ namespace Remact.Net.Protocol.JsonRpc
                 error = new JsonRpcV2Error
                 {
                     data = payload
-                } 
+                }
             };
-            
+
             if (requestId > 0)
             {
                 rpc.id = requestId.ToString();
             }
-            
+
             if (payload == null)
             {
-//                rpc.error.code = (int)errorMsg.Error; TODO
+                //                rpc.error.code = (int)errorMsg.Error; TODO
                 rpc.error.message = "ErrorFromService"; // message.Payload.GetType().FullName;
             }
             else
@@ -130,13 +130,14 @@ namespace Remact.Net.Protocol.JsonRpc
                 rpc.error.message = payload.Message;
             }
 
-            using (var stream = new MemoryStream())
+            var stream = context.DataFrame.CreateInstance();
+            stream.IsBinary = true;
             using (var writer = new Newtonsoft.Msgpack.MessagePackWriter(stream))
             {
-
                 var serializer = new JsonSerializer();
                 serializer.Serialize(writer, rpc);
-                _sendAction(stream.GetBuffer(), (int)stream.Length);
+                stream.Flush();
+                context.Send(stream);
             }
         }
 
@@ -170,7 +171,7 @@ namespace Remact.Net.Protocol.JsonRpc
 
                 if (rpc.jsonrpc != "2.0")
                 {
-                    IncomingMessageNotDeserializable(msg.RequestId, "not supportet json-rpc protocol version");
+                    IncomingMessageNotDeserializable(msg.RequestId, "not supportet json-rpc protocol version", context);
                     return;
                 }
                 else if (rpc.method != null || rpc.params1 != null)
@@ -183,7 +184,7 @@ namespace Remact.Net.Protocol.JsonRpc
                     {
                         msg.Type = RemactMessageType.Notification;
                     }
-                    
+
                     msg.DestinationMethod = rpc.method;
                     msg.Payload = rpc.params1;
                 }
@@ -199,7 +200,7 @@ namespace Remact.Net.Protocol.JsonRpc
                 }
                 else
                 {
-                    IncomingMessageNotDeserializable(msg.RequestId, "not supportet json-rpc message type");
+                    IncomingMessageNotDeserializable(msg.RequestId, "not supportet json-rpc message type", context);
                     return;
                 }
 
@@ -210,13 +211,13 @@ namespace Remact.Net.Protocol.JsonRpc
                     _toClientInterface.OnMessageToClient(msg); // client side
                 }
                 else
-                {   
+                {
                     _toServiceInterface.MessageToService(msg); // service side
                 }
             }
             catch (Exception ex)
             {
-                if (msg.Type != RemactMessageType.Error) IncomingMessageNotDeserializable(msg.RequestId, ex.Message);
+                if (msg.Type != RemactMessageType.Error) IncomingMessageNotDeserializable(msg.RequestId, ex.Message, context);
             }
         }
 

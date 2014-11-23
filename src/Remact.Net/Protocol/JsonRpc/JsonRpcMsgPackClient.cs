@@ -44,14 +44,14 @@ namespace Remact.Net.Protocol.JsonRpc
         /// <inheritdoc/>
         public void OpenAsync(OpenAsyncState state, IRemactProtocolDriverToClient callback)
         {
-            InitOnClientSide(_wsClient.Send, callback);
+            InitOnClientSide(callback);
             _clientHelper.OpenAsync(state, callback, OnReceived);
         }
 
         /// <inheritdoc/>
         public void MessageToService(LowerProtocolMessage msg)
         {
-            SendMessage(msg);
+            SendMessage(msg, _clientHelper.UserContext);
         }
 
         /// <inheritdoc/>
@@ -63,24 +63,6 @@ namespace Remact.Net.Protocol.JsonRpc
             }
             base.Dispose(disposing);
         }
-
-        #endregion
-        #region Alchemy callbacks
-
-        private int _lowLevelErrorCount;
-
-        /// <inheritdoc/>
-        protected override void IncomingMessageNotDeserializable(int id, string errorDesc)
-        {
-            if (++_lowLevelErrorCount > 100)
-            {
-                return; // do not respond endless on erronous error messages
-            }
-
-            var error = new ErrorMessage(ErrorCode.ResponseNotDeserializableOnClient, errorDesc);
-            SendError(id, error);
-        }
-
 
         #endregion
     }

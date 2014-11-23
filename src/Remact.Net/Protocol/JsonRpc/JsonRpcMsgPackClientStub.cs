@@ -28,7 +28,7 @@ namespace Remact.Net.Protocol.JsonRpc
                 //OnConnected = OnConnected,
             _wsChannel.SetOnDisconnect(OnDisconnect);
 
-            InitOnServiceSide((buf,len)=>_wsChannel.Send(buf,len), requestHandler);
+            InitOnServiceSide(requestHandler);
         }
 
 
@@ -53,7 +53,7 @@ namespace Remact.Net.Protocol.JsonRpc
         /// <inheritdoc/>
         public void OnMessageToClient(LowerProtocolMessage msg)
         {
-            SendMessage(msg);
+            SendMessage(msg, _wsChannel);
         }
 
 
