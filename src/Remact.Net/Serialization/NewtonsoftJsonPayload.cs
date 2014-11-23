@@ -22,8 +22,7 @@ namespace Remact.Net
 
         private JToken _jToken;
 
-        /// <iheritdoc/>
-        public object AsDynamic
+        object ISerializationPayload.AsDynamic
         {
             get
             {
@@ -33,6 +32,11 @@ namespace Remact.Net
 
         object ISerializationPayload.TryReadAs (Type payloadType)
         {
+            if (_jToken == null)
+            {
+                return null;
+            }
+
             try
             {
                 return _jToken.ToObject(payloadType); // deserialized
@@ -45,11 +49,17 @@ namespace Remact.Net
 
         /// <summary>
         /// Tries to read the payload as the given assemblyQualifiedTypeName.
+        /// Currently used for the WAMP protocol.
         /// </summary>
         /// <param name="assemblyQualifiedTypeName">The type to convert the payload to.</param>
         /// <returns>JToken, when the payload could not be converted.</returns>
         public object TryReadAs (string assemblyQualifiedTypeName)
         {
+            if (_jToken == null)
+            {
+                return null;
+            }
+
             try
             {
                 var type = System.Type.GetType(assemblyQualifiedTypeName);

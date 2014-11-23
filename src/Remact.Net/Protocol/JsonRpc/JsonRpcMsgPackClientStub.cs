@@ -10,7 +10,7 @@ namespace Remact.Net.Protocol.JsonRpc
     /// Implements the protocol level for a JSON-RPC server. See http://www.jsonrpc.org/specification.
     /// Uses the MsgPack-cli serializer.
     /// </summary>
-    public class JsonRpcMsgPackClientStub : JsonRpcMsgPackDriver, IRemactProtocolDriverToClient
+    public class JsonRpcMsgPackClientStub : JsonRpcNewtonsoftMsgPackDriver, IRemactProtocolDriverToClient
     {
         private UserContext _wsChannel;
 

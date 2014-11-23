@@ -49,6 +49,7 @@
     <Compile Include="Contracts\IRemactService.cs" />
     <Compile Include="Contracts\IRemactCatalog.cs" />
     <Compile Include="Contracts\ErrorMessage.cs" />
+    <Compile Include="Protocol\JsonRpc\JsonRpcNewtonsoftMsgPackDriver.cs" />
     <Compile Include="RemactPortProxy.cs" />
     <Compile Include="Protocol\IRemactProtocolDriver.cs" />
     <Compile Include="Protocol\Wamp\WampClient.cs" />
@@ -105,6 +106,10 @@
     <ProjectReference Include="..\..\..\msgpack-cli\src\MsgPack.Net40\MsgPack.Net40.csproj">
       <Project>{D45D4CBE-AFE7-4E2A-945D-47AED564C39D}</Project>
       <Name>MsgPack.Net40</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Newtonsoft.Msgpack\Newtonsoft.Msgpack.csproj">
+      <Project>{39fe4157-2a85-4aee-8d4a-4b7a1a60b03c}</Project>
+      <Name>Newtonsoft.Msgpack</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

@@ -1,7 +1,6 @@
 
 // Copyright (c) 2014, github.com/steforster/Remact.Net
 
-using System;
 using Alchemy;
 using Alchemy.Classes;
 using System.IO;
@@ -31,7 +30,7 @@ namespace Remact.Net.Protocol
         #region IRemactProtocolDriverToService implementation
 
         /// <inheritdoc/>
-        public PortState BasePortState 
+        public PortState PortState 
         { 
             get 
             {
@@ -60,7 +59,7 @@ namespace Remact.Net.Protocol
         /// <param name="state">The state is passed to OnOpenCompleted.</param>
         /// <param name="callback">Called when the open has finished or messages have been received.</param>
         /// <param name="onReceiveAction">Called by the web socket client or service, when a message has been received.</param>
-        public void BaseOpenAsync(OpenAsyncState state, IRemactProtocolDriverToClient callback, OnEventDelegate onReceiveAction)
+        public void OpenAsync(OpenAsyncState state, IRemactProtocolDriverToClient callback, OnEventDelegate onReceiveAction)
         {
             _callback = callback;
             _onReceiveAction = onReceiveAction;

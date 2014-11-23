@@ -17,7 +17,7 @@ namespace Remact.Net
         object AsDynamic {get;}
 
         /// <summary>
-        /// Tries the read the payload as a given type.
+        /// Tries to the read the payload as a given type.
         /// </summary>
         /// <param name="payloadType">The type to convert the payload to.</param>
         /// <returns>Null, when the payload could not be converted or is null.</returns>

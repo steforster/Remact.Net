@@ -44,13 +44,13 @@ namespace Remact.Net.Protocol.Wamp
         public Uri ServiceUri { get; private set; }
 
         /// <inheritdoc/>
-        public PortState PortState {get {return _clientHelper.BasePortState; }}
+        public PortState PortState {get {return _clientHelper.PortState; }}
 
         /// <inheritdoc/>
         public void OpenAsync(OpenAsyncState state, IRemactProtocolDriverToClient callback)
         {
             _callback = callback;
-            _clientHelper.BaseOpenAsync(state, callback, OnReceived);
+            _clientHelper.OpenAsync(state, callback, OnReceived);
         }
 
         /// <inheritdoc/>

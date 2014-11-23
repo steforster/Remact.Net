@@ -39,7 +39,7 @@ namespace Remact.Net
             {
                 if (_instance == null)
                 {
-                    UseMsgPack = false;
+                    UseMsgPack = true;
                     _instance = new RemactConfigDefault();
                 }
                 return _instance;
