@@ -101,6 +101,7 @@ namespace Remact.Net.Remote
         /// </summary>
         public void Disconnect()
         {
+            // TODO close the webSocket in case a remote connection is present.
             PortClient.Disconnect();
         }
 

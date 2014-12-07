@@ -43,7 +43,11 @@ namespace Remact.Net.Protocol.Wamp
         /// <inheritdoc/>
         public void OnServiceDisconnect()
         {
-            _wsChannel = null;
+            if (_wsChannel != null)
+            {
+                _wsChannel.Disconnect();
+                _wsChannel = null;
+            }
         }
 
         /// <inheritdoc/>
