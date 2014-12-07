@@ -73,9 +73,8 @@ namespace Remact.Net
         #region == Default Service and Client configuration ==
 
         /// <summary>
-        /// The Webservice communication namespace is used by clients and services to uniquely identify services.
-        /// Library users may change this constant to e.g. "YourCompany.com/YourProduct".
-        /// For use in attrbutes (Microsoft WCF ServiceContract) this is defined as a constant string.
+        /// Service URIs are constructed from {scheme}/{host}:{tcpPort}/{WsNamespace}/{ServiceName}
+        /// Library users may change the WsNamespace to e.g. "YourCompany.com/YourProduct".
         /// </summary>
         public const string WsNamespace = "Remact";
 

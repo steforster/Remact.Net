@@ -1,0 +1,11 @@
+How to run and debug NUnit tests from VisualStudio 2015
+-------------------------------------------------------
+The NUnitTestAdapter.WithFramework is added as a NuGet package to the unit tests using this runner.
+Then, in VisualStudio2015, you can run NUnit tests from the 'Test -> Windows -> TestExplorer' (as the Microsoft unit tests).
+
+
+How to install, run and debug NUnit tests from MonoDevelop
+----------------------------------------------------------
+apt-get install monodevelop-nunit
+see http://codenuggets.com/2012/03/26/nunit-for-monodevelop/
+see http://www.monodevelop.com/download/linux/

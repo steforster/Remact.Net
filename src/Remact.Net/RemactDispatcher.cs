@@ -167,10 +167,18 @@ namespace Remact.Net
             }
 
             param[1] = msg;
-            param[0] = msg.SerializationPayload.TryReadAs(this.PayloadType);
-            if (param[0] == null)
+
+            if (msg.SerializationPayload != null)
             {
-                param[0] = msg.Payload; // raw
+                param[0] = msg.SerializationPayload.TryReadAs(this.PayloadType);
+                if (param[0] == null)
+                {
+                    param[0] = msg.Payload; // raw
+                }
+            }
+            else
+            {
+                param[0] = msg.Payload; // process local call
             }
 
             return param;

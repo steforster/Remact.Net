@@ -282,7 +282,7 @@ namespace Remact.Net
         {
             if (!m_isOpen)
             {
-                DispatchingError(msg, new ErrorMessage(ErrorCode.NotConnected, "Cannot post message"));
+                DispatchingError(msg, new ErrorMessage(ErrorCode.NotConnected, "Input port not open, cannot post message"));
             }
             else if (IsMultithreaded)
             {
