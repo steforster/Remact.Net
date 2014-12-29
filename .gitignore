@@ -2,6 +2,7 @@
 [Bb]in/
 [Oo]bj/
 [Ll]ogs/
+test-results/
 
 *.suo
 *.user

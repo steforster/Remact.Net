@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Threading; // WPF Dispatcher from assembly 'WindowsBase'
+using System.Windows.Forms;
 
 namespace Remact.Net.UnitTests
 {
@@ -30,6 +31,40 @@ namespace Remact.Net.UnitTests
         static private int _testThreadId;
 
 
+        // On Mono, only the WinFormsSyncContext is fully implemented.
+        //          also test output must be sent to Console only.
+        static public void RunInWinFormsSyncContext(Func<Task> function)
+        {
+            Console.WriteLine(DateTime.Now.ToString("--- dd.MM.yy  HH:mm:ss.fff")
+                + " --- Start " /*+ function.Method.ReflectedType.FullName + "."*/ 
+                + function.Method.Name);
+            _testThreadId = Thread.CurrentThread.ManagedThreadId;
+            //Assert.AreNotEqual(_testThreadId, ServiceThread.ManagedThreadId); // start ServiceThread
+            //ServiceException = null;
+            //-------------------
+            SynchronizationContext.SetSynchronizationContext(new WindowsFormsSynchronizationContext());
+
+            var task = function(); // start it
+            while (!task.IsCompleted)
+            {
+                Application.DoEvents();
+            }
+
+            task.GetAwaiter().GetResult(); // throw exception in case task.IsFaulted 
+            //-------------------
+            // end of test
+            //m_serviceThread.Dispose();
+            //m_serviceThread = null;
+            //AssertRunningOnClientThread();
+
+            //if (ServiceException != null)
+            //{
+            //    RaLog.Exception("Test failed on service side", ServiceException);
+            //    throw new Exception("Test failed on service side", ServiceException);
+            //}
+        }
+
+        /* new DispatcherSynchronizationContext() is not implemented in Mono
         static public void RunInWpfSyncContext(Func<Task> function)
         {
             Trace.WriteLine(DateTime.Now.ToString("--- dd.MM.yy  HH:mm:ss.fff")
@@ -40,7 +75,7 @@ namespace Remact.Net.UnitTests
             //-------------------
             SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext());
 
-            var task = function(); // start it synchronuosly
+            var task = function(); // start it
             var frame = new DispatcherFrame();
             var t2 = task.ContinueWith(x => { frame.Continue = false; }, TaskScheduler.Default);
             Dispatcher.PushFrame(frame);
@@ -57,7 +92,7 @@ namespace Remact.Net.UnitTests
             //    RaLog.Exception("Test failed on service side", ServiceException);
             //    throw new Exception("Test failed on service side", ServiceException);
             //}
-        }
+        }*/
 
 
         //public static void AssertRunningOnClientThread()

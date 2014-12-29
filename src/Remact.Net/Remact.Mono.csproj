@@ -79,7 +79,6 @@
     <Compile Include="Properties\AssemblyInfo.Mono.cs" />
     <Compile Include="Serialization\NewtonsoftJsonPayload.cs" />
     <Compile Include="Serialization\ISerializationPayload.cs" />
-    <Compile Include="Serialization\MsgPackPayload.cs" />
     <Compile Include="Protocol\JsonRpc\JsonRpcMsgPackClient.cs" />
     <Compile Include="Protocol\JsonRpc\JsonRpcV2.cs" />
     <Compile Include="Protocol\ProtocolDriverClientHelper.cs" />
@@ -108,7 +107,7 @@
       <Name>MsgPack.Net40</Name>
     </ProjectReference>
     <ProjectReference Include="..\Newtonsoft.Msgpack\Newtonsoft.Msgpack.csproj">
-      <Project>{39fe4157-2a85-4aee-8d4a-4b7a1a60b03c}</Project>
+      <Project>{39FE4157-2A85-4AEE-8D4A-4B7A1A60B03C}</Project>
       <Name>Newtonsoft.Msgpack</Name>
     </ProjectReference>
   </ItemGroup>

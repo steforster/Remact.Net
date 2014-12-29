@@ -60,7 +60,7 @@ namespace Remact.Net.UnitTests.CommunicationModel
 
             if (variant == 1)
             {
-                Trace.WriteLine("start '" + TestContext.CurrentContext.Test.Name + "' variant 1: communicate locally in the same process");
+                Console.WriteLine("start '" + TestContext.CurrentContext.Test.Name + "' variant 1: communicate locally in the same process");
                 var service = new ClientServerService(remote: false, multithreaded: true);
                 _proxy = new RemactPortProxy("ClientServiceTestLocal", DefaultResponseHandler);
                 _proxy.IsMultithreaded = true;
@@ -68,7 +68,7 @@ namespace Remact.Net.UnitTests.CommunicationModel
             }
             else if (variant == 2)
             {
-                Trace.WriteLine("start '" + TestContext.CurrentContext.Test.Name + "' variant 2: communicate to a remote process");
+                Console.WriteLine("start '" + TestContext.CurrentContext.Test.Name + "' variant 2: communicate to a remote process");
                 var service = new ClientServerService(remote: true, multithreaded: true);
                 _proxy = new RemactPortProxy("ClientServiceTestRemote", DefaultResponseHandler);
                 _proxy.IsMultithreaded = true;
@@ -76,16 +76,16 @@ namespace Remact.Net.UnitTests.CommunicationModel
             }
             else if (variant == 3)
             {
-                Trace.WriteLine("start '" + TestContext.CurrentContext.Test.Name + "' variant 3: communicate locally in the same process, use thread synchronization");
+                Console.WriteLine("start '" + TestContext.CurrentContext.Test.Name + "' variant 3: communicate locally in the same process, use thread synchronization");
                 var service = new ClientServerService(remote: false, multithreaded: false);
-                _proxy = new RemactPortProxy("ClientServiceTestRemote", DefaultResponseHandler);
+                _proxy = new RemactPortProxy("ClientServiceTestLocalSync", DefaultResponseHandler);
                 _proxy.LinkToService(service.Port);
             }
             else if (variant == 4)
             {
-                Trace.WriteLine("start '" + TestContext.CurrentContext.Test.Name + "' variant 4: communicate to a remote process, use thread synchronization");
+                Console.WriteLine("start '" + TestContext.CurrentContext.Test.Name + "' variant 4: communicate to a remote process, use thread synchronization");
                 var service = new ClientServerService(remote: true, multithreaded: false);
-                _proxy = new RemactPortProxy("ClientServiceTestRemote", DefaultResponseHandler);
+                _proxy = new RemactPortProxy("ClientServiceTestRemoteSync", DefaultResponseHandler);
                _proxy.LinkOutputToRemoteService(service.RemoteUri);
             }
             else
@@ -107,7 +107,7 @@ namespace Remact.Net.UnitTests.CommunicationModel
         [Test]
         public void SendStringReceiveString()
         {
-            Helper.RunInWpfSyncContext(async () =>
+            Helper.RunInWinFormsSyncContext(async () =>
             {
                 // service side: see ClientServerService.ReceiveStringReplyString.
                 //               It is scheduled on the same thread. Therefore, we have to use await in order to avoid deadlocks.
@@ -128,7 +128,7 @@ namespace Remact.Net.UnitTests.CommunicationModel
         [Test]
         public void SendStringReceiveError()
         {
-            Helper.RunInWpfSyncContext(async () =>
+            Helper.RunInWinFormsSyncContext(async () =>
             {
                 // When executing this test, an exception is thrown on service side: see ClientServerService.ReceiveStringReplyString.
                 // This exception is propagated as a 'RemactException' to this thread.
@@ -158,7 +158,7 @@ namespace Remact.Net.UnitTests.CommunicationModel
         [Test]
         public void SendStringReceiveInt()
         {
-            Helper.RunInWpfSyncContext(async () =>
+            Helper.RunInWinFormsSyncContext(async () =>
             {
                 // service side: see ClientServerService.ReceiveStringReplyInt.
                 //               It is scheduled on the same thread. Therefore, we have to use await in order to avoid deadlocks.
@@ -183,7 +183,7 @@ namespace Remact.Net.UnitTests.CommunicationModel
         [Test]
         public void SendStringReceiveUnexpectedType()
         {
-            Helper.RunInWpfSyncContext(async () =>
+            Helper.RunInWinFormsSyncContext(async () =>
             {
                 // When executing this test, an exception is thrown on client side caused by not expected reply type.
                 int variant = 1;
