@@ -24,6 +24,7 @@ namespace Remact.Net
             : base (message, innerEx)
         {
             RemactMessage = msg;
+            ErrorCode = errorcode;
             SourceStackTrace = sourceStackTrace;
         }
 
@@ -35,7 +36,7 @@ namespace Remact.Net
         /// <summary>
         /// Get the Error-Code
         /// </summary>
-        public ErrorCode Error { get; protected set; }
+        public ErrorCode ErrorCode { get; protected set; }
 
         /// <summary>
         /// In case a InnerException represents an ErrorMessage, the SourceStackTrace may contain additional information from the sending side.

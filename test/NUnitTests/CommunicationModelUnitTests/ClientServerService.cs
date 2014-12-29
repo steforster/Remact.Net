@@ -3,33 +3,33 @@
 
 using NUnit.Framework;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Diagnostics;
 
-namespace Remact.Net.CommunicationModelUnitTests
+namespace Remact.Net.UnitTests.CommunicationModel
 {
+    // This is the communication contract for clinet-server tests.
     public interface IClientServerReceiver
     {
-        string ReceiveString(string request);
+        string ReceiveStringReplyString(string request);
+        int ReceiveStringReplyInt(string request);
     }
 
+    // This is the service part of the client-server test.
     public class ClientServerService
     {
         // Expose for local connection
         public IRemactPortService Port { get; private set; }
 
-        // Expose for remote connection
+        // Exposed interface for remote connection
         public readonly string ServiceName = "ClientServerService";
         public readonly Uri    RemoteUri = new Uri("ws://localhost:40001/Remact/ClientServerService");
 
         // Constructor
-        public ClientServerService(bool remote)
+        public ClientServerService(bool remote, bool multithreaded)
         {
             var port = new RemactPortService(ServiceName, DefaultRequestHandler)
             {
-                IsMultithreaded = true,
+                IsMultithreaded = multithreaded,
             };
 
             port.InputDispatcher.AddActorInterface(typeof(IClientServerReceiver), this); 
@@ -43,16 +43,25 @@ namespace Remact.Net.CommunicationModelUnitTests
             Port = port;
          }
 
-        public void DefaultRequestHandler(RemactMessage msg)
+        private void DefaultRequestHandler(RemactMessage msg)
         {
             throw new NotImplementedException();
         }
 
-        public string ReceiveString(string request, RemactMessage message)
+        private string ReceiveStringReplyString(string request, RemactMessage message)
         {
             // service side
+            Trace.WriteLine("  '" + request + "' received in 'ReceiveStringReplyString', service: " + Port.Uri);
             Assert.AreEqual("a request", request, "wrong request content");
             return "the response";
+        }
+
+        private int ReceiveStringReplyInt(string request, RemactMessage message)
+        {
+            // service side
+            Trace.WriteLine("  '" + request + "' received in 'ReceiveStringReplyInt', service: " + Port.Uri);
+            Assert.AreEqual("a request", request, "wrong request content");
+            return 123;
         }
     }
 }

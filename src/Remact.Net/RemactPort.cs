@@ -457,9 +457,9 @@ namespace Remact.Net
                                 }
                                 else if (throwException)
                                 {
-                                //var dynamicRsp = new RemactMessage<dynamic>((dynamic)rsp.Payload, rsp);
-                                //var ex = new RemactException<dynamic>(dynamicRsp, "unexpected response type '" + rsp.Payload.GetType().FullName + "' from method '" + method + "'");
-                                Exception ex;
+                                    //var dynamicRsp = new RemactMessage<dynamic>((dynamic)rsp.Payload, rsp);
+                                    //var ex = new RemactException<dynamic>(dynamicRsp, "unexpected response type '" + rsp.Payload.GetType().FullName + "' from method '" + method + "'");
+                                    Exception ex;
                                     ErrorMessage error;
                                     if (rsp.MessageType == RemactMessageType.Error && rsp.TryConvertPayload(out error))
                                     {
@@ -468,7 +468,7 @@ namespace Remact.Net
                                         {
                                             inner = new Exception(error.InnerMessage);
                                         }
-                                        ex = new RemactException(rsp, error.Error, error.Message, inner, error.StackTrace);
+                                        ex = new RemactException(rsp, error.ErrorCode, error.Message, inner, error.StackTrace);
                                     }
                                     else
                                     {
@@ -566,6 +566,8 @@ namespace Remact.Net
 
         /// <summary>
         /// Multithreaded partners do not use a message input queue. All threads may directly call InputHandler delegates.
+        /// The actor providing a multithreaded port is responsible to protect its internal data from race conditions.
+        /// When IsMultithreaded is false, all requests and responses of the port are synchronized to the single thread that has opened the port.
         /// Default = false.
         /// </summary>
         public bool IsMultithreaded { get; set; }
@@ -614,7 +616,7 @@ namespace Remact.Net
 
                 if (msg.IsRequest)
                 {
-                    if (err.Error == ErrorCode.CouldNotDispatch) err.Error = ErrorCode.UnhandledExceptionOnService;
+                    if (err.ErrorCode == ErrorCode.CouldNotDispatch) err.ErrorCode = ErrorCode.UnhandledExceptionOnService;
                     msg.SendResponseFrom(this, err, null);
                 }
                 else
@@ -640,7 +642,7 @@ namespace Remact.Net
                 SynchronizationContext currentThreadSyncContext = SynchronizationContext.Current;
                 if (currentThreadSyncContext == null)
                 {
-                    throw new Exception("Thread connecting RemactPort '" + Name + "' has no message queue. Set RemactPort.IsMultithreaded=true, when your message handlers are threadsafe!");
+                    throw new Exception("The thread that opens RemactPort '" + Name + "' has no message queue. Set RemactPort.IsMultithreaded=true, when your message handlers are threadsafe!");
                 }
                 else
                 {

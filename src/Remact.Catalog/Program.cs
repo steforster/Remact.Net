@@ -2,10 +2,7 @@
 // Copyright (c) 2014, github.com/steforster/Remact.Net
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Windows.Forms;
-using System.IO;
 using Remact.Net;
 
 namespace Remact.Catalog

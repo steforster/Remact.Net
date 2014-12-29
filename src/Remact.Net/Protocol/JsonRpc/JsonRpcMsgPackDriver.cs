@@ -73,7 +73,7 @@ namespace Remact.Net.Protocol.JsonRpc
             else
             {   // request or notification
                 rpc.method = msg.DestinationMethod;
-                rpc.params1 = msg.Payload;
+                rpc.parameters = msg.Payload;
             }
             
             var serializer = MessagePackSerializer.Get<JsonRpcV2Message>();
@@ -123,7 +123,7 @@ namespace Remact.Net.Protocol.JsonRpc
             }
             else
             {
-                rpc.error.code = (int)payload.Error;
+                rpc.error.code = (int)payload.ErrorCode;
                 rpc.error.message = payload.Message;
             }
             
@@ -165,7 +165,7 @@ namespace Remact.Net.Protocol.JsonRpc
                     IncomingMessageNotDeserializable(msg.RequestId, "not supportet json-rpc protocol version");
                     return;
                 }
-                else if (rpc.method != null || rpc.params1 != null)
+                else if (rpc.method != null || rpc.parameters != null)
                 {
                     if (msg.RequestId >= 0)
                     {
@@ -177,7 +177,7 @@ namespace Remact.Net.Protocol.JsonRpc
                     }
                     
                     msg.DestinationMethod = rpc.method;
-                    msg.Payload = rpc.params1;
+                    msg.Payload = rpc.parameters;
                     // TODO msg.SerializationPayload = new MsgPackPayload(rpc.params1); 
                 }
                 else if (rpc.result != null && msg.RequestId >= 0)

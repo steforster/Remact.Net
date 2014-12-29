@@ -1,6 +1,8 @@
 ﻿
 // Copyright (c) 2014, github.com/steforster/Remact.Net
 
+using Newtonsoft.Json;
+
 namespace Remact.Net.Protocol.JsonRpc
 {
     /// <summary>
@@ -27,7 +29,8 @@ namespace Remact.Net.Protocol.JsonRpc
         /// An object that holds the first parameter to be used during the invocation of the method.
         /// Params may be a structure, an array, a single value or null.
         /// </summary>
-        public object params1;
+        [JsonProperty("params")]
+        public object parameters;
         
         /// <summary>
         /// This member is REQUIRED on success in reply messages.
@@ -51,47 +54,6 @@ namespace Remact.Net.Protocol.JsonRpc
         public string id;
     }
     
-/*
-    /// <summary>
-    /// Json rpc v2 request or notification message.
-    /// </summary>
-    public class JsonRpcV2Request : JsonRpcV2Message
-    {
-        /// <summary>
-        /// A String containing the name of the method to be invoked. 
-        /// Method names that begin with the word rpc followed by a period character (U+002E or ASCII 46) 
-        /// are reserved for rpc-internal methods and extensions and MUST NOT be used for anything else.
-        /// </summary>
-        public string method;
-        
-        /// <summary>
-        /// An object that holds the first parameter to be used during the invocation of the method.
-        /// Params may be a structure, an array, a single value or null.
-        /// </summary>
-        public object params1;
-    }
-    
-
-    /// <summary>
-    /// Json rpc v2 response or error message.
-    /// </summary>
-    public class JsonRpcV2Response : JsonRpcV2Message
-    {
-        /// <summary>
-        /// This member is REQUIRED on success.
-        /// This member MUST NOT exist if there was an error invoking the method.
-        /// The value of this member is determined by the method invoked on the Server.
-        /// </summary>
-        public object result;
-        
-        /// <summary>
-        /// This member is REQUIRED on error.
-        /// This member MUST NOT exist if there was no error triggered during invocation.
-        /// The value for this member MUST be an Object as defined in section 5.1.
-        /// </summary>
-        public JsonRpcV2Error error;
-    }
-*/    
     /// <summary>
     /// Json rpc v2 error object.
     /// </summary>
@@ -115,10 +77,10 @@ namespace Remact.Net.Protocol.JsonRpc
         /// </summary>
         public object data;
     }
-    
-    
+
+
     /// <summary>
-    /// Predefined errorcodes.
+    /// TODO: Predefined errorcodes.
     /// </summary>
     public enum JsonRpcV2ErrorCode
     {

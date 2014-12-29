@@ -71,7 +71,7 @@ namespace Remact.Net.Protocol.JsonRpc
             else
             {   // request or notification
                 rpc.method = msg.DestinationMethod;
-                rpc.params1 = msg.Payload;
+                rpc.parameters = msg.Payload;
             }
 
             var stream = context.DataFrame.CreateInstance();
@@ -126,7 +126,7 @@ namespace Remact.Net.Protocol.JsonRpc
             }
             else
             {
-                rpc.error.code = (int)payload.Error;
+                rpc.error.code = (int)payload.ErrorCode;
                 rpc.error.message = payload.Message;
             }
 
@@ -174,7 +174,7 @@ namespace Remact.Net.Protocol.JsonRpc
                     IncomingMessageNotDeserializable(msg.RequestId, "not supportet json-rpc protocol version", context);
                     return;
                 }
-                else if (rpc.method != null || rpc.params1 != null)
+                else if (rpc.method != null || rpc.parameters != null)
                 {
                     if (rpc.id != null)
                     {
@@ -186,17 +186,22 @@ namespace Remact.Net.Protocol.JsonRpc
                     }
 
                     msg.DestinationMethod = rpc.method;
-                    msg.Payload = rpc.params1;
+                    msg.Payload = rpc.parameters;
+                    // in case the Payload is a primitive type, it has already been converted and SerializationPayload.AsDynamic will return null.
+                    msg.SerializationPayload = new NewtonsoftJsonPayload(msg.Payload as JToken);
                 }
                 else if (rpc.result != null && rpc.id != null)
                 {
                     msg.Type = RemactMessageType.Response;
                     msg.Payload = rpc.result;
+                    msg.SerializationPayload = new NewtonsoftJsonPayload(msg.Payload as JToken);
                 }
                 else if (rpc.error != null)
                 {
                     msg.Type = RemactMessageType.Error;
                     msg.Payload = rpc.error;
+                    // TODO: currently error.code and error.message are unused.
+                    msg.SerializationPayload = new NewtonsoftJsonPayload(rpc.error.data as JToken);
                 }
                 else
                 {
@@ -204,8 +209,6 @@ namespace Remact.Net.Protocol.JsonRpc
                     return;
                 }
 
-                // in case the Payload is a primitive type, it has already been converted and SerializationPayload.AsDynamic will return null.
-                msg.SerializationPayload = new NewtonsoftJsonPayload(msg.Payload as JToken);
                 if (_toClientInterface != null)
                 {
                     _toClientInterface.OnMessageToClient(msg); // client side

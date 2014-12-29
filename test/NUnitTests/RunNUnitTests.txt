@@ -1,6 +1,7 @@
 How to run and debug NUnit tests from VisualStudio 2015
 -------------------------------------------------------
-The NUnitTestAdapter.WithFramework is added as a NuGet package to the unit tests using this runner.
+The NuGet package 'NUnitTestAdapter.WithFramework' has been added to the unit test project.
+VisualStudio 2015 will automatically download the required packages.
 Then, in VisualStudio2015, you can run NUnit tests from the 'Test -> Windows -> TestExplorer' (as the Microsoft unit tests).
 
 

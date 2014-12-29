@@ -127,7 +127,7 @@ namespace Remact.Net
     {
         /// <summary>
         /// For version tolerance, error is streamed as int.
-        /// Application internally, the enum 'Error' is used.
+        /// Application internally, the enum 'ErrorCode' is used.
         /// </summary>
         [JsonProperty]
         private int error;
@@ -151,7 +151,7 @@ namespace Remact.Net
         /// Get or set the Error-Code
         /// </summary>
         [JsonIgnore]
-        public ErrorCode Error
+        public ErrorCode ErrorCode
         {
             get
             {
@@ -178,7 +178,7 @@ namespace Remact.Net
         /// <param name="text">unique information where te error occured.</param>
         public ErrorMessage(ErrorCode err, string text = null)
         {
-            Error = err;
+            ErrorCode = err;
             Message = text;
             if (Message == null)
             {
@@ -193,7 +193,7 @@ namespace Remact.Net
         /// <param name="ex">detailed information about the error.</param>
         public ErrorMessage(ErrorCode err, Exception ex)
         {
-            Error = err;
+            ErrorCode = err;
             if (ex == null)
             {
                 Message = String.Empty;
@@ -224,7 +224,7 @@ namespace Remact.Net
         /// </summary>
         /// <param name="ex">detailed information about the error.</param>
         public ErrorMessage(RemactException ex)
-            : this(ex.Error, ex)
+            : this(ex.ErrorCode, ex)
         {
         }// CTOR 3
 
@@ -236,8 +236,8 @@ namespace Remact.Net
         {
             StringBuilder err = new StringBuilder(1000);
             err.Append("RemactError ");
-            if (Error == ErrorCode.Undef) { err.Append("error="); err.Append(error); }
-            else { err.Append(Error.ToString()); }
+            if (ErrorCode == ErrorCode.Undef) { err.Append("error="); err.Append(error); }
+            else { err.Append(ErrorCode.ToString()); }
             err.Append(". ");
             err.Append(Message);
             if (InnerMessage != null && InnerMessage.Length > 0)

@@ -27,9 +27,7 @@ The next development steps will be:
 * Do not use Type.AssemblyQualifiedTypeName for dispatching
 * Port unit tests from AsyncWcfLib
 * Integrate Newtonsoft logging
-* Add missing XML comments
 * Cleanup TODO's
-* Support Json-RPC
 
 
 
@@ -41,6 +39,8 @@ The following goals have been reached:
 * Local actors (message passing between threads)
 * Remote actors (message passing between hosts or processes)
 * WebSockets, Json and other open standards are used to link Remact actors
+* Supported protocols: WAMP or JSON-RPC. 
+* Supported serialization: Json or MsgPack (binary).
 * Peer to peer communication using distributed actor catalogs avoid single point of failure
 * Fully support bidirectional models: client-server / server-client / publish-subscribe
 * Strongly typed interfaces
@@ -68,7 +68,6 @@ serialization that supports inheritance and extensibility (lax versioning).
 Interesting developments are:
 
 * [WampSharp](https://github.com/darkl/WampSharp), I have lent some ideas from this WAMP implementation
-* [MessagePack](http://msgpack.org) for [CLI](https://github.com/msgpack/msgpack-cli), for [Json.Net](https://github.com/Code-Sharp/Newtonsoft.Msgpack)
 * [Protobuf-Net](https://code.google.com/p/protobuf-net/) and [Google protocol buffers](https://developers.google.com/protocol-buffers)
 * [A good overview](http://spin.atomicobject.com/2011/11/23/binary-serialization-tour-guide/)
 
@@ -88,6 +87,8 @@ I would like to thank all who built these components for their contribution to t
 * [JSON-RPC](http://www.jsonrpc.org/specification), instad of WAMP, Json-RPC can be used on top of the WebSocket protocol.
 
 * [Newtonsoft.Json](https://github.com/JamesNK/Newtonsoft.Json), a class library for Json serialization
+
+* [MessagePack](http://msgpack.org) for [CLI](https://github.com/msgpack/msgpack-cli), for [Json.Net](https://github.com/Code-Sharp/Newtonsoft.Msgpack)
 
 * [Log4Net](http://logging.apache.org/log4net/), logging component from Apache
 
@@ -244,16 +245,16 @@ TCP connections to known partners.
 
 Remact uses the following layers when receiving a message from a remote actor:
 * The .NET TCP layer raises an event on a threadpool thread
-* The Alchemy.WebSocketClient or -Service interpretes the data frame and dispatches a text string to the protocol layer
+* The Alchemy.WebSocketClient or -Service interpretes the data frame and dispatches it to the protocol layer
 * The Wamp- or Json.RPC protocol layer deserializes the payload to a [Newtonsoft.Json.Linq.JToken](http://weblog.west-wind.com/posts/2012/Aug/30/Using-JSONNET-for-dynamic-JSON-parsing)
 * The RemactClient or -Service switches to the correct actor thread, builds a RemactMessage and and handles Remact internal messages 
-* Other messages are handled by the RemactDispatcher. It finds the addressed method name in the list of supported contract interfaces,
-  converts the payload to the .NET type defined as first parameter of the addressed method and
+* User messages are handled by the RemactDispatcher. It finds the addressed method name in the list of supported contract interfaces,
+  it converts the payload to the .NET type defined as first parameter of the addressed method and
   invokes the addressed method by passing the strong typed payload, the RemactMessage and the session data as parameters
 * The called method may accept any serializable payload type, a Newtonsoft.Json.Linq.JToken or a [dynamic object](http://msdn.microsoft.com/en-us/library/dd264736%28v=vs.110%29.aspx)
 * When the addressed method could not be found or the received stream could not be converted to the correct .NET type,
   a default message handler is called
-* The protocol layer serializes the return type of the called method and send it as a response
+* The protocol layer serializes the return type of the called method and sends it as a response
 
 
 
@@ -273,8 +274,8 @@ Afterwards your git project folder should look like this:
       Alchemy-Websockets  msgpack-cli  Newtonsoft.Json  Newtonsoft.MsgPack  Remact.Net  ...  
 
 
-The Remact.VS2012 solution is used for VisualStudio 2012 under Windows.  
-Use Remact.Mono.sln for MonoDevelop 4.0.12 under Ubuntu 14.04.
+The Remact.VS2015 solution is used for VisualStudio 2015 under Windows.  
+Use Remact.Mono.sln for earlier VS versions and for MonoDevelop 4.0.12 under Ubuntu 14.04.
 
 Both solutions currently reference the same projects, target the Mono/.NET 4.0 frameworks 
 and generate their output into a 'Mono' folder.  

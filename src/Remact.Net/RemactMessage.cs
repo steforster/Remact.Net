@@ -337,7 +337,7 @@ namespace Remact.Net
                     type = RemactMessageType.Error;
                 }
 
-                Response = new RemactMessage(Source, null, payload, type, sender, ClientId, RequestId);
+                Response = new RemactMessage(Source, DestinationMethod, payload, type, sender, ClientId, RequestId);
                 Response.SourceLambda = responseHandler;
                 Response.DestinationLambda = SourceLambda; // SourceLambda will be called later on for the first response only
                 SourceLambda = null;
@@ -377,7 +377,7 @@ namespace Remact.Net
         /// <returns>The message in readable text form.</returns>
         public override string ToString ()
         {
-            return string.Concat(MessageType.ToString(), '<', DestinationMethod, '>');
+            return string.Concat(MessageType.ToString(), " of '", DestinationMethod, "'");
         }
 
         /// <summary>
