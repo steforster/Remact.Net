@@ -18,7 +18,7 @@ namespace Remact.Net.Remote
         /// Connect or reconnect output to the previously linked partner.
         /// </summary>
         /// <returns>A task. When this task is run to completion, the task.Result is either true or an exception.</returns>
-        Task<bool> TryConnect();
+        Task<bool> ConnectAsync();
 
         /// <summary>
         /// Shutdown the outgoing remote connection. Send a disconnect message to the partner.

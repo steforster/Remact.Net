@@ -37,7 +37,7 @@ namespace Test1.Service
             // The clients may connect without Remact.Catalog. They know our TCP port. 
             service.LinkInputToNetwork(null, tcpPort);
             Console.Title = service.AppIdentification;
-            if (service.TryConnect().Result)
+            if (service.ConnectAsync().Result)
             {
                 Console.WriteLine("Service listening on '" + service.Uri.ToString() + "'" + Environment.NewLine);
             }

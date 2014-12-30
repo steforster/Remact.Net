@@ -236,7 +236,7 @@ namespace Remact.Net
         #region IRemotePort implementation
 
         /// <inheritdoc />
-        public virtual Task<bool> TryConnect()
+        public virtual Task<bool> ConnectAsync()
         {
             throw new NotImplementedException(); // implemented in subclass
         }
@@ -290,7 +290,7 @@ namespace Remact.Net
             }
             else if (this.SyncContext == null)
             {
-                throw new Exception("Remact: Destination of '" + Name + "' has not picked up a thread synchronization context.");
+                throw new InvalidOperationException("Remact: Destination of '" + Name + "' has not picked up a thread synchronization context.");
             }
             else
             {
@@ -361,7 +361,7 @@ namespace Remact.Net
                 }
                 else if (ManagedThreadId != threadId)
                 {
-                    throw new Exception("Remact: wrong thread synchronization context when sending from '" + Name + "'");
+                    throw new InvalidOperationException("Remact: wrong thread synchronization context when sending from '" + Name + "'");
                 }
             }
 
@@ -380,7 +380,7 @@ namespace Remact.Net
         }
 
         /// <summary>
-        /// Ask: send a request message to the partner RemactPort.
+        /// SendReceiveAsync: send a request message to the partner RemactPort.
         /// Invokes the specified remote method and pass the payload as parameter.
         /// The remote method has to return a payload of type TRsp.
         /// The asynchronous responseHandler expects a payload of type TRsp.
@@ -390,7 +390,7 @@ namespace Remact.Net
         /// <param name="payload">The message payload to send. It must be of a type acceptable for the called method.</param>
         /// <param name="responseHandler">A method or lambda expression handling the asynchronous response.</param>
         /// <typeparam name="TRsp">The expected type of the response payload. When receiving other types, the message will be passed to the default message handler.</typeparam>
-        public void Ask<TRsp>(string method, object payload, Action<TRsp, RemactMessage> responseHandler) where TRsp : class
+        public void SendReceiveAsync<TRsp>(string method, object payload, Action<TRsp, RemactMessage> responseHandler) where TRsp : class
         {
             RemactMessage msg = NewMessage(method, payload, RemactMessageType.Request,
 
@@ -411,7 +411,7 @@ namespace Remact.Net
 
 
         /// <summary>
-        /// Ask: sends a request message to the partner RemactPort.
+        /// SendReceiveAsync: sends a request message to the partner RemactPort.
         /// Invokes the specified remote method and passes the payload as parameter.
         /// The remote method has to return a payload of type TRsp.
         /// The returned asynchronous Task.Result is of type TRsp.
@@ -421,14 +421,14 @@ namespace Remact.Net
         /// <typeparam name="TRsp">The expected type of the response payload. 
         ///    When receiving a payload of other type, an RemactException will be thrown.</typeparam>
         /// <returns>A Task to track the asynchronous completion of the request.</returns>
-        public Task<RemactMessage<TRsp>> Ask<TRsp>(string method, object payload) where TRsp : class
+        public Task<RemactMessage<TRsp>> SendReceiveAsync<TRsp>(string method, object payload) where TRsp : class
         {
             RemactMessage sentMessage;
-            return Ask<TRsp>(method, payload, out sentMessage, true);
+            return SendReceiveAsync<TRsp>(method, payload, out sentMessage, true);
         }
 
         /// <summary>
-        /// Ask: sends a request message to the partner RemactPort.
+        /// SendReceiveAsync: sends a request message to the partner RemactPort.
         /// Invokes the specified remote method and passes the payload as parameter.
         /// The remote method has to return a payload of type TRsp.
         /// The returned asynchronous Task.Result is of type TRsp.
@@ -440,7 +440,7 @@ namespace Remact.Net
         ///                              When set to false, a message with unexpected response type will be sent to the default message handler.</param>
         /// <typeparam name="TRsp">The expected type of the response payload.</typeparam>
         /// <returns>A Task to track the asynchronous completion of the request.</returns>
-        public Task<RemactMessage<TRsp>> Ask<TRsp>(string method, object payload, out RemactMessage sentMessage, bool throwException = true) where TRsp : class
+        public Task<RemactMessage<TRsp>> SendReceiveAsync<TRsp>(string method, object payload, out RemactMessage sentMessage, bool throwException = true) where TRsp : class
         {
             var tcs = new TaskCompletionSource<RemactMessage<TRsp>>();
 
@@ -642,7 +642,7 @@ namespace Remact.Net
                 SynchronizationContext currentThreadSyncContext = SynchronizationContext.Current;
                 if (currentThreadSyncContext == null)
                 {
-                    throw new Exception("The thread that opens RemactPort '" + Name + "' has no message queue. Set RemactPort.IsMultithreaded=true, when your message handlers are threadsafe!");
+                    throw new InvalidOperationException("The thread that opens RemactPort '" + Name + "' has no message queue. Set RemactPort.IsMultithreaded=true, when your message handlers are threadsafe!");
                 }
                 else
                 {

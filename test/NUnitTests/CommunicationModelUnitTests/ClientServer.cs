@@ -3,7 +3,6 @@
 
 using NUnit.Framework;
 using System;
-using System.Diagnostics;
 using System.Threading.Tasks;
 
 // Communication model tests
@@ -114,13 +113,42 @@ namespace Remact.Net.UnitTests.CommunicationModel
                 int variant = 1;
                 while (SetUpTestVariant(variant++))
                 {
-                    // client side
-                    var ok = await _proxy.TryConnect();
-                    Assert.IsTrue(ok, "could not connect");
-
-                    var response = await _proxy.Ask<string>("ReceiveStringReplyString", "a request");
-                    Assert.AreEqual("the response", response.Payload, "wrong response content");
+                    await SendStringReceiveStringAsync();
                 }
+            });
+        }
+
+        private async Task SendStringReceiveStringAsync()
+        {
+            // client side
+            var ok = await _proxy.ConnectAsync();
+            Assert.IsTrue(ok, "could not connect");
+
+            var response = await _proxy.SendReceiveAsync<string>("ReceiveStringReplyString", "a request");
+            Assert.AreEqual("the response", response.Payload, "wrong response content");
+        }
+
+        [Test]
+        public async Task SendStringReceiveStringWithoutSyncContext()
+        {
+            // variants 1 and 2 do not use a synchronization context. 
+            // Client and server support multithreading.
+            SetUpTestVariant(1);
+            await SendStringReceiveStringAsync();
+
+            SetUpTestVariant(2);
+            await SendStringReceiveStringAsync();
+
+            // variants 3 and 4 miss the synchronization context in this test thread. 
+            // Therefore, they throw an exception.
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                SetUpTestVariant(3);
+            });
+
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                SetUpTestVariant(4);
             });
         }
 
@@ -136,13 +164,13 @@ namespace Remact.Net.UnitTests.CommunicationModel
                 while (SetUpTestVariant(variant++))
                 {
                     // client side
-                    var ok = await _proxy.TryConnect();
+                    var ok = await _proxy.ConnectAsync();
                     Assert.IsTrue(ok, "could not connect");
 
                     // we cannot use Assert.Throws<AggregateException> because this is not async and will deadlock.
                     try
                     {
-                        var response = await _proxy.Ask<string>("ReceiveStringReplyString", "BlaBlaRequest");
+                        var response = await _proxy.SendReceiveAsync<string>("ReceiveStringReplyString", "BlaBlaRequest");
                         Assert.Fail("no exception thrown");
                     }
                     catch (RemactException ex)
@@ -166,11 +194,11 @@ namespace Remact.Net.UnitTests.CommunicationModel
                 while (SetUpTestVariant(variant++))
                 {
                     // client side
-                    var ok = await _proxy.TryConnect();
+                    var ok = await _proxy.ConnectAsync();
                     Assert.IsTrue(ok, "could not connect");
 
                     // value types are returned as object (boxed)
-                    var response = await _proxy.Ask<object>("ReceiveStringReplyInt", "a request");
+                    var response = await _proxy.SendReceiveAsync<object>("ReceiveStringReplyInt", "a request");
                     Assert.AreEqual(123, response.Payload, "wrong response content");
                     Assert.AreEqual(RemactMessageType.Response, response.MessageType);
                     Assert.AreEqual("ReceiveStringReplyInt", response.DestinationMethod);
@@ -190,13 +218,13 @@ namespace Remact.Net.UnitTests.CommunicationModel
                 while (SetUpTestVariant(variant++))
                 {
                     // client side
-                    var ok = await _proxy.TryConnect();
+                    var ok = await _proxy.ConnectAsync();
                     Assert.IsTrue(ok, "could not connect");
 
                     // we cannot use Assert.Throws<AggregateException> because this is not async and will deadlock.
                     try
                     {
-                        var response = await _proxy.Ask<string>("ReceiveStringReplyInt", "a request");
+                        var response = await _proxy.SendReceiveAsync<string>("ReceiveStringReplyInt", "a request");
                         Assert.Fail("no exception thrown");
                     }
                     catch (RemactException ex)

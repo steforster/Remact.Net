@@ -87,7 +87,7 @@ namespace Test1.Client
         {
             Console.Write("\n\r Thread=" + Thread.CurrentThread.ManagedThreadId + ", is connecting...");
             TestInput.Open();
-            var task = TestOutput.TryConnect();
+            var task = TestOutput.ConnectAsync();
             task.ContinueWith(t =>
                 {
                     Console.WriteLine("\n\r Thread=" + Thread.CurrentThread.ManagedThreadId + ", connected.");
@@ -116,7 +116,7 @@ namespace Test1.Client
                 else
                 {
                     int sendContextNumber = TestOutput.LastRequestIdSent + 1000;
-                    TestOutput.Ask("OnMessageReceived", testMessage,
+                    TestOutput.SendReceiveAsync("OnMessageReceived", testMessage,
 
                             delegate (ReadyMessage response, RemactMessage rsp)
                             {

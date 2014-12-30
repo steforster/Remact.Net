@@ -98,7 +98,7 @@ namespace Remact.Net
         public RemactService BasicService { get { return m_MyInputService; } }
 
         /// <summary>
-        /// When true: TryConnect() must be called (will open the service host)
+        /// When true: ConnectAsync() must be called (will open the service host)
         /// </summary>
         public bool MustOpenInput { get { return m_MyInputService != null && !m_MyInputService.IsOpen; } }
 
@@ -107,7 +107,7 @@ namespace Remact.Net
         /// <para>Gets or sets the state of the incoming connection from the network to the service.</para>
         /// <para>May be called from any thread.</para>
         /// <para>Setting InputStateFromNetwork to PortState.Ok or PortState.Connecting reconnects a previously disconnected link.</para>
-        /// <para>These states may be set only after an initial call to TryConnect from the actors internal thread.</para>
+        /// <para>These states may be set only after an initial call to ConnectAsync from the actors internal thread.</para>
         /// <para>Setting other states will disconnect the RemactService from network.</para>
         /// </summary>
         /// <returns>A <see cref="PortState"/></returns>
@@ -140,7 +140,7 @@ namespace Remact.Net
                 m_Anonymous = new RemactPortProxy("anonymous");
                 m_Anonymous.IsMultithreaded = true;
                 m_Anonymous.LinkToService(this);
-                m_Anonymous.TryConnect();
+                m_Anonymous.ConnectAsync();
             }
             return m_Anonymous;
         }
@@ -163,7 +163,7 @@ namespace Remact.Net
         #region IRemotePort implementation
 
         /// <summary>
-        /// Opens the service for incomming (network) connections (same as TryConnect).
+        /// Opens the service for incomming (network) connections (same as ConnectAsync).
         /// The method is accessible only by the owner of this RemactPortService object. No interface exposes the method.
         /// Open picks up the synchronization context and must be called on the receiving thread only!
         /// A ActorInfo message is received, when the connection is established.
@@ -171,11 +171,11 @@ namespace Remact.Net
         /// </summary>
         public void Open()
         {
-            TryConnect();
+            ConnectAsync();
         }
 
         /// <inheritdoc />
-        public override Task<bool> TryConnect()
+        public override Task<bool> ConnectAsync()
         {
             bool ok = true;
             PickupSynchronizationContext();

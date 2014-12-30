@@ -2,7 +2,6 @@
 // Copyright (c) 2014, github.com/steforster/Remact.Net
 
 using System;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Threading; // WPF Dispatcher from assembly 'WindowsBase'
@@ -42,15 +41,23 @@ namespace Remact.Net.UnitTests
             //Assert.AreNotEqual(_testThreadId, ServiceThread.ManagedThreadId); // start ServiceThread
             //ServiceException = null;
             //-------------------
-            SynchronizationContext.SetSynchronizationContext(new WindowsFormsSynchronizationContext());
-
-            var task = function(); // start it
-            while (!task.IsCompleted)
+            var previousSyncContext = SynchronizationContext.Current;
+            try
             {
-                Application.DoEvents();
+                SynchronizationContext.SetSynchronizationContext(new WindowsFormsSynchronizationContext());
+
+                var task = function(); // start it
+                while (!task.IsCompleted)
+                {
+                    Application.DoEvents();
+                }
+                task.GetAwaiter().GetResult(); // throw exception in case task.IsFaulted 
+            }
+            finally
+            {
+                SynchronizationContext.SetSynchronizationContext(previousSyncContext);
             }
 
-            task.GetAwaiter().GetResult(); // throw exception in case task.IsFaulted 
             //-------------------
             // end of test
             //m_serviceThread.Dispose();

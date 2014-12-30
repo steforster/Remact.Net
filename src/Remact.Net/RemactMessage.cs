@@ -325,7 +325,7 @@ namespace Remact.Net
             if (m != null && m.BoundSyncContext != null && m.BoundSyncContext != SynchronizationContext.Current)
             {
                 string name = sender == null ? "null" : sender.Name;
-                throw new Exception("Remact: wrong thread synchronization context when responding from '" + name + "'");
+                throw new InvalidOperationException("Remact: wrong thread synchronization context when responding from '" + name + "'");
             }
 
             // return same request ID for first call to SendResponse

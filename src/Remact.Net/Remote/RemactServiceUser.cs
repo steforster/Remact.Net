@@ -206,7 +206,7 @@ namespace Remact.Net.Remote
         /// Dummy implementation. Client stub is always connected to the service.
         /// </summary>
         /// <returns>true</returns>
-        Task<bool> IRemotePort.TryConnect()
+        Task<bool> IRemotePort.ConnectAsync()
         {
             return RemactPort.TrueTask;
         }

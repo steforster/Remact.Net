@@ -94,7 +94,7 @@ namespace Remact.Net
         ResponseNotDeserializableOnClient,
 
         /// <summary>
-        /// The Ask method was expecting a different payload type.
+        /// The SendReceiveAsync method was expecting a different response payload type.
         /// </summary>
         UnexpectedResponsePayloadType,
 

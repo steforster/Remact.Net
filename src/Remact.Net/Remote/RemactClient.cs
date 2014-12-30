@@ -214,7 +214,7 @@ namespace Remact.Net.Remote
 
         /// <summary>
         /// <para>Send Disconnect messages to service if possible . Go from any state to Disconnected state.</para>
-        /// <para>Makes it possible to restart the client with TryConnect.</para>
+        /// <para>Makes it possible to restart the client with ConnectAsync.</para>
         /// </summary>
         public void Disconnect()
         {
@@ -255,7 +255,7 @@ namespace Remact.Net.Remote
 
         /// <summary>
         /// <para>Abort all messages, go from any state to Disconnected state.</para>
-        /// <para>Makes it possible to restart the client with TryConnect.</para>
+        /// <para>Makes it possible to restart the client with ConnectAsync.</para>
         /// </summary>
         public void AbortCommunication()
         {
@@ -273,7 +273,7 @@ namespace Remact.Net.Remote
         /// Connect or reconnect output to the previously linked partner.
         /// </summary>
         /// <returns>A task. When this task is run to completion, the task.Result corresponds to IsOpen.</returns>
-        public Task<bool> TryConnect()
+        public Task<bool> ConnectAsync()
         {
             var tcs = new TaskCompletionSource<bool>();
             try
@@ -326,15 +326,15 @@ namespace Remact.Net.Remote
 
                     m_addressesTried = 0;
                     TryOpenNextServiceIpAddress(tcs, null); // try first address
-            });
+                });
             }
             catch (Exception ex)
             {
-                EndOfConnectionTries(tcs, "exception in TryConnect.", ex); // enter 'faulted' state when eg. configuration is incorrect
+                EndOfConnectionTries(tcs, "exception in ConnectAsync.", ex); // enter 'faulted' state when eg. configuration is incorrect
             }
 
             return tcs.Task;
-        }// TryConnect
+        }
 
 
         // Tries to open one of the IP addresses of the service. Is running on user- or threadpool thread
@@ -485,7 +485,7 @@ namespace Remact.Net.Remote
             PortProxy.m_isOpen = true; // internal, from Proxy to RemactClient
             LastRequestIdReceived = 9;
             RemactMessage sentMessage;
-            var task = PortProxy.Ask<ActorInfo>(RemactService.ConnectMethodName, client, out sentMessage, throwException: false);
+            var task = PortProxy.SendReceiveAsync<ActorInfo>(RemactService.ConnectMethodName, client, out sentMessage, throwException: false);
 
             PortProxy.IsMultithreaded = multithreaded;
             if (PortProxy.TraceConnect)
@@ -704,11 +704,11 @@ namespace Remact.Net.Remote
                 {
                     if (PortProxy.IsMultithreaded || PortProxy.SyncContext != null)
                     {
-                        TryConnect();
+                        ConnectAsync();
                     }
                     else
                     {
-                        throw new InvalidOperationException("Remact: TryConnect of '" + PortClient.Name + "' has not been called to pick up the synchronization context.");
+                        throw new InvalidOperationException("Remact: ConnectAsync of '" + PortClient.Name + "' has not been called to pick up the synchronization context.");
                     }
                 }
                 else if (value == PortState.Faulted)

@@ -119,7 +119,7 @@ namespace Remact.Net
         public bool IsOutputConnected { get { return PortState.Ok == OutputState; } }
 
         /// <summary>
-        /// When true: TryConnect() must be called (first connect or reconnect)
+        /// When true: ConnectAsync() must be called (first connect or reconnect)
         /// </summary>
         public bool MustConnectOutput { get { PortState s = OutputState; return s == PortState.Disconnected || s == PortState.Faulted; } }
 
@@ -138,7 +138,7 @@ namespace Remact.Net
         /// <para>Gets or sets the state of the outgoing connection.</para>
         /// <para>May be called from any thread.</para>
         /// <para>Setting OutputState to PortState.Ok or PortState.Connecting reconnects a previously disconnected link.</para>
-        /// <para>These states may be set only after an initial call to TryConnect from the active services internal thread.</para>
+        /// <para>These states may be set only after an initial call to ConnectAsync from the active services internal thread.</para>
         /// <para>Setting other states will disconnect the Remact client from network.</para>
         /// </summary>
         /// <returns>A <see cref="PortState"/></returns>
@@ -166,18 +166,18 @@ namespace Remact.Net
         #region IRemotePort implementation
 
         /// <summary>
-        /// 'TryConnect' opens the outgoing connection to the previously linked partner.
+        /// 'ConnectAsync' opens the outgoing connection to the previously linked partner.
         /// The method is accessible by the owner of this RemactPortClient object only. No interface exposes the method.
-        /// TryConnect picks up the synchronization context and must be called on the sending thread only!
+        /// ConnectAsync picks up the synchronization context and must be called on the sending thread only!
         /// The connect-process runs asynchronous and may involve an address lookup at the Remact.Catalog.
         /// An ActorInfo message is received, after the connection has been established.
         /// An ErrorMessage is received, when the partner is not reachable.
         /// </summary>
         /// <returns>A task. When this task is run to completion, the task.Result corresponds to IsOpen.</returns>
-        public override Task<bool> TryConnect()
+        public override Task<bool> ConnectAsync()
         {
             PickupSynchronizationContext();
-            if (m_RemoteClient != null) return m_RemoteClient.TryConnect(); // calls PickupSynchronizationContext and sets m_Connected
+            if (m_RemoteClient != null) return m_RemoteClient.ConnectAsync(); // calls PickupSynchronizationContext and sets m_Connected
             if (m_LocalService == null || RedirectIncoming == null) throw new InvalidOperationException("RemactPortClient is not linked");
             m_LocalService.TryAddClient(m_Client);
             m_isOpen = true;

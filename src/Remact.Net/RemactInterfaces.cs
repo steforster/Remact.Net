@@ -360,7 +360,7 @@ namespace Remact.Net
         /// <para>Gets or sets the state of the outgoing connection.</para>
         /// <para>May be called from any thread.</para>
         /// <para>Setting OutputState to PortState.Ok or PortState.Connecting reconnects a previously disconnected link.</para>
-        /// <para>These states may be set only after an initial call to TryConnect from the active services internal thread.</para>
+        /// <para>These states may be set only after an initial call to ConnectAsync from the active services internal thread.</para>
         /// <para>Setting other states will disconnect the client from network.</para>
         /// </summary>
         /// <returns>A <see cref="PortState"/></returns>
@@ -401,7 +401,7 @@ namespace Remact.Net
         /// <para>Gets or sets the state of the incoming service connection from the network.</para>
         /// <para>May be called from any thread.</para>
         /// <para>Setting InputStateFromNetwork to PortState.Ok or PortState.Connecting reconnects a previously disconnected link.</para>
-        /// <para>These states may be set only after an initial call to TryConnect from the active services internal thread.</para>
+        /// <para>These states may be set only after an initial call to ConnectAsync from the active services internal thread.</para>
         /// <para>Setting other states will disconnect the service from network.</para>
         /// </summary>
         /// <returns>A <see cref="PortState"/></returns>

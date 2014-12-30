@@ -39,7 +39,7 @@ namespace Test2.Client
 
         public Task<bool> TryConnect()
         {
-            return _proxy.Output.TryConnect();
+            return _proxy.Output.ConnectAsync();
         }
 
 
@@ -131,17 +131,17 @@ namespace Test2.Client
 
             public Task<RemactMessage<Test2Rsp>> GetSomeData(ReadyMessage req)
             {
-                return Output.Ask<Test2Rsp>("GetSomeData", req);
+                return Output.SendReceiveAsync<Test2Rsp>("GetSomeData", req);
             }
 
             public Task<RemactMessage<ReadyMessage>> SpeedTest1(Test2Req req)
             {
-                return Output.Ask<ReadyMessage>("SpeedTest1", req);
+                return Output.SendReceiveAsync<ReadyMessage>("SpeedTest1", req);
             }
 
             public Task<RemactMessage<Test2Rsp>> SpeedTest2(Test2Req req)
             {
-                return Output.Ask<Test2Rsp>("SpeedTest2", req);
+                return Output.SendReceiveAsync<Test2Rsp>("SpeedTest2", req);
             }
         }
     }

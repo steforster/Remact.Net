@@ -177,7 +177,7 @@ namespace Remact.Catalog
                     p.OutputContext.WaitSeconcsForConnect -= seconds;
                     if( p.OutputContext.WaitSeconcsForConnect <= 0 )
                     {
-                        p.TryConnect();
+                        p.ConnectAsync();
                         p.OutputContext.WaitSeconcsForConnect = 30;
                         p.OutputContext.WaitSecondsForUpdate  =  0;
                     }
@@ -288,7 +288,7 @@ namespace Remact.Catalog
         m_RemactService.OnInputDisconnected += m_CatalogService.OnClientConnectedOrDisconnected;
         m_RemactService.LinkInputToNetwork( null, RemactConfigDefault.Instance.CatalogPort, publishToCatalog: false, serviceConfig: this ); // calls our DoServiceConfiguration
         m_RemactService.TraceConnect = false;
-        m_RemactService.TryConnect();
+        m_RemactService.ConnectAsync();
       
         string names = string.Empty;
         foreach (string host in Properties.Settings.Default.PeerHosts)
@@ -300,7 +300,7 @@ namespace Remact.Catalog
                                  + "/" + RemactConfigDefault.WsNamespace + "/" + RemactConfigDefault.Instance.CatalogServiceName),// no catalog lookup as uri is given.
                                  this ); // calls our DoClientConfiguration
                 output.OutputContext = new SvcDat();
-                output.TryConnect();
+                output.ConnectAsync();
                 PeerCatalogs.Add (output);
                 names += host+", ";
             }

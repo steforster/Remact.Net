@@ -3,6 +3,7 @@
 [Oo]bj/
 [Ll]ogs/
 test-results/
+packages/
 
 *.suo
 *.user

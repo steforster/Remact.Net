@@ -194,7 +194,7 @@ namespace Remact.Net.Remote
                     m_connectToCatalogTask = new Task<bool>[1];
                 }
 
-                m_connectToCatalogTask[0] = m_CatalogProxy.TryConnect();
+                m_connectToCatalogTask[0] = m_CatalogProxy.ConnectAsync();
                 m_connectToCatalogTask[0].ContinueWith(t =>
                     {
                         if (t.Status == TaskStatus.RanToCompletion)
@@ -384,12 +384,12 @@ namespace Remact.Net.Remote
 
         Task<RemactMessage<ReadyMessage>> IRemactCatalog.ServiceOpened(ActorInfo actorInput)
         {
-            return m_CatalogProxy.Ask<ReadyMessage>("ServiceOpened", actorInput, out _latestSentMessage, false);
+            return m_CatalogProxy.SendReceiveAsync<ReadyMessage>("ServiceOpened", actorInput, out _latestSentMessage, false);
         }
 
         Task<RemactMessage<ReadyMessage>> IRemactCatalog.ServiceClosed(ActorInfo actorInput)
         {
-            return m_CatalogProxy.Ask<ReadyMessage>("ServiceClosed", actorInput, out _latestSentMessage, false);
+            return m_CatalogProxy.SendReceiveAsync<ReadyMessage>("ServiceClosed", actorInput, out _latestSentMessage, false);
         }
 
         Task<RemactMessage<ActorInfoList>> IRemactCatalog.SynchronizeCatalog(ActorInfoList serviceList)
@@ -422,7 +422,7 @@ namespace Remact.Net.Remote
 
         private Task<RemactMessage<ActorInfo>> Lookup(string serviceName)
         {
-            return m_CatalogProxy.Ask<ActorInfo>("LookupService", serviceName);
+            return m_CatalogProxy.SendReceiveAsync<ActorInfo>("LookupService", serviceName);
         }
 
 
