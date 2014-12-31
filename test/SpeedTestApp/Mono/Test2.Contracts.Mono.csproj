@@ -8,8 +8,8 @@
     <ProjectGuid>{BE3C83E3-6A92-453D-BA90-00D8EF810286}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Test2.Contracts</RootNamespace>
-    <AssemblyName>Test2.Contracts</AssemblyName>
+    <RootNamespace>Remact.SpeedTest.Contracts</RootNamespace>
+    <AssemblyName>Remact.SpeedTest.Contracts.Mono</AssemblyName>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">

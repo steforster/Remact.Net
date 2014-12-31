@@ -23,8 +23,10 @@ In spite of all these features, Remact.Net is remarkably slim and easy to adapt 
 Remact.Net is in good shape now. You are invited to try it out.  
 
 The next development steps will be:
+* Xamarin.Android test application
 * Additional integration tests for bidirectional communication
 * Do not use Type.AssemblyQualifiedTypeName for dispatching
+* Extract Remact.Msgpack to reduce dependencies and deployment size
 * Port unit tests from AsyncWcfLib
 * Integrate Newtonsoft logging
 * Cleanup TODO's
@@ -257,6 +259,12 @@ Remact uses the following layers when receiving a message from a remote actor:
 * The protocol layer serializes the return type of the called method and sends it as a response
 
 
+**Assemblies**
+
+* Remact.Net.dll: The remote actors library. It has dependencies to Alchemy and Newtonsoft.Json.
+* Remact.Catalog.exe: The remact catalog application for desktop systems.
+* Remact.DesktopApp.dll: A helper library for desktop systems.
+
 
 How to build and test Remact.Net
 --------------------------------
@@ -288,6 +296,6 @@ under Ubuntu you may start "test\SpeedTestApp\Mono\_startTest2.sh".
 License
 -------
 Remact.Net is licensed under [MIT](http://www.opensource.org/licenses/mit-license.php).
-Copyright (c) 2014, Stefan Forster.
+Copyright (c) 2014-2015, Stefan Forster.
 
 

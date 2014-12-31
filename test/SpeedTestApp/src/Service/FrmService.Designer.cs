@@ -1,4 +1,4 @@
-namespace Test2.Service
+namespace Remact.SpeedTest.Service
 {
   partial class FrmService
   {

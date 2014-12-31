@@ -1,18 +1,11 @@
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Windows.Forms;
-using System.Threading;
 using Remact.Net;
 using Remact.Net.Remote;
-using Test2.Contracts;
 using System.Threading.Tasks;
 
 
-namespace Test2.Client
+namespace Remact.SpeedTest.Client
 {
     /// <summary>
     /// The main form for the speed test client application.
@@ -31,7 +24,7 @@ namespace Test2.Client
             {
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
-                RemactConfigDefault.ApplicationStart(args, new RaLog.PluginFile());
+                RemactDesktopApp.ApplicationStart(args, new RaLog.PluginFile());
                 RaLog.Info("Clt1", "Start");
 
                 Application.Run(new FrmClient());

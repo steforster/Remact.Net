@@ -1,4 +1,4 @@
-namespace Test2.Client
+namespace Remact.SpeedTest.Client
 {
   partial class FrmClient
   {

@@ -1,5 +1,5 @@
 
-// Copyright (c) 2014, github.com/steforster/Remact.Net
+// Copyright (c) github.com/steforster/Remact.Net
 
 using System;
 using System.Windows.Forms;
@@ -25,7 +25,7 @@ namespace Remact.Catalog
             catch { }
             RaLog.UsePlugin (new RaLog.PluginFile ());
             RaLog.Start (appInstance);
-            RemactApplication.InstallExitHandler ();
+            RemactDesktopApp.InstallExitHandler ();
             RaLog.Run (); // open file and write first messages
             RaLog.Info( "Catalog", "Start" );
             try

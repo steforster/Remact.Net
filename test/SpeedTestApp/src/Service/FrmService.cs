@@ -1,15 +1,9 @@
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 using Remact.Net;
-using Test2.Contracts;
 
 
-namespace Test2.Service
+namespace Remact.SpeedTest.Service
 {
     /// <summary>
     /// The main form of the speed test service application.
@@ -25,7 +19,7 @@ namespace Test2.Service
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            RemactConfigDefault.ApplicationStart(args, new RaLog.PluginFile());
+            RemactDesktopApp.ApplicationStart(args, new RaLog.PluginFile());
             RaLog.Info("Svc1", "Start");
             try
             {

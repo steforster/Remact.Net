@@ -1,13 +1,11 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Remact.Net;
-using Test2.Contracts;
+using Remact.SpeedTest.Contracts;
 
-namespace Test2.Client
+namespace Remact.SpeedTest.Client
 {
     /// <summary>
     /// Implementation of the Test2 Client

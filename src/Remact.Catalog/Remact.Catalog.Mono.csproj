@@ -98,6 +98,10 @@
       <Project>{45486CDE-86A3-4769-952F-E0821BF79493}</Project>
       <Name>Alchemy</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Remact.DesktopApp\Remact.DesktopApp.Mono.csproj">
+      <Project>{aea3453e-96fc-4fdb-984e-65f05044018b}</Project>
+      <Name>Remact.DesktopApp.Mono</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Remact.Net\Remact.Mono.csproj">
       <Project>{9DC114F4-F328-4770-B1EA-2BD4D0FA5A5A}</Project>
       <Name>Remact.Mono</Name>

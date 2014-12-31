@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -8,8 +8,8 @@
     <ProjectGuid>{D8A24025-5596-4391-AF4C-676AA434CADE}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Test2.Service</RootNamespace>
-    <AssemblyName>Test2.Service</AssemblyName>
+    <RootNamespace>Remact.SpeedTest.Service</RootNamespace>
+    <AssemblyName>Remact.SpeedTest.Service.Mono</AssemblyName>
     <FileAlignment>512</FileAlignment>
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <PublishUrl>publish\</PublishUrl>
@@ -128,6 +128,10 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Remact.DesktopApp\Remact.DesktopApp.Mono.csproj">
+      <Project>{aea3453e-96fc-4fdb-984e-65f05044018b}</Project>
+      <Name>Remact.DesktopApp.Mono</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\..\src\Remact.Net\Remact.Mono.csproj">
       <Project>{9DC114F4-F328-4770-B1EA-2BD4D0FA5A5A}</Project>
       <Name>Remact.Mono</Name>

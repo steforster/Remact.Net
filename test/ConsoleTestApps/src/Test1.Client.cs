@@ -22,8 +22,8 @@ namespace Test1.Client
             // 0: Application instance id. Default = 0 --> process id is used.
             // 1: Hostname and TCP port for the service to connect to. Default: "localhost:40001" is used.
 
-            RemactConfigDefault.ApplicationStart(args, new RaLog.PluginFile());
-            RemactApplication.ApplicationExit += ApplicationExitHandler;
+            RemactDesktopApp.ApplicationStart(args, new RaLog.PluginFile());
+            RemactDesktopApp.ApplicationExit += ApplicationExitHandler;
 
             string host = "localhost:40001";
             if (args.Length > 1 && args[1].Length > 0) host = args[1];
@@ -61,12 +61,12 @@ namespace Test1.Client
                 TestInput.PostFromAnonymous(new Test1CommandMessage(command));
             }
 
-            RemactApplication.Exit(0);
+            RemactDesktopApp.Exit(0);
         }// Main
 
 
         // called for all normal and exceptional close types
-        static void ApplicationExitHandler(RemactApplication.CloseType closeType, ref bool goExit)
+        static void ApplicationExitHandler(RemactDesktopApp.CloseType closeType, ref bool goExit)
         {
             //if (closeType == RemactApplication.CloseType.CtrlC) goExit = true; // test application cancellation
 

@@ -8,8 +8,8 @@
     <ProjectGuid>{A748B855-6AC6-4F89-BEBA-094E97AEB2C0}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Test2.Client</RootNamespace>
-    <AssemblyName>Test2.Client</AssemblyName>
+    <RootNamespace>Remact.SpeedTest.Client</RootNamespace>
+    <AssemblyName>Remact.SpeedTest.Client.Mono</AssemblyName>
     <FileAlignment>512</FileAlignment>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
@@ -96,6 +96,10 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Remact.DesktopApp\Remact.DesktopApp.Mono.csproj">
+      <Project>{aea3453e-96fc-4fdb-984e-65f05044018b}</Project>
+      <Name>Remact.DesktopApp.Mono</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\..\src\Remact.Net\Remact.Mono.csproj">
       <Project>{9DC114F4-F328-4770-B1EA-2BD4D0FA5A5A}</Project>
       <Name>Remact.Mono</Name>

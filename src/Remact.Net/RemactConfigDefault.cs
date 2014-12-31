@@ -1,10 +1,9 @@
 
-// Copyright (c) 2014, github.com/steforster/Remact.Net
+// Copyright (c) github.com/steforster/Remact.Net
 
 using System;
 using System.Reflection;           // Assembly
 using System.Net;                  // Dns
-using System.IO;                   // Files
 using Remact.Net.Remote;
 using Remact.Net.Protocol;
 using Remact.Net.Protocol.Wamp;
@@ -279,67 +278,6 @@ namespace Remact.Net
             else
             {
                 return string.Format("{0} ({1}-{2})", appName, hostName, processId);
-            }
-        }
-
-        #endregion
-        //----------------------------------------------------------------------------------------------
-        #region == Default application startup and commandline arguments ==
-
-        /// <summary>
-        /// Library users may change here how to extract the application instance id from commandline arguments.
-        /// </summary>
-        /// <param name="args">the commandline arguments passed to Main()</param>
-        /// <param name="logWriter">null or the plugin to write trace</param>
-        public static void ApplicationStart(string[] args, RaLog.ILogPlugin logWriter)
-        {
-            int appInstance; // by default the first commandline argument
-            if (args.Length == 0 || !int.TryParse(args[0], out appInstance))
-            {
-                appInstance = 0; // use ProcessId
-            }
-
-            RaLog.UsePlugin(logWriter);
-            RaLog.Start(appInstance);
-            RemactApplication.InstallExitHandler();
-            RaLog.Run(); // open file and write first messages
-        }
-
-        private string m_LogFolder = null;
-
-        /// <summary>
-        /// Get the folder name where log files may be stored. 
-        /// </summary>
-        public virtual string LogFolder
-        {
-            get
-            {
-                if (m_LogFolder != null) return m_LogFolder;
-
-                string sBase = Path.GetFullPath(Path.GetDirectoryName(RemactApplication.ExecutablePath));
-                m_LogFolder = sBase + "/../logs";
-                if (Directory.Exists(m_LogFolder)) return m_LogFolder;
-
-                m_LogFolder = Path.GetFullPath(sBase + "/../../logs");
-                if (Directory.Exists(m_LogFolder)) return m_LogFolder;
-
-                m_LogFolder = Path.GetFullPath(sBase + "/../../../logs");
-                if (Directory.Exists(m_LogFolder)) return m_LogFolder;
-
-                m_LogFolder = Path.GetFullPath(sBase + "/../../../../logs");
-                if (Directory.Exists(m_LogFolder)) return m_LogFolder;
-
-                m_LogFolder = Path.GetFullPath(sBase + "/../../../../../logs");
-                if (Directory.Exists(m_LogFolder)) return m_LogFolder;
-
-                // store logs beside .exe file, if no other logs path exists
-                m_LogFolder = sBase;
-                return m_LogFolder;
-            }
-
-            set
-            {
-                m_LogFolder = value;
             }
         }
 

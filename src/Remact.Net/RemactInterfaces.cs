@@ -1,5 +1,5 @@
 
-// Copyright (c) 2014, github.com/steforster/Remact.Net
+// Copyright (c) github.com/steforster/Remact.Net
 
 using System;
 using System.Collections.Generic;
@@ -87,15 +87,6 @@ namespace Remact.Net
         /// The AppIdentification is composed from AppName, HostName, AppInstance and processId to for a unique string
         /// </summary>
         string GetAppIdentification(string appName, int appInstance, string hostName, int processId);
-
-        #endregion
-        //----------------------------------------------------------------------------------------------
-        #region == Logging ==
-
-        /// <summary>
-        /// Get the folder name where log files are stored. 
-        /// </summary>
-        string LogFolder { get; }
 
         #endregion
         //----------------------------------------------------------------------------------------------

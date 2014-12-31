@@ -1,10 +1,13 @@
+
+// Copyright (c) github.com/steforster/Remact.Net
+
 using System.Threading.Tasks;
 using Remact.Net;
 
-namespace Test2.Contracts
+namespace Remact.SpeedTest.Contracts
 {
     /// <summary>
-    /// The interface definition for Test2Service.
+    /// The interface definition for SpeedTest.Service.
     /// 
     /// On the serverside this interface has to be added to the RemactPortService.InputDispatcher.
     /// At runtime, when calling RemactDispatcher.AddActorInterface the methods defined here are matched to the implemented methods.

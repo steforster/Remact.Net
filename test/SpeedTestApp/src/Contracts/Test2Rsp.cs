@@ -1,7 +1,10 @@
+
+// Copyright (c) github.com/steforster/Remact.Net
+
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
-namespace Test2.Contracts
+namespace Remact.SpeedTest.Contracts
 {
     /// <summary>
     /// The response message for the speed test application.
@@ -32,8 +35,7 @@ namespace Test2.Contracts
         {
             Items.Add(new Test2MessageItem(++Index, name, p1, p2, p3, p4));
         }
-
-   }// Test2Rsp
+   }
 
 
     /// <summary>
@@ -67,5 +69,5 @@ namespace Test2.Contracts
                 Parameter = new List<object>();
             }
         }
-    }// Test2MessageItem
+    }
 }

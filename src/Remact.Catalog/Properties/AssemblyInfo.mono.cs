@@ -1,5 +1,5 @@
 
-// Copyright (c) 2014, github.com/steforster/Remact.Net
+// Copyright (c) github.com/steforster/Remact.Net
 
 using System.Reflection;
 using System.Runtime.InteropServices;

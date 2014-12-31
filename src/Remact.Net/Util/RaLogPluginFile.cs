@@ -5,7 +5,6 @@ using System;
 using System.IO;            // Files
 using System.Diagnostics;   // Trace Listener, Trace...
 using System.Reflection;    // Assembly, Attributes
-using System.Windows.Forms; // MessageBox
 using System.Text;     // Sleep
 
 
@@ -181,7 +180,7 @@ namespace Remact.Net
                 {
                     if (i_FileName == null || i_FileName.Length == 0)
                     {
-                        i_FileName = RemactConfigDefault.Instance.LogFolder;
+                        i_FileName = RemactApplication.LogFolder;
 
                         // files older than 30 days will be deleted
                         DateTime tooOld = DateTime.Now.AddDays(-30);
@@ -403,11 +402,8 @@ namespace Remact.Net
                     {
                         m_DirectStreamWriter.WriteLine(Message);
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
-                        MessageBox.Show(Message + "\r\n-------\r\n" + ex.Message,
-                                        "Exception while tracing for " + RemactConfigDefault.Instance.AppIdentification,
-                                        MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
             }
         }

@@ -47,6 +47,10 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Remact.DesktopApp\Remact.DesktopApp.Mono.csproj">
+      <Project>{aea3453e-96fc-4fdb-984e-65f05044018b}</Project>
+      <Name>Remact.DesktopApp.Mono</Name>
+    </ProjectReference>
     <ProjectReference Include="Test1.Messages.Mono.csproj">
       <Project>{13CB30C8-528D-4C71-A937-FCF1DBC5E762}</Project>
       <Name>Test1.Messages.Mono</Name>

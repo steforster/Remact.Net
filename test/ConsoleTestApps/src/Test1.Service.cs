@@ -17,8 +17,8 @@ namespace Test1.Service
             // 0: Application instance id. Default = 0 --> process id is used.
             // 1: TCP port number for this service (on localhost). Default = 40001.
 
-            RemactConfigDefault.ApplicationStart(args, new RaLog.PluginFile());
-            RemactApplication.ApplicationExit += ApplicationExitHandler;
+            RemactDesktopApp.ApplicationStart(args, new RaLog.PluginFile());
+            RemactDesktopApp.ApplicationExit += ApplicationExitHandler;
 
             int tcpPort; // the second commandline argument
             if (args.Length < 2 || !int.TryParse(args[1], out tcpPort))
@@ -59,7 +59,7 @@ namespace Test1.Service
 
 
         // called for all normal and exceptional close types
-        static void ApplicationExitHandler(RemactApplication.CloseType closeType, ref bool goExit)
+        static void ApplicationExitHandler(RemactDesktopApp.CloseType closeType, ref bool goExit)
         {
             //if (closeType == RemactApplication.CloseType.CtrlC) goExit = true; // test application cancellation
             if (goExit)

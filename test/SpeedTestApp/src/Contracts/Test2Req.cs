@@ -1,6 +1,9 @@
+
+// Copyright (c) github.com/steforster/Remact.Net
+
 using Newtonsoft.Json;
 
-namespace Test2.Contracts
+namespace Remact.SpeedTest.Contracts
 {
     /// <summary>
     /// The request message for the speed test application.
@@ -10,9 +13,7 @@ namespace Test2.Contracts
         #region Message Data Members
 
         /// <summary>
-        /// z_RequestCode is public but used internally only! Access 'RequestCode' instead!
-        /// Reason: http://msdn.microsoft.com/en-us/library/bb924412%28v=VS.100%29.aspx
-        /// 'RequestCode' is stramed as int in order to make it reverse compatible to older communication partners
+        /// 'RequestCode' is streamed as int in order to make it reverse compatible to older communication partners.
         /// </summary>
         [JsonProperty]
         private uint z_requestcode = 0; // ERequestCode
