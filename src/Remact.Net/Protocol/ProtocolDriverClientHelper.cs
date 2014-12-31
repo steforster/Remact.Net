@@ -1,5 +1,5 @@
 
-// Copyright (c) 2014, github.com/steforster/Remact.Net
+// Copyright (c) https://github.com/steforster/Remact.Net
 
 using Alchemy;
 using Alchemy.Classes;

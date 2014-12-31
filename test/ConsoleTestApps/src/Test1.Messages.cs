@@ -1,4 +1,7 @@
-﻿using Remact.Net;              // Copyright (c) 2014, <http://github.com/steforster/Remact.Net>
+﻿
+// Copyright (c) https://github.com/steforster/Remact.Net
+
+using Remact.Net;
 
 namespace Test1.Messages
 {

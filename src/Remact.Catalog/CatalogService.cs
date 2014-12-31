@@ -1,21 +1,15 @@
 
-// Copyright (c) 2014, github.com/steforster/Remact.Net
+// Copyright (c) https://github.com/steforster/Remact.Net
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
 using Remact.Net;
-using Remact.Net.Remote;
 
 namespace Remact.Catalog
 {
-  /// <summary>
-  /// This is the CatalogService Entrypoint.
-  /// It dispatches requests and returns a response.
-  /// </summary>
-  class CatalogService
+    /// <summary>
+    /// This is the CatalogService Entrypoint.
+    /// It dispatches requests and returns a response.
+    /// </summary>
+    class CatalogService
   {
     public void OnClientConnectedOrDisconnected (RemactMessage id)
     {

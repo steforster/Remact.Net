@@ -1,5 +1,5 @@
 
-// Copyright (c) 2014-2015, github.com/steforster/Remact.Net
+// Copyright (c) 2014-2015, https://github.com/steforster/Remact.Net
 
 using System.Reflection;
 

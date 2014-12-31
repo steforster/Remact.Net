@@ -1,8 +1,7 @@
 
-// Copyright (c) 2014, github.com/steforster/Remact.Net
+// Copyright (c) https://github.com/steforster/Remact.Net
 
 using System;
-using System.IO;
 using Alchemy.Classes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
