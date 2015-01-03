@@ -263,21 +263,31 @@ namespace Remact.Net
                 return true; 
             }
 
-            var correctType = Payload as T; // needs 'where T : class'
-            if (correctType != null)
-            {
-                result = correctType;
-                return true;
-            }
-
             if (SerializationPayload != null)
             {
-                result = (T)SerializationPayload.TryReadAs(typeof(T));
+                // remote serialized payload
+                // Newtonsoft.jToken cannot be unboxed to value type directly, we first have to read it as object
+                Type exactType = typeof(T);
+                if (exactType == Payload.GetType())
+                {
+                    result = (T)Payload;
+                    return true;
+                }
+
+                result = (T)SerializationPayload.TryReadAs(exactType);
                 if (result != null)
                 {
                     Payload = result; // keep converted result
                     return true;
                 }
+            }
+
+            // local communication or preconverted data (Json-RPC does preconvert primitive message types e.g. int).
+            var correctType = Payload as T; // needs 'where T : class'
+            if (correctType != null)
+            {
+                result = correctType;
+                return true;
             }
 
             return false;

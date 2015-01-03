@@ -4,10 +4,10 @@ echo start catalog service
 sh -c "mono ../../../src/Remact.Catalog/bin/Release.Mono/Remact.Catalog.exe" &
 
 echo start service
-sh -c "mono bin/Release/Test2.Service.exe" &
+sh -c "mono bin/Release/Remact.SpeedTest.Service.Mono.exe" &
 
 echo start client
-sh -c "mono bin/Release/Test2.Client.exe" &
+sh -c "mono bin/Release/Remact.SpeedTest.Client.Mono.exe" &
 
-read -p "Test2 started..." inVar
+read -p "SpeedTest started..." inVar
 

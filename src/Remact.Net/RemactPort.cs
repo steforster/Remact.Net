@@ -468,11 +468,11 @@ namespace Remact.Net
                                         {
                                             inner = new Exception(error.InnerMessage);
                                         }
-                                        ex = new RemactException(rsp, error.ErrorCode, error.Message, inner, error.StackTrace);
+                                        ex = new RemactException(rsp, error.ErrorCode, error.ToString(), inner, error.StackTrace);
                                     }
                                     else
                                     {
-                                        ex = new RemactException(rsp, ErrorCode.UnexpectedResponsePayloadType, "unexpected response payload type '" + rsp.Payload.GetType().FullName + "' from method '" + method + "'");
+                                        ex = new RemactException(rsp, ErrorCode.UnexpectedResponsePayloadType, "got unexpected response payload type '" + rsp.Payload.GetType().FullName + "' from method '" + method + "'");
                                     }
 
                                     tcs.SetException(ex);

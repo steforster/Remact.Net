@@ -55,7 +55,7 @@ namespace Remact.SpeedTest.Client
             InitializeComponent();
             _client = new Test2Client();
             _client.UpdateView += OnUpdateView;
-            labelClient.Text = _client.Output.ToString("Client", 20);
+            labelClient.Text = _client.Output.ToString("Client", 3);
             this.Text = _client.Output.AppIdentification;
         }
 
@@ -76,8 +76,8 @@ namespace Remact.SpeedTest.Client
 
                 if (labelService.Text.Length == 0)
                 {
-                    labelClient.Text = _client.Output.ClientIdent.ToString("Client", 20);
-                    labelService.Text = _client.Output.ToString("Service", 20);
+                    labelClient.Text = _client.Output.ClientIdent.ToString("Client", 3);
+                    labelService.Text = _client.Output.ToString("Service", 3);
                 }
             }
         }

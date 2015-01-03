@@ -10,6 +10,7 @@ using Remact.Net.Protocol.Wamp;
 using Remact.Net.Protocol.JsonRpc;
 using Alchemy;
 using Alchemy.Classes;
+using Newtonsoft.Json;
 
 namespace Remact.Net
 {
@@ -38,7 +39,7 @@ namespace Remact.Net
             {
                 if (_instance == null)
                 {
-                    UseMsgPack = true;
+                    UseMsgPack = false;
                     _instance = new RemactConfigDefault();
                 }
                 return _instance;
@@ -163,6 +164,24 @@ namespace Remact.Net
         }
 
         #endregion
+        //----------------------------------------------------------------------------------------------
+        #region == Serialization ==
+
+        /// <summary>
+        /// Returns a new serializer usable to write polymorph messages.
+        /// </summary>
+        public virtual JsonSerializer GetSerializer()
+        {
+            return new JsonSerializer
+            {
+                // Auto $type metadata insertion. Simple assembly format is used to supports lax versioning.
+                TypeNameHandling = TypeNameHandling.Auto,
+                TypeNameAssemblyFormat = System.Runtime.Serialization.Formatters.FormatterAssemblyStyle.Simple,
+            };
+        }
+
+        #endregion
+        //----------------------------------------------------------------------------------------------
         //----------------------------------------------------------------------------------------------
         #region == Remact.Catalog configuration ==
 

@@ -211,7 +211,7 @@ open service ports.
 
 
 
-###Communication models###
+###Communication models
 
 
 **Client / Service**
@@ -259,11 +259,13 @@ Remact uses the following layers when receiving a message from a remote actor:
 * The protocol layer serializes the return type of the called method and sends it as a response
 
 
-**Assemblies**
+
+###Assemblies
 
 * Remact.Net.dll: The remote actors library. It has dependencies to Alchemy and Newtonsoft.Json.
 * Remact.Catalog.exe: The remact catalog application for desktop systems.
 * Remact.DesktopApp.dll: A helper library for desktop systems.
+
 
 
 How to build and test Remact.Net

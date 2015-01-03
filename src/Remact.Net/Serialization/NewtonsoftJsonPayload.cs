@@ -2,6 +2,7 @@
 // Copyright (c) https://github.com/steforster/Remact.Net
 
 using System;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Remact.Net
@@ -15,12 +16,15 @@ namespace Remact.Net
         /// Create a serializer message instance.
         /// </summary>
         /// <param name="jToken">The incoming payload converted to JToken.</param>
-        public NewtonsoftJsonPayload (JToken jToken)
+        /// <param name="serializer">The serializer to use for converting the JToken to an object.</param>
+        public NewtonsoftJsonPayload (JToken jToken, JsonSerializer serializer)
         {
             _jToken = jToken;
+            _serializer = serializer;
         }
 
         private JToken _jToken;
+        private JsonSerializer _serializer;
 
         object ISerializationPayload.AsDynamic
         {
@@ -39,7 +43,7 @@ namespace Remact.Net
 
             try
             {
-                return _jToken.ToObject(payloadType); // deserialized
+                return _jToken.ToObject(payloadType, _serializer); // deserialize
             }
             catch
             {
@@ -63,7 +67,7 @@ namespace Remact.Net
             try
             {
                 var type = System.Type.GetType(assemblyQualifiedTypeName);
-                return _jToken.ToObject(type); // deserialized
+                return _jToken.ToObject(type, _serializer); // deserialize
             }
             catch (Exception ex)
             {

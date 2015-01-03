@@ -27,7 +27,7 @@ namespace Remact.Net.UnitTests
         //}
         //static public Exception ServiceException;
         //static private ActionThread m_serviceThread;
-        static private int _testThreadId;
+        //static private int _testThreadId;
 
 
         // On Mono, only the WinFormsSyncContext is fully implemented.
@@ -37,7 +37,7 @@ namespace Remact.Net.UnitTests
             Console.WriteLine(DateTime.Now.ToString("--- dd.MM.yy  HH:mm:ss.fff")
                 + " --- Start " /*+ function.Method.ReflectedType.FullName + "."*/ 
                 + function.Method.Name);
-            _testThreadId = Thread.CurrentThread.ManagedThreadId;
+            //_testThreadId = Thread.CurrentThread.ManagedThreadId;
             //Assert.AreNotEqual(_testThreadId, ServiceThread.ManagedThreadId); // start ServiceThread
             //ServiceException = null;
             //-------------------

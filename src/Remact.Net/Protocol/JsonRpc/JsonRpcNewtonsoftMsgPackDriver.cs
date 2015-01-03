@@ -77,7 +77,7 @@ namespace Remact.Net.Protocol.JsonRpc
             stream.IsBinary = true;
             using (var writer = new Newtonsoft.Msgpack.MessagePackWriter(stream))
             {
-                var serializer = new JsonSerializer();
+                var serializer = RemactConfigDefault.Instance.GetSerializer();
                 serializer.Serialize(writer, rpc);
                 stream.Flush();
                 context.Send(stream);
@@ -133,7 +133,7 @@ namespace Remact.Net.Protocol.JsonRpc
             stream.IsBinary = true;
             using (var writer = new Newtonsoft.Msgpack.MessagePackWriter(stream))
             {
-                var serializer = new JsonSerializer();
+                var serializer = RemactConfigDefault.Instance.GetSerializer();
                 serializer.Serialize(writer, rpc);
                 stream.Flush();
                 context.Send(stream);
@@ -160,9 +160,9 @@ namespace Remact.Net.Protocol.JsonRpc
             JsonRpcV2Message rpc = null;
             try
             {
+                var serializer = RemactConfigDefault.Instance.GetSerializer();
                 using (var reader = new Newtonsoft.Msgpack.MessagePackReader(context.DataFrame))
                 {
-                    var serializer = new JsonSerializer();
                     rpc = (JsonRpcV2Message)serializer.Deserialize(reader, typeof(JsonRpcV2Message));
                 }
 
@@ -186,21 +186,28 @@ namespace Remact.Net.Protocol.JsonRpc
 
                     msg.DestinationMethod = rpc.method;
                     msg.Payload = rpc.parameters;
-                    // in case the Payload is a primitive type, it has already been converted and SerializationPayload.AsDynamic will return null.
-                    msg.SerializationPayload = new NewtonsoftJsonPayload(msg.Payload as JToken);
+                    // in case the payload is a primitive- or known type, it has already been converted and SerializationPayload.AsDynamic will return null.
+                    msg.SerializationPayload = new NewtonsoftJsonPayload(msg.Payload as JToken, serializer);
                 }
                 else if (rpc.result != null && rpc.id != null)
                 {
                     msg.Type = RemactMessageType.Response;
                     msg.Payload = rpc.result;
-                    msg.SerializationPayload = new NewtonsoftJsonPayload(msg.Payload as JToken);
+                    msg.SerializationPayload = new NewtonsoftJsonPayload(msg.Payload as JToken, serializer);
                 }
                 else if (rpc.error != null)
                 {
                     msg.Type = RemactMessageType.Error;
-                    msg.Payload = rpc.error;
+                    if (rpc.error.data != null)
+                    {
+                        msg.Payload = rpc.error.data;
+                    }
+                    else
+                    {
+                        msg.Payload = rpc.error;
+                    }
                     // TODO: currently error.code and error.message are unused.
-                    msg.SerializationPayload = new NewtonsoftJsonPayload(rpc.error.data as JToken);
+                    msg.SerializationPayload = new NewtonsoftJsonPayload(rpc.error.data as JToken, serializer);
                 }
                 else
                 {

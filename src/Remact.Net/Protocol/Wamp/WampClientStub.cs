@@ -81,7 +81,11 @@ namespace Remact.Net.Protocol.Wamp
             if (payload != null)
             {
                 jToken = payload as JToken;
-                if (jToken == null) jToken = JToken.FromObject(payload);
+                if (jToken == null) 
+                {
+                    var serializer = RemactConfigDefault.Instance.GetSerializer();
+                    jToken = JToken.FromObject(payload, serializer);
+                }
             }
 
             // eg. CALLRESULT message with 'null' result: [3, "CcDnuI2bl2oLGBzO", null] 
@@ -110,7 +114,11 @@ namespace Remact.Net.Protocol.Wamp
             if (detail != null)
             {
                 var jToken = detail as JToken;
-                if (jToken == null) jToken = JToken.FromObject(detail);
+                if (jToken == null) 
+                {
+                    var serializer = RemactConfigDefault.Instance.GetSerializer();
+                    jToken = JToken.FromObject(detail, serializer);
+                }
 
                 wamp.Add(jToken);
             }
@@ -128,7 +136,11 @@ namespace Remact.Net.Protocol.Wamp
                 type = payload.GetType().AssemblyQualifiedName;
 
                 jToken = payload as JToken;
-                if (jToken == null) jToken = JToken.FromObject(payload);
+                if (jToken == null) 
+                {
+                    var serializer = RemactConfigDefault.Instance.GetSerializer();
+                    jToken = JToken.FromObject(payload, serializer);
+                }
             }
             else
             {
@@ -159,6 +171,7 @@ namespace Remact.Net.Protocol.Wamp
             {
                 string json = context.DataFrame.ToString();
 
+                var serializer = RemactConfigDefault.Instance.GetSerializer();
                 JArray wamp = JArray.Parse(json);
                 if(wamp.Count < 3)
                 {
@@ -181,7 +194,7 @@ namespace Remact.Net.Protocol.Wamp
                     {
                         DestinationMethod = (string)wamp[2],
                         Payload = jToken,
-                        SerializationPayload = new NewtonsoftJsonPayload(jToken),
+                        SerializationPayload = new NewtonsoftJsonPayload(jToken, serializer),
                         Type = RemactMessageType.Request,
                         RequestId = id,
                     });
@@ -203,7 +216,7 @@ namespace Remact.Net.Protocol.Wamp
                     object payload;
                     if (wamp.Count > 4)
                     {
-                        pld = new NewtonsoftJsonPayload(wamp[4]); // JToken
+                        pld = new NewtonsoftJsonPayload(wamp[4], serializer); // JToken
                         payload = pld.TryReadAs(errorUri); // errorUri is assemblyQualifiedTypeNamewamp[4]
                     }
                     else
@@ -226,7 +239,7 @@ namespace Remact.Net.Protocol.Wamp
                     // eg. EVENT message with 'null' as payload: [8, "http://example.com/simple", null]
 
                     var eventUri = (string)wamp[1];
-                    var pld = new NewtonsoftJsonPayload(wamp[2]); // JToken
+                    var pld = new NewtonsoftJsonPayload(wamp[2], serializer); // JToken
                     var payload = pld.TryReadAs(eventUri); // eventUri is assemblyQualifiedTypeName
 
                     _requestHandler.MessageToService(new LowerProtocolMessage

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using Remact.Net.Remote;
 using Remact.Net.Protocol;
 using System.Reflection;
+using Newtonsoft.Json;
 
 namespace Remact.Net
 {
@@ -17,6 +18,15 @@ namespace Remact.Net
     /// </summary>
     public interface IRemactConfig : IServiceConfiguration, IClientConfiguration
     {
+        //----------------------------------------------------------------------------------------------
+        #region == Serialization ==
+
+        /// <summary>
+        /// Returns a new serializer usable to write messages.
+        /// </summary>
+        JsonSerializer GetSerializer();
+
+        #endregion
         //----------------------------------------------------------------------------------------------
         #region == Remact.Catalog configuration ==
 

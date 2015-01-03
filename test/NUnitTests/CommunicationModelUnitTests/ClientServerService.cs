@@ -7,12 +7,34 @@ using System.Diagnostics;
 
 namespace Remact.Net.UnitTests.CommunicationModel
 {
-    // This is the communication contract for clinet-server tests.
+    // This is the communication contract for client-server tests.
     public interface IClientServerReceiver
     {
-        string ReceiveStringReplyString(string request);
-        int ReceiveStringReplyInt(string request);
+        string ReceiveString_ReplyString(string request);
+        int ReceiveString_ReplyInt(string request);
+        ReadyMessage ReceiveTest_ReplyEmpty(TestMessage request);
+        TestMessage ReceiveEmpty_ReplyTest(ReadyMessage request);
     }
+
+    // This is a test message containing a polymorph member
+    public class TestMessage
+    {
+        public IInnerTestMessage Inner;
+    }
+
+    // This the interface to the polymorph member
+    public interface IInnerTestMessage
+    {
+        int Id {get; set; }
+    }
+
+    // This is an implementation of the polymorph member
+    public class InnerTestMessage : IInnerTestMessage
+    {
+        public int Id {get; set; }
+        public string Name;
+    }
+
 
     // This is the service part of the client-server test.
     public class ClientServerService
@@ -48,20 +70,39 @@ namespace Remact.Net.UnitTests.CommunicationModel
             throw new NotImplementedException();
         }
 
-        private string ReceiveStringReplyString(string request, RemactMessage message)
+        private string ReceiveString_ReplyString(string request, RemactMessage message)
         {
             // service side
-            Trace.WriteLine("  '" + request + "' received in 'ReceiveStringReplyString', service: " + Port.Uri);
+            Trace.WriteLine("  '" + request + "' received in 'ReceiveString_ReplyString', service: " + Port.Uri);
             Assert.AreEqual("a request", request, "wrong request content");
             return "the response";
         }
 
-        private int ReceiveStringReplyInt(string request, RemactMessage message)
+        private int ReceiveString_ReplyInt(string request, RemactMessage message)
         {
             // service side
-            Trace.WriteLine("  '" + request + "' received in 'ReceiveStringReplyInt', service: " + Port.Uri);
+            Trace.WriteLine("  '" + request + "' received in 'ReceiveString_ReplyInt', service: " + Port.Uri);
             Assert.AreEqual("a request", request, "wrong request content");
             return 123;
+        }
+
+        private ReadyMessage ReceiveTest_ReplyEmpty(TestMessage request, RemactMessage message)
+        {
+            // service side
+            Trace.WriteLine("  '" + request + "' received in 'ReceiveTest_ReplyEmpty', service: " + Port.Uri);
+            Assert.IsNotNull(request.Inner, "inner message is null");
+            Assert.AreEqual(1, request.Inner.Id, "wrong Id of inner message");
+            Assert.IsInstanceOf<InnerTestMessage>(request.Inner, "wrong inner message type");
+            var inner = request.Inner as InnerTestMessage;
+            Assert.AreEqual("Hello", inner.Name, "wrong Name of inner message");
+            return new ReadyMessage();
+        }
+
+        private TestMessage ReceiveEmpty_ReplyTest(ReadyMessage request, RemactMessage message)
+        {
+            // service side
+            Trace.WriteLine("  '" + request + "' received in 'ReceiveEmpty_ReplyTest', service: " + Port.Uri);
+            return new TestMessage {Inner = new InnerTestMessage {Id=2, Name="Hi"}};
         }
     }
 }
