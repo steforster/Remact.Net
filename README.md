@@ -270,25 +270,32 @@ Remact uses the following layers when receiving a message from a remote actor:
 
 How to build and test Remact.Net
 --------------------------------
-You have to clone these (small) repos to be able to build:  
+
+Solutions are provided for several build targets.   
+The solutions contain the same Remact core project but differ in test-projects, glue-projects and dependencies to third party libraries.  
+
+* Remact.Net.Bms.TCP.Mono.sln (for Monodevelop 5.5) and Remact.Net.Bms.TCP.VS2015.sln (for Visual Studio 2015 Update1):
+  These are the most lightweight solutions. Thye use binary serialization over a Bms1 message stream directly connected to a TCP socket.
+  These solutions have dependencies to the Remact.Net.Bms1Serializer.git repository.
+
+* Remact.Net.Json.Msgpak.Alchemy.VS2015.sln:
+  This solution allows to serialize binary (Msgpak) or textual (Json) over Websockets (Alchemy).
+  The solutions has dependencies to Alchemy-Websockets.git, Newtonsoft.Json.git, Newtonsoft.Msgpack.git, msgpack-cli.git repositories.
+
+
+You must download sourcecode of the dependent repositories. All repos must reside in folders that have the original name (e.g. 'Remact.Net' and 'Remact.Net.Bms1Serializer').
+Use the following commandlines to clone the repositories into one folder:  
 
       $ git clone https://github.com/steforster/Remact.Net.git  
+	  $ git clone https://github.com/steforster/Remact.Net.Bms1Serializer.git
+
       $ git clone https://github.com/steforster/Alchemy-Websockets.git  
       $ git clone https://github.com/JamesNK/Newtonsoft.Json.git  
       $ git clone https://github.com/Code-Sharp/Newtonsoft.Msgpack.git  
       $ git clone https://github.com/msgpack/msgpack-cli.git  
 
-Afterwards your git project folder should look like this:
-
-      $ ls  
-      Alchemy-Websockets  msgpack-cli  Newtonsoft.Json  Newtonsoft.MsgPack  Remact.Net  ...  
-
-
-The Remact.VS2015 solution is used for VisualStudio 2015 under Windows.  
-Use Remact.Mono.sln for earlier VS versions and for MonoDevelop 4.0.12 under Ubuntu 14.04.
-
-Both solutions currently reference the same projects, target the Mono/.NET 4.0 frameworks 
-and generate their output into a 'Mono' folder.  
+	  Currently, for VS2015 Update1, you have to fix a line in 'Newtonsoft.Json/Src/Newtonsoft.Json/Newtonsoft.Json.Net40.project.json':
+	  change the "runtimes" entry "win-anycpu" to "win".
 
 To test under Windows you may start "test\SpeedTestApp\Mono\_startTest2.cmd",  
 under Ubuntu you may start "test\SpeedTestApp\Mono\_startTest2.sh".
