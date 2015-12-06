@@ -10,7 +10,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Nito.Async;
 using Remact.Net;
 
-namespace UnitTest
+namespace DemoUnitTest
 {
     /// <summary>
     /// UnitTest.ActorDemo is intended as a first introduction to Remact.Net.
@@ -122,7 +122,7 @@ namespace UnitTest
                 // It means a WCF service is created and opened (on the foreign actors thread).
                 // For unit tests we explicitly specify the TCP port. 
                 // This would not be needed if we would run a WcfRouter application on the localhost.
-                m_foreignActor.InputAsync.LinkInputToNetwork( "DelayActorInputAsync", tcpPort: 40001, publishToRouter: false );
+                m_foreignActor.InputAsync.LinkInputToNetwork( "DelayActorInputAsync", tcpPort: 40001, publishToCatalog: false );
                 m_foreignActor.Open();
 
                 // Now we link our output to the newly opened WCF service.
@@ -153,7 +153,7 @@ namespace UnitTest
             // Any time the 'await' keyword is used, the program flow may be interrupted and other tasks may be interleaved.
             // After the TryConnectAsync-Task has finished, the control flow continues on the same thread
             // (thanks to its SynchronizationContext).
-            bool connectOk = await m_output.TryConnect();
+            bool connectOk = await m_output.ConnectAsync();
 
             // The connectResponse is of type WcfReqIdent.
             // Actually all requests and responses are of this type.
@@ -174,10 +174,10 @@ namespace UnitTest
             // the System.Runtime.Serialization.DataContractSerializer how to serialize this type.
             // The serializer is used only when our partner is linked over the network.
             var request = new DelayActor.Request() { Text = "hello world!" };
-            var response = await m_output.Ask <DelayActor.Response>("...", request);
+            var response = await m_output.SendReceiveAsync <DelayActor.Response>("...", request);
                 
             // We either receive a message type provided by the partner actor or a WcfErrorMessage.
-            Assert.IsInstanceOfType( response.Message, typeof( DelayActor.Response ), "unexpected response type" );
+            Assert.IsInstanceOfType( response.Payload, typeof( DelayActor.Response ), "unexpected response type" );
 
             // When disconnecting the client, we send a last message to inform the service and close the client afterwards.
             m_output.Disconnect();
@@ -203,12 +203,12 @@ namespace UnitTest
             m_foreignActor = new DelayActor();
 
             // Now we create our own output (named "PingOutput") and link it to the partner input (named "InternalAsyncInput").
-            m_output = new ActorOutput( "PingOutput" );
-            m_output.LinkOutputTo( m_foreignActor.InputAsync );
+            m_output = new RemactPortProxy( "PingOutput" );
+            m_output.LinkToService( m_foreignActor.InputAsync );
 
             // Now we create our own input (named "PingPongInput") and link the partner output (named "PongOutput") to our input.
-            m_input = new ActorInput( "PingPongInput", OnPingPongInput );
-            m_foreignActor.PongOutput.LinkOutputTo( m_input );
+            m_input = new RemactPortService( "PingPongInput", OnPingPongInput );
+            m_foreignActor.PongOutput.LinkToService( m_input );
 
             // we like to see the full message flow in trace output
             m_output.TraceSend = true;
@@ -230,10 +230,10 @@ namespace UnitTest
                 Trace.WriteLine("--------------------------------------------------------");
 
                 // Now we link the actors with WCF and run the same test again:
-                m_foreignActor.InputAsync.LinkInputToNetwork( "DelayActorInputAsync", tcpPort: 40001, publishToRouter: false );
+                m_foreignActor.InputAsync.LinkInputToNetwork( "DelayActorInputAsync", tcpPort: 40001, publishToCatalog: false );
                 m_output.LinkOutputToRemoteService( new Uri( "net.tcp://localhost:40001/Remact.Net/DelayActorInputAsync" ) );
 
-                m_input.LinkInputToNetwork( "PingPongInput", tcpPort: 40001, publishToRouter: false );
+                m_input.LinkInputToNetwork( "PingPongInput", tcpPort: 40001, publishToCatalog: false );
                 m_foreignActor.PongOutput.LinkOutputToRemoteService( new Uri( "net.tcp://localhost:40001/Remact.Net/PingPongInput" ) );
                 m_foreignActor.Open();
 
@@ -249,7 +249,7 @@ namespace UnitTest
             // Now, we connect the previously linked output and input.
             // The m_input.TryConnect() is asynchronous. m_input.Open() is exactly the same functionality.
             m_input.Open();
-            await m_output.TryConnectAsync();
+            await m_output.ConnectAsync();
 
             // We can check the state of an ActorOutput or -Input:
             Assert.IsTrue( m_output.IsOutputConnected, "IsOutputConnected is not set" );
@@ -260,17 +260,17 @@ namespace UnitTest
             // When we send "Ping", the actor will call back to our OnPingPongInput handler.
             m_pingPongRequestCount = 0;
             var request = new DelayActor.Request() { Text = "Ping" };
-            WcfReqIdent rsp = await m_output.SendReceiveAsync( request );
+            RemactMessage rsp = await m_output.SendReceiveAsync<object>( "???", request );
 
-            var err = rsp.Message as WcfErrorMessage;
+            var err = rsp.Payload as ErrorMessage;
             if( err != null )
             {
                 RaLog.Error( "PingPongTest received ErrorMessage", err.ToString() );
             }
             // Test the received message. The OnPingPongInput handler must have been called in the meantime (on our thread!)
-            Assert.IsInstanceOfType( rsp.Message, typeof( DelayActor.Response ), "wrong response received" );
+            Assert.IsInstanceOfType( rsp.Payload, typeof( DelayActor.Response ), "wrong response received" );
             Assert.AreEqual( 1, m_pingPongRequestCount, "wrong count of requests received" );
-            Assert.AreEqual( "PingPongResponse", (rsp.Message as DelayActor.Response).Text, "wrong response text" );
+            Assert.AreEqual( "PingPongResponse", (rsp.Payload as DelayActor.Response).Text, "wrong response text" );
 
             // TODO, ActorPort.DisconnectAll() works only for remote clients and routed remote services.
             m_output.Disconnect();
@@ -284,11 +284,11 @@ namespace UnitTest
 
         // This is the messagehandler for messages coming to our m_input
         #pragma warning disable 1998 // Consider using the 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' to do CPU-bound work on a background thread.
-        async Task OnPingPongInput( WcfReqIdent req, bool dummy)
+        async Task OnPingPongInput(RemactMessage req)
         {
             // Our input is called on the dedicated ActionThread
             Helper.AssertRunningOnClientThread();
-            var request = req.Message as DelayActor.Request;
+            var request = req.Payload as DelayActor.Request;
             Assert.AreEqual( "PingPong", request.Text, "wrong request received" );
             m_pingPongRequestCount++;
             req.SendResponse( new DelayActor.Response() { Text = "PingPongResponse" } );
@@ -313,8 +313,8 @@ namespace UnitTest
             m_foreignActor = new DelayActor();
 
             // Now we create our own output (named "DynOutput") and link it to the partner input (named "InternalSyncInput").
-            var output = new ActorOutput<MyOutputContext>("DynOutput");
-            output.LinkOutputTo( m_foreignActor.InputSync );
+            var output = new RemactPortProxy<MyOutputContext>("DynOutput");
+            output.LinkToService( m_foreignActor.InputSync );
 
             // we like to see the full message flow in trace output
             output.TraceSend = true;
@@ -330,7 +330,7 @@ namespace UnitTest
                 Helper.AssertRunningOnClientThread();
 
                 // We connect the previously linked output and input.
-                await output.TryConnectAsync();
+                await output.ConnectAsync();
                 Assert.IsTrue(output.IsOutputConnected, "IsOutputConnected is not set");
 
                 m_responseCount = 0;
@@ -339,26 +339,26 @@ namespace UnitTest
 
                 // We send a request (without waiting) and use dynamic dispatch for the asynchronous response.
                 m_pingPongRequestCount = 0;
-                output.SendOut(new DelayActor.Request(), 
-                    id1 => 
-                        OnResponse(id1.Message as dynamic));
+                output.SendReceiveAsync<object>("???", new DelayActor.Request(), 
+                    (pld,msg) => 
+                        OnResponse(pld as dynamic));
 
                 // While the last request is still on the way, we send the next request and await both responses
-                var id2 = await output.SendReceiveAsync(new DelayActor.RequestA1());
+                var id2 = await output.SendReceiveAsync<object>("???", new DelayActor.RequestA1());
 
                 // We use dynamic dispatch for the asynchronous response.
-                OnResponse(id2.Message as dynamic);
+                OnResponse(id2.Payload as dynamic);
                
                 Assert.AreEqual(1, m_responseCount, "wrong m_responseCount");
                 Assert.AreEqual(1, m_responseA1Count, "wrong m_responseA1Count");
 
                 // At last we send an A2 request, the A2 response has no handler here and falls back to the A1 handler (base class)
-                var id3 = await output.SendReceiveAsync(new DelayActor.RequestA2());
-                OnResponse(id3.Message as dynamic);
+                var id3 = await output.SendReceiveAsync<object>("???", new DelayActor.RequestA2());
+                OnResponse(id3.Payload as dynamic);
 
                 Assert.AreEqual(1, m_responseCount, "wrong m_responseCount");
                 Assert.AreEqual(2, m_responseA1Count, "wrong m_responseA1Count");
-                Assert.IsInstanceOfType(id3.Message, typeof(DelayActor.ResponseA2), "wrong response received");
+                Assert.IsInstanceOfType(id3.Payload, typeof(DelayActor.ResponseA2), "wrong response received");
 
                 // disconnect and last checks
                 output.Disconnect();
@@ -372,7 +372,7 @@ namespace UnitTest
         int m_responseA1Count;
         int m_defaultResponseCount;
 
-        WcfReqIdent OnResponse(DelayActor.Response rsp)
+        RemactMessage OnResponse(DelayActor.Response rsp)
         {
             m_responseCount++;
             return null; // the lambda expression passed to method 'SendOut' needs a return null, when the message has been handled.
@@ -383,12 +383,12 @@ namespace UnitTest
             m_responseA1Count++;
         }
 
-        void OnResponse(WcfMessage rsp)
+        void OnResponse(RemactMessage rsp)
         {
             m_defaultResponseCount++;
         }
 
-        void OnResponse(WcfErrorMessage rsp)
+        void OnResponse(ErrorMessage rsp)
         {
             RaLog.Error("PingPongTest received ErrorMessage", rsp.ToString());
         }

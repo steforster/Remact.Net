@@ -9,7 +9,7 @@ using Remact.Net;
 using log4net;
 
 
-namespace UnitTest
+namespace DemoUnitTest
 {
     /// <summary>
     /// This class is used to adapt the RaLog output to the Log4Net package.

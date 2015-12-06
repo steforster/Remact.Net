@@ -11,7 +11,7 @@ using Remact.Net.Remote;
 namespace Remact.Net
 {
     /// <summary>
-    /// <para>The base class of RemactPortService and RemactPortClient.</para>
+    /// <para>RemactPort is the base class of <see cref="RemactPortProxy"/> and <see cref="RemactPortService"/>.</para>
     /// <para>It is the source or destination of message exchange.</para>
     /// </summary>
     public class RemactPort : IRemactPort, IRemotePort
@@ -384,7 +384,7 @@ namespace Remact.Net
         /// Invokes the specified remote method and pass the payload as parameter.
         /// The remote method has to return a payload of type TRsp.
         /// The asynchronous responseHandler expects a payload of type TRsp.
-        /// Unexpected response types do not throw an exception. Such (error) message are sent to the default message handler.
+        /// Unexpected response types do not throw an exception. Such (error) messages are sent to the default message handler.
         /// </summary>
         /// <param name="method">The name of the method to be called.</param>
         /// <param name="payload">The message payload to send. It must be of a type acceptable for the called method.</param>
@@ -419,7 +419,7 @@ namespace Remact.Net
         /// <param name="method">The name of the method to be called.</param>
         /// <param name="payload">The message payload to send. It must be of a type acceptable for the called method.</param>
         /// <typeparam name="TRsp">The expected type of the response payload. 
-        ///    When receiving a payload of other type, an RemactException will be thrown.</typeparam>
+        ///    When receiving a payload of another type, a RemactException will be thrown.</typeparam>
         /// <returns>A Task to track the asynchronous completion of the request.</returns>
         public Task<RemactMessage<TRsp>> SendReceiveAsync<TRsp>(string method, object payload) where TRsp : class
         {
@@ -725,7 +725,7 @@ namespace Remact.Net
                 }
                 else
                 {
-                    //No logging for anonymous RemactPortClient
+                    //No logging for anonymous RemactPortProxy
                     //RaLog.Error( "Remact", "Unhandled response: " + id.Payload, Logger );
                 }
             }

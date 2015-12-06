@@ -13,15 +13,15 @@ namespace Remact.Net
     #region == class RemactPortService ==
 
     /// <summary>
-    /// <para>This class represents a communication partner (service).</para>
-    /// <para>It is the destination of a request message and the source of a response message.</para>
+    /// <para>Actors can connect <see cref="RemactPortProxy"/>'s to this service.</para>
+    /// <para>The service is the destination of request messages and the source of response messages.</para>
     /// </summary>
     public class RemactPortService : RemactPort, IRemactPortService
     {
         #region Constructor
 
         /// <summary>
-        /// <para>Creates an input port for an actor running in the current application on the local host.</para>
+        /// <para>Creates a service port for an actor. The port can be opened later on for local access or network access.</para>
         /// </summary>
         /// <param name="name">The unique name of this service.</param>
         /// <param name="requestHandler">The method to be called when a request is received.</param>

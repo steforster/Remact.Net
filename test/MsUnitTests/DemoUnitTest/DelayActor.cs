@@ -10,15 +10,15 @@ using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Remact.Net;
 
-namespace UnitTest
+namespace DemoUnitTest
 {
     public class DelayActor
     {
         public DelayActor()
         {
-            m_inputSync  = new ActorInput<MyInputContext> ( "InternalSyncInput",  OnDelayResponseBy10 );
-            m_inputAsync = new ActorInput ( "InternalAsyncInput", OnDelayResponseBy100Async );
-            m_pongOutput = new ActorOutput( "PongOutput" );
+            m_inputSync  = new RemactPortService<MyInputContext> ( "InternalSyncInput",  OnDelayResponseBy10 );
+            m_inputAsync = new RemactPortService( "InternalAsyncInput", OnDelayResponseBy100Async );
+            m_pongOutput = new RemactPortProxy( "PongOutput" );
         }
 
         public void Open( object logger = null )
@@ -40,22 +40,22 @@ namespace UnitTest
             m_inputAsync.Disconnect();
         }
 
-        public IActorInput  InputSync  { get { return m_inputSync; } }
-        public IActorInput  InputAsync { get { return m_inputAsync; } }
-        public IActorOutput PongOutput { get { return m_pongOutput; } }
+        public IRemactPortService InputSync  { get { return m_inputSync; } }
+        public IRemactPortService  InputAsync { get { return m_inputAsync; } }
+        public IRemactPortProxy PongOutput { get { return m_pongOutput; } }
 
         public int          StartedCount;
         public int          FinishedCount;
         public int          MaxParallelCount;
 
         private int         m_currentParallelCount;
-        private ActorInput<MyInputContext>  m_inputSync;
-        private ActorInput                  m_inputAsync;
-        private ActorOutput                 m_pongOutput;
+        private RemactPortService<MyInputContext>  m_inputSync;
+        private RemactPortService m_inputAsync;
+        private RemactPortProxy m_pongOutput;
 
 
         // async void is not allowed, it returns at first await, before the Task has finished.
-        private void OnDelayResponseBy10( WcfReqIdent id, MyInputContext inputContext )
+        private void OnDelayResponseBy10( RemactMessage id, MyInputContext inputContext )
         {
             if (++m_currentParallelCount > MaxParallelCount) MaxParallelCount = m_currentParallelCount;
             StartedCount++;
@@ -64,7 +64,7 @@ namespace UnitTest
                 Helper.AssertRunningOnServiceThread();
 
                 // dynamic dispatch depending on received message type
-                OnRequest(id.Message as dynamic, id, inputContext);
+                OnRequest(id.Payload as dynamic, id, inputContext);
 
                 Helper.AssertRunningOnServiceThread();
             }
@@ -77,56 +77,56 @@ namespace UnitTest
             m_currentParallelCount--;
         }
 
-        private void OnRequest(Request req, WcfReqIdent id, MyInputContext inputContext)
+        private void OnRequest(Request req, RemactMessage id, MyInputContext inputContext)
         {
             Assert.IsInstanceOfType(req, typeof(Request), "wrong message type received");
             Thread.Sleep(10);
             id.SendResponse(new Response() { Text = "response after blocking for 10ms" });
         }
 
-        private void OnRequest(RequestA1 req, WcfReqIdent id, MyInputContext inputContext)
+        private void OnRequest(RequestA1 req, RemactMessage id, MyInputContext inputContext)
         {
             Assert.IsInstanceOfType(req, typeof(RequestA1), "wrong message type received");
             id.SendResponse(new ResponseA1());
         }
 
-        private void OnRequest(RequestA2 req, WcfReqIdent id, MyInputContext inputContext)
+        private void OnRequest(RequestA2 req, RemactMessage id, MyInputContext inputContext)
         {
             Assert.IsInstanceOfType(req, typeof(RequestA2), "wrong message type received");
             id.SendResponse(new ResponseA2());
         }
 
-        private void OnRequest(WcfMessage req, WcfReqIdent id, MyInputContext inputContext)
+        private void OnRequest(RemactMessage req, RemactMessage id, MyInputContext inputContext)
         {
-            Assert.IsInstanceOfType(req, typeof(WcfMessage), "wrong message type received");
-            id.SendResponse(new WcfIdleMessage());
+            Assert.IsInstanceOfType(req, typeof(RemactMessage), "wrong message type received");
+            id.SendResponse(new ReadyMessage());
         }
 
 
         // async Task matches the WcfMessageHandlerAsync delegate
-        private async Task OnDelayResponseBy100Async( WcfReqIdent id, bool dummy )
+        private async Task OnDelayResponseBy100Async(RemactMessage id)
         {
             if (++m_currentParallelCount > MaxParallelCount) MaxParallelCount = m_currentParallelCount;
             StartedCount++;
             try
             {
                 Helper.AssertRunningOnServiceThread();
-                if (!(id.Message is Request))
+                if (!(id.Payload is Request))
                 {
                     RaLog.Error("", "");
                 }
-                Assert.IsInstanceOfType( id.Message, typeof( Request ), "wrong message type received" );
+                Assert.IsInstanceOfType( id.Payload, typeof( Request ), "wrong message type received" );
 
-                if( (id.Message as Request).Text == "Ping" )
+                if( (id.Payload as Request).Text == "Ping" )
                 {
                     if( !m_pongOutput.IsOutputConnected )
                     {
-                        await m_pongOutput.TryConnectAsync();
+                        await m_pongOutput.ConnectAsync();
                     }
                     // Test method ActorDemo_PingPongAsync sent us a request
                     // we will get the response from a call to another service...
-                    var rsp = await m_pongOutput.SendReceiveAsync( new Request() { Text = "PingPong" } );
-                    id.SendResponse( rsp.Message );
+                    var rsp = await m_pongOutput.SendReceiveAsync<object>("???", new Request() { Text = "PingPong" } );
+                    id.SendResponse( rsp.Payload );
                 }
                 else
                 {

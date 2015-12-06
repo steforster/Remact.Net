@@ -8,6 +8,7 @@ namespace Remact.Net
     #region == class RemactPortClient ==
 
     /// <summary>
+    /// <para>This class is used internally. An actor must create a <see cref="RemactPortProxy"/>, to build a connection to a <see cref="RemactPortService"/>.</para>
     /// <para>This class represents a communication partner (client).</para>
     /// <para>It can be asked to send a request to the actor owning this client port.</para>
     /// </summary>
@@ -58,7 +59,7 @@ namespace Remact.Net
     #region == class RemactPortClient<TOC> ==
 
     /// <summary>
-    /// <para>This class represents an outgoing (client) connection to an actor (service).</para>
+    /// <para>This class is internally used. It represents an outgoing (client) connection to an actor (service).</para>
     /// <para>It is the destination of responses and contains additional data representing the session and the remote service.</para>
     /// </summary>
     /// <typeparam name="TOC">Additional data (output context) representing the communication session and the remote service.</typeparam>
