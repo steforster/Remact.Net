@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{E30CFAB0-A9D3-4F1B-9142-84B66F74D2F6}</ProjectGuid>
+    <ProjectGuid>{FCE6F7F9-90A2-4A1D-AB13-383D2939EBF5}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Remact.Net.UnitTests.CommunicationModel</RootNamespace>
