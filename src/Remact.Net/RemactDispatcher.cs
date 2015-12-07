@@ -33,7 +33,7 @@ namespace Remact.Net
         /// Internally used by Remact.Net.
         /// </summary>
         /// <param name="msg">The incoming RemactMessage.</param>
-        /// <param name="context">The context object defined by a <see cref="RemactPortClient{TOC}"/> or <see cref="RemactPortService{TSC}"/></param>
+        /// <param name="context">The context object defined by a <see cref="RemactPortProxy{TOC}"/> or <see cref="RemactPortService{TSC}"/></param>
         /// <returns>Null, when the message has been processed. The unchanged message otherwise.</returns>
         public RemactMessage CallMethod(RemactMessage msg, object context)
         {
@@ -63,9 +63,9 @@ namespace Remact.Net
         /// The first parameter must match the parameter of the equally named method in the interface.
         /// The second parameter must be of type <see cref="RemactMessage"/>.
         /// The third parameter is optional. When provided it must match the context type
-        /// of the corresponding <see cref="RemactPortClient{TOC}"/> or <see cref="RemactPortService{TSC}"/>.
+        /// of the corresponding <see cref="RemactPortProxy{TOC}"/> or <see cref="RemactPortService{TSC}"/>.
         /// The return type of the implemented method must be equal to the return type T of the interface method.
-        /// When implemented as an asynchronous service, the retun type also may be of type <see cref="Task{M}"/> 
+        /// When implemented as an asynchronous service, the return type may also be of type <see cref="Task{M}"/> 
         /// where M is <see cref="RemactMessage{T}"/> and T is the return type of the interface method.
         /// All these constraints are checked at runtime, when <see cref="AddActorInterface"/> is called.
         /// </summary>

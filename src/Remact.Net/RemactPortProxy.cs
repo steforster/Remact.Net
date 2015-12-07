@@ -10,7 +10,7 @@ namespace Remact.Net
     #region == class RemactPortProxy ==
 
     /// <summary>
-    /// <para>The RemactPortProxy is used when an actor sends to a service.</para>
+    /// <para>The RemactPortProxy is used when an actor connects to a <see cref="RemactPortService"/>.</para>
     /// </summary>
     public class RemactPortProxy : RemactPort, IRemactPortProxy
     {
@@ -167,7 +167,7 @@ namespace Remact.Net
 
         /// <summary>
         /// 'ConnectAsync' opens the outgoing connection to the previously linked partner.
-        /// The method is accessible by the owner of this RemactPortClient object only. No interface exposes the method.
+        /// The method is accessible by the owner of this RemactPortProxy object only. No interface exposes the method.
         /// ConnectAsync picks up the synchronization context and must be called on the sending thread only!
         /// The connect-process runs asynchronous and may involve an address lookup at the Remact.Catalog.
         /// An ActorInfo message is received, after the connection has been established.
@@ -178,7 +178,7 @@ namespace Remact.Net
         {
             PickupSynchronizationContext();
             if (m_RemoteClient != null) return m_RemoteClient.ConnectAsync(); // calls PickupSynchronizationContext and sets m_Connected
-            if (m_LocalService == null || RedirectIncoming == null) throw new InvalidOperationException("RemactPortClient is not linked");
+            if (m_LocalService == null || RedirectIncoming == null) throw new InvalidOperationException("RemactPortProxy is not linked");
             m_LocalService.TryAddClient(m_Client);
             m_isOpen = true;
             return RemactPort.TrueTask;

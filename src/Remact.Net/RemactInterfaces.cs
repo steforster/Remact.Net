@@ -52,7 +52,7 @@ namespace Remact.Net
         #region == Remact partner identification ==
 
         /// <summary>
-        /// The name of this application is used for logging and for identifying a RemactPortClient.
+        /// The name of this application is used for logging and for identifying a RemactPortProxy.
         /// </summary>
         string ApplicationName { get; }
 
@@ -305,7 +305,7 @@ namespace Remact.Net
 
     #endregion
     //----------------------------------------------------------------------------------------------
-    #region == interface IRemactPortClient ==
+    #region == interface IRemactPortProxy ==
 
     /// <summary>
     /// A public client interface of an actor. It may be called from any thread.

@@ -11,7 +11,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Nito.Async;
 using Remact.Net;
 
-namespace UnitTest
+namespace DemoUnitTest
 {
     public static class Helper
     {

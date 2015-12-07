@@ -9,19 +9,21 @@ using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Nito.Async;
 using Remact.Net;
+using Remact.Net.Remote;
 
-namespace UnitTest
+namespace DemoUnitTest
 {
     [TestClass]
-    public class ServiceStructure
+    public class ServiceStructureTest
     {
         [ClassInitialize] // run once when creating this class
         public static void ClassInitialize( TestContext testContext )
         {
             RaLog.UsePlugin( new RaLog.PluginConsole() );
-            WcfMessage.AddKnownType( typeof( DelayActor.Request ) );
-            WcfMessage.AddKnownType( typeof( DelayActor.Response ) );
-            ActorInput.DisableRouterClient = true;
+            // TODO: Init Dispatcher
+            //RemactMessage.AddKnownType( typeof( DelayActor.Request ) );
+            //RemactMessage.AddKnownType( typeof( DelayActor.Response ) );
+            RemactCatalogClient.IsDisabled = true;
         }
 
         [TestInitialize] // run before each TestMethod
@@ -33,7 +35,7 @@ namespace UnitTest
         [TestCleanup] // run after each TestMethod
         public void TestCleanup()
         {
-            ActorPort.DisconnectAll();
+            RemactPort.DisconnectAll();
         }
 
         DelayActor m_foreignActor;
@@ -42,25 +44,26 @@ namespace UnitTest
         public void When10ClientsSendTo1SyncService_ThenNoDelay()
         {
             m_foreignActor = new DelayActor();
-            m_foreignActor.InputSync.LinkInputToNetwork( "DelayActorInputSync", tcpPort: 40001, publishToRouter: false );
+            m_foreignActor.InputSync.LinkInputToNetwork( "DelayActorInputSync", tcpPort: 40001, publishToCatalog: false );
             m_foreignActor.Open();
             Helper.RunTestInWpfSyncContext( async () =>
             {
                 Helper.AssertRunningOnClientThread();
                 int clientCount = 10;
-                var output = new ActorOutput[clientCount];
-                var sendOp = new Task<WcfReqIdent>[clientCount];
+                var output = new RemactPortProxy[clientCount];
+                var connnectOp = new Task<bool>[clientCount];
+                var sendOp = new Task<RemactMessage<object>>[clientCount];
 
                 for (int i = 0; i < clientCount; i++)
                 {
-                    output[i] = new ActorOutput(string.Format("OUT{0:00}", i + 1));
+                    output[i] = new RemactPortProxy(string.Format("OUT{0:00}", i + 1));
                     output[i].LinkOutputToRemoteService(new Uri("net.tcp://localhost:40001/Remact.Net/DelayActorInputSync"));
                     output[i].TraceSend = true;
                     output[i].TraceReceive = true;
-                    sendOp[i] = output[i].TryConnectAsync();
+                    connnectOp[i] = output[i].ConnectAsync();
                 }
 
-                if (await Task.WhenAll(sendOp).WhenTimeout(10000))
+                if (await Task.WhenAll(connnectOp).WhenTimeout(10000))
                 {
                     Assert.Fail("Timeout while opening");
                 }
@@ -68,7 +71,7 @@ namespace UnitTest
                 for (int i = 0; i < clientCount; i++)
                 {
                     Assert.IsTrue(output[i].IsOutputConnected, "output " + i + " not connected");
-                    sendOp[i] = output[i].SendReceiveAsync(new DelayActor.Request() { Text = ((char)('A' + i)).ToString() });
+                    sendOp[i] = output[i].SendReceiveAsync<object>("???", new DelayActor.Request() { Text = ((char)('A' + i)).ToString() });
                 }
 
                 // normal delay for 10 requests is 10 x 10ms as they are handled synchronous on server side
@@ -82,9 +85,9 @@ namespace UnitTest
                 Assert.AreEqual(1, m_foreignActor.MaxParallelCount, "some operations run in parallel");
                 for (int i = 0; i < clientCount; i++)
                 {
-                    Assert.IsInstanceOfType(sendOp[i].Result.Message, typeof(DelayActor.Response), "wrong response type received");
+                    Assert.IsInstanceOfType(sendOp[i].Result.Payload, typeof(DelayActor.Response), "wrong response type received");
                 }
-                ActorPort.DisconnectAll(); // This sends a disconnect message from all clients to the service and closes all client afterwards.
+                RemactPort.DisconnectAll(); // This sends a disconnect message from all clients to the service and closes all client afterwards.
                 Helper.AssertRunningOnClientThread();
                 Helper.AssertTraceCount(0, 0);
             });
@@ -96,25 +99,26 @@ namespace UnitTest
         public void When10ClientsSendTo1AsyncService_ThenNoDelay()
         {
             m_foreignActor = new DelayActor();
-            m_foreignActor.InputAsync.LinkInputToNetwork( "DelayActorInputAsync", tcpPort: 40001, publishToRouter: false );
+            m_foreignActor.InputAsync.LinkInputToNetwork( "DelayActorInputAsync", tcpPort: 40001, publishToCatalog: false );
             m_foreignActor.Open();
             Helper.RunTestInWpfSyncContext(async () =>
             {
                 Helper.AssertRunningOnClientThread();
                 int clientCount = 10;
-                var output = new ActorOutput[clientCount];
-                var sendOp = new Task<WcfReqIdent>[clientCount];
+                var output = new RemactPortProxy[clientCount];
+                var connnectOp = new Task<bool>[clientCount];
+                var sendOp = new Task<RemactMessage<object>>[clientCount];
 
                 for (int i = 0; i < clientCount; i++)
                 {
-                    output[i] = new ActorOutput(string.Format("OUT{0:00}", i + 1));
+                    output[i] = new RemactPortProxy(string.Format("OUT{0:00}", i + 1));
                     output[i].LinkOutputToRemoteService(new Uri("net.tcp://localhost:40001/Remact.Net/DelayActorInputAsync"));
                     output[i].TraceSend = true;
                     output[i].TraceReceive = true;
-                    sendOp[i] = output[i].TryConnectAsync();
+                    connnectOp[i] = output[i].ConnectAsync();
                 }
 
-                if (await Task.WhenAll(sendOp).WhenTimeout(10000))
+                if (await Task.WhenAll(connnectOp).WhenTimeout(10000))
                 {
                     Assert.Fail("Timeout while opening");
                 }
@@ -122,7 +126,7 @@ namespace UnitTest
                 for (int i = 0; i < clientCount; i++)
                 {
                     Assert.IsTrue(output[i].IsOutputConnected, "output " + i + " not connected");
-                    sendOp[i] = output[i].SendReceiveAsync(new DelayActor.Request() { Text = ((char)('A' + i)).ToString() });
+                    sendOp[i] = output[i].SendReceiveAsync<object>("???", new DelayActor.Request() { Text = ((char)('A' + i)).ToString() });
                 }
 
                 // normal delay for 10 requests is 1 x 100ms as they are handled async on server side
@@ -136,9 +140,9 @@ namespace UnitTest
                 Assert.IsTrue(m_foreignActor.MaxParallelCount > 1, "no operations run in parallel");
                 for (int i = 0; i < clientCount; i++)
                 {
-                    Assert.IsInstanceOfType(sendOp[i].Result.Message, typeof(DelayActor.Response), "wrong response type received");
+                    Assert.IsInstanceOfType(sendOp[i].Result.Payload, typeof(DelayActor.Response), "wrong response type received");
                 }
-                ActorPort.DisconnectAll(); // This sends a disconnect message from all clients to the service and closes all client afterwards.
+                RemactPort.DisconnectAll(); // This sends a disconnect message from all clients to the service and closes all client afterwards.
                 Helper.AssertRunningOnClientThread();
                 Helper.AssertTraceCount(0, 0);
             });
@@ -156,8 +160,9 @@ namespace UnitTest
             {
                 Helper.AssertRunningOnClientThread();
                 int clientCount = 20;
-                var output = new ActorOutput[clientCount];
-                var sendOp = new Task<WcfReqIdent>[clientCount];
+                var output = new RemactPortProxy[clientCount];
+                var connnectOp = new Task<bool>[clientCount];
+                var sendOp = new Task<RemactMessage<object>>[clientCount];
 
                 // trace all message flow
                 m_foreignActor.InputAsync.TraceSend = true;
@@ -165,11 +170,11 @@ namespace UnitTest
 
                 for (int i = 0; i < clientCount; i++)
                 {
-                    output[i] = new ActorOutput(string.Format("OUT{0:00}", i + 1));
-                    output[i].LinkOutputTo(m_foreignActor.InputAsync);
+                    output[i] = new RemactPortProxy(string.Format("OUT{0:00}", i + 1));
+                    output[i].LinkToService(m_foreignActor.InputAsync);
                     output[i].TraceSend = true;
                     output[i].TraceReceive = true;
-                    sendOp[i] = output[i].TryConnectAsync();
+                    connnectOp[i] = output[i].ConnectAsync();
                 }
 
                 if (await Task.WhenAll(sendOp).WhenTimeout(100))
@@ -180,7 +185,7 @@ namespace UnitTest
                 for (int i = 0; i < clientCount; i++)
                 {
                     Assert.IsTrue(output[i].IsOutputConnected, "output " + i + " not connected");
-                    sendOp[i] = output[i].SendReceiveAsync(new DelayActor.Request() { Text = ((char)('A' + i)).ToString() });
+                    sendOp[i] = output[i].SendReceiveAsync<object>("???", new DelayActor.Request() { Text = ((char)('A' + i)).ToString() });
                 }
 
                 // normal delay for 10 requests is 1 x 100ms as they are handled async on server side
@@ -194,7 +199,7 @@ namespace UnitTest
                 Assert.IsTrue(m_foreignActor.MaxParallelCount > 1, "no operations run in parallel");
                 for (int i = 0; i < clientCount; i++)
                 {
-                    Assert.IsInstanceOfType(sendOp[i].Result.Message, typeof(DelayActor.Response), "wrong response type received");
+                    Assert.IsInstanceOfType(sendOp[i].Result.Payload, typeof(DelayActor.Response), "wrong response type received");
                 }
                 Helper.AssertRunningOnClientThread();
                 Helper.AssertTraceCount(0, 0);
@@ -213,8 +218,9 @@ namespace UnitTest
             {
                 Helper.AssertRunningOnClientThread();
                 int clientCount = 20;
-                var output = new ActorOutput[clientCount];
-                var sendOp = new Task<WcfReqIdent>[clientCount];
+                var output = new RemactPortProxy[clientCount];
+                var connnectOp = new Task<bool>[clientCount];
+                var sendOp = new Task<RemactMessage<object>>[clientCount];
 
                 // trace all message flow
                 m_foreignActor.InputAsync.TraceSend = true;
@@ -222,11 +228,11 @@ namespace UnitTest
 
                 for (int i = 0; i < clientCount; i++)
                 {
-                    output[i] = new ActorOutput(string.Format("OUT{0:00}", i + 1));
-                    output[i].LinkOutputTo(m_foreignActor.InputSync);
+                    output[i] = new RemactPortProxy(string.Format("OUT{0:00}", i + 1));
+                    output[i].LinkToService(m_foreignActor.InputSync);
                     output[i].TraceSend = true;
                     output[i].TraceReceive = true;
-                    sendOp[i] = output[i].TryConnectAsync();
+                    connnectOp[i] = output[i].ConnectAsync();
                 }
 
                 if (await Task.WhenAll(sendOp).WhenTimeout(100))
@@ -237,7 +243,7 @@ namespace UnitTest
                 for (int i = 0; i < clientCount; i++)
                 {
                     Assert.IsTrue(output[i].IsOutputConnected, "output " + i + " not connected");
-                    sendOp[i] = output[i].SendReceiveAsync(new DelayActor.Request() { Text = ((char)('A' + i)).ToString() });
+                    sendOp[i] = output[i].SendReceiveAsync<object>("???", new DelayActor.Request() { Text = ((char)('A' + i)).ToString() });
                 }
 
                 // normal delay for 20 requests is 20 x 10ms as they are handled synchronous on server side

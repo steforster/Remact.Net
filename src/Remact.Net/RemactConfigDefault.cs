@@ -215,7 +215,7 @@ namespace Remact.Net
         protected Assembly m_cifAssembly;
 
         /// <summary>
-        /// The name of this application is used for logging and for identifying a RemactPortClient.
+        /// The name of this application is used for logging and for identifying a RemactPortProxy.
         /// </summary>
         public virtual string ApplicationName { get { return m_appAssembly.GetName().Name; } }
 
