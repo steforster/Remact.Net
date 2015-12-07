@@ -23,7 +23,7 @@ namespace Remact.Net.UnitTests.CommunicationModel
         public IInnerTestMessage Inner;
     }
 
-    // This the interface to the polymorph member
+    // This is the interface to the polymorph member
     public interface IInnerTestMessage
     {
         int Id {get; set; }

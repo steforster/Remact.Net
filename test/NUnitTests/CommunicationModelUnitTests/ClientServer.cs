@@ -47,6 +47,8 @@ namespace Remact.Net.UnitTests.CommunicationModel
         {
         }
 
+        string _testName;
+
         // We create a matrix of tests.
         // Each test method is run in several communication variants.
         public bool SetUpTestVariant(int variant)
@@ -59,7 +61,8 @@ namespace Remact.Net.UnitTests.CommunicationModel
 
             if (variant == 1)
             {
-                Console.WriteLine("start '" + TestContext.CurrentContext.Test.Name + "' variant 1: communicate locally in the same process");
+                _testName = TestContext.CurrentContext.Test.Name;
+                Console.WriteLine("start '" + _testName + "' variant 1: communicate locally in the same process");
                 RemactConfigDefault.UseMsgPack = false;
                 var service = new ClientServerService(remote: false, multithreaded: true);
                 _proxy = new RemactPortProxy("ClientServiceTestLocal", DefaultResponseHandler);
@@ -68,7 +71,7 @@ namespace Remact.Net.UnitTests.CommunicationModel
             }
             else if (variant == 2)
             {
-                Console.WriteLine("start '" + TestContext.CurrentContext.Test.Name + "' variant 2: communicate to a remote process");
+                Console.WriteLine("start '" + _testName + "' variant 2: communicate to a remote process");
                 RemactConfigDefault.UseMsgPack = false;
                 var service = new ClientServerService(remote: true, multithreaded: true);
                 _proxy = new RemactPortProxy("ClientServiceTestRemote", DefaultResponseHandler);
@@ -77,7 +80,7 @@ namespace Remact.Net.UnitTests.CommunicationModel
             }
             else if (variant == 3)
             {
-                Console.WriteLine("start '" + TestContext.CurrentContext.Test.Name + "' variant 3: communicate locally in the same process, use thread synchronization");
+                Console.WriteLine("start '" + _testName + "' variant 3: communicate locally in the same process, use thread synchronization");
                 RemactConfigDefault.UseMsgPack = false;
                 var service = new ClientServerService(remote: false, multithreaded: false);
                 _proxy = new RemactPortProxy("ClientServiceTestLocalSync", DefaultResponseHandler);
@@ -85,7 +88,7 @@ namespace Remact.Net.UnitTests.CommunicationModel
             }
             else if (variant == 4)
             {
-                Console.WriteLine("start '" + TestContext.CurrentContext.Test.Name + "' variant 4: communicate to a remote process, use thread synchronization");
+                Console.WriteLine("start '" + _testName + "' variant 4: communicate to a remote process, use thread synchronization");
                 RemactConfigDefault.UseMsgPack = false;
                 var service = new ClientServerService(remote: true, multithreaded: false);
                 _proxy = new RemactPortProxy("ClientServiceTestRemoteSync", DefaultResponseHandler);
@@ -93,7 +96,7 @@ namespace Remact.Net.UnitTests.CommunicationModel
             }
             else if (variant == 5)
             {
-                Console.WriteLine("start '" + TestContext.CurrentContext.Test.Name + "' variant 5: communicate to a remote process, use MsgPack binary transport");
+                Console.WriteLine("start '" + _testName + "' variant 5: communicate to a remote process, use MsgPack binary transport");
                 RemactConfigDefault.UseMsgPack = true;
                 var service = new ClientServerService(remote: true, multithreaded: true);
                 _proxy = new RemactPortProxy("ClientServiceTestRemoteMsgPack", DefaultResponseHandler);
@@ -102,7 +105,7 @@ namespace Remact.Net.UnitTests.CommunicationModel
             }
             else if (variant == 6)
             {
-                Console.WriteLine("start '" + TestContext.CurrentContext.Test.Name + "' variant 6: communicate to a remote process, use MsgPack binary transport and thread synchronization");
+                Console.WriteLine("start '" + _testName + "' variant 6: communicate to a remote process, use MsgPack binary transport and thread synchronization");
                 RemactConfigDefault.UseMsgPack = true;
                 var service = new ClientServerService(remote: true, multithreaded: false);
                 _proxy = new RemactPortProxy("ClientServiceTestRemoteMsgPackSync", DefaultResponseHandler);
@@ -151,7 +154,7 @@ namespace Remact.Net.UnitTests.CommunicationModel
             var response = await _proxy.SendReceiveAsync<string>("ReceiveString_ReplyString", "a request");
 
             // Note: In VisualStudio2015 you can use the 'nameof' operator to safely get the name of the remote method.
-            // var response = await _proxy.SendReceiveAsync<string>(nameof(IClientServerReceiver.ReceiveString_ReplyString), "a request");
+            //var response = await _proxy.SendReceiveAsync<string>(nameof(IClientServerReceiver.ReceiveString_ReplyString), "a request");
 
             Assert.AreEqual("the response", response.Payload, "wrong response content");
         }
