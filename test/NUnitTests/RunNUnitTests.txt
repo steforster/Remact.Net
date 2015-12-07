@@ -7,6 +7,8 @@ Then, in VisualStudio2015, you can run NUnit tests from the 'Test -> Windows -> 
 
 How to install, run and debug NUnit tests from MonoDevelop
 ----------------------------------------------------------
-apt-get install monodevelop-nunit
-see http://codenuggets.com/2012/03/26/nunit-for-monodevelop/
-see http://www.monodevelop.com/download/linux/
+Monodevelop 5.5 now also supports the NuGet 'NUnitTestAdapter.WithFramework' package.
+Before that, you have to
+	apt-get install monodevelop-nunit
+	see http://codenuggets.com/2012/03/26/nunit-for-monodevelop/
+	see http://www.monodevelop.com/download/linux/

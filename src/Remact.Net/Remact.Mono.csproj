@@ -4,8 +4,6 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{9DC114F4-F328-4770-B1EA-2BD4D0FA5A5A}</ProjectGuid>
-    <ProductVersion>9.0.30729</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
     <OutputType>Library</OutputType>
     <NoStandardLibraries>false</NoStandardLibraries>
     <AssemblyName>Remact.Net</AssemblyName>
@@ -20,9 +18,8 @@
     <DefineConstants>DEBUG;TRACE;MONO;BEFORE_NET45</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Debug.Mono\Remact.Net.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug.Mono\Remact.Net.xml</DocumentationFile>
     <UseVSHostingProcess>false</UseVSHostingProcess>
-    <GenerateDocumentation>true</GenerateDocumentation>
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -31,8 +28,7 @@
     <DefineConstants>TRACE;MONO;BEFORE_NET45</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Release.Mono\Remact.Net.XML</DocumentationFile>
-    <GenerateDocumentation>true</GenerateDocumentation>
+    <DocumentationFile>bin\Release.Mono\Remact.Net.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />

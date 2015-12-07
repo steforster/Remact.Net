@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using Remact.Net;
 using Remact.Net.Remote;
@@ -320,7 +321,7 @@ namespace Remact.Catalog
     }
     
 
-    private void OnResponseFromPeerCatalog(RemactMessage id, SvcDat svcDat)
+    private Task OnResponseFromPeerCatalog(RemactMessage id, SvcDat svcDat)
     {
       if (
           id.On<ActorInfo>(partner=>
@@ -343,6 +344,7 @@ namespace Remact.Catalog
       {
           RaLog.Warning("Remact", "Received unexpected message from peer catalog " + id.Source.Name + ": " + id.Payload.ToString());
       }
+      return null; // completed synchronously
     }
     
     #endregion

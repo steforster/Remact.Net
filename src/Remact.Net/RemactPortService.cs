@@ -382,18 +382,19 @@ namespace Remact.Net
         /// Message is passed to users default handler.
         /// </summary>
         /// <param name="msg">RemactMessage containing Payload and Source.</param>
-        private void OnDefaultInput(RemactMessage msg)
+        private Task OnDefaultInput(RemactMessage msg)
         {
             TSC senderCtx = GetSenderContext(msg);
 
             if (m_defaultTscInputHandler != null)
             {
-                m_defaultTscInputHandler(msg, senderCtx); // MessageHandlerC> delegate
+                return m_defaultTscInputHandler(msg, senderCtx); // MessageHandlerC> delegate
             }
             else
             {
                 RaLog.Error("Remact", "Unhandled request: " + msg.Payload, Logger);
             }
+            return null; // completed synchronously
         }
     }// class RemactPortService<TSC>
 

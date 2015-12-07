@@ -1,6 +1,7 @@
 
 // Copyright (c) https://github.com/steforster/Remact.Net
 
+using System.Threading.Tasks;
 using Remact.Net.Remote;
 
 namespace Remact.Net
@@ -104,16 +105,17 @@ namespace Remact.Net
         /// Message is passed to users default handler.
         /// </summary>
         /// <param name="msg">RemactMessage containing Payload and Source.</param>
-        private void OnDefaultInput(RemactMessage msg)
+        private Task OnDefaultInput(RemactMessage msg)
         {
             if (m_defaultTocResponseHandler != null)
             {
-                m_defaultTocResponseHandler(msg, OutputContext); // MessageHandler<TOC> delegate
+                return m_defaultTocResponseHandler(msg, OutputContext); // MessageHandler<TOC> delegate
             }
             else
             {
                 RaLog.Error("Remact", "Unhandled response: " + msg.Payload, Logger);
             }
+            return null; // completed synchronously
         }
 
     }// class RemactPortClient<TOC>

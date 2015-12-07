@@ -1,6 +1,7 @@
 
 // Copyright (c) https://github.com/steforster/Remact.Net
 
+using System.Threading.Tasks;
 using Remact.Net;
 
 namespace Remact.Catalog
@@ -11,15 +12,17 @@ namespace Remact.Catalog
     /// </summary>
     class CatalogService
   {
-    public void OnClientConnectedOrDisconnected (RemactMessage id)
+    public Task OnClientConnectedOrDisconnected (RemactMessage id)
     {
         Program.Catalog.SvcRegisterChanged = true;
+        return null; // completed synchronously
     }
 
-    public void OnUnknownRequest (RemactMessage msg)
+    public Task OnUnknownRequest (RemactMessage msg)
     {
         RaLog.Warning(msg.SvcRcvId, "Unknown request or no service: " + msg.Payload.ToString());
         msg.SendResponse(new ErrorMessage(ErrorCode.ActorReceivedMessageForUnknownDestinationMethod, "Remact.CatalogService got unknown request: "+msg.ToString()));
+        return null; // completed synchronously
     }
 
     // service request method implements IRemactCatalog

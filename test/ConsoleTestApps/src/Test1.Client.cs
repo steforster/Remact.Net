@@ -96,7 +96,7 @@ namespace Test1.Client
         }
 
         // receive a message from main thread or from remote service
-        static void OnMessageReceived(RemactMessage msg)
+        static Task OnMessageReceived(RemactMessage msg)
         {
             Console.Write("\n\r Thread=" + Thread.CurrentThread.ManagedThreadId + ", received: " + msg.ToString());
 
@@ -126,7 +126,7 @@ namespace Test1.Client
                             });
 
                     Console.Write(", sending context #" + sendContextNumber + "...");
-                    return;
+                    return null;
                 }
             }
             else if (msg.TryConvertPayload(out errorMessage))
@@ -139,6 +139,7 @@ namespace Test1.Client
             }
 
             Console.Write("\n\r\n\rSend command > ");
+            return null;
         }
     }
     #endregion

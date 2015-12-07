@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using Remact.Net;              // Copyright (c) 2014, <http://github.com/steforster/Remact.Net>
 using Remact.Net.Remote;
 using Test1.Messages;
@@ -74,7 +75,7 @@ namespace Test1.Service
         #region == Requesting thread ==
 
         // receive a message from client...
-        public void OnMessageReceived(RemactMessage req)
+        public Task OnMessageReceived(RemactMessage req)
         {
             object response;
             Test1CommandMessage testMessage;
@@ -92,6 +93,7 @@ namespace Test1.Service
             }
 
             req.SendResponse(response);
+            return null;
         }
 
         #endregion

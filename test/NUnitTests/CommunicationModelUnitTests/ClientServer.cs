@@ -117,9 +117,10 @@ namespace Remact.Net.UnitTests.CommunicationModel
         }
 
 
-        protected void DefaultResponseHandler(RemactMessage msg)
+        protected Task DefaultResponseHandler(RemactMessage msg)
         {
             throw new NotImplementedException();
+            //return null;
         }
 
         #endregion

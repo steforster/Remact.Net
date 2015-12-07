@@ -4,6 +4,7 @@
 using NUnit.Framework;
 using System;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace Remact.Net.UnitTests.CommunicationModel
 {
@@ -65,9 +66,10 @@ namespace Remact.Net.UnitTests.CommunicationModel
             Port = port;
          }
 
-        private void DefaultRequestHandler(RemactMessage msg)
+        private Task DefaultRequestHandler(RemactMessage msg)
         {
             throw new NotImplementedException();
+            //return null;
         }
 
         private string ReceiveString_ReplyString(string request, RemactMessage message)

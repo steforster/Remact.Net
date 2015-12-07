@@ -3,8 +3,6 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.30729</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{72A84AD5-213F-4DBD-8890-2B1B7CEEFC08}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>Test1.Service</RootNamespace>

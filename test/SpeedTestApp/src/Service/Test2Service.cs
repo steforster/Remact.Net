@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using Remact.Net;
 using Remact.SpeedTest.Contracts;
 
@@ -47,17 +48,19 @@ namespace Remact.SpeedTest.Service
         }
 
         // Remact service method for connect and disconnect requests
-        public void OnConnectDisconnect(RemactMessage msg)
+        public Task OnConnectDisconnect(RemactMessage msg)
         {
             // nothing to do, connect-logging is switched on
+            return null;
         }
 
 
         // Remact service method for unknown messages
-        void OnUnhandledRequest(RemactMessage msg)
+        Task OnUnhandledRequest(RemactMessage msg)
         {
             // will send ErrorMessage.Code.NotImplementedOnService
             throw new NotImplementedException("unknown message on service " + msg.ToString());
+            //return null;
         }
 
 

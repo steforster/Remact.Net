@@ -223,7 +223,7 @@ namespace Remact.Net.Remote
 
 
         // Response callback from Remact.CatalogService
-        private void OnMessageReceived(RemactMessage rsp)
+        private Task OnMessageReceived(RemactMessage rsp)
         {
             ErrorMessage err;
             ReadyMessage ready;
@@ -239,6 +239,7 @@ namespace Remact.Net.Remote
             {
                 RaLog.Info(rsp.CltRcvId, "unexpected message: " + rsp.ToString(), RemactApplication.Logger);
             }
+            return null; // completed synchronously
         }// OnMessageReceived
 
 

@@ -56,7 +56,7 @@ namespace Remact.SpeedTest.Client
 
 
         // Remact client method for unknown responses
-        private void OnUnhandledResponse(RemactMessage msg)
+        private Task OnUnhandledResponse(RemactMessage msg)
         {
             ResponseCount++;
             Log.AppendFormat("{0} {1}, thd={2}", msg.CltRcvId, msg.Payload.ToString(), Thread.CurrentThread.ManagedThreadId.ToString());
@@ -77,6 +77,7 @@ namespace Remact.SpeedTest.Client
             {
                 RaLog.Warning(msg.CltRcvId, msg.Payload.ToString());
             }
+            return null;
         }
 
 
