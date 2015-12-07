@@ -363,7 +363,7 @@ namespace Remact.Net
                 // Remote: PortClient      RemactServiceUser        RemactPortProxy    RemactClient
 
                 // PostInput does not check for the correct synchronization context. We want to send from threadpool also (exceptions and InternalResponses)
-                Source.RedirectIncoming.PostInput(Response);
+                Source.LinkedPort.PostInput(Response);
             }
             else
             {
@@ -376,7 +376,7 @@ namespace Remact.Net
                 var msg = new RemactMessage(Source, null, payload, type, sender, ClientId, 0);
                 msg.SourceLambda = responseHandler;
                 if (sender.TraceSend) RaLog.Info(msg.SvcSndId, msg.ToString(), sender.Logger);
-                Source.RedirectIncoming.PostInput(msg);
+                Source.LinkedPort.PostInput(msg);
             }
         }
 

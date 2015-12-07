@@ -26,7 +26,7 @@ namespace Remact.Net
         {
             m_Client = new RemactPortClient(clientName)
             {
-                RedirectIncoming = this,
+                LinkedPort = this,
                 ServiceIdent = this,
             };
         }// CTOR1
@@ -48,7 +48,7 @@ namespace Remact.Net
         {
             Disconnect();
             m_LocalService = service as RemactPortService;
-            RedirectIncoming = m_LocalService;
+            LinkedPort = m_LocalService;
             m_RemoteClient = null;
         }
 
@@ -62,12 +62,12 @@ namespace Remact.Net
         {
             Disconnect();
             m_LocalService = null;
-            RedirectIncoming = null;
+            LinkedPort = null;
             if (!string.IsNullOrEmpty(serviceName))
             {
                 m_RemoteClient = new RemactClient(this, m_Client);
                 m_RemoteClient.LinkToRemoteService(serviceName, clientConfig);
-                RedirectIncoming = m_RemoteClient;
+                LinkedPort = m_RemoteClient;
             }
         }
 
@@ -80,12 +80,12 @@ namespace Remact.Net
         {
             Disconnect();
             m_LocalService = null;
-            RedirectIncoming = null;
+            LinkedPort = null;
             if (serviceUri != null)
             {
                 m_RemoteClient = new RemactClient(this, m_Client);
                 m_RemoteClient.LinkToRemoteService(serviceUri, clientConfig);
-                RedirectIncoming = m_RemoteClient;
+                LinkedPort = m_RemoteClient;
             }
         }
 
@@ -147,7 +147,7 @@ namespace Remact.Net
             get
             {
                 if (m_RemoteClient != null) return m_RemoteClient.OutputState; // proxy for remote actor
-                if (RedirectIncoming != null)
+                if (LinkedPort != null)
                 {   // internal actor
                     if (m_isOpen) return PortState.Ok;
                     return PortState.Disconnected;
@@ -178,7 +178,7 @@ namespace Remact.Net
         {
             PickupSynchronizationContext();
             if (m_RemoteClient != null) return m_RemoteClient.ConnectAsync(); // calls PickupSynchronizationContext and sets m_Connected
-            if (m_LocalService == null || RedirectIncoming == null) throw new InvalidOperationException("RemactPortProxy is not linked");
+            if (m_LocalService == null || LinkedPort == null) throw new InvalidOperationException("RemactPortProxy is not linked");
             m_LocalService.TryAddClient(m_Client);
             m_isOpen = true;
             return RemactPort.TrueTask;
@@ -202,8 +202,8 @@ namespace Remact.Net
         {
             get
             {
-                if (RedirectIncoming == null) return 0;
-                return RedirectIncoming.OutstandingResponsesCount;
+                if (LinkedPort == null) return 0;
+                return LinkedPort.OutstandingResponsesCount;
             }
         }
 

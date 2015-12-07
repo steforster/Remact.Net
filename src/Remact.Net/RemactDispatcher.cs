@@ -35,14 +35,13 @@ namespace Remact.Net
         /// <param name="msg">The incoming RemactMessage.</param>
         /// <param name="context">The context object defined by a <see cref="RemactPortProxy{TOC}"/> or <see cref="RemactPortService{TSC}"/></param>
         /// <returns>Null, when the message has been processed. The unchanged message otherwise.</returns>
-        public RemactMessage CallMethod(RemactMessage msg, object context)
+        public Task CallMethod(ref RemactMessage msg, object context)
         {
-            if (string.IsNullOrEmpty(msg.DestinationMethod)) return msg;
-
             RemactMethod method;
-            if (!_methods.TryGetValue(msg.DestinationMethod, out method))
+            if (string.IsNullOrEmpty(msg.DestinationMethod)
+             || !_methods.TryGetValue(msg.DestinationMethod, out method))
             {
-                return msg;
+                return null; // message not processed
             }
 
             var parameters = method.Parameters(msg, context);
@@ -51,7 +50,8 @@ namespace Remact.Net
             {
                 msg.SendResponse(reply);
             }
-            return null;
+            msg = null; // message processed
+            return null; // completed synchronously
         }
 
         /// <summary>

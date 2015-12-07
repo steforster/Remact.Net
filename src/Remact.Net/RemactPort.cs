@@ -296,7 +296,7 @@ namespace Remact.Net
             {
                 try
                 {
-                    this.SyncContext.Post(MessageHandlerBase, msg);// Message is posted into the message queue
+                    this.SyncContext.Post(MessageHandlerBase, msg);// Message is posted into the message queue (nonblocking)
                 }
                 catch (Exception ex)
                 {
@@ -322,10 +322,10 @@ namespace Remact.Net
 
 
         // Send requests, notifications and responses to application-internal proxy (used by library only)
-        internal IRemotePort RedirectIncoming; // RemactPortProxy / RemactPortService (app. internal) or RemactClient / RemactServiceUser (remote)
+        internal IRemotePort LinkedPort; // RemactPortService / RemactPortClient (app. internal) or RemactClient / RemactServiceUser (remote)
 
         /// <summary>
-        /// Send a notification message to the partner RemactPort.
+        /// Send a notification message to the linked port.
         /// Invoke the specified remote method and pass the payload as parameter.
         /// Do not wait for a response.
         /// </summary>
@@ -338,7 +338,7 @@ namespace Remact.Net
         }
 
         /// <summary>
-        /// Send a request or notification message to the partner on the outgoing connection.
+        /// Send a request or notification message to the linked port.
         /// Usage:
         /// Clientside:  Send a request to the connected remote service.
         /// Internal:    Send a message to the connected partner running on another thread synchronization context.
@@ -347,7 +347,7 @@ namespace Remact.Net
         /// <param name="msg">A <see cref="RemactMessage"/>the 'Source' property references the sending partner, where the response is expected.</param>
         public void SendOut(RemactMessage msg)
         {
-            if (RedirectIncoming == null) throw new InvalidOperationException("Remact: Output of '" + Name + "' has not been linked. Cannot send message.");
+            if (LinkedPort == null) throw new InvalidOperationException("Remact: Output of '" + Name + "' has not been linked. Cannot send message.");
 
             if (!m_isOpen) throw new InvalidOperationException("Remact: ActorPort '" + Name + "' is not connected. Cannot send message.");
 
@@ -365,7 +365,7 @@ namespace Remact.Net
                 }
             }
 
-            RedirectIncoming.PostInput(msg);
+            LinkedPort.PostInput(msg);
         }
 
         #endregion
@@ -688,6 +688,7 @@ namespace Remact.Net
             }
 
             //msg.Destination = this;
+            Task task = null;
 
             if (msg.DestinationLambda == null && msg.DestinationMethod != null && IsServiceName && msg.DestinationMethod.StartsWith(ActorInfo.MethodNamePrefix))
             {
@@ -714,14 +715,30 @@ namespace Remact.Net
 
             if (msg != null && m_Dispatcher != null)
             {
-                msg = m_Dispatcher.CallMethod(msg, null); // TODO context
+                task = m_Dispatcher.CallMethod(ref msg, null); // TODO context
+                if (task != null) 
+                {
+                    task.ContinueWith((t)=>DispatchMessageStep2 (t, msg, needsResponse));
+                    return; // ????
+                }
             }
 
+            DispatchMessageStep2 (task, msg, needsResponse);
+        }
+
+
+        private Task DispatchMessageStep2(Task task, RemactMessage msg, bool needsResponse)
+        {
             if (msg != null) // not handled yet
             {
                 if (DefaultInputHandler != null)
                 {
-                    DefaultInputHandler(msg); // MessageHandlerlegate
+                    task = DefaultInputHandler(msg); // MessageHandlerlegate
+                    if (task != null) 
+                    {
+                        task.ContinueWith((t)=>DispatchMessageStep3 (t, msg, needsResponse));
+                        return task;
+                    }
                 }
                 else
                 {
@@ -729,12 +746,18 @@ namespace Remact.Net
                     //RaLog.Error( "Remact", "Unhandled response: " + id.Payload, Logger );
                 }
             }
+            return DispatchMessageStep3 (task, msg, needsResponse);
+        }
 
+
+        private Task DispatchMessageStep3(Task task, RemactMessage msg, bool needsResponse)
+        {
             if (msg != null && needsResponse && msg.Response == null)
             {
                 msg.SendResponse(new ReadyMessage());
             }
-        }// DispatchMessage
+            return task;
+        }
 
 
         /// <summary>

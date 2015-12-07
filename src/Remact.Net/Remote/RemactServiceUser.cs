@@ -54,7 +54,7 @@ namespace Remact.Net.Remote
             PortClient = new RemactPortClient()
             {
                 SvcUser = this,
-                RedirectIncoming = this,  // the local client posts notifications to us, we will pass it to the remote client
+                LinkedPort = this,  // the local client posts notifications to us, we will pass it to the remote client
                 ServiceIdent = serviceIdent,
                 SenderCtx = serviceIdent.GetNewSenderContext(),
                 TraceConnect = serviceIdent.TraceConnect,
