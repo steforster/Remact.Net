@@ -1,13 +1,13 @@
 ﻿
-// Copyright (c) 2014, github.com/steforster/Remact.Net
+// Copyright (c) https://github.com/steforster/Remact.Net
 
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Remact.Net;
 
 namespace DemoUnitTest
@@ -84,20 +84,20 @@ namespace DemoUnitTest
 
         private void OnRequest(Request req, RemactMessage msg, MyInputContext inputContext)
         {
-            Assert.IsInstanceOfType(req, typeof(Request), "wrong message type received");
+            Assert.IsInstanceOf<Request>(req, "wrong message type received");
             Thread.Sleep(10);
             msg.SendResponse(new Response() { Text = "response after blocking for 10ms" });
         }
 
         private void OnRequest(RequestA1 req, RemactMessage msg, MyInputContext inputContext)
         {
-            Assert.IsInstanceOfType(req, typeof(RequestA1), "wrong message type received");
+            Assert.IsInstanceOf<RequestA1>(req, "wrong message type received");
             msg.SendResponse(new ResponseA1());
         }
 
         private void OnRequest(RequestA2 req, RemactMessage msg, MyInputContext inputContext)
         {
-            Assert.IsInstanceOfType(req, typeof(RequestA2), "wrong message type received");
+            Assert.IsInstanceOf<RequestA2>(req, "wrong message type received");
             msg.SendResponse(new ResponseA2());
         }
 
@@ -115,7 +115,7 @@ namespace DemoUnitTest
                 {
                     RaLog.Error("", "");
                 }
-                Assert.IsInstanceOfType(request, typeof(Request), "wrong message type received");
+                Assert.IsInstanceOf<Request>(request, "wrong message type received");
 
                 if (request.Text == "Ping")
                 {

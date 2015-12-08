@@ -1,12 +1,12 @@
 ﻿
-// Copyright (c) 2014, github.com/steforster/Remact.Net
+// Copyright (c) https://github.com/steforster/Remact.Net
 
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Nito.Async;
 using Remact.Net;
 
@@ -25,11 +25,11 @@ namespace DemoUnitTest
     /// - durable services and clients
     /// - unrequested notifications from services
     /// </summary>
-    [TestClass]
+    [TestFixture]
     public class ActorDemo
     {
-        [ClassInitialize] // run once when creating this class
-        public static void ClassInitialize( TestContext testContext )
+        [TestFixtureSetUp] // run once when creating this class.
+        public static void ClassInitialize()
         {
             // Using the RaLog.PluginConsole, Remact.Net writes its trace to the VisualStudio output window and to the unit test output.
             RaLog.UsePlugin( new RaLog.PluginConsole() );
@@ -38,13 +38,13 @@ namespace DemoUnitTest
             Remact.Net.Remote.RemactCatalogClient.IsDisabled = true;
         }
 
-        [TestInitialize] // run before each TestMethod
+        [SetUp] // run before each TestMethod.
         public void TestInitialize()
         {
             RaLog.ResetCount();
         }
 
-        [TestCleanup] // run after each TestMethod
+        [TearDown] // run after each TestMethod (successful or failed).
         public void TestCleanup()
         {
             // This disconnects (closes) all clients and services that where created in the TestMethod.
@@ -73,7 +73,7 @@ namespace DemoUnitTest
         /// This way the partner actor is still running inside the same process 
         /// but could actually run on a separate application on a separate host.
         /// </summary>
-        [TestMethod]
+        [Test]
         public void ActorDemo_Ping()
         {
             // We create the foreign actor. 
@@ -100,7 +100,7 @@ namespace DemoUnitTest
             // Therefore we use the Helper class to start a WPF DispatcherSynchronizationContext. 
             // It will run our test and make it possible that callback messages are executed on 
             // the single thread that is responsible for this actor. 
-            Helper.RunTestInWpfSyncContext(async () =>
+            Helper.RunInWinFormsSyncContext(async () =>
             {
                 // We execute the first test run and close the connection afterwards.
                 await ActorDemo_PingAsync();
@@ -157,7 +157,7 @@ namespace DemoUnitTest
             // As response to our request, we get a RemactMessage. It contains the 'Payload' member, that is of type 'DelayActor.Response'.
             // In case, the service sends another message type (e.g. ErrorMessage), a RemactException is thrown.
             var response = await m_output.SendReceiveAsync <DelayActor.Response>(null, request);
-            Assert.IsInstanceOfType( response.Payload, typeof( DelayActor.Response ), "unexpected response type" );
+            Assert.IsInstanceOf<DelayActor.Response>( response.Payload, "unexpected response type" );
 
             // When disconnecting the client, we send a last message to inform the service and close the client afterwards.
             m_output.Disconnect();
@@ -176,7 +176,7 @@ namespace DemoUnitTest
         /// 
         /// As before, the test is executed without and with remote connection.
         /// </summary>
-        [TestMethod]
+        [Test]
         public void ActorDemo_PingPong()
         {
             // We create the foreign actor with local connection. 
@@ -202,7 +202,7 @@ namespace DemoUnitTest
 
             // we prepare the foreign actor and our synchronization context
             m_foreignActor.Open();
-            Helper.RunTestInWpfSyncContext( async () =>
+            Helper.RunInWinFormsSyncContext( async () =>
             {
                 // The first test run is without remote connection:
                 await ActorDemo_PingPongAsync();
@@ -300,7 +300,7 @@ namespace DemoUnitTest
         /// 
         /// As before, the test is executed without and TODO: with remote connection.
         /// </summary>
-        [TestMethod]
+        [Test]
         public void ActorDemo_DynamicDispatch()
         {
             // We create the foreign actor with local connection. 
@@ -318,7 +318,7 @@ namespace DemoUnitTest
 
             // we prepare the foreign actor and our synchronization context
             m_foreignActor.Open();
-            Helper.RunTestInWpfSyncContext( async () =>
+            Helper.RunInWinFormsSyncContext( async () =>
             {
                 // This test is without remote connection.
                 Helper.AssertRunningOnClientThread();
@@ -352,7 +352,7 @@ namespace DemoUnitTest
 
                 Assert.AreEqual(1, m_responseCount, "wrong m_responseCount");
                 Assert.AreEqual(2, m_responseA1Count, "wrong m_responseA1Count");
-                Assert.IsInstanceOfType(id3.Payload, typeof(DelayActor.ResponseA2), "wrong response received");
+                Assert.IsInstanceOf<DelayActor.ResponseA2>(id3.Payload, "wrong response received");
 
                 // disconnect and last checks
                 output.Disconnect();

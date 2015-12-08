@@ -1,35 +1,35 @@
 ﻿
-// Copyright (c) 2014, github.com/steforster/Remact.Net
+// Copyright (c) https://github.com/steforster/Remact.Net
 
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Nito.Async;
 using Remact.Net;
 using Remact.Net.Remote;
 
 namespace DemoUnitTest
 {
-    [TestClass]
+    [TestFixture]
     public class ServiceStructureTest
     {
-        [ClassInitialize] // run once when creating this class
-        public static void ClassInitialize( TestContext testContext )
+        [TestFixtureSetUp] // run once when creating this class.
+        public static void ClassInitialize()
         {
             RaLog.UsePlugin( new RaLog.PluginConsole() );
             RemactCatalogClient.IsDisabled = true;
         }
 
-        [TestInitialize] // run before each TestMethod
+        [SetUp] // run before each TestMethod.
         public void TestInitialize()
         {
             RaLog.ResetCount();
         }
 
-        [TestCleanup] // run after each TestMethod
+        [TearDown] // run after each TestMethod (successful or failed).
         public void TestCleanup()
         {
             RemactPort.DisconnectAll();
@@ -37,13 +37,13 @@ namespace DemoUnitTest
 
         DelayActor m_foreignActor;
 
-        [TestMethod]
+        [Test]
         public void When10ClientsSendTo1SyncService_ThenNoDelay()
         {
             m_foreignActor = new DelayActor();
             m_foreignActor.InputSync.LinkInputToNetwork( "DelayActorInputSync", tcpPort: 40001, publishToCatalog: false );
             m_foreignActor.Open();
-            Helper.RunTestInWpfSyncContext( async () =>
+            Helper.RunInWinFormsSyncContext( async () =>
             {
                 Helper.AssertRunningOnClientThread();
                 int clientCount = 10;
@@ -83,7 +83,7 @@ namespace DemoUnitTest
                 Assert.AreEqual(1, m_foreignActor.MaxParallelCount, "some operations run in parallel");
                 for (int i = 0; i < clientCount; i++)
                 {
-                    Assert.IsInstanceOfType(sendOp[i].Result.Payload, typeof(DelayActor.Response), "wrong response type received");
+                    Assert.IsInstanceOf<DelayActor.Response>(sendOp[i].Result.Payload, "wrong response type received");
                 }
                 RemactPort.DisconnectAll(); // This sends a disconnect message from all clients to the service and closes all client afterwards.
                 Helper.AssertRunningOnClientThread();
@@ -93,13 +93,13 @@ namespace DemoUnitTest
         }
 
 
-        [TestMethod]
+        [Test]
         public void When10ClientsSendTo1AsyncService_ThenNoDelay()
         {
             m_foreignActor = new DelayActor();
             m_foreignActor.InputAsync.LinkInputToNetwork( "DelayActorInputAsync", tcpPort: 40001, publishToCatalog: false );
             m_foreignActor.Open();
-            Helper.RunTestInWpfSyncContext(async () =>
+            Helper.RunInWinFormsSyncContext(async () =>
             {
                 Helper.AssertRunningOnClientThread();
                 int clientCount = 10;
@@ -139,7 +139,7 @@ namespace DemoUnitTest
                 Assert.IsTrue(m_foreignActor.MaxParallelCount > 1, "no operations run in parallel");
                 for (int i = 0; i < clientCount; i++)
                 {
-                    Assert.IsInstanceOfType(sendOp[i].Result.Payload, typeof(DelayActor.Response), "wrong response type received");
+                    Assert.IsInstanceOf<DelayActor.Response>(sendOp[i].Result.Payload, "wrong response type received");
                 }
                 RemactPort.DisconnectAll(); // This sends a disconnect message from all clients to the service and closes all client afterwards.
                 Helper.AssertRunningOnClientThread();
@@ -149,13 +149,13 @@ namespace DemoUnitTest
         }
 
 
-        [TestMethod]
+        [Test]
         public void When20ClientsSendTo1InternalAsyncService_ThenNoDelay()
         {
             m_foreignActor = new DelayActor();
             // m_actor is not linked to network but must be opened to pick up its synchronization context
             m_foreignActor.Open();
-            Helper.RunTestInWpfSyncContext(async () =>
+            Helper.RunInWinFormsSyncContext(async () =>
             {
                 Helper.AssertRunningOnClientThread();
                 int clientCount = 20;
@@ -199,7 +199,7 @@ namespace DemoUnitTest
                 Assert.IsTrue(m_foreignActor.MaxParallelCount > 1, "no operations run in parallel");
                 for (int i = 0; i < clientCount; i++)
                 {
-                    Assert.IsInstanceOfType(sendOp[i].Result.Payload, typeof(DelayActor.Response), "wrong response type received");
+                    Assert.IsInstanceOf<DelayActor.Response>(sendOp[i].Result.Payload, "wrong response type received");
                 }
                 Helper.AssertRunningOnClientThread();
                 Helper.AssertTraceCount(0, 0);
@@ -208,13 +208,13 @@ namespace DemoUnitTest
         }
 
 
-        [TestMethod]
+        [Test]
         public void When20ClientsSendTo1InternalSyncService_ThenTimeout()
         {
             m_foreignActor = new DelayActor();
             // m_actor is not linked to network but must be opened to pick up its synchronization context
             m_foreignActor.Open();
-            Helper.RunTestInWpfSyncContext(async () =>
+            Helper.RunInWinFormsSyncContext(async () =>
             {
                 Helper.AssertRunningOnClientThread();
                 int clientCount = 20;
@@ -264,6 +264,5 @@ namespace DemoUnitTest
             });
             m_foreignActor.Close();
         }
-
     }
 }
