@@ -16,7 +16,7 @@ namespace DemoUnitTest
     /// You can use it as an example for an adapter to any other logging framework.
     /// In order to test this class, the "log4net" package must be installed e.g. from http://nuget.org/packages/log4net
     /// </summary>
-    public class Log4NetAdapter : RaLog.ITracePlugin
+    public class Log4NetAdapter : RaLog.ILogPlugin
     {
         private ILog m_defaultLogger;
 
@@ -105,7 +105,7 @@ namespace DemoUnitTest
         [TestCleanup] // run after each TestMethod
         public void TestCleanup()
         {
-            ActorPort.DisconnectAll();
+            RemactPort.DisconnectAll();
         }
 
         DelayActor m_foreignActor;
@@ -138,7 +138,8 @@ namespace DemoUnitTest
                 Helper.AssertRunningOnClientThread();
                 int clientCount = 10;
                 var output = new ActorOutput[clientCount];
-                var sendOp = new Task<WcfReqIdent>[clientCount];
+                var connnectOp = new Task<bool>[clientCount];
+                var sendOp = new Task<RemactMessage<DelayActor.Response>>[clientCount];
 
                 for (int i = 0; i < clientCount; i++)
                 {
@@ -147,17 +148,17 @@ namespace DemoUnitTest
                     output[i].TraceReceive = true;
                     output[i].Logger = log4netLogger;
                     output[i].LinkOutputToRemoteService(new Uri("net.tcp://localhost:40001/Remact.Net/DelayActorInputAsync"));
-                    sendOp[i] = output[i].TryConnectAsync();
+                    connnectOp[i] = output[i].TryConnectAsync();
                 }
 
-                if (await Task.WhenAll(sendOp).WhenTimeout(10000))
+                if (await Task.WhenAll(connnectOp).WhenTimeout(10000))
                 {
-                    Assert.Fail("Timeout while opening");
+                    Assert.Fail("Timeout while connecting");
                 }
 
                 for (int i = 0; i < clientCount; i++)
                 {
-                    sendOp[i] = output[i].SendReceiveAsync(new DelayActor.Request());
+                    sendOp[i] = output[i].SendReceiveAsync<DelayActor.Response>(null, new DelayActor.Request());
                 }
 
                 if (await Task.WhenAll(sendOp).WhenTimeout(900))

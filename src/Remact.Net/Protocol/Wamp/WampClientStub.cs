@@ -237,16 +237,17 @@ namespace Remact.Net.Protocol.Wamp
                 else if (wampType == (int)WampMessageType.v1Event)
                 {
                     // eg. EVENT message with 'null' as payload: [8, "http://example.com/simple", null]
-
-                    var eventUri = (string)wamp[1];
-                    var pld = new NewtonsoftJsonPayload(wamp[2], serializer); // JToken
-                    var payload = pld.TryReadAs(eventUri); // eventUri is assemblyQualifiedTypeName
+                    JToken jToken = null;
+                    if (wamp.Count > 2)
+                    {
+                        jToken = wamp[2];
+                    }
 
                     _requestHandler.MessageToService(new LowerProtocolMessage
                     {
-                        DestinationMethod = null,
-                        Payload = payload,
-                        SerializationPayload = pld,
+                        DestinationMethod = (string)wamp[1],
+                        Payload = jToken,
+                        SerializationPayload = new NewtonsoftJsonPayload(jToken, serializer),
                         Type = RemactMessageType.Notification,
                         RequestId = 0,
                     });

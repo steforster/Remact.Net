@@ -238,6 +238,7 @@ namespace Remact.Net
         {
             MessageType = msg.MessageType;
             Payload = msg.Payload;
+            SerializationPayload = msg.SerializationPayload;
             ClientId = msg.ClientId;
             RequestId = msg.RequestId;
             Source = msg.Source;
@@ -387,7 +388,16 @@ namespace Remact.Net
         /// <returns>The message in readable text form.</returns>
         public override string ToString ()
         {
-            return string.Concat(MessageType.ToString(), " of '", DestinationMethod, "'");
+            if (string.IsNullOrEmpty(DestinationMethod) && Payload != null)
+            {
+                return string.Concat(MessageType.ToString(), " type = '", Payload.GetType().Name, "'");
+            }
+
+            if (MessageType == RemactMessageType.Request || MessageType == RemactMessageType.Notification)
+            {
+                return string.Concat(MessageType.ToString(), " to method '", DestinationMethod, "'");
+            }
+            return string.Concat(MessageType.ToString(), " from method '", DestinationMethod, "'"); // Response, Error
         }
 
         /// <summary>
@@ -493,11 +503,6 @@ namespace Remact.Net
         /// Gets the strongly typed payload. <see cref="RemactMessage{T}"/> always contains a successfully converted payload.
         /// </summary>
         public new T Payload { get; internal set; }
-
-        /*/ <summary>
-        /// The raw, unconverted payload.
-        /// </summary>
-        public object RawPayload { get { return base.Payload; } }*/
     }
 
     #endregion

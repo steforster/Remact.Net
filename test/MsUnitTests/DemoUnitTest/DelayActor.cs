@@ -16,6 +16,8 @@ namespace DemoUnitTest
     {
         public DelayActor()
         {
+            // The actor has two service ports and one output port to another service.
+            // We do not use the RemactPort.InputDispatcher. All incoming messages are handled by the defaultRequestHandler.
             m_inputSync  = new RemactPortService<MyInputContext> ( "InternalSyncInput",  OnDelayResponseBy10 );
             m_inputAsync = new RemactPortService( "InternalAsyncInput", OnDelayResponseBy100Async );
             m_pongOutput = new RemactPortProxy( "PongOutput" );
@@ -41,21 +43,21 @@ namespace DemoUnitTest
         }
 
         public IRemactPortService InputSync  { get { return m_inputSync; } }
-        public IRemactPortService  InputAsync { get { return m_inputAsync; } }
-        public IRemactPortProxy PongOutput { get { return m_pongOutput; } }
+        public IRemactPortService InputAsync { get { return m_inputAsync; } }
+        public IRemactPortProxy   PongOutput { get { return m_pongOutput; } }
 
-        public int          StartedCount;
-        public int          FinishedCount;
-        public int          MaxParallelCount;
+        public int  StartedCount;
+        public int  FinishedCount;
+        public int  MaxParallelCount;
 
-        private int         m_currentParallelCount;
+        private int m_currentParallelCount;
         private RemactPortService<MyInputContext>  m_inputSync;
         private RemactPortService m_inputAsync;
         private RemactPortProxy m_pongOutput;
 
 
-        // async void is not allowed, it returns at first await, before the Task has finished.
-        private void OnDelayResponseBy10( RemactMessage id, MyInputContext inputContext )
+        // This method is the defaultRequestHandler for all incoming messages of port 'InternalSyncInput'
+        private Task OnDelayResponseBy10( RemactMessage msg, MyInputContext inputContext )
         {
             if (++m_currentParallelCount > MaxParallelCount) MaxParallelCount = m_currentParallelCount;
             StartedCount++;
@@ -63,8 +65,10 @@ namespace DemoUnitTest
             {
                 Helper.AssertRunningOnServiceThread();
 
-                // dynamic dispatch depending on received message type
-                OnRequest(id.Payload as dynamic, id, inputContext);
+                Request request;
+                Assert.IsTrue(msg.TryConvertPayload(out request), "unknown request type received");
+                // dynamic dispatch depending on received request type
+                OnRequest(request as dynamic, msg, inputContext);
 
                 Helper.AssertRunningOnServiceThread();
             }
@@ -75,49 +79,45 @@ namespace DemoUnitTest
             }
             FinishedCount++;
             m_currentParallelCount--;
+            return null;
         }
 
-        private void OnRequest(Request req, RemactMessage id, MyInputContext inputContext)
+        private void OnRequest(Request req, RemactMessage msg, MyInputContext inputContext)
         {
             Assert.IsInstanceOfType(req, typeof(Request), "wrong message type received");
             Thread.Sleep(10);
-            id.SendResponse(new Response() { Text = "response after blocking for 10ms" });
+            msg.SendResponse(new Response() { Text = "response after blocking for 10ms" });
         }
 
-        private void OnRequest(RequestA1 req, RemactMessage id, MyInputContext inputContext)
+        private void OnRequest(RequestA1 req, RemactMessage msg, MyInputContext inputContext)
         {
             Assert.IsInstanceOfType(req, typeof(RequestA1), "wrong message type received");
-            id.SendResponse(new ResponseA1());
+            msg.SendResponse(new ResponseA1());
         }
 
-        private void OnRequest(RequestA2 req, RemactMessage id, MyInputContext inputContext)
+        private void OnRequest(RequestA2 req, RemactMessage msg, MyInputContext inputContext)
         {
             Assert.IsInstanceOfType(req, typeof(RequestA2), "wrong message type received");
-            id.SendResponse(new ResponseA2());
-        }
-
-        private void OnRequest(RemactMessage req, RemactMessage id, MyInputContext inputContext)
-        {
-            Assert.IsInstanceOfType(req, typeof(RemactMessage), "wrong message type received");
-            id.SendResponse(new ReadyMessage());
+            msg.SendResponse(new ResponseA2());
         }
 
 
-        // async Task matches the WcfMessageHandlerAsync delegate
-        private async Task OnDelayResponseBy100Async(RemactMessage id)
+        // This method is the defaultRequestHandler for all incoming messages of port 'InternalAsyncInput'
+        private async Task OnDelayResponseBy100Async(RemactMessage msg)
         {
             if (++m_currentParallelCount > MaxParallelCount) MaxParallelCount = m_currentParallelCount;
             StartedCount++;
             try
             {
                 Helper.AssertRunningOnServiceThread();
-                if (!(id.Payload is Request))
+                Request request;
+                if (!msg.TryConvertPayload(out request))
                 {
                     RaLog.Error("", "");
                 }
-                Assert.IsInstanceOfType( id.Payload, typeof( Request ), "wrong message type received" );
+                Assert.IsInstanceOfType(request, typeof(Request), "wrong message type received");
 
-                if( (id.Payload as Request).Text == "Ping" )
+                if (request.Text == "Ping")
                 {
                     if( !m_pongOutput.IsOutputConnected )
                     {
@@ -125,13 +125,14 @@ namespace DemoUnitTest
                     }
                     // Test method ActorDemo_PingPongAsync sent us a request
                     // we will get the response from a call to another service...
-                    var rsp = await m_pongOutput.SendReceiveAsync<object>("???", new Request() { Text = "PingPong" } );
-                    id.SendResponse( rsp.Payload );
+                    var rsp = await m_pongOutput.SendReceiveAsync<object>(null, new Request() { Text = "PingPong" });
+                    // we pass the response payload without conversion to the client that called us
+                    msg.SendResponse(rsp.Payload);
                 }
                 else
                 {
                     await Task.Delay( 100 );
-                    id.SendResponse( new Response() { Text = "response after 100ms" } );
+                    msg.SendResponse( new Response() { Text = "response after 100ms" } );
                 }
                 Helper.AssertRunningOnServiceThread();
             }

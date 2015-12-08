@@ -110,7 +110,7 @@ namespace Remact.Net.Remote
             _OutstandingRequests = new Dictionary<int, RemactMessage>();
             _lock = new object();
             PortClient = portClient;
-            PortProxy = portProxy; // not yet defined
+            PortProxy = portProxy;
             PortProxy.IsServiceName = true;
         }
 
@@ -127,7 +127,7 @@ namespace Remact.Net.Remote
             m_ClientConfig = clientConfig;
             m_ServiceNameToLookup = serviceName;
             PortProxy.PrepareServiceName(RemactConfigDefault.Instance.CatalogHost, m_ServiceNameToLookup);
-        }// LinkToService (URI)
+        }
 
 
         /// <summary>

@@ -268,17 +268,21 @@ namespace Remact.Net.Remote
         /// </summary>
         internal static void DisconnectAll()
         {
-            if (ms_Instance != null && ms_Instance.m_ServiceList != null)
+            var client = ms_Instance;
+            if (client != null && client.m_ServiceList != null)
             {
-                // Send disconnect messages on the ThreadPool timer thread.
-                // Responses are routed to the normal synchronization context of services or clients.
-                if (ms_Instance.m_Running) Thread.Sleep(20);
-                ms_Instance.m_nCurrentSvc = -100;    // Markierung für Dispose
-                ms_Instance.m_Timer.Change(0, 1000);// Im Timer Thread ausführen, damit Responses dort verarbeitet werden
+                // Send disconnect notifications on the ThreadPool timer thread. Responses are not expected.
+                if (client.m_Running) Thread.Sleep(20);
+                client.m_nCurrentSvc = -100;    // mark for disconnect from all services and from catalog 
+                if (client.m_Timer != null)
+                {
+                    client.m_Timer.Change(0, 1000); // run in timer thread
+                }
+                // wait until all disconnects have been done
                 int n = 0;
                 while (ms_Instance != null && n < 500) { Thread.Sleep(20); n += 20; }
             }
-        }// Remact.CatalogClient.DisconnectAll
+        }
 
 
         /// <summary>

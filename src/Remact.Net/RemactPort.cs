@@ -87,7 +87,7 @@ namespace Remact.Net
         /// After a service has no message received for TimeoutSeconds, it may render the connection to this client as disconnected.
         /// 0 means no timeout. 
         /// The client should send at least 2 messages each TimeoutSeconds-period in order to keep the correct connection state on the service.
-        /// A Service is trying to notify 2 messages each TimeoutSeconds-period in order to check a dual-Http connection.
+        /// A Service is trying to notify 2 messages each TimeoutSeconds-period in order to check a dual connection.
         /// </summary>
         public int TimeoutSeconds { get; set; }
 
@@ -363,6 +363,12 @@ namespace Remact.Net
                 {
                     throw new InvalidOperationException("Remact: wrong thread synchronization context when sending from '" + Name + "'");
                 }
+            }
+
+            if (TraceSend)
+            {
+                var id = IsServiceName ? msg.SvcSndId : msg.CltSndId;
+                RaLog.Info(id, msg.ToString(), Logger);
             }
 
             LinkedPort.PostInput(msg);
@@ -672,7 +678,7 @@ namespace Remact.Net
         }
 
 
-        // Message is passed to the lambda functions of the sending context or to the default response handler
+        // Message is passed to the lambda functions of the sending context, to the method dispatcher or to the default response handler
         internal void DispatchMessage(RemactMessage msg)
         {
             if (!m_isOpen)
@@ -694,7 +700,8 @@ namespace Remact.Net
             {
                 if (TraceConnect)
                 {
-                    RaLog.Info(msg.SvcRcvId, String.Format("{0} to service './{1}'", msg.DestinationMethod, Name), Logger);
+                  //RaLog.Info(msg.SvcRcvId, String.Format("'{0}' to service './{1}'", msg.DestinationMethod, Name), Logger);
+                    RaLog.Info(msg.SvcRcvId, msg.ToString(), Logger);
                 }
 
                 OnConnectDisconnect(msg); // may be overloaded
@@ -703,9 +710,9 @@ namespace Remact.Net
 
             if (TraceReceive)
             {
-                if (IsServiceName) RaLog.Info(msg.SvcRcvId, msg.ToString(), Logger);
-                else RaLog.Info(msg.CltRcvId, msg.ToString(), Logger);
+                LogIncoming(msg);
             }
+
             bool needsResponse = msg.IsRequest;
 
             if (msg.DestinationLambda != null)
@@ -719,7 +726,7 @@ namespace Remact.Net
                 if (task != null) 
                 {
                     task.ContinueWith((t)=>DispatchMessageStep2 (t, msg, needsResponse));
-                    return; // ????
+                    return; // TODO ????
                 }
             }
 
@@ -733,7 +740,7 @@ namespace Remact.Net
             {
                 if (DefaultInputHandler != null)
                 {
-                    task = DefaultInputHandler(msg); // MessageHandlerlegate
+                    task = DefaultInputHandler(msg);
                     if (task != null) 
                     {
                         task.ContinueWith((t)=>DispatchMessageStep3 (t, msg, needsResponse));
@@ -759,6 +766,13 @@ namespace Remact.Net
             return task;
         }
 
+        /// <summary>
+        /// Must be overloaded to log an incoming message.
+        /// </summary>
+        /// <param name="msg">RemactMessage containing Payload and Source.</param>
+        protected virtual void LogIncoming(RemactMessage msg)
+        {
+        }
 
         /// <summary>
         /// Message is passed to users connect/disconnect event handler, may be overloaded and call a MessageHandler{TSC}

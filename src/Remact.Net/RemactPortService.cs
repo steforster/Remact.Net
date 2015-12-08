@@ -24,9 +24,9 @@ namespace Remact.Net
         /// <para>Creates a service port for an actor. The port can be opened later on for local access or network access.</para>
         /// </summary>
         /// <param name="name">The unique name of this service.</param>
-        /// <param name="requestHandler">The method to be called when a request is received.</param>
-        public RemactPortService(string name, MessageHandler requestHandler)
-             : base(name, requestHandler)
+        /// <param name="defaultRequestHandler">The method to be called when a request is not handled by the <see cref="RemactPort.InputDispatcher"/>. See <see cref="MessageHandler"/>.</param>
+        public RemactPortService(string name, MessageHandler defaultRequestHandler)
+             : base(name, defaultRequestHandler)
         {
             IsServiceName = true;
         }// CTOR1
@@ -41,15 +41,6 @@ namespace Remact.Net
             IsServiceName = true;
         }// CTOR2
 
-
-        /// <summary>
-        /// <para>Creates a service proxy. Used internally by the client.</para>
-        /// </summary>
-        internal RemactPortService()
-            : base()
-        {
-            IsServiceName = true;
-        }// default CTOR
 
 
         #endregion
@@ -242,6 +233,15 @@ namespace Remact.Net
             return true;
         }
 
+        /// <summary>
+        /// Log an incoming message (service side).
+        /// </summary>
+        protected override void LogIncoming(RemactMessage msg)
+        {
+            RaLog.Info(msg.SvcRcvId, msg.ToString(), Logger);
+        }
+
+
         #endregion
         //----------------------------------------------------------------------------------------------
         #region InputClientList
@@ -316,12 +316,12 @@ namespace Remact.Net
         /// Creates a RemactPortService using a handler method with TSC object for each client.
         /// </summary>
         /// <param name="name">The application internal name of this service or client</param>
-        /// <param name="requestHandler">The method to be called when a request is received. See <see cref="MessageHandler{TSC}"/>.</param>
-        public RemactPortService(string name, MessageHandler<TSC> requestHandler)
+        /// <param name="defaultRequestHandler">The method to be called when a request is not handled by the <see cref="RemactPort.InputDispatcher"/>. See <see cref="MessageHandler{TSC}"/>.</param>
+        public RemactPortService(string name, MessageHandler<TSC> defaultRequestHandler)
             : base(name)
         {
             DefaultInputHandler = OnDefaultInput;
-            m_defaultTscInputHandler = requestHandler;
+            m_defaultTscInputHandler = defaultRequestHandler;
         }
 
 

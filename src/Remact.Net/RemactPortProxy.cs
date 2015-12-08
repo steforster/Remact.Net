@@ -161,6 +161,15 @@ namespace Remact.Net
             }
         }
 
+
+        /// <summary>
+        /// Log an incoming message (client side).
+        /// </summary>
+        protected override void LogIncoming(RemactMessage msg)
+        {
+            RaLog.Info(msg.CltRcvId, msg.ToString(), Logger);
+        }
+
         #endregion
         //----------------------------------------------------------------------------------------------
         #region IRemotePort implementation

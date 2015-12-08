@@ -57,9 +57,17 @@ namespace Remact.Net.Protocol.Wamp
         public void MessageToService(LowerProtocolMessage msg)
         {
             string callId = msg.RequestId.ToString();
-
-            // eg. CALL message for RPC with no arguments: [2, "7DK6TdN4wLiUJgNM", "http://example.com/api#howdy"]
-            var wamp = new JArray(WampMessageType.v1Call, callId, msg.DestinationMethod);
+            JArray wamp;
+            if (msg.Type == RemactMessageType.Notification)
+            {
+                // eg. EVENT message with 'null' as payload: [8, "http://example.com/simple", null]
+                wamp = new JArray(WampMessageType.v1Event, msg.DestinationMethod);
+            }
+            else
+            {
+                // eg. CALL message for RPC with no arguments: [2, "7DK6TdN4wLiUJgNM", "http://example.com/api#howdy"]
+                wamp = new JArray(WampMessageType.v1Call, callId, msg.DestinationMethod);
+            }
 
             if (msg.Payload != null)
             {

@@ -24,10 +24,9 @@ be processed on the client side.
     b) Remact.ActorInfo.<Use-enum>  
 	c) <Type.AssemblyQualifiedTypeName>  
 
-Variant (a) is used for v1Call. The method name is registered in the InputDispatcher of the receiving RemactPortService.  
-Variant (b) is used for messages to be processed by the RemactService or the RemactCatalog (v1Call, v1CallResult).  
+Variant (a) is used for v1Call and v1Event. The method name is registered in the InputDispatcher of the receiving RemactPortService.  
+Variant (b) is used for messages to be processed by the RemactService or the RemactCatalog (v1Event, v1Call, v1CallResult).  
 Variant (c) is used in v1CallError messages to transfer the .NET type of error detail.  
-Variant (c) is used in v1Event messages to transfer the .NET type of the payload.  
 
 When the AssemblyQualifiedTypeName of variant (c) is empty, the errorDetail or notification payload is passed as 
 Json.Net.JToken to the application.

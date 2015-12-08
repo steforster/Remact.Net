@@ -20,15 +20,16 @@ In spite of all these features, Remact.Net is remarkably slim and easy to adapt 
 
 **Project status**  
 
-Remact.Net is in good shape now. You are invited to try it out.  
+Currently I'm doing some mayor refactoring.  
 
-The next development steps will be:
+The next development steps are:
+* Refactor for async services. Use .Net 4.5 also for Mono.
+* Integrate [Bms1.TCP](https://github.com/steforster/Remact.Net.Bms1Serializer) streaming
+* Extract Remact.Msgpack to reduce dependencies and deployment size
 * Xamarin.Android test application
 * Additional integration tests for bidirectional communication
 * Do not use Type.AssemblyQualifiedTypeName for dispatching
-* Extract Remact.Msgpack to reduce dependencies and deployment size
-* Port unit tests from AsyncWcfLib
-* Integrate Newtonsoft logging
+* Port more tests from AsyncWcfLib
 * Cleanup TODO's
 
 
