@@ -664,6 +664,14 @@ namespace Remact.Net
         }
 
 
+#if(!BEFORE_NET45)
+        // Message is passed to the lambda functions of the sending context, to the method dispatcher or to the default response handler
+        internal async Task DispatchMessageAsync(RemactMessage msg)
+        {
+            throw new NotImplementedException();
+        }
+#endif
+
         // Message comes out of message queue in user thread
         private void MessageHandlerBase(object userState)
         {
@@ -676,7 +684,6 @@ namespace Remact.Net
                 DispatchingError(userState as RemactMessage, new ErrorMessage(ErrorCode.CouldNotDispatch, ex));
             }
         }
-
 
         // Message is passed to the lambda functions of the sending context, to the method dispatcher or to the default response handler
         internal void DispatchMessage(RemactMessage msg)

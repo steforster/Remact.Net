@@ -24,6 +24,7 @@ namespace Test1.Client
 
             RemactDesktopApp.ApplicationStart(args, new RaLog.PluginFile());
             RemactDesktopApp.ApplicationExit += ApplicationExitHandler;
+            RemactConfigDefault.Instance = new Remact.Net.Json.Msgpack.Alchemy.JsonProtocolConfig();
 
             string host = "localhost:40001";
             if (args.Length > 1 && args[1].Length > 0) host = args[1];

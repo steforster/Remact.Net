@@ -21,6 +21,7 @@ namespace Remact.SpeedTest.Service
             Application.SetCompatibleTextRenderingDefault(false);
             RemactDesktopApp.ApplicationStart(args, new RaLog.PluginFile());
             RaLog.Info("Svc1", "Start");
+            RemactConfigDefault.Instance = new Remact.Net.Json.Msgpack.Alchemy.JsonProtocolConfig();
             try
             {
                 Application.Run(new FrmService());

@@ -1,0 +1,88 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{C2B408A5-BF3D-4E43-80E6-642605388CA9}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <NoStandardLibraries>false</NoStandardLibraries>
+    <AssemblyName>Remact.Net.Json.Msgpack.Alchemy</AssemblyName>
+    <FileAlignment>512</FileAlignment>
+    <RootNamespace>Remact.Net.Json.Msgpack.Alchemy</RootNamespace>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\bin\Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>1</WarningLevel>
+    <DocumentationFile>..\bin\Debug\Remact.Net.Json.Msgpack.Alchemy.xml</DocumentationFile>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <Optimize>true</Optimize>
+    <OutputPath>..\bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>..\bin\Release\Remact.Net.Json.Msgpack.Alchemy.xml</DocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System" />
+    <Reference Include="System.Runtime.Serialization" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="JsonProtocol\JsonRpc\JsonRpcNewtonsoftMsgPackDriver.cs" />
+    <Compile Include="JsonProtocol\Wamp\WampClient.cs" />
+    <Compile Include="JsonProtocol\Wamp\WampClientStub.cs" />
+    <Compile Include="JsonProtocol\Wamp\WampRpcV1.cs" />
+    <Compile Include="JsonProtocol\WebSocketPortManager.cs" />
+    <Compile Include="Properties\AssemblyInfoCommon.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="JsonProtocol\NewtonsoftJsonPayload.cs" />
+    <Compile Include="JsonProtocol\JsonRpc\JsonRpcMsgPackClient.cs" />
+    <Compile Include="JsonProtocol\JsonRpc\JsonRpcV2.cs" />
+    <Compile Include="JsonProtocol\ProtocolDriverClientHelper.cs" />
+    <Compile Include="JsonProtocol\JsonRpc\JsonRpcMsgPackClientStub.cs" />
+    <Compile Include="JsonProtocol\JsonProtocolConfig.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ProjectExtensions>
+    <VisualStudio AllowExistingFolder="true" />
+  </ProjectExtensions>
+  <PropertyGroup>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="JsonProtocol\Wamp\WampNotes.md" />
+    <None Include="JsonProtocol\JsonRpc\JsonRpcNotes.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Alchemy-Websockets\src\Alchemy\Alchemy.csproj">
+      <Project>{45486cde-86a3-4769-952f-e0821bf79493}</Project>
+      <Name>Alchemy</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\msgpack-cli\src\MsgPack.Net40\MsgPack.Net40.csproj">
+      <Project>{d45d4cbe-afe7-4e2a-945d-47aed564c39d}</Project>
+      <Name>MsgPack.Net40</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\Newtonsoft.Json\Src\Newtonsoft.Json\Newtonsoft.Json.Net40.csproj">
+      <Project>{a9ae40ff-1a21-414a-9fe7-3be13644cc6d}</Project>
+      <Name>Newtonsoft.Json.Net40</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Newtonsoft.Msgpack\Newtonsoft.Msgpack.csproj">
+      <Project>{39fe4157-2a85-4aee-8d4a-4b7a1a60b03c}</Project>
+      <Name>Newtonsoft.Msgpack</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Remact.Net\Remact.Net.csproj">
+      <Project>{9a55aa58-1ffd-48c8-820a-675432755952}</Project>
+      <Name>Remact.Net</Name>
+    </ProjectReference>
+  </ItemGroup>
+</Project>

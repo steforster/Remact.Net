@@ -66,16 +66,6 @@
   <ItemGroup>
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\..\Alchemy-Websockets\src\Alchemy\Alchemy.csproj">
-      <Project>{45486CDE-86A3-4769-952F-E0821BF79493}</Project>
-      <Name>Alchemy</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\src\Remact.Net\Remact.Mono.csproj">
-      <Project>{9DC114F4-F328-4770-B1EA-2BD4D0FA5A5A}</Project>
-      <Name>Remact.Mono</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
     <MonoDevelop>
@@ -86,5 +76,19 @@
   </ProjectExtensions>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Alchemy-Websockets\src\Alchemy\Alchemy.csproj">
+      <Project>{45486cde-86a3-4769-952f-e0821bf79493}</Project>
+      <Name>Alchemy</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\src\Remact.Net.Json.Msgpak.Alchemy\Remact.Net.Json.Msgpak.Alchemy.csproj">
+      <Project>{c2b408a5-bf3d-4e43-80e6-642605388ca9}</Project>
+      <Name>Remact.Net.Json.Msgpak.Alchemy</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\src\Remact.Net\Remact.Net.csproj">
+      <Project>{9a55aa58-1ffd-48c8-820a-675432755952}</Project>
+      <Name>Remact.Net</Name>
+    </ProjectReference>
   </ItemGroup>
 </Project>

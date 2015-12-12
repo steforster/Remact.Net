@@ -20,6 +20,8 @@ namespace Test1.Service
 
             RemactDesktopApp.ApplicationStart(args, new RaLog.PluginFile());
             RemactDesktopApp.ApplicationExit += ApplicationExitHandler;
+            RemactConfigDefault.Instance = new Remact.Net.Json.Msgpack.Alchemy.JsonProtocolConfig();
+            RemactCatalogClient.IsDisabled = false; // Test1.Client does not use Remact.Catalog.exe, but we publish this service to the catalog anyway.
 
             int tcpPort; // the second commandline argument
             if (args.Length < 2 || !int.TryParse(args[1], out tcpPort))
@@ -27,7 +29,6 @@ namespace Test1.Service
                 tcpPort = 40001;
             }
 
-            RemactCatalogClient.IsDisabled = false; // Test1.Client does not use Remact.Catalog.exe, but we publish this service to the catalog anyway.
             Console.WriteLine("Commandline arguments:   ServiceInstance=" + RemactConfigDefault.Instance.ApplicationInstance
                             + "   ServiceTcpPort=" + tcpPort + "\r\n");
 

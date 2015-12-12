@@ -5,12 +5,6 @@ using System;
 using System.Reflection;           // Assembly
 using System.Net;                  // Dns
 using Remact.Net.Remote;
-using Remact.Net.Protocol;
-using Remact.Net.Protocol.Wamp;
-using Remact.Net.Protocol.JsonRpc;
-using Alchemy;
-using Alchemy.Classes;
-using Newtonsoft.Json;
 
 namespace Remact.Net
 {
@@ -26,11 +20,6 @@ namespace Remact.Net
         private static IRemactConfig _instance;
 
         /// <summary>
-        /// Use experimental MessagePack integration, when set to true.
-        /// </summary>
-        public static bool UseMsgPack { get; set; }
-
-        /// <summary>
         /// Library users may plug in their own implementation of IRemactDefault to RemactDefault.Instance.
         /// </summary>
         public static IRemactConfig Instance
@@ -39,7 +28,6 @@ namespace Remact.Net
             {
                 if (_instance == null)
                 {
-                    UseMsgPack = false;
                     _instance = new RemactConfigDefault();
                 }
                 return _instance;
@@ -64,7 +52,6 @@ namespace Remact.Net
             }
 
             // static configuration
-            Alchemy.Handlers.Handler.FastDirectSendingMode = true;
             CatalogHost = "localhost";
         }
 
@@ -88,59 +75,9 @@ namespace Remact.Net
         /// <param name="uri">The dynamically generated URI for this service.</param>
         /// <param name="isCatalog">true if used for Remact.Catalog service.</param>
         /// <returns>The network port manager. It must be called, when the RemactPortService is disconnected from network.</returns>
-        public virtual WebSocketPortManager DoServiceConfiguration(RemactService service, ref Uri uri, bool isCatalog)
+        public virtual INetworkServicePortManager DoServiceConfiguration(RemactService service, ref Uri uri, bool isCatalog)
         {
-            var portManager = WebSocketPortManager.GetWebSocketPortManager(uri.Port);
-
-            if (portManager.WebSocketServer == null)
-            {
-                // this TCP port has to be opened
-                portManager.WebSocketServer = new WebSocketServer(false, uri.Port)
-                {
-                    OnConnected = (userContext) => OnClientConnected(portManager, userContext)
-                };
-                if (!UseMsgPack) portManager.WebSocketServer.SubProtocols = new string[] { "wamp" };
-            }
-
-            portManager.RegisterService(uri.AbsolutePath, service);
-            portManager.WebSocketServer.Start(); // Listen for client connections
-            return portManager; // will be called, when this RemactPortService is disconnected.
-        }
-
-        /// <summary>
-        /// Do this for every new client connecting to a WebSocketPort.
-        /// </summary>
-        /// <param name="portManager">Our WebSocketPortManager.</param>
-        /// <param name="userContext">Alchemy user context.</param>
-        protected virtual void OnClientConnected(WebSocketPortManager portManager, UserContext userContext)
-        {
-            RemactService service;
-            var absolutePath = userContext.RequestPath;
-            if (!absolutePath.StartsWith("/"))
-            {
-                absolutePath = string.Concat('/', absolutePath); // uri.AbsolutPath contains a leading slash.
-            }
-
-            if (portManager.TryGetService(absolutePath, out service))
-            {
-                var svcUser = new RemactServiceUser(service.ServiceIdent);
-                var handler = new MultithreadedServiceNet40(svcUser, service);
-                // in future, the client stub will handle the OnReceive and OnDisconnect events for this connection
-                if(UseMsgPack)
-                {
-                    var jsonRpcProxy = new JsonRpcMsgPackClientStub(handler, userContext);
-                    svcUser.SetCallbackHandler(jsonRpcProxy);
-                }
-                else
-                {
-                    var wampProxy = new WampClientStub(handler, userContext);
-                    svcUser.SetCallbackHandler(wampProxy);
-                }
-            }
-            else
-            {
-                RaLog.Error("Svc:", "No service found on '" + absolutePath + "' to connect client " + userContext.ClientAddress);
-            }
+            throw new NotSupportedException("RemactConfigDefault cannot configure service for remote connection. Use JsonProtocolConfig or another plugin for remote configuration.");
         }
 
         /// <summary>
@@ -151,33 +88,7 @@ namespace Remact.Net
         /// <returns>The protocol driver including serializer.</returns>
         public virtual IRemactProtocolDriverToService DoClientConfiguration(ref Uri uri, bool forCatalog)
         {
-            if (UseMsgPack)
-            {
-                // Protocol = JsonRpc, binary, serializer = MsgPack.
-                return new JsonRpcMsgPackClient(uri);
-            }
-            else
-            {
-                // Protocol = WAMP, serializer = Newtonsoft.Json.
-                return new WampClient(uri);
-            }
-        }
-
-        #endregion
-        //----------------------------------------------------------------------------------------------
-        #region == Serialization ==
-
-        /// <summary>
-        /// Returns a new serializer usable to write polymorph messages.
-        /// </summary>
-        public virtual JsonSerializer GetSerializer()
-        {
-            return new JsonSerializer
-            {
-                // Auto $type metadata insertion. Simple assembly format is used to supports lax versioning.
-                TypeNameHandling = TypeNameHandling.Auto,
-                TypeNameAssemblyFormat = System.Runtime.Serialization.Formatters.FormatterAssemblyStyle.Simple,
-            };
+            throw new NotSupportedException("RemactConfigDefault cannot configure client for remote connection. Use JsonProtocolConfig or another plugin for remote configuration.");
         }
 
         #endregion
@@ -309,8 +220,6 @@ namespace Remact.Net
         public virtual void Shutdown()
         {
             RemactPort.DisconnectAll();
-            Alchemy.WebSocketClient.Shutdown();
-            Alchemy.WebSocketServer.Shutdown();
         }
 
         #endregion

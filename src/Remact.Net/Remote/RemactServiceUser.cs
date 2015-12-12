@@ -3,7 +3,6 @@
 
 using System;
 using System.Threading.Tasks;
-using Remact.Net.Protocol;
 
 namespace Remact.Net.Remote
 {

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace Remact.Net.Remote
 {
     //----------------------------------------------------------------------------------------------
-    #region == interface IRemoteActor ==
+    #region == interface IRemotePort ==
 
     /// <summary>
     /// Services and Clients must implement this interface.

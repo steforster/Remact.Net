@@ -20,6 +20,7 @@ namespace DemoUnitTest
         public static void ClassInitialize()
         {
             RaLog.UsePlugin( new RaLog.PluginConsole() );
+            RemactConfigDefault.Instance = new Remact.Net.Json.Msgpack.Alchemy.JsonProtocolConfig();
             RemactCatalogClient.IsDisabled = true;
         }
 

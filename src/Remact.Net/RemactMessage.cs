@@ -3,6 +3,7 @@
 
 using System;
 using System.Threading;            // SynchronizationContext
+using Remact.Net.Remote;
 
 namespace Remact.Net
 {
@@ -209,7 +210,7 @@ namespace Remact.Net
         /// <summary>
         /// Creates a new RemactMessage to send from service user (client) to service.
         /// </summary>
-        internal RemactMessage(RemactPort destination, string destinationMethod, object payload, RemactMessageType messageType,
+        public RemactMessage(RemactPort destination, string destinationMethod, object payload, RemactMessageType messageType,
                                RemactPort sender, int clientId, int requestId)
         {
             Destination = destination;

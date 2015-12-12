@@ -1,0 +1,89 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{9A55AA58-1FFD-48C8-820A-675432755952}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <NoStandardLibraries>false</NoStandardLibraries>
+    <AssemblyName>Remact.Net</AssemblyName>
+    <FileAlignment>512</FileAlignment>
+    <RootNamespace>Remact.Net</RootNamespace>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\bin\Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;BEFORE_NET45</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>..\bin\Debug\Remact.Net.xml</DocumentationFile>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <Optimize>true</Optimize>
+    <OutputPath>..\bin\Release\</OutputPath>
+    <DefineConstants>TRACE;BEFORE_NET45</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>..\bin\Release\Remact.Net.xml</DocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Mono.Posix">
+      <HintPath>..\..\lib\Mono\Mono.Posix.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Contracts\ActorInfo.cs" />
+    <Compile Include="Contracts\ReadyMessage.cs" />
+    <Compile Include="Contracts\IRemactService.cs" />
+    <Compile Include="Contracts\IRemactCatalog.cs" />
+    <Compile Include="Contracts\ErrorMessage.cs" />
+    <Compile Include="RemactConfigDefault.cs" />
+    <Compile Include="IConfiguration.cs" />
+    <Compile Include="RemactPortProxy.cs" />
+    <Compile Include="Remote\IRemactProtocolDriver.cs" />
+    <Compile Include="RemactDelegates.cs" />
+    <Compile Include="RemactDispatcher.cs" />
+    <Compile Include="RemactException.cs" />
+    <Compile Include="RemactInterfaces.cs" />
+    <Compile Include="RemactMessage.cs" />
+    <Compile Include="RemactPort.cs" />
+    <Compile Include="RemactPortClient.cs" />
+    <Compile Include="RemactPortService.cs" />
+    <Compile Include="Remote\IRemotePort.cs" />
+    <Compile Include="Remote\MultithreadedServiceNet40.cs" />
+    <Compile Include="Remote\RemactCatalogClient.cs" />
+    <Compile Include="Remote\RemactClient.cs" />
+    <Compile Include="Remote\RemactService.cs" />
+    <Compile Include="Remote\RemactServiceUser.cs" />
+    <Compile Include="Util\RaLog.cs" />
+    <Compile Include="Util\RaLogPluginConsole.cs" />
+    <Compile Include="Util\RaLogPluginFile.cs" />
+    <Compile Include="Util\RemactApplication.cs" />
+    <Compile Include="Properties\AssemblyInfoCommon.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Remote\ISerializationPayload.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ProjectExtensions>
+    <VisualStudio AllowExistingFolder="true" />
+  </ProjectExtensions>
+  <PropertyGroup>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Newtonsoft.Json.Replacement\Newtonsoft.Json.Replacement.csproj">
+      <Project>{e8e29df6-e63f-4b5e-8d7f-ff6c59113ef6}</Project>
+      <Name>Newtonsoft.Json.Replacement</Name>
+    </ProjectReference>
+  </ItemGroup>
+</Project>

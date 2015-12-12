@@ -4,6 +4,7 @@
 using NUnit.Framework;
 using System;
 using System.Threading.Tasks;
+using Remact.Net.Json.Msgpack.Alchemy;
 
 // Communication model tests
 // Client classes:         Service classes:
@@ -63,7 +64,7 @@ namespace Remact.Net.UnitTests.CommunicationModel
             {
                 _testName = TestContext.CurrentContext.Test.Name;
                 Console.WriteLine("start '" + _testName + "' variant 1: communicate locally in the same process");
-                RemactConfigDefault.UseMsgPack = false;
+                JsonProtocolConfig.UseMsgPack = false;
                 var service = new ClientServerService(remote: false, multithreaded: true);
                 _proxy = new RemactPortProxy("ClientServiceTestLocal", DefaultResponseHandler);
                 _proxy.IsMultithreaded = true;
@@ -72,7 +73,7 @@ namespace Remact.Net.UnitTests.CommunicationModel
             else if (variant == 2)
             {
                 Console.WriteLine("start '" + _testName + "' variant 2: communicate to a remote process");
-                RemactConfigDefault.UseMsgPack = false;
+                JsonProtocolConfig.UseMsgPack = false;
                 var service = new ClientServerService(remote: true, multithreaded: true);
                 _proxy = new RemactPortProxy("ClientServiceTestRemote", DefaultResponseHandler);
                 _proxy.IsMultithreaded = true;
@@ -81,7 +82,7 @@ namespace Remact.Net.UnitTests.CommunicationModel
             else if (variant == 3)
             {
                 Console.WriteLine("start '" + _testName + "' variant 3: communicate locally in the same process, use thread synchronization");
-                RemactConfigDefault.UseMsgPack = false;
+                JsonProtocolConfig.UseMsgPack = false;
                 var service = new ClientServerService(remote: false, multithreaded: false);
                 _proxy = new RemactPortProxy("ClientServiceTestLocalSync", DefaultResponseHandler);
                 _proxy.LinkToService(service.Port);
@@ -89,7 +90,7 @@ namespace Remact.Net.UnitTests.CommunicationModel
             else if (variant == 4)
             {
                 Console.WriteLine("start '" + _testName + "' variant 4: communicate to a remote process, use thread synchronization");
-                RemactConfigDefault.UseMsgPack = false;
+                JsonProtocolConfig.UseMsgPack = false;
                 var service = new ClientServerService(remote: true, multithreaded: false);
                 _proxy = new RemactPortProxy("ClientServiceTestRemoteSync", DefaultResponseHandler);
                _proxy.LinkOutputToRemoteService(service.RemoteUri);
@@ -97,7 +98,7 @@ namespace Remact.Net.UnitTests.CommunicationModel
             else if (variant == 5)
             {
                 Console.WriteLine("start '" + _testName + "' variant 5: communicate to a remote process, use MsgPack binary transport");
-                RemactConfigDefault.UseMsgPack = true;
+                JsonProtocolConfig.UseMsgPack = true;
                 var service = new ClientServerService(remote: true, multithreaded: true);
                 _proxy = new RemactPortProxy("ClientServiceTestRemoteMsgPack", DefaultResponseHandler);
                 _proxy.IsMultithreaded = true;
@@ -106,7 +107,7 @@ namespace Remact.Net.UnitTests.CommunicationModel
             else if (variant == 6)
             {
                 Console.WriteLine("start '" + _testName + "' variant 6: communicate to a remote process, use MsgPack binary transport and thread synchronization");
-                RemactConfigDefault.UseMsgPack = true;
+                JsonProtocolConfig.UseMsgPack = true;
                 var service = new ClientServerService(remote: true, multithreaded: false);
                 _proxy = new RemactPortProxy("ClientServiceTestRemoteMsgPackSync", DefaultResponseHandler);
                _proxy.LinkOutputToRemoteService(service.RemoteUri);

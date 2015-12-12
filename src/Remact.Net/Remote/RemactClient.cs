@@ -7,7 +7,6 @@ using System.Threading;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Remact.Net.Contracts;
-using Remact.Net.Protocol;
 
 namespace Remact.Net.Remote
 {
@@ -491,8 +490,8 @@ namespace Remact.Net.Remote
             if (PortProxy.TraceConnect)
             {
                 PortProxy.TraceSend = traceSend;
-                string serviceAddr = GetSetServiceAddress();
-                RaLog.Info(sentMessage.CltSndId, string.Concat("Connecting svc: '", serviceAddr, "'"), PortProxy.Logger);
+                PortProxy.Uri = m_protocolClient.ServiceUri; // Prepares endpointaddress for logging
+                RaLog.Info(sentMessage.CltSndId, string.Concat("Connecting svc: '", PortProxy.Uri, "'"), PortProxy.Logger);
             }
             return task;
         }
@@ -511,36 +510,6 @@ namespace Remact.Net.Remote
         #endregion
         //----------------------------------------------------------------------------------------------
         #region IRemactProtocolDriverCallbacks implementation and incoming messages
-
-
-        /// <summary>
-        /// Called before opening a connection. Prepares endpointaddress for tracing.
-        /// </summary>
-        /// <returns>string representation of the endpoint address.</returns>
-        protected string GetSetServiceAddress()
-        {
-#if !MONO
-        // Anonymous Uri: http://schemas.microsoft.com/2005/12/ServiceModel/Addressing/Anonymous
-        EndpointAddress address = m_ServiceReference.InnerChannel.LocalAddress;
-        if (address.IsAnonymous)
-        { // basicHttpBinding
-          //  ClientIdent.Uri = new Uri ("http://"+ClientIdent.HostName+"/"+RemactConfig.WsNamespace
-          //                              +string.Format ("/{0}/{1}", ClientIdent.AppIdentification, ClientIdent.Name));
-        }
-        else
-        { // wsDualHttpBinding
-            ClientIdent.Uri = address.Uri;
-        }
-        ServiceIdent.Uri = m_ServiceReference.Endpoint.ListenUri;
-        return m_ServiceReference.Endpoint.ListenUri.ToString();
-#else
-            // mono:
-            // ClientIdent.Uri = new Uri ("http://"+ClientIdent.HostName+"/"+RemactDefaults.WsNamespace
-            //                              +string.Format ("/{0}/{1}", ClientIdent.AppIdentification, ClientIdent.Name));
-            PortProxy.Uri = m_protocolClient.ServiceUri;
-            return m_protocolClient.ServiceUri.ToString();
-#endif
-        }
 
 
         private bool TryGetResponseMessage(LowerProtocolMessage lower, out RemactMessage msg)

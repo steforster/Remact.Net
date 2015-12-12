@@ -43,13 +43,13 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\Remact.Net\Remact.Mono.csproj">
-      <Project>{9DC114F4-F328-4770-B1EA-2BD4D0FA5A5A}</Project>
-      <Name>Remact.Mono</Name>
-    </ProjectReference>
     <ProjectReference Include="..\..\..\..\Newtonsoft.Json\Src\Newtonsoft.Json\Newtonsoft.Json.Net40.csproj">
-      <Project>{A9AE40FF-1A21-414A-9FE7-3BE13644CC6D}</Project>
+      <Project>{a9ae40ff-1a21-414a-9fe7-3be13644cc6d}</Project>
       <Name>Newtonsoft.Json.Net40</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\src\Remact.Net\Remact.Net.csproj">
+      <Project>{9a55aa58-1ffd-48c8-820a-675432755952}</Project>
+      <Name>Remact.Net</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

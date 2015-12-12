@@ -3,12 +3,16 @@
 
 using System;
 using System.Collections.Generic;
-using Remact.Net.Protocol;
 using System.Net.Sockets;
 using System.Net;
 
 namespace Remact.Net.Remote
 {
+    public interface INetworkServicePortManager
+    {
+        void RemoveService(string absolutePath);
+    }
+
     /// <summary>
     /// <para>Class used on service side.</para>
     /// <para>Handles and stores all connected clients.</para>
@@ -62,7 +66,7 @@ namespace Remact.Net.Remote
         private int _tcpPort;
         private bool _publishToCatalog;
         private IServiceConfiguration _serviceConfig;
-        private WebSocketPortManager _networkPortManager;
+        private INetworkServicePortManager _networkPortManager;
 
         private static int ms_nSharedTcpPort;
         private static int ms_nSharedTcpPortCount;

@@ -3,11 +3,8 @@
 
 using NUnit.Framework;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Threading;
 using System.Threading.Tasks;
-using Nito.Async;
 using Remact.Net;
 
 namespace DemoUnitTest
@@ -33,6 +30,9 @@ namespace DemoUnitTest
         {
             // Using the RaLog.PluginConsole, Remact.Net writes its trace to the VisualStudio output window and to the unit test output.
             RaLog.UsePlugin( new RaLog.PluginConsole() );
+
+            // For remote connections we need a plugin that references the needed third party assemblies and configures them.
+            RemactConfigDefault.Instance = new Remact.Net.Json.Msgpack.Alchemy.JsonProtocolConfig();
 
             // Do not use Remact.Catalog application for these unit tests.
             Remact.Net.Remote.RemactCatalogClient.IsDisabled = true;

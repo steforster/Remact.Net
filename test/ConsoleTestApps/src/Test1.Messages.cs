@@ -1,8 +1,6 @@
 ﻿
 // Copyright (c) https://github.com/steforster/Remact.Net
 
-using Remact.Net;
-
 namespace Test1.Messages
 {
     public class Test1CommandMessage

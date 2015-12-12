@@ -4,7 +4,6 @@
 using System;
 using System.Threading;   // SynchronizationContext
 using System.Threading.Tasks;
-using Remact.Net.Protocol;
 
 
 
@@ -13,7 +12,7 @@ namespace Remact.Net.Remote
     /// <summary>
     /// This is the Service Entrypoint. It dispatches requests and returns a response.
     /// </summary>
-    internal class MultithreadedServiceNet40 : IRemactProtocolDriverToService
+    public class MultithreadedServiceNet40 : IRemactProtocolDriverToService
     {
         private RemactService _service;
         private RemactServiceUser _svcUser;
@@ -107,9 +106,9 @@ namespace Remact.Net.Remote
                 || msg.Destination.ManagedThreadId == Thread.CurrentThread.ManagedThreadId )
             { // execute request on the calling thread or multi-threaded
             #if !BEFORE_NET45
-                id.Input.DispatchMessageAsync( id )
+                msg.Destination.DispatchMessageAsync( msg )
                     .ContinueWith((t)=>
-                        tcs.SetResult( id )); // when finished the first task: finish tcs and let the original request thread return the response.
+                        tcs.SetResult(msg)); // when finished the first task: finish tcs and let the original request thread return the response.
             #else
                 msg.Destination.DispatchMessage( msg );
                 tcs.SetResult( msg );
@@ -123,9 +122,9 @@ namespace Remact.Net.Remote
                         try
                         {
                 #if !BEFORE_NET45
-                            id.Input.DispatchMessageAsync( id )        // execute request async on the thread bound to the Input
+                            msg.Destination.DispatchMessageAsync( msg )        // execute request async on the thread bound to the Input
                                 .ContinueWith((t)=>
-                                    tcs.SetResult( id )); // when finished the first task: finish tcs and let the original request thread return the response.
+                                    tcs.SetResult( msg )); // when finished the first task: finish tcs and let the original request thread return the response.
                 #else
                             msg.Destination.DispatchMessage( msg );// execute request synchronously on the thread bound to the Destination
                             tcs.SetResult( msg );

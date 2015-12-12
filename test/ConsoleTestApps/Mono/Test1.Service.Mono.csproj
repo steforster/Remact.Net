@@ -46,17 +46,21 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\Remact.DesktopApp\Remact.DesktopApp.Mono.csproj">
-      <Project>{AEA3453E-96FC-4FDB-984E-65F05044018B}</Project>
-      <Name>Remact.DesktopApp.Mono</Name>
+    <ProjectReference Include="..\..\..\src\Remact.Net.DesktopAppHelper\Remact.Net.DesktopAppHelper.csproj">
+      <Project>{66ef889f-f66f-4411-83ad-7c2d00d26c2d}</Project>
+      <Name>Remact.Net.DesktopAppHelper</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\src\Remact.Net.Json.Msgpak.Alchemy\Remact.Net.Json.Msgpak.Alchemy.csproj">
+      <Project>{c2b408a5-bf3d-4e43-80e6-642605388ca9}</Project>
+      <Name>Remact.Net.Json.Msgpak.Alchemy</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\src\Remact.Net\Remact.Net.csproj">
+      <Project>{9a55aa58-1ffd-48c8-820a-675432755952}</Project>
+      <Name>Remact.Net</Name>
     </ProjectReference>
     <ProjectReference Include="Test1.Messages.Mono.csproj">
       <Project>{13CB30C8-528D-4C71-A937-FCF1DBC5E762}</Project>
       <Name>Test1.Messages.Mono</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\src\Remact.Net\Remact.Mono.csproj">
-      <Project>{9DC114F4-F328-4770-B1EA-2BD4D0FA5A5A}</Project>
-      <Name>Remact.Mono</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
