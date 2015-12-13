@@ -12,7 +12,7 @@ namespace Remact.Net.Json.Msgpack.Alchemy
     /// The WebSocketPortManager is used on server side. 
     /// For each WebSocketServer TCP port a WebSocketPortManager is created.
     /// Several RemactPortService may be registered for the single TCP port (portsharing)
-    /// When a clients connect, the PortManager is used for finding the addressed RemactPortService.
+    /// When a client connects, the PortManager is used for finding the addressed RemactPortService.
     /// The path part of an uri is used to address the RemactPortService: ws://{host}:{tcpPort}/{path}.
     /// </summary>
     public class WebSocketPortManager : INetworkServicePortManager, IDisposable

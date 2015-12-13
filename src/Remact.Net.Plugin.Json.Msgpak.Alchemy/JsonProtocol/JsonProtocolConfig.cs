@@ -11,7 +11,9 @@ namespace Remact.Net.Json.Msgpack.Alchemy
 {
     /// <summary>
     /// Common definitions for all interacting actors.
-    /// Library users may plug in their own implementation of this class to RemactDefault.Instance.
+    /// This plugin builds remote connection over Alchemy websockes using the textual Json or binary Msgpack serialization.
+    /// It uses either the Wamp V1 websocket protocol with Newtonsoft.Json textual serialization
+    /// or the JsonRpc V2 protocol with Msgpack binary serializer.
     /// </summary>
     public class JsonProtocolConfig : RemactConfigDefault
     {
@@ -19,7 +21,7 @@ namespace Remact.Net.Json.Msgpack.Alchemy
         #region == Instance and plugin ==
 
         /// <summary>
-        /// Use experimental MessagePack integration, when set to true.
+        /// Use experimental JsonRpc / MessagePack integration, when set to true.
         /// </summary>
         public static bool UseMsgPack { get; set; }
 
@@ -45,7 +47,6 @@ namespace Remact.Net.Json.Msgpack.Alchemy
 
         /// <summary>
         /// Configures and sets up a new service for a remotly accessible RemactPortService.
-        /// Feel free to overwrite this default implementation.
         /// Here we set up a WAMP WebSocket with TCP portsharing.
         /// The 'path' part of the uri addresses the RemactPortService.
         /// </summary>

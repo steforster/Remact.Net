@@ -72,9 +72,9 @@
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\Remact.Net.Json.Msgpak.Alchemy\Remact.Net.Json.Msgpak.Alchemy.csproj">
+    <ProjectReference Include="..\..\..\src\Remact.Net.Plugin.Json.Msgpak.Alchemy\Remact.Net.Plugin.Json.Msgpak.Alchemy.csproj">
       <Project>{c2b408a5-bf3d-4e43-80e6-642605388ca9}</Project>
-      <Name>Remact.Net.Json.Msgpak.Alchemy</Name>
+      <Name>Remact.Net.Plugin.Json.Msgpak.Alchemy</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\src\Remact.Net\Remact.Net.csproj">
       <Project>{9a55aa58-1ffd-48c8-820a-675432755952}</Project>

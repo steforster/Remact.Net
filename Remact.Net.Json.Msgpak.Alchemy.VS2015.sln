@@ -51,7 +51,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Remact.Net.DesktopAppHelper
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Remact.Net", "src\Remact.Net\Remact.Net.csproj", "{9A55AA58-1FFD-48C8-820A-675432755952}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Remact.Net.Json.Msgpak.Alchemy", "src\Remact.Net.Json.Msgpak.Alchemy\Remact.Net.Json.Msgpak.Alchemy.csproj", "{C2B408A5-BF3D-4E43-80E6-642605388CA9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Remact.Net.Plugin.Json.Msgpak.Alchemy", "src\Remact.Net.Plugin.Json.Msgpak.Alchemy\Remact.Net.Plugin.Json.Msgpak.Alchemy.csproj", "{C2B408A5-BF3D-4E43-80E6-642605388CA9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Newtonsoft.Json.Replacement", "src\Newtonsoft.Json.Replacement\Newtonsoft.Json.Replacement.csproj", "{E8E29DF6-E63F-4B5E-8D7F-FF6C59113EF6}"
 EndProject

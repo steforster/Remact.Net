@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{71A13208-AA07-43B2-A952-FDE353EBC123}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <NoStandardLibraries>false</NoStandardLibraries>
+    <AssemblyName>Remact.Net.Bms.Tcp</AssemblyName>
+    <FileAlignment>512</FileAlignment>
+    <RootNamespace>Remact.Net.Bms.Tcp</RootNamespace>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\bin\Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>1</WarningLevel>
+    <DocumentationFile>..\bin\Debug\Remact.Net.Bms.Tcp.xml</DocumentationFile>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <Optimize>true</Optimize>
+    <OutputPath>..\bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>..\bin\Release\Remact.Net.Bms.Tcp.xml</DocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\Remact.Net\Properties\AssemblyInfoCommon.cs">
+      <Link>Properties\AssemblyInfoCommon.cs</Link>
+    </Compile>
+    <Compile Include="BmsSerialization\BmsProtocolConfig.cs" />
+    <Compile Include="BmsSerialization\BmsProtocolClient.cs" />
+    <Compile Include="BmsSerialization\BmsProtocolClientStub.cs" />
+    <Compile Include="BmsSerialization\BmsProtocolDriver.cs" />
+    <Compile Include="BmsSerialization\TcpPortManager.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ProjectExtensions>
+    <VisualStudio AllowExistingFolder="true" />
+  </ProjectExtensions>
+  <PropertyGroup>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Remact.Net.Bms1Serializer\src\Remact.Net.Bms1Serializer\Remact.Net.Bms1Serializer.csproj">
+      <Project>{658ff815-d635-497e-ba72-f6a9d22692ce}</Project>
+      <Name>Remact.Net.Bms1Serializer</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\Remact.Net.Bms1Serializer\src\Remact.Net.TcpStream\Remact.Net.TcpStream.csproj">
+      <Project>{2f6c2e7a-6372-4020-810d-a23f9d47e9ab}</Project>
+      <Name>Remact.Net.TcpStream</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Remact.Net\Remact.Net.csproj">
+      <Project>{9a55aa58-1ffd-48c8-820a-675432755952}</Project>
+      <Name>Remact.Net</Name>
+    </ProjectReference>
+  </ItemGroup>
+</Project>

@@ -11,6 +11,10 @@ namespace Remact.Net
     /// <summary>
     /// Common definitions for all interacting actors.
     /// Library users may plug in their own implementation of this class to RemactDefault.Instance.
+    /// This implementation only support process internal connections.
+    /// There exists other assemblies with network implementations to plug in:
+    /// - JsonProtocolConfig in Remact.Net.Json.Msgpack.Alchemy.dll
+    /// - BmsProtocolConfig  in Remact.Net.Bms.Tcp.dll
     /// </summary>
     public class RemactConfigDefault : IRemactConfig
     {
@@ -68,8 +72,6 @@ namespace Remact.Net
         /// <summary>
         /// Configures and sets up a new service for a remotly accessible RemactPortService.
         /// Feel free to overwrite this default implementation.
-        /// Here we set up a WAMP WebSocket with TCP portsharing.
-        /// The 'path' part of the uri addresses the RemactPortService.
         /// </summary>
         /// <param name="service">The new service for an RemactPortService.</param>
         /// <param name="uri">The dynamically generated URI for this service.</param>
