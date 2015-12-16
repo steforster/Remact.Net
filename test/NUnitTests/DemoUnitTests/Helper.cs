@@ -103,5 +103,28 @@ namespace DemoUnitTest
             return  taskToDo != firstFinished  // timeout
                 || !taskToDo.IsCompleted;      // failed
         }
+
+
+        public static void LoadPluginDll(string fileName)
+        {
+            #if(DEBUG)
+                var path = @"../../../../../src/bin/Debug/" + fileName;
+            #else
+                var path = @"../../../../../src/bin/Release/" + fileName;
+            #endif
+
+            var disposable = RemactConfigDefault.LoadPluginAssembly(path);
+            Assert.IsNotNull(disposable, "cannot dynamically load dll: " + path);
+            RaLog.Info("RemactConfigDefault.LoadPluginAssembly", fileName);
+
+            /* TODO:
+             * Newtonsoft.Json (Replacement) is problematic, because it can be copied to the test output directory.
+             * In the original folder (src/bin) it overwrites the Newtonsoft.Json when compiled after Json-Plugin.
+             *                               
+             * Does LoadPluginAssembly link to same Remact.Net as test assembly ?
+             * 
+             * How to execte tests with both bluginc (Json + BMS) ?
+             */
+        }
     }
 }

@@ -5,7 +5,7 @@ using System;
 using Alchemy.Classes;
 using Remact.Net.Remote;
 
-namespace Remact.Net.Json.Msgpack.Alchemy
+namespace Remact.Net.Plugin.Json.Msgpack.Alchemy
 {
     /// <summary>
     /// Implements the protocol level for a JSON-RPC server. See http://www.jsonrpc.org/specification.

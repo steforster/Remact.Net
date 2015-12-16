@@ -60,7 +60,6 @@
     </Compile>
     <Compile Include="ClientServer.cs" />
     <Compile Include="ClientServerService.cs" />
-    <Compile Include="Helper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -89,6 +88,10 @@
     <ProjectReference Include="..\..\..\src\Remact.Net\Remact.Net.csproj">
       <Project>{9a55aa58-1ffd-48c8-820a-675432755952}</Project>
       <Name>Remact.Net</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\DemoUnitTests\DemoUnitTest.Mono.csproj">
+      <Project>{89bd8525-2245-44c2-af7c-d8b79f931c47}</Project>
+      <Name>DemoUnitTest.Mono</Name>
     </ProjectReference>
   </ItemGroup>
 </Project>

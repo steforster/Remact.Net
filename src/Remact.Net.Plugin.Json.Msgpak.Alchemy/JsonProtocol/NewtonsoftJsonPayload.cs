@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Remact.Net.Remote;
 
-namespace Remact.Net.Json.Msgpack.Alchemy
+namespace Remact.Net.Plugin.Json.Msgpack.Alchemy
 {
     /// <summary>
     /// The implementation of <see cref="ISerializationPayload"/> for the text based Newtonsoft.Json serializer, see https://github.com/JamesNK/Newtonsoft.Json.

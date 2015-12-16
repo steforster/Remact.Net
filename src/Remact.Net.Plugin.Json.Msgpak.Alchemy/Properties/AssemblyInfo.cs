@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 
 // Information about this assembly:
-[assembly: AssemblyTitle( "Remact.Net adapter for Newtonsoft.Json, Msgpack-cli and Alchemy webservice" )]
+[assembly: AssemblyTitle( "Remact.Net plugin for Newtonsoft.Json, Msgpack-cli and Alchemy webservice" )]
 
 // Setting ComVisible to false makes the types in this assembly not visible to COM components.
 [assembly: ComVisible (false)]

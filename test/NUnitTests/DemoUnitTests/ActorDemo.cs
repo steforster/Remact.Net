@@ -32,7 +32,7 @@ namespace DemoUnitTest
             RaLog.UsePlugin( new RaLog.PluginConsole() );
 
             // For remote connections we need a plugin that references the needed third party assemblies and configures them.
-            RemactConfigDefault.Instance = new Remact.Net.Json.Msgpack.Alchemy.JsonProtocolConfig();
+            Helper.LoadPluginDll(RemactConfigDefault.JsonProtocolPluginName);
 
             // Do not use Remact.Catalog application for these unit tests.
             Remact.Net.Remote.RemactCatalogClient.IsDisabled = true;

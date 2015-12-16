@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 
 // Information about this assembly:
-[assembly: AssemblyTitle( "Remact.Net adapter for Bms1.Tcp serialization" )]
+[assembly: AssemblyTitle( "Remact.Net plugin for Bms1.Tcp serialization" )]
 
 // Setting ComVisible to false makes the types in this assembly not visible to COM components.
 [assembly: ComVisible (false)]

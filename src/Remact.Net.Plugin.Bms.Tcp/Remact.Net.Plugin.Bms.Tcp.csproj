@@ -6,9 +6,9 @@
     <ProjectGuid>{71A13208-AA07-43B2-A952-FDE353EBC123}</ProjectGuid>
     <OutputType>Library</OutputType>
     <NoStandardLibraries>false</NoStandardLibraries>
-    <AssemblyName>Remact.Net.Bms.Tcp</AssemblyName>
+    <AssemblyName>Remact.Net.Plugin.Bms.Tcp</AssemblyName>
     <FileAlignment>512</FileAlignment>
-    <RootNamespace>Remact.Net.Bms.Tcp</RootNamespace>
+    <RootNamespace>Remact.Net.Plugin.Bms.Tcp</RootNamespace>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -19,7 +19,7 @@
     <DefineConstants>TRACE;DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>1</WarningLevel>
-    <DocumentationFile>..\bin\Debug\Remact.Net.Bms.Tcp.xml</DocumentationFile>
+    <DocumentationFile>..\bin\Debug\Remact.Net.Plugin.Bms.Tcp.xml</DocumentationFile>
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
@@ -29,11 +29,12 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>..\bin\Release\Remact.Net.Bms.Tcp.xml</DocumentationFile>
+    <DocumentationFile>..\bin\Release\Remact.Net.Plugin.Bms.Tcp.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System" />
+    <Reference Include="System.Runtime.Serialization" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\Remact.Net\Properties\AssemblyInfoCommon.cs">
@@ -44,6 +45,7 @@
     <Compile Include="BmsSerialization\BmsProtocolClientStub.cs" />
     <Compile Include="BmsSerialization\BmsProtocolDriver.cs" />
     <Compile Include="BmsSerialization\TcpPortManager.cs" />
+    <Compile Include="EntryPoint.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

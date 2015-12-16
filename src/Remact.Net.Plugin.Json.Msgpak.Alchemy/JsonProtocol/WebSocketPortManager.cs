@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using Alchemy;
 using Remact.Net.Remote;
 
-namespace Remact.Net.Json.Msgpack.Alchemy
+namespace Remact.Net.Plugin.Json.Msgpack.Alchemy
 {
     /// <summary>
     /// The WebSocketPortManager is used on server side. 

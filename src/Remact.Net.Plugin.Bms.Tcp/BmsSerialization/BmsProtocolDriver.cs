@@ -5,8 +5,9 @@ using System;
 using Remact.Net.Remote;
 using Remact.Net.Bms1Serializer;
 using Remact.Net.TcpStream;
+using System.IO;
 
-namespace Remact.Net.Bms.Tcp
+namespace Remact.Net.Plugin.Bms.Tcp
 {
     /// <summary>
     /// Implements the protocol level for a JSON-RPC client. See http://www.jsonrpc.org/specification.
@@ -42,103 +43,75 @@ namespace Remact.Net.Bms.Tcp
         #region Send messages
 
         /// <summary>
-        /// Send a message in JsonRpc and MsgPack.
+        /// Send a message in BMS format.
         /// </summary>
-        /// <param name="msg">The message.</param>
-        /// <param name="context">Alchemy connection context.</param>
-        protected void SendMessage(LowerProtocolMessage msg, UserContext context)
+        /// <param name="msg">The lower protocol message.</param>
+        /// <param name="channel">TCP channel to service or to client.</param>
+        protected void SendMessage(LowerProtocolMessage msg, string servicePath, Stream outputStream)
         {
-            if (msg.Type == RemactMessageType.Error)
+            string knownBaseTypeName;
+            var serializer = BmsProtocolConfig.Instance.FindSerializerByObjectType(msg.Payload.GetType(), out knownBaseTypeName);
+            _messageSerializer.WriteMessage(outputStream, (writer) => WriteAttributes(msg, servicePath, writer, serializer, knownBaseTypeName));
+        }
+
+        private void WriteAttributes(LowerProtocolMessage msg, string servicePath, IBms1Writer writer, Action<IBms1Writer> writeDto, string knownBaseTypeName)
+        {
+            if (servicePath != null) // needed on first message to service
             {
-                SendError(msg.RequestId, msg.Payload as ErrorMessage, context);
-                return;
+                writer.Internal.NameValueAttributes.Add("PV=1.0");
+                writer.Internal.NameValueAttributes.Add(string.Concat("SID=", servicePath));
             }
 
-            var rpc = new JsonRpcV2Message
+            if (msg.Type == RemactMessageType.Request)
             {
-                jsonrpc = "2.0",
-            };
+                writer.Internal.NameValueAttributes.Add("MT=Q");
+            }
+            else if (msg.Type == RemactMessageType.Response)
+            {
+                writer.Internal.NameValueAttributes.Add("MT=R");
+            }
+            else if (msg.Type == RemactMessageType.Notification)
+            {
+                writer.Internal.NameValueAttributes.Add("MT=N");
+            }
+            else // RemactMessageType.Error
+            {
+                writer.Internal.NameValueAttributes.Add("MT=E");
+            }
 
             if (msg.RequestId > 0 && msg.Type != RemactMessageType.Notification)
             {
-                rpc.id = msg.RequestId.ToString();
+                writer.Internal.NameValueAttributes.Add(string.Concat("RID=", msg.RequestId));
             }
 
-            if (msg.Type == RemactMessageType.Response)
-            {
-                rpc.result = msg.Payload;
+            if (msg.DestinationMethod != null)
+            {   // deserialize by destination method
+                writer.Internal.NameValueAttributes.Add(string.Concat("DM=", msg.DestinationMethod));
             }
             else
-            {   // request or notification
-                rpc.method = msg.DestinationMethod;
-                rpc.parameters = msg.Payload;
+            {   // deserialize by object type
+                writer.Internal.ObjectType = knownBaseTypeName;
             }
 
-            var stream = context.DataFrame.CreateInstance();
-            stream.IsBinary = true;
-            using (var writer = new Newtonsoft.Msgpack.MessagePackWriter(stream))
-            {
-                var serializer = JsonProtocolConfig.Instance.GetSerializer();
-                serializer.Serialize(writer, rpc);
-                stream.Flush();
-                context.Send(stream);
-            }
+            writeDto(writer);
         }
 
-        private void IncomingMessageNotDeserializable(int id, string errorDesc, UserContext context)
+        private void IncomingMessageNotDeserializable(int id, string errorDesc, Stream outputStream)
         {
             if (_toClientInterface != null && _lowLevelErrorCount > 100)
             {
                 return; // on client side do not respond endless on erronous error messages
             }
             _lowLevelErrorCount++;
-            var error = new ErrorMessage(ErrorCode.ReqestNotDeserializableOnService, errorDesc);
-            SendError(id, error, context);
-        }
 
-
-        /// <summary>
-        /// Send an error message in JsonRpc and MsgPack.
-        /// </summary>
-        /// <param name="requestId">The request id is > 0 in case the error is a response to a request. Otherwise 0.</param>
-        /// <param name="payload">The error payload.</param>
-        /// <param name="context">Alchemy connection context.</param>
-        protected void SendError(int requestId, ErrorMessage payload, UserContext context)
-        {
-            var rpc = new JsonRpcV2Message
+            var msg = new LowerProtocolMessage
             {
-                jsonrpc = "2.0",
-                error = new JsonRpcV2Error
-                {
-                    data = payload
-                }
+                Type = RemactMessageType.Error,
+                RequestId = id,
+                Payload = new ErrorMessage(ErrorCode.ReqestNotDeserializableOnService, errorDesc),
             };
 
-            if (requestId > 0)
-            {
-                rpc.id = requestId.ToString();
-            }
-
-            if (payload == null)
-            {
-                //                rpc.error.code = (int)errorMsg.Error; TODO
-                rpc.error.message = "ErrorFromService"; // message.Payload.GetType().FullName;
-            }
-            else
-            {
-                rpc.error.code = (int)payload.ErrorCode;
-                rpc.error.message = payload.Message;
-            }
-
-            var stream = context.DataFrame.CreateInstance();
-            stream.IsBinary = true;
-            using (var writer = new Newtonsoft.Msgpack.MessagePackWriter(stream))
-            {
-                var serializer = JsonProtocolConfig.Instance.GetSerializer();
-                serializer.Serialize(writer, rpc);
-                stream.Flush();
-                context.Send(stream);
-            }
+            SendMessage(msg, null, outputStream);
         }
 
 
@@ -237,7 +210,7 @@ namespace Remact.Net.Bms.Tcp
             }
             catch (Exception ex)
             {
-                if (msg.Type != RemactMessageType.Error) IncomingMessageNotDeserializable(msg.RequestId, ex.Message, context);
+                if (msg.Type != RemactMessageType.Error) IncomingMessageNotDeserializable(msg.RequestId, ex.Message, channel.OutputStream);
             }
         }
 
@@ -246,6 +219,7 @@ namespace Remact.Net.Bms.Tcp
             throw new InvalidOperationException(); // client side
         }
 
+        // must be overloaded
         protected virtual Func<IBms1Reader, object> FindDeserializerByDestination(string destinationMethod)
         {
             throw new InvalidOperationException();

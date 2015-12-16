@@ -4,7 +4,6 @@
 using NUnit.Framework;
 using System;
 using System.Threading.Tasks;
-using Remact.Net.Json.Msgpack.Alchemy;
 
 // Communication model tests
 // Client classes:         Service classes:

@@ -6,7 +6,7 @@ using Remact.Net.Remote;
 using Remact.Net.Bms1Serializer;
 using Remact.Net.TcpStream;
 
-namespace Remact.Net.Bms.Tcp
+namespace Remact.Net.Plugin.Bms.Tcp
 {
     /// <summary>
     /// Implements the protocol level for a JSON-RPC server. See http://www.jsonrpc.org/specification.
@@ -15,15 +15,18 @@ namespace Remact.Net.Bms.Tcp
     public class BmsProtocolClientStub : BmsProtocolDriver, IRemactProtocolDriverToClient
     {
         private TcpPortManager _portManager;
+        private TcpStreamChannel _tcpChannel;
         private RemactService _remactService;
 
         /// <summary>
-        /// Constructor for a stub instance that is created when a client is accepted on a service.
+        /// Constructor for a stub instance that is created when a client is accepted by a service.
         /// </summary>
-        /// <param name="portManager">The port manager manages services on the shared TCP port.</param>
-        public BmsProtocolClientStub(TcpPortManager portManager)
+        /// <param name="portManager">TcpPortManager for this shared TCP port.</param>
+        /// <param name="tcpChannel">The newly accepted TCP client channel.</param>
+        public BmsProtocolClientStub(TcpPortManager portManager, TcpStreamChannel tcpChannel)
         {
             _portManager = portManager;
+            _tcpChannel = tcpChannel;
             InitOnServiceSide();
         }
 
@@ -31,15 +34,15 @@ namespace Remact.Net.Bms.Tcp
         #region IRemactProtocolDriverCallbacks implementation
 
         /// <inheritdoc/>
-        public Uri ClientUri { get { return new Uri("ws://"+_wsChannel.ClientAddress.ToString()); } }
+        public Uri ClientUri { get { return new Uri("net.tcp://" + _tcpChannel.ClientSocket.RemoteEndPoint.ToString()); } }
 
         /// <inheritdoc/>
         public void OnServiceDisconnect()
         {
-            if (_wsChannel != null)
+            if (_tcpChannel != null)
             {
-                _wsChannel.Disconnect();
-                _wsChannel = null;
+                _tcpChannel.Dispose();
+                _tcpChannel = null;
             }
         }
 
@@ -53,7 +56,7 @@ namespace Remact.Net.Bms.Tcp
         /// <inheritdoc/>
         public void OnMessageToClient(LowerProtocolMessage msg)
         {
-            SendMessage(msg, _wsChannel);
+            SendMessage(msg, null, _tcpChannel.OutputStream);
         }
 
 
@@ -77,6 +80,12 @@ namespace Remact.Net.Bms.Tcp
             var svcUser = new RemactServiceUser(_remactService.ServiceIdent);
             var handler = new MultithreadedServiceNet40(svcUser, _remactService);
             return handler;
+        }
+
+        protected override Func<IBms1Reader, object> FindDeserializerByDestination(string destinationMethod)
+        {
+            // TODO search dispatcher, then BmsProtocolConfig.Instance.FindDeserializerByObjectType(objectType) 
+            throw new NotImplementedException();
         }
 
         /// <summary>

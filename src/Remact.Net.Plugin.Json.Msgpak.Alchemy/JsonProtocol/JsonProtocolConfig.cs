@@ -7,7 +7,7 @@ using Alchemy;
 using Alchemy.Classes;
 using Newtonsoft.Json;
 
-namespace Remact.Net.Json.Msgpack.Alchemy
+namespace Remact.Net.Plugin.Json.Msgpack.Alchemy
 {
     /// <summary>
     /// Common definitions for all interacting actors.
@@ -25,19 +25,19 @@ namespace Remact.Net.Json.Msgpack.Alchemy
         /// </summary>
         public static bool UseMsgPack { get; set; }
 
+
         /// <summary>
         /// Library users may plug in their own implementation of IRemactDefault to RemactDefault.Instance.
         /// </summary>
-        static JsonProtocolConfig()
-        {
-            RemactConfigDefault.Instance = new JsonProtocolConfig();
-        }
-
         public static new JsonProtocolConfig Instance
         {
             get
             {
                 return RemactConfigDefault.Instance as JsonProtocolConfig;
+            }
+            set
+            {
+                RemactConfigDefault.Instance = value;
             }
         }
 

@@ -6,9 +6,9 @@
     <ProjectGuid>{C2B408A5-BF3D-4E43-80E6-642605388CA9}</ProjectGuid>
     <OutputType>Library</OutputType>
     <NoStandardLibraries>false</NoStandardLibraries>
-    <AssemblyName>Remact.Net.Json.Msgpack.Alchemy</AssemblyName>
+    <AssemblyName>Remact.Net.Plugin.Json.Msgpack.Alchemy</AssemblyName>
     <FileAlignment>512</FileAlignment>
-    <RootNamespace>Remact.Net.Json.Msgpack.Alchemy</RootNamespace>
+    <RootNamespace>Remact.Net.Plugin.Json.Msgpack.Alchemy</RootNamespace>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -19,7 +19,7 @@
     <DefineConstants>TRACE;DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>1</WarningLevel>
-    <DocumentationFile>..\bin\Debug\Remact.Net.Json.Msgpack.Alchemy.xml</DocumentationFile>
+    <DocumentationFile>..\bin\Debug\Remact.Net.Plugin.Json.Msgpack.Alchemy.xml</DocumentationFile>
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
@@ -29,7 +29,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>..\bin\Release\Remact.Net.Json.Msgpack.Alchemy.xml</DocumentationFile>
+    <DocumentationFile>..\bin\Release\Remact.Net.Plugin.Json.Msgpack.Alchemy.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
@@ -40,6 +40,7 @@
     <Compile Include="..\Remact.Net\Properties\AssemblyInfoCommon.cs">
       <Link>Properties\AssemblyInfoCommon.cs</Link>
     </Compile>
+    <Compile Include="EntryPoint.cs" />
     <Compile Include="JsonProtocol\JsonRpc\JsonRpcNewtonsoftMsgPackDriver.cs" />
     <Compile Include="JsonProtocol\Wamp\WampClient.cs" />
     <Compile Include="JsonProtocol\Wamp\WampClientStub.cs" />

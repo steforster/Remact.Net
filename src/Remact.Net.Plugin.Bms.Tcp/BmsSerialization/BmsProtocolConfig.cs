@@ -7,7 +7,7 @@ using Remact.Net.TcpStream;
 using Remact.Net.Bms1Serializer;
 using System.Collections.Generic;
 
-namespace Remact.Net.Bms.Tcp
+namespace Remact.Net.Plugin.Bms.Tcp
 {
     /// <summary>
     /// Common definitions for all interacting actors.
@@ -21,16 +21,15 @@ namespace Remact.Net.Bms.Tcp
         /// <summary>
         /// Library users may plug in their own implementation of IRemactDefault to RemactDefault.Instance.
         /// </summary>
-        static BmsProtocolConfig()
-        {
-            RemactConfigDefault.Instance = new BmsProtocolConfig();
-        }
-
         public static new BmsProtocolConfig Instance
         {
             get
             {
                 return RemactConfigDefault.Instance as BmsProtocolConfig;
+            }
+            set
+            {
+                RemactConfigDefault.Instance = value;
             }
         }
 
@@ -65,11 +64,11 @@ namespace Remact.Net.Bms.Tcp
         /// <summary>
         /// Do this for every new client connecting to a TCP port.
         /// </summary>
-        /// <param name="portManager">TcpPortManager for this port.</param>
+        /// <param name="portManager">TcpPortManager for this shared TCP port.</param>
         /// <param name="channel">The newly accepted client channel.</param>
         protected virtual void OnClientAccepted(TcpPortManager portManager, TcpStreamChannel channel)
         {
-            var protocolDriver = new BmsProtocolClientStub(portManager);
+            var protocolDriver = new BmsProtocolClientStub(portManager, channel);
             channel.UserContext = protocolDriver;
             channel.Start(protocolDriver.OnMessageReceived, protocolDriver.OnDisconnect);
         }
@@ -82,66 +81,78 @@ namespace Remact.Net.Bms.Tcp
         /// <returns>The protocol driver including serializer.</returns>
         public override IRemactProtocolDriverToService DoClientConfiguration(ref Uri uri, bool forCatalog)
         {
-            if (UseMsgPack)
-            {
-                // Protocol = JsonRpc, binary, serializer = MsgPack.
-                return new JsonRpcMsgPackClient(uri);
-            }
-            else
-            {
-                // Protocol = WAMP, serializer = Newtonsoft.Json.
-                return new WampClient(uri);
-            }
+            return new BmsProtocolClient(uri);
         }
 
         #endregion
         //----------------------------------------------------------------------------------------------
         #region == Serialization ==
 
-        /// <summary>
-        /// Returns a new serializer usable to write polymorph messages.
-        /// </summary>
-        public virtual JsonSerializer GetSerializer()
-        {
-            return new JsonSerializer
-            {
-                // Auto $type metadata insertion. Simple assembly format is used to supports lax versioning.
-                TypeNameHandling = TypeNameHandling.Auto,
-                TypeNameAssemblyFormat = System.Runtime.Serialization.Formatters.FormatterAssemblyStyle.Simple,
-            };
-        }
-
-
 
         private Dictionary<string, Func<IBms1Reader, object>> _deserializerMap = new Dictionary<string, Func<IBms1Reader, object>>();
+        
+        private Dictionary<Type, Action<IBms1Writer>> _serializerMap = new Dictionary<Type, Action<IBms1Writer>>();
 
         /// <summary>
         /// Returns a deserializer method for a base object type.
         /// </summary>
-        public Func<IBms1Reader, object> FindDeserializerByObjectType(string objectType)
+        public Func<IBms1Reader, object> FindDeserializerByObjectType(string objectTypeName)
         {
-            return _deserializerMap[objectType];
+            Func<IBms1Reader, object> deserializer;
+            if (!_deserializerMap.TryGetValue(objectTypeName, out deserializer))
+            {
+                throw new InvalidOperationException("Cannot deserialize message with unknown type: " + objectTypeName);
+            }
+            return deserializer;
+        }
+
+        /// <summary>
+        /// Returns a serializer method for a base object type.
+        /// </summary>
+        public Action<IBms1Writer> FindSerializerByObjectType(Type objectType, out string objectTypeName)
+        {
+            Action<IBms1Writer> serializer;
+            if (_serializerMap.TryGetValue(objectType, out serializer))
+            {
+                objectTypeName = objectType.FullName;
+            }
+            else
+            {
+                foreach (var item in _serializerMap)
+                {
+                    if (item.Key.IsAssignableFrom(objectType))
+                    {
+                        objectTypeName = item.Key.FullName;
+                        return item.Value;
+                    }
+                }
+                objectTypeName = null;
+                throw new InvalidOperationException("Cannot serialize message with unknown (base) type: " + objectType.FullName);
+            }
+            return serializer;
         }
 
         /// <summary>
         /// Adds a (static) deserializer method for a base object type.
         /// </summary>
-        public void AddKnownMessageType<T>(Func<IBms1Reader, T> deserializer) where T : class
+        public void AddKnownMessageType<T>(Func<IBms1Reader, T> deserializer, Action<IBms1Writer> serializer) where T : class
         {
             lock (_deserializerMap)
             {
-                _deserializerMap.Add(typeof(T).Name, deserializer);
+                _deserializerMap.Add(typeof(T).FullName, deserializer);
+                _serializerMap.Add(typeof(T), serializer);
             }
         }
 
         /// <summary>
         /// Adds a (static) deserializer method for a base object type.
         /// </summary>
-        public void AddKnownMessageType(Type messageType, Func<IBms1Reader, object> deserializer)
+        public void AddKnownMessageType(Type messageType, Func<IBms1Reader, object> deserializer, Action<IBms1Writer> serializer)
         {
             lock (_deserializerMap)
             {
-                _deserializerMap.Add(messageType.Name, deserializer);
+                _deserializerMap.Add(messageType.FullName, deserializer);
+                _serializerMap.Add(messageType, serializer);
             }
         }
 
@@ -155,8 +166,7 @@ namespace Remact.Net.Bms.Tcp
         public override void Shutdown()
         {
             base.Shutdown();
-            WebSocketClient.Shutdown();
-            WebSocketServer.Shutdown();
+            // TODO: shutdown all TcpPortManagers and clients
         }
 
         #endregion

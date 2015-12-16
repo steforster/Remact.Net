@@ -5,6 +5,7 @@ using System;
 using System.Reflection;           // Assembly
 using System.Net;                  // Dns
 using Remact.Net.Remote;
+using System.IO;
 
 namespace Remact.Net
 {
@@ -59,6 +60,46 @@ namespace Remact.Net
             CatalogHost = "localhost";
         }
 
+        /// <summary>
+        /// Loads and executes the EntryPoint default constructor of the specified assembly file.
+        /// The assemblyName also specifies the namespace of the EntryPoint class.
+        /// </summary>
+        /// <param name="assemblyName">Short or long form of the assembly name. E.g. "Remact.Net.Plugin.Bms.Tcp".</param>
+        /// <returns>Null, when assembly not found. Otherwise the disposable EntryPoint class. Should be disposed, before the assembly unloads.</returns>
+        public static IDisposable LoadPluginAssembly(string assemblyName)
+        {
+            var dllDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            var fileName = Path.Combine(dllDir, assemblyName);
+            if (!File.Exists(fileName))
+            {
+                return null;
+            }
+            var an = new AssemblyName(Path.GetFileNameWithoutExtension(fileName));
+            an.CodeBase = fileName;
+            try
+            {
+                var assembly = Assembly.Load(an);
+                //var assembly = Assembly.LoadFrom(fileName); // for unit tests, load dependant assemblies from this folder
+                return (IDisposable)assembly.CreateInstance(an.Name + ".EntryPoint");
+            }
+            catch (Exception ex)
+            {
+                RaLog.Info("RemactConfigDefault.LoadPluginAssembly", "cannot load '" + assemblyName + "': " + ex.Message);
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Name of the Remact.Net.Plugin.Bms.Tcp.dll
+        /// </summary>
+        public const string DefaultProtocolPluginName = "Remact.Net.Plugin.Bms.Tcp.dll";
+
+        /// <summary>
+        /// Name of the Remact.Net.Plugin.Json.Msgpack.Alchemy.dll
+        /// </summary>
+        public const string JsonProtocolPluginName = "Remact.Net.Plugin.Json.Msgpack.Alchemy.dll";
+
+
         #endregion
         //----------------------------------------------------------------------------------------------
         #region == Default Service and Client configuration ==
@@ -79,7 +120,7 @@ namespace Remact.Net
         /// <returns>The network port manager. It must be called, when the RemactPortService is disconnected from network.</returns>
         public virtual INetworkServicePortManager DoServiceConfiguration(RemactService service, ref Uri uri, bool isCatalog)
         {
-            throw new NotSupportedException("RemactConfigDefault cannot configure service for remote connection. Use JsonProtocolConfig or another plugin for remote configuration.");
+            throw new NotSupportedException("RemactConfigDefault cannot configure service for remote connection. Use LoadPluginAssembly to load plugin for remote configuration.");
         }
 
         /// <summary>
@@ -90,7 +131,7 @@ namespace Remact.Net
         /// <returns>The protocol driver including serializer.</returns>
         public virtual IRemactProtocolDriverToService DoClientConfiguration(ref Uri uri, bool forCatalog)
         {
-            throw new NotSupportedException("RemactConfigDefault cannot configure client for remote connection. Use JsonProtocolConfig or another plugin for remote configuration.");
+            throw new NotSupportedException("RemactConfigDefault cannot configure client for remote connection. Use LoadPluginAssembly to load a plugin for remote configuration.");
         }
 
         #endregion

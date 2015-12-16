@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using Remact.Net.Remote;
 using Remact.Net.TcpStream;
 
-namespace Remact.Net.Bms.Tcp
+namespace Remact.Net.Plugin.Bms.Tcp
 {
     /// <summary>
     /// The TcpPortManager is used on server side. 

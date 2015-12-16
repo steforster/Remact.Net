@@ -6,7 +6,7 @@ using Alchemy.Classes;
 using System.IO;
 using Remact.Net.Remote;
 
-namespace Remact.Net.Json.Msgpack.Alchemy
+namespace Remact.Net.Plugin.Json.Msgpack.Alchemy
 {
     /// <summary>
     /// Implements some common protocol level methods for a client.

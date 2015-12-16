@@ -17,6 +17,11 @@ namespace Remact.Net.Remote
         private RemactService _service;
         private RemactServiceUser _svcUser;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MultithreadedServiceNet40"/> class.
+        /// </summary>
+        /// <param name="svcUser">The service user (client stub).</param>
+        /// <param name="service">The service.</param>
         public MultithreadedServiceNet40(RemactServiceUser svcUser, RemactService service)
         {
             _svcUser = svcUser;

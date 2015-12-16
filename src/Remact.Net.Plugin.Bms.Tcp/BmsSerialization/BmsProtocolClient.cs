@@ -6,33 +6,25 @@ using Remact.Net.Remote;
 using Remact.Net.Bms1Serializer;
 using Remact.Net.TcpStream;
 
-namespace Remact.Net.Bms.Tcp
+namespace Remact.Net.Plugin.Bms.Tcp
 {
     /// <summary>
-    /// Implements the protocol level for a JSON-RPC client. See http://www.jsonrpc.org/specification.
-    /// Uses the MsgPack-cli serializer. See http://msgpack.org.
+    /// Implements the protocol level for a BMS client. See https://github.com/steforster/bms1-binary-message-stream-format.
     /// </summary>
     public class BmsProtocolClient : BmsProtocolDriver, IRemactProtocolDriverToService
     {
-        private ProtocolDriverClientHelper _clientHelper;
-        private WebSocketClient _wsClient;
+        private TcpStreamClient _tcpClient;
+        private bool _connecting;
+        private bool _faulted;
 
         /// <summary>
         /// Constructor for a client that connects to a service.
         /// </summary>
-        /// <param name="websocketUri">The uri of the service.</param>
-        public JsonRpcMsgPackClient(Uri websocketUri)
+        /// <param name="tcpUri">The uri of the service.</param>
+        public BmsProtocolClient(Uri tcpUri)
         {
-            ServiceUri = websocketUri;
-            _wsClient = new WebSocketClient(websocketUri.ToString())
-            {
-                //OnSend = OnSend,// Message has been dequeued and passed to the socket buffer
-                //OnConnect = OnConnect,// TCP socket is connected to the server
-                //SubProtocols = new string[]{"wamp"} // null: take all subprotocols
-                //TODO Origin = see rfc6455
-            };
-
-            _clientHelper = new ProtocolDriverClientHelper(_wsClient);
+            ServiceUri = tcpUri;
+            _tcpClient = new TcpStreamClient();
         }
 
         #region IRemactProtocolDriverService proxy implementation
@@ -41,29 +33,74 @@ namespace Remact.Net.Bms.Tcp
         public Uri ServiceUri { get; private set; }
 
         /// <inheritdoc/>
-        public PortState PortState {get {return _clientHelper.PortState; }}
+        public PortState PortState
+        {
+            get
+            {
+                if (_faulted)
+                {
+                    return PortState.Faulted;
+                }
+                else if (_connecting)
+                {
+                    return PortState.Connecting;
+                }
+                else if (_tcpClient.IsConnected)
+                {
+                    return PortState.Ok;
+                }
+                else
+                {
+                    return PortState.Disconnected;
+                }
+            }
+        }
 
         /// <inheritdoc/>
         public void OpenAsync(OpenAsyncState state, IRemactProtocolDriverToClient callback)
         {
+            _connecting = true;
             InitOnClientSide(callback);
-            _clientHelper.OpenAsync(state, callback, OnReceived);
+            var task = _tcpClient.ConnectAsync(ServiceUri, OnMessageReceived, OnDisconnect);
+            task.ContinueWith((t) => _connecting = false);
+            // TODO task ...
         }
 
         /// <inheritdoc/>
         public void MessageToService(LowerProtocolMessage msg)
         {
-            SendMessage(msg, _clientHelper.UserContext);
+            SendMessage(msg, ServiceUri.AbsolutePath, _tcpClient.OutputStream);
         }
 
         /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {
+            _faulted = true;
             if (disposing)
             {
-                _clientHelper.Dispose();
+                _tcpClient.Dispose();
             }
             base.Dispose(disposing);
+        }
+
+        #endregion
+        #region Socket callbacks
+
+
+        protected override Func<IBms1Reader, object> FindDeserializerByDestination(string destinationMethod)
+        {
+            // TODO search dispatcher, then BmsProtocolConfig.Instance.FindDeserializerByObjectType(objectType) 
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Occurs, when connection failes or is disposed.
+        /// </summary>
+        /// <param name="channel">The client channel.</param>
+        private void OnDisconnect(TcpStreamChannel channel)
+        {
+            _faulted = true;
+            // TODO
         }
 
         #endregion

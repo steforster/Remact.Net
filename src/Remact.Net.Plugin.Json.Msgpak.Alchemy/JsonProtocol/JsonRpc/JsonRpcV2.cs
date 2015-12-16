@@ -3,7 +3,7 @@
 
 using Newtonsoft.Json;
 
-namespace Remact.Net.Json.Msgpack.Alchemy
+namespace Remact.Net.Plugin.Json.Msgpack.Alchemy
 {
     /// <summary>
     /// Json rpc v2 message for request, reply, error and notification.

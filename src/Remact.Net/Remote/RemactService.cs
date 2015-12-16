@@ -8,8 +8,15 @@ using System.Net;
 
 namespace Remact.Net.Remote
 {
+    /// <summary>
+    /// When RemactService.Disconnect is called, a plugged in port manager is informed by callback on this interface.
+    /// </summary>
     public interface INetworkServicePortManager
     {
+        /// <summary>
+        /// Removes the service.
+        /// </summary>
+        /// <param name="absolutePath">The absolute path to identify the service.</param>
         void RemoveService(string absolutePath);
     }
 

@@ -1,7 +1,7 @@
 ﻿
 // Copyright (c) https://github.com/steforster/Remact.Net
 
-namespace Remact.Net.Json.Msgpack.Alchemy
+namespace Remact.Net.Plugin.Json.Msgpack.Alchemy
 {
 #pragma warning disable 1591
     /// <summary>
