@@ -78,20 +78,20 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\Alchemy-Websockets\src\Alchemy\Alchemy.csproj">
-      <Project>{45486cde-86a3-4769-952f-e0821bf79493}</Project>
+      <Project>{45486CDE-86A3-4769-952F-E0821BF79493}</Project>
       <Name>Alchemy</Name>
     </ProjectReference>
+    <ProjectReference Include="..\DemoUnitTests\DemoUnitTest.Mono.csproj">
+      <Project>{89BD8525-2245-44C2-AF7C-D8B79F931C47}</Project>
+      <Name>DemoUnitTest.Mono</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\..\src\Remact.Net.Plugin.Json.Msgpak.Alchemy\Remact.Net.Plugin.Json.Msgpak.Alchemy.csproj">
-      <Project>{c2b408a5-bf3d-4e43-80e6-642605388ca9}</Project>
+      <Project>{C2B408A5-BF3D-4E43-80E6-642605388CA9}</Project>
       <Name>Remact.Net.Plugin.Json.Msgpak.Alchemy</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\src\Remact.Net\Remact.Net.csproj">
-      <Project>{9a55aa58-1ffd-48c8-820a-675432755952}</Project>
+      <Project>{9A55AA58-1FFD-48C8-820A-675432755952}</Project>
       <Name>Remact.Net</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\DemoUnitTests\DemoUnitTest.Mono.csproj">
-      <Project>{89bd8525-2245-44c2-af7c-d8b79f931c47}</Project>
-      <Name>DemoUnitTest.Mono</Name>
     </ProjectReference>
   </ItemGroup>
 </Project>

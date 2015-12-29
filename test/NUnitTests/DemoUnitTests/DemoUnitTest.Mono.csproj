@@ -73,7 +73,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Remact.Net\Remact.Net.csproj">
-      <Project>{9a55aa58-1ffd-48c8-820a-675432755952}</Project>
+      <Project>{9A55AA58-1FFD-48C8-820A-675432755952}</Project>
       <Name>Remact.Net</Name>
     </ProjectReference>
   </ItemGroup>

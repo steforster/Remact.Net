@@ -38,7 +38,6 @@
     <DocumentationFile>..\bin\Debug\Remact.Net.CatalogApp.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>..\bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
@@ -46,6 +45,7 @@
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>..\bin\Release\Remact.Net.CatalogApp.xml</DocumentationFile>
     <UseVSHostingProcess>false</UseVSHostingProcess>
+    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <PropertyGroup />
   <ItemGroup>
@@ -113,17 +113,17 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Remact.Net\Remact.Net.csproj">
+      <Project>{9A55AA58-1FFD-48C8-820A-675432755952}</Project>
+      <Name>Remact.Net</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Remact.Net.DesktopAppHelper\Remact.Net.DesktopAppHelper.csproj">
-      <Project>{66ef889f-f66f-4411-83ad-7c2d00d26c2d}</Project>
+      <Project>{66EF889F-F66F-4411-83AD-7C2D00D26C2D}</Project>
       <Name>Remact.Net.DesktopAppHelper</Name>
     </ProjectReference>
     <ProjectReference Include="..\Remact.Net.Plugin.Json.Msgpak.Alchemy\Remact.Net.Plugin.Json.Msgpak.Alchemy.csproj">
-      <Project>{c2b408a5-bf3d-4e43-80e6-642605388ca9}</Project>
+      <Project>{C2B408A5-BF3D-4E43-80E6-642605388CA9}</Project>
       <Name>Remact.Net.Plugin.Json.Msgpak.Alchemy</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Remact.Net\Remact.Net.csproj">
-      <Project>{9a55aa58-1ffd-48c8-820a-675432755952}</Project>
-      <Name>Remact.Net</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

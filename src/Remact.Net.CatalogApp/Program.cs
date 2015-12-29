@@ -27,7 +27,7 @@ namespace Remact.Net.CatalogApp
             RemactDesktopApp.InstallExitHandler ();
             RaLog.Run (); // open file and write first messages
             RaLog.Info( "Catalog", "Start" );
-            RemactConfigDefault.Instance = new Remact.Net.Json.Msgpack.Alchemy.JsonProtocolConfig();
+            RemactConfigDefault.Instance = new Remact.Net.Plugin.Json.Msgpack.Alchemy.JsonProtocolConfig();
             try
             {
                 Catalog = new Catalog();

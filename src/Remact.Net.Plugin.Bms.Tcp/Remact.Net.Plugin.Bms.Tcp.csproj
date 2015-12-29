@@ -18,7 +18,7 @@
     <OutputPath>..\bin\Debug\</OutputPath>
     <DefineConstants>TRACE;DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>1</WarningLevel>
+    <WarningLevel>4</WarningLevel>
     <DocumentationFile>..\bin\Debug\Remact.Net.Plugin.Bms.Tcp.xml</DocumentationFile>
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <RunCodeAnalysis>false</RunCodeAnalysis>
@@ -30,6 +30,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>..\bin\Release\Remact.Net.Plugin.Bms.Tcp.xml</DocumentationFile>
+    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
@@ -58,15 +59,15 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\Remact.Net.Bms1Serializer\src\Remact.Net.Bms1Serializer\Remact.Net.Bms1Serializer.csproj">
-      <Project>{658ff815-d635-497e-ba72-f6a9d22692ce}</Project>
+      <Project>{658FF815-D635-497E-BA72-F6A9D22692CE}</Project>
       <Name>Remact.Net.Bms1Serializer</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\Remact.Net.Bms1Serializer\src\Remact.Net.TcpStream\Remact.Net.TcpStream.csproj">
-      <Project>{2f6c2e7a-6372-4020-810d-a23f9d47e9ab}</Project>
+      <Project>{2F6C2E7A-6372-4020-810D-A23F9D47E9AB}</Project>
       <Name>Remact.Net.TcpStream</Name>
     </ProjectReference>
     <ProjectReference Include="..\Remact.Net\Remact.Net.csproj">
-      <Project>{9a55aa58-1ffd-48c8-820a-675432755952}</Project>
+      <Project>{9A55AA58-1FFD-48C8-820A-675432755952}</Project>
       <Name>Remact.Net</Name>
     </ProjectReference>
   </ItemGroup>

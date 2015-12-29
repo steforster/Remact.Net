@@ -30,6 +30,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>..\bin\Release\Remact.Net.xml</DocumentationFile>
+    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
@@ -82,7 +83,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Newtonsoft.Json.Replacement\Newtonsoft.Json.Replacement.csproj">
-      <Project>{e8e29df6-e63f-4b5e-8d7f-ff6c59113ef6}</Project>
+      <Project>{E8E29DF6-E63F-4B5E-8D7F-FF6C59113EF6}</Project>
       <Name>Newtonsoft.Json.Replacement</Name>
     </ProjectReference>
   </ItemGroup>

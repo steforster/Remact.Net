@@ -4,6 +4,8 @@
 using NUnit.Framework;
 using System;
 using System.Threading.Tasks;
+using Remact.Net.Plugin.Json.Msgpack.Alchemy;
+using DemoUnitTest;
 
 // Communication model tests
 // Client classes:         Service classes:
@@ -25,6 +27,8 @@ namespace Remact.Net.UnitTests.CommunicationModel
         [TestFixtureSetUp] // run once when creating this class.
         public void FixtureSetUp()
         {
+            // For remote connections we need a plugin that references the needed third party assemblies and configures them.
+            Helper.LoadPluginDll(RemactConfigDefault.JsonProtocolPluginName);
         }
 
         [TestFixtureTearDown]  // run once after all tests of this class have been executed.

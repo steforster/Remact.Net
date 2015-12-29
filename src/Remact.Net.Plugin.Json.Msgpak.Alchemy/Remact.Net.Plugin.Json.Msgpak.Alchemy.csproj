@@ -18,7 +18,7 @@
     <OutputPath>..\bin\Debug\</OutputPath>
     <DefineConstants>TRACE;DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>1</WarningLevel>
+    <WarningLevel>4</WarningLevel>
     <DocumentationFile>..\bin\Debug\Remact.Net.Plugin.Json.Msgpack.Alchemy.xml</DocumentationFile>
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <RunCodeAnalysis>false</RunCodeAnalysis>
@@ -30,6 +30,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>..\bin\Release\Remact.Net.Plugin.Json.Msgpack.Alchemy.xml</DocumentationFile>
+    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
@@ -68,23 +69,23 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\Alchemy-Websockets\src\Alchemy\Alchemy.csproj">
-      <Project>{45486cde-86a3-4769-952f-e0821bf79493}</Project>
+      <Project>{45486CDE-86A3-4769-952F-E0821BF79493}</Project>
       <Name>Alchemy</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\msgpack-cli\src\MsgPack.Net40\MsgPack.Net40.csproj">
-      <Project>{d45d4cbe-afe7-4e2a-945d-47aed564c39d}</Project>
+      <Project>{D45D4CBE-AFE7-4E2A-945D-47AED564C39D}</Project>
       <Name>MsgPack.Net40</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\Newtonsoft.Json\Src\Newtonsoft.Json\Newtonsoft.Json.Net40.csproj">
-      <Project>{a9ae40ff-1a21-414a-9fe7-3be13644cc6d}</Project>
+      <Project>{A9AE40FF-1A21-414A-9FE7-3BE13644CC6D}</Project>
       <Name>Newtonsoft.Json.Net40</Name>
     </ProjectReference>
     <ProjectReference Include="..\Newtonsoft.Msgpack\Newtonsoft.Msgpack.csproj">
-      <Project>{39fe4157-2a85-4aee-8d4a-4b7a1a60b03c}</Project>
+      <Project>{39FE4157-2A85-4AEE-8D4A-4B7A1A60B03C}</Project>
       <Name>Newtonsoft.Msgpack</Name>
     </ProjectReference>
     <ProjectReference Include="..\Remact.Net\Remact.Net.csproj">
-      <Project>{9a55aa58-1ffd-48c8-820a-675432755952}</Project>
+      <Project>{9A55AA58-1FFD-48C8-820A-675432755952}</Project>
       <Name>Remact.Net</Name>
     </ProjectReference>
   </ItemGroup>

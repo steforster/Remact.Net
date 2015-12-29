@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Remact.Net.Remote;
 using Remact.Net.Contracts;
-using Remact.Net.Json.Msgpack.Alchemy;
+using Remact.Net.Plugin.Json.Msgpack.Alchemy;
 
 namespace Remact.Net.CatalogApp
 {

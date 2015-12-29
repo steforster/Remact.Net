@@ -62,8 +62,16 @@ namespace Remact.Net.Plugin.Bms.Tcp
             _connecting = true;
             InitOnClientSide(callback);
             var task = _tcpClient.ConnectAsync(ServiceUri, OnMessageReceived, OnDisconnect);
-            task.ContinueWith((t) => _connecting = false);
-            // TODO task ...
+            task.ContinueWith((t) => 
+                {
+                    _connecting = false;
+                    if (t.Exception != null)
+                    {
+                        state.Error = t.Exception;
+                        _faulted = true;
+                    }
+                    callback.OnOpenCompleted(state);
+                });
         }
 
         /// <inheritdoc/>

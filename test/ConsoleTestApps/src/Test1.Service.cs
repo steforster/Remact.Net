@@ -20,7 +20,7 @@ namespace Test1.Service
 
             RemactDesktopApp.ApplicationStart(args, new RaLog.PluginFile());
             RemactDesktopApp.ApplicationExit += ApplicationExitHandler;
-            RemactConfigDefault.Instance = new Remact.Net.Json.Msgpack.Alchemy.JsonProtocolConfig();
+            RemactConfigDefault.Instance = new Remact.Net.Plugin.Json.Msgpack.Alchemy.JsonProtocolConfig();
             RemactCatalogClient.IsDisabled = false; // Test1.Client does not use Remact.Catalog.exe, but we publish this service to the catalog anyway.
 
             int tcpPort; // the second commandline argument
