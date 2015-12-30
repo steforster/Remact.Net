@@ -166,11 +166,11 @@ namespace Remact.Net
 
         /// <summary>
         /// Newtonsoft.Json needs a private or public default constructor.
-        /// MsgPack needs a public default constructor.
+        /// MsgPack an Bms need a public default constructor.
         /// </summary>
         public ActorInfo()
         {
-        }// CTOR3 for Json deserialization
+        }// CTOR3 for Json or BMS1 deserialization
 
         /// <summary>
         /// Check if two communication partner objects represent the same partner

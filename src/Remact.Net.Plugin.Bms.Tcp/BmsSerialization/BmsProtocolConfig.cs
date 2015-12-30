@@ -19,6 +19,16 @@ namespace Remact.Net.Plugin.Bms.Tcp
         #region == Instance and plugin ==
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="Remact.Net.Plugin.Bms.Tcp.BmsProtocolConfig"/> class.
+        /// </summary>
+        public BmsProtocolConfig()
+        {
+            AddKnownMessageType(typeof(ActorInfo), ActorInfoExtension.ReadFromBms1Stream, ActorInfoExtension.WriteToBms1Stream);
+            AddKnownMessageType(typeof(ReadyMessage), ReadyMessageExtension.ReadFromBms1Stream, ReadyMessageExtension.WriteToBms1Stream);
+            AddKnownMessageType(typeof(ErrorMessage), ErrorMessageExtension.ReadFromBms1Stream, ErrorMessageExtension.WriteToBms1Stream);
+        }
+
+        /// <summary>
         /// Library users may plug in their own implementation of IRemactDefault to RemactDefault.Instance.
         /// </summary>
         public static new BmsProtocolConfig Instance
@@ -91,7 +101,7 @@ namespace Remact.Net.Plugin.Bms.Tcp
 
         private Dictionary<string, Func<IBms1Reader, object>> _deserializerMap = new Dictionary<string, Func<IBms1Reader, object>>();
         
-        private Dictionary<Type, Action<IBms1Writer>> _serializerMap = new Dictionary<Type, Action<IBms1Writer>>();
+        private Dictionary<Type, Action<object, IBms1Writer>> _serializerMap = new Dictionary<Type, Action<object, IBms1Writer>>();
 
         /// <summary>
         /// Returns a deserializer method for a base object type.
@@ -109,9 +119,9 @@ namespace Remact.Net.Plugin.Bms.Tcp
         /// <summary>
         /// Returns a serializer method for a base object type.
         /// </summary>
-        public Action<IBms1Writer> FindSerializerByObjectType(Type objectType, out string objectTypeName)
+        public Action<object, IBms1Writer> FindSerializerByObjectType(Type objectType, out string objectTypeName)
         {
-            Action<IBms1Writer> serializer;
+            Action<object, IBms1Writer> serializer;
             if (_serializerMap.TryGetValue(objectType, out serializer))
             {
                 objectTypeName = objectType.FullName;
@@ -133,26 +143,29 @@ namespace Remact.Net.Plugin.Bms.Tcp
         }
 
         /// <summary>
-        /// Adds a (static) deserializer method for a base object type.
+        /// Adds serializer methods for a BMS payload.
         /// </summary>
-        public void AddKnownMessageType<T>(Func<IBms1Reader, T> deserializer, Action<IBms1Writer> serializer) where T : class
+        public void AddKnownMessageType<T>(Func<IBms1Reader, T> readFunction, Action<object, IBms1Writer> writeFunction) where T : class
         {
-            lock (_deserializerMap)
-            {
-                _deserializerMap.Add(typeof(T).FullName, deserializer);
-                _serializerMap.Add(typeof(T), serializer);
-            }
+            AddKnownMessageType(typeof(T), readFunction, writeFunction);
         }
 
         /// <summary>
-        /// Adds a (static) deserializer method for a base object type.
+        /// Adds (static) serializer methods for a BMS payload.
         /// </summary>
-        public void AddKnownMessageType(Type messageType, Func<IBms1Reader, object> deserializer, Action<IBms1Writer> serializer)
+        public void AddKnownMessageType(Type messageType, Func<IBms1Reader, object> readFunction, Action<object, IBms1Writer> writeFunction)
         {
             lock (_deserializerMap)
             {
-                _deserializerMap.Add(messageType.FullName, deserializer);
-                _serializerMap.Add(messageType, serializer);
+                if (!_deserializerMap.ContainsKey(messageType.FullName))
+                {
+                    _deserializerMap.Add(messageType.FullName, readFunction);
+                }
+
+                if (!_serializerMap.ContainsKey(messageType))
+                {
+                    _serializerMap.Add(messageType, writeFunction);
+                }
             }
         }
 

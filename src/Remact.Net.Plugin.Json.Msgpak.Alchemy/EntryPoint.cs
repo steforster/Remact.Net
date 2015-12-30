@@ -19,7 +19,9 @@ namespace Remact.Net.Plugin.Json.Msgpack.Alchemy
             Remact.Net.RemactConfigDefault.Instance = new JsonProtocolConfig();
         }
 
-
+        /// <summary>
+        /// Releases all resource used by the <see cref="Remact.Net.Plugin.Json.Msgpack.Alchemy.EntryPoint"/> object.
+        /// </summary>
         public void Dispose()
         {
         }

@@ -48,6 +48,9 @@
     <Compile Include="BmsSerialization\TcpPortManager.cs" />
     <Compile Include="EntryPoint.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Contracts\ActorInfoExtension.cs" />
+    <Compile Include="Contracts\ErrorMessageExtension.cs" />
+    <Compile Include="Contracts\ReadyMessageExtension.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
@@ -70,5 +73,8 @@
       <Project>{9A55AA58-1FFD-48C8-820A-675432755952}</Project>
       <Name>Remact.Net</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Contracts\" />
   </ItemGroup>
 </Project>

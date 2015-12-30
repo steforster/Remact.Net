@@ -16,15 +16,14 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>DEBUG;TRACE;BMS1</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>TRACE;BMS1</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -57,12 +56,14 @@
     <Compile Include="..\..\..\src\Remact.Net\Properties\AssemblyInfoCommon.cs">
       <Link>Properties\AssemblyInfoCommon.cs</Link>
     </Compile>
-    <Compile Include="ActorDemo.cs" />
     <Compile Include="DelayActor.cs" />
     <Compile Include="Log4NetTest.cs" />
     <Compile Include="ServiceStructureTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Helper.cs" />
+    <Compile Include="Contracts\JsonMessages.cs" />
+    <Compile Include="Contracts\BmsMessages.cs" />
+    <Compile Include="ActorDemoTest.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -76,5 +77,16 @@
       <Project>{9A55AA58-1FFD-48C8-820A-675432755952}</Project>
       <Name>Remact.Net</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\..\..\Remact.Net.Bms1Serializer\src\Remact.Net.Bms1Serializer\Remact.Net.Bms1Serializer.csproj">
+      <Project>{658FF815-D635-497E-BA72-F6A9D22692CE}</Project>
+      <Name>Remact.Net.Bms1Serializer</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\src\Remact.Net.Plugin.Bms.Tcp\Remact.Net.Plugin.Bms.Tcp.csproj">
+      <Project>{71A13208-AA07-43B2-A952-FDE353EBC123}</Project>
+      <Name>Remact.Net.Plugin.Bms.Tcp</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Contracts\" />
   </ItemGroup>
 </Project>

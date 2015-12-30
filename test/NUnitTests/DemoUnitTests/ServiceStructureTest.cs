@@ -19,8 +19,20 @@ namespace DemoUnitTest
         [TestFixtureSetUp] // run once when creating this class.
         public static void ClassInitialize()
         {
+            RaLog.PluginConsole.OutputWriter = Console.Out; // Mono
             RaLog.UsePlugin( new RaLog.PluginConsole() );
+
+            #if (BMS1)
             Helper.LoadPluginDll(RemactConfigDefault.DefaultProtocolPluginName);
+            var conf = Remact.Net.Plugin.Bms.Tcp.BmsProtocolConfig.Instance;
+            conf.AddKnownMessageType(Request.ReadFromBms1Stream, Request.WriteToBms1Stream);
+            conf.AddKnownMessageType(RequestA1.ReadFromBms1Stream, RequestA1.WriteToBms1Stream);
+            conf.AddKnownMessageType(RequestA2.ReadFromBms1Stream, RequestA2.WriteToBms1Stream);
+            conf.AddKnownMessageType(Response.ReadFromBms1Stream, Response.WriteToBms1Stream);
+            conf.AddKnownMessageType(ResponseA1.ReadFromBms1Stream, ResponseA1.WriteToBms1Stream);
+            conf.AddKnownMessageType(ResponseA2.ReadFromBms1Stream, ResponseA2.WriteToBms1Stream);
+            #endif
+
             RemactCatalogClient.IsDisabled = true;
         }
 
@@ -50,7 +62,7 @@ namespace DemoUnitTest
                 int clientCount = 10;
                 var output = new RemactPortProxy[clientCount];
                 var connnectOp = new Task<bool>[clientCount];
-                var sendOp = new Task<RemactMessage<DelayActor.Response>>[clientCount];
+                var sendOp = new Task<RemactMessage<Response>>[clientCount];
 
                 for (int i = 0; i < clientCount; i++)
                 {
@@ -69,8 +81,8 @@ namespace DemoUnitTest
                 for (int i = 0; i < clientCount; i++)
                 {
                     Assert.IsTrue(output[i].IsOutputConnected, "output " + i + " not connected");
-                    // we will convert and accept response payloads of type <DelayActor.Response> only. Other types will throw an exception.
-                    sendOp[i] = output[i].SendReceiveAsync<DelayActor.Response>(null, new DelayActor.Request() { Text = ((char)('A' + i)).ToString() });
+                    // we will convert and accept response payloads of type <Response> only. Other types will throw an exception.
+                    sendOp[i] = output[i].SendReceiveAsync<Response>(null, new Request() { Text = ((char)('A' + i)).ToString() });
                 }
 
                 // normal delay for 10 requests is 10 x 10ms as they are handled synchronous on server side
@@ -84,7 +96,7 @@ namespace DemoUnitTest
                 Assert.AreEqual(1, m_foreignActor.MaxParallelCount, "some operations run in parallel");
                 for (int i = 0; i < clientCount; i++)
                 {
-                    Assert.IsInstanceOf<DelayActor.Response>(sendOp[i].Result.Payload, "wrong response type received");
+                    Assert.IsInstanceOf<Response>(sendOp[i].Result.Payload, "wrong response type received");
                 }
                 RemactPort.DisconnectAll(); // This sends a disconnect message from all clients to the service and closes all client afterwards.
                 Helper.AssertRunningOnClientThread();
@@ -106,7 +118,7 @@ namespace DemoUnitTest
                 int clientCount = 10;
                 var output = new RemactPortProxy[clientCount];
                 var connnectOp = new Task<bool>[clientCount];
-                var sendOp = new Task<RemactMessage<DelayActor.Response>>[clientCount];
+                var sendOp = new Task<RemactMessage<Response>>[clientCount];
 
                 for (int i = 0; i < clientCount; i++)
                 {
@@ -126,7 +138,7 @@ namespace DemoUnitTest
                 {
                     Assert.IsTrue(output[i].IsOutputConnected, "output " + i + " not connected");
                     // we will convert and accept response payloads of type <DelayActor.Response> only. Other types will throw an exception.
-                    sendOp[i] = output[i].SendReceiveAsync<DelayActor.Response>(null, new DelayActor.Request() { Text = ((char)('A' + i)).ToString() });
+                    sendOp[i] = output[i].SendReceiveAsync<Response>(null, new Request() { Text = ((char)('A' + i)).ToString() });
                 }
 
                 // normal delay for 10 requests is 1 x 100ms as they are handled async on server side
@@ -140,7 +152,7 @@ namespace DemoUnitTest
                 Assert.IsTrue(m_foreignActor.MaxParallelCount > 1, "no operations run in parallel");
                 for (int i = 0; i < clientCount; i++)
                 {
-                    Assert.IsInstanceOf<DelayActor.Response>(sendOp[i].Result.Payload, "wrong response type received");
+                    Assert.IsInstanceOf<Response>(sendOp[i].Result.Payload, "wrong response type received");
                 }
                 RemactPort.DisconnectAll(); // This sends a disconnect message from all clients to the service and closes all client afterwards.
                 Helper.AssertRunningOnClientThread();
@@ -162,7 +174,7 @@ namespace DemoUnitTest
                 int clientCount = 20;
                 var output = new RemactPortProxy[clientCount];
                 var connnectOp = new Task<bool>[clientCount];
-                var sendOp = new Task<RemactMessage<DelayActor.Response>>[clientCount];
+                var sendOp = new Task<RemactMessage<Response>>[clientCount];
 
                 // trace all message flow
                 m_foreignActor.InputAsync.TraceSend = true;
@@ -186,7 +198,7 @@ namespace DemoUnitTest
                 {
                     Assert.IsTrue(output[i].IsOutputConnected, "output " + i + " not connected");
                     // we will convert and accept response payloads of type <DelayActor.Response> only. Other types will throw an exception.
-                    sendOp[i] = output[i].SendReceiveAsync<DelayActor.Response>(null, new DelayActor.Request() { Text = ((char)('A' + i)).ToString() });
+                    sendOp[i] = output[i].SendReceiveAsync<Response>(null, new Request() { Text = ((char)('A' + i)).ToString() });
                 }
 
                 // normal delay for 10 requests is 1 x 100ms as they are handled async on server side
@@ -200,7 +212,7 @@ namespace DemoUnitTest
                 Assert.IsTrue(m_foreignActor.MaxParallelCount > 1, "no operations run in parallel");
                 for (int i = 0; i < clientCount; i++)
                 {
-                    Assert.IsInstanceOf<DelayActor.Response>(sendOp[i].Result.Payload, "wrong response type received");
+                    Assert.IsInstanceOf<Response>(sendOp[i].Result.Payload, "wrong response type received");
                 }
                 Helper.AssertRunningOnClientThread();
                 Helper.AssertTraceCount(0, 0);
@@ -221,7 +233,7 @@ namespace DemoUnitTest
                 int clientCount = 20;
                 var output = new RemactPortProxy[clientCount];
                 var connnectOp = new Task<bool>[clientCount];
-                var sendOp = new Task<RemactMessage<DelayActor.Response>>[clientCount];
+                var sendOp = new Task<RemactMessage<Response>>[clientCount];
 
                 // trace all message flow
                 m_foreignActor.InputAsync.TraceSend = true;
@@ -245,7 +257,7 @@ namespace DemoUnitTest
                 {
                     Assert.IsTrue(output[i].IsOutputConnected, "output " + i + " not connected");
                     // we will convert and accept response payloads of type <DelayActor.Response> only. Other types will throw an exception.
-                    sendOp[i] = output[i].SendReceiveAsync<DelayActor.Response>(null, new DelayActor.Request() { Text = ((char)('A' + i)).ToString() });
+                    sendOp[i] = output[i].SendReceiveAsync<Response>(null, new Request() { Text = ((char)('A' + i)).ToString() });
                 }
 
                 // normal delay for 20 requests is 20 x 10ms as they are handled synchronous on server side

@@ -128,6 +128,22 @@ namespace Remact.Net
                 }
             }
         }
+        
+        /// <summary>
+        /// Searches the InputDispatcher for the method name. Returns the expected payload type or null, when not found.
+        /// </summary>
+        /// <param name="destinationMethod">The name of the method to call.</param>
+        internal Type FindPayloadTypeByDestination(string destinationMethod)
+        {
+            RemactMethod method;
+            if (string.IsNullOrEmpty(destinationMethod)
+            || !_methods.TryGetValue(destinationMethod, out method))
+            {
+                return null; // destination not found
+            }
+
+            return method.PayloadType;
+        }
 
         private Type InnerType (Type type)
         {

@@ -529,6 +529,16 @@ namespace Remact.Net
         }
 
         /// <summary>
+        /// Searches the InputDispatcher for the method name. Returns the expected payload type or null, when not found.
+        /// </summary>
+        /// <param name="destinationMethod">The name of the method to call.</param>
+        public Type FindPayloadTypeByDestination(string destinationMethod)
+        {
+            if (m_Dispatcher == null) return null;
+            return m_Dispatcher.FindPayloadTypeByDestination(destinationMethod);
+        }
+
+        /// <summary>
         /// Trace switch: Traces all sent messages. Default = false;
         /// </summary>
         public bool TraceSend { get; set; }

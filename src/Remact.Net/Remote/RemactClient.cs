@@ -419,17 +419,17 @@ namespace Remact.Net.Remote
 
                             if (t.Result.Payload.IsServiceName && t.Result.Payload.IsOpen)
                             { // First message received from Service
-                            t.Result.Payload.Uri = PortProxy.Uri; // keep the Uri stored here (maybe IP address instead of hostname used)
-                            PortProxy.UseDataFrom(t.Result.Payload);
+                                t.Result.Payload.Uri = PortProxy.Uri; // keep the Uri stored here (maybe IP address instead of hostname used)
+                                PortProxy.UseDataFrom(t.Result.Payload);
                                 PortClient.ClientId = t.Result.Payload.ClientId; // defined by server
-                            t.Result.ClientId = t.Result.Payload.ClientId;
+                                t.Result.ClientId = t.Result.Payload.ClientId;
                                 if (PortProxy.TraceConnect) RaLog.Info(t.Result.CltRcvId, PortProxy.ToString("Connected  svc", 0), PortProxy.Logger);
 
                                 m_boConnecting = false;
                                 m_boFirstResponseReceived = true; // IsConnected --> true !
-                            RemactCatalogClient.Instance.AddClient(this);
+                                RemactCatalogClient.Instance.AddClient(this);
                                 EndOfConnectionTries(state.Tcs, null, null); // ok
-                        }
+                            }
                             else
                             {
                                 EndOfConnectionTries(state.Tcs, "unexpeced ClientConnectResponse.", new InvalidOperationException("unexpected message from service: " + t.Result.ToString()));

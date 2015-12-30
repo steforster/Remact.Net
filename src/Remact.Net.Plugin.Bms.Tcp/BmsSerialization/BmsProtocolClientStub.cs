@@ -9,8 +9,7 @@ using Remact.Net.TcpStream;
 namespace Remact.Net.Plugin.Bms.Tcp
 {
     /// <summary>
-    /// Implements the protocol level for a JSON-RPC server. See http://www.jsonrpc.org/specification.
-    /// Uses the MsgPack-cli serializer.
+    /// Implements the protocol level for a BMS server. See https://github.com/steforster/bms1-binary-message-stream-format.
     /// </summary>
     public class BmsProtocolClientStub : BmsProtocolDriver, IRemactProtocolDriverToClient
     {
@@ -78,13 +77,24 @@ namespace Remact.Net.Plugin.Bms.Tcp
             }
 
             var svcUser = new RemactServiceUser(_remactService.ServiceIdent);
+            svcUser.SetCallbackHandler(this);
             var handler = new MultithreadedServiceNet40(svcUser, _remactService);
             return handler;
         }
 
         protected override Func<IBms1Reader, object> FindDeserializerByDestination(string destinationMethod)
         {
-            // TODO search dispatcher, then BmsProtocolConfig.Instance.FindDeserializerByObjectType(objectType) 
+            if (destinationMethod.StartsWith(ActorInfo.MethodNamePrefix))
+            {
+                return ActorInfoExtension.ReadFromBms1Stream;
+            }
+
+            var type = _remactService.ServiceIdent.FindPayloadTypeByDestination(destinationMethod);
+            if (type != null)
+            {
+                return BmsProtocolConfig.Instance.FindDeserializerByObjectType(type.FullName);
+            }
+
             throw new NotImplementedException();
         }
 

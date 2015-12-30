@@ -23,7 +23,7 @@ namespace DemoUnitTest
     /// - unrequested notifications from services
     /// </summary>
     [TestFixture]
-    public class ActorDemo
+    public class ActorDemoTest
     {
         [TestFixtureSetUp] // run once when creating this class.
         public static void ClassInitialize()
@@ -152,12 +152,12 @@ namespace DemoUnitTest
             // Now we have an open connection and will try to send a message.
             // The partner actor has an interface for some request and response message types. 
             // See DelayActor.cs, #region Messages.
-            var request = new DelayActor.Request() { Text = "hello world!" };
+            var request = new Request() { Text = "hello world!" };
 
             // As response to our request, we get a RemactMessage. It contains the 'Payload' member, that is of type 'DelayActor.Response'.
             // In case, the service sends another message type (e.g. ErrorMessage), a RemactException is thrown.
-            var response = await m_output.SendReceiveAsync <DelayActor.Response>(null, request);
-            Assert.IsInstanceOf<DelayActor.Response>( response.Payload, "unexpected response type" );
+            var response = await m_output.SendReceiveAsync <Response>(null, request);
+            Assert.IsInstanceOf<Response>( response.Payload, "unexpected response type" );
 
             // When disconnecting the client, we send a last message to inform the service and close the client afterwards.
             m_output.Disconnect();
@@ -237,7 +237,7 @@ namespace DemoUnitTest
 
             // prepare the request payload
             m_pingPongRequestCount = 0;
-            var request = new DelayActor.Request() { Text = "Ping" };
+            var request = new Request() { Text = "Ping" };
 
             // Send a message containing the request payload.
             // When we send "Ping", the DelayActor will call back to our OnPingPongInput handler.
@@ -252,7 +252,7 @@ namespace DemoUnitTest
                 RaLog.Error( "PingPongTest received ErrorMessage", err.ToString() );
             }
 
-            DelayActor.Response rsp;
+            Response rsp;
             if( !msg.TryConvertPayload(out rsp) )
             {
                 Assert.Fail( "wrong response type received" );
@@ -278,14 +278,14 @@ namespace DemoUnitTest
         {
             // Our input is called on the dedicated ActionThread
             Helper.AssertRunningOnClientThread();
-            DelayActor.Request req;
+            Request req;
             if( !msg.TryConvertPayload(out req) )
             {
                 Assert.Fail( "wrong request type received" );
             }
             Assert.AreEqual( "PingPong", req.Text, "wrong request text received" );
             m_pingPongRequestCount++;
-            msg.SendResponse( new DelayActor.Response() { Text = "PingPongResponse" } );
+            msg.SendResponse( new Response() { Text = "PingPongResponse" } );
         }
         #pragma warning restore 1998
 
@@ -333,12 +333,12 @@ namespace DemoUnitTest
 
                 // We send a request (without waiting) and use dynamic dispatch for the asynchronous response.
                 m_pingPongRequestCount = 0;
-                output.SendReceiveAsync<object>(null, new DelayActor.Request(), 
+                output.SendReceiveAsync<object>(null, new Request(), 
                     (pld,msg) => 
                         OnResponse(pld as dynamic));
 
                 // While the last request is still on the way, we send the next request and await both responses
-                var id2 = await output.SendReceiveAsync<object>(null, new DelayActor.RequestA1());
+                var id2 = await output.SendReceiveAsync<object>(null, new RequestA1());
 
                 // We use dynamic dispatch for the asynchronous response.
                 OnResponse(id2.Payload as dynamic);
@@ -347,12 +347,12 @@ namespace DemoUnitTest
                 Assert.AreEqual(1, m_responseA1Count, "wrong m_responseA1Count");
 
                 // At last we send an A2 request, the A2 response has no handler here and falls back to the A1 handler (base class)
-                var id3 = await output.SendReceiveAsync<object>(null, new DelayActor.RequestA2());
+                var id3 = await output.SendReceiveAsync<object>(null, new RequestA2());
                 OnResponse(id3.Payload as dynamic);
 
                 Assert.AreEqual(1, m_responseCount, "wrong m_responseCount");
                 Assert.AreEqual(2, m_responseA1Count, "wrong m_responseA1Count");
-                Assert.IsInstanceOf<DelayActor.ResponseA2>(id3.Payload, "wrong response received");
+                Assert.IsInstanceOf<ResponseA2>(id3.Payload, "wrong response received");
 
                 // disconnect and last checks
                 output.Disconnect();
@@ -366,12 +366,12 @@ namespace DemoUnitTest
         int m_responseA1Count;
         int m_defaultResponseCount;
 
-        void OnResponse(DelayActor.Response rsp)
+        void OnResponse(Response rsp)
         {
             m_responseCount++;
         }
 
-        void OnResponse(DelayActor.ResponseA1 rsp)
+        void OnResponse(ResponseA1 rsp)
         {
             m_responseA1Count++;
         }

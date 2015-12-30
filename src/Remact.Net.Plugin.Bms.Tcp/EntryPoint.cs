@@ -19,7 +19,9 @@ namespace Remact.Net.Plugin.Bms.Tcp
             Remact.Net.RemactConfigDefault.Instance = new BmsProtocolConfig();
         }
 
-
+        /// <summary>
+        /// Releases all resource used by the <see cref="Remact.Net.Plugin.Bms.Tcp.EntryPoint"/> object.
+        /// </summary>
         public void Dispose()
         {
         }

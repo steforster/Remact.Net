@@ -6,13 +6,12 @@ using Remact.Net.Remote;
 using Remact.Net.Bms1Serializer;
 using Remact.Net.TcpStream;
 using System.IO;
+using System.Collections.Generic;
 
 namespace Remact.Net.Plugin.Bms.Tcp
 {
     /// <summary>
-    /// Implements the protocol level for a JSON-RPC client. See http://www.jsonrpc.org/specification.
-    /// Uses the MsgPack-cli serializer.
-    /// Is used on client as well as on service side.
+    /// Implements the protocol level for a BMS client and server. See https://github.com/steforster/bms1-binary-message-stream-format.
     /// </summary>
     public class BmsProtocolDriver : IDisposable
     {
@@ -46,16 +45,22 @@ namespace Remact.Net.Plugin.Bms.Tcp
         /// Send a message in BMS format.
         /// </summary>
         /// <param name="msg">The lower protocol message.</param>
-        /// <param name="channel">TCP channel to service or to client.</param>
+        /// <param name="servicePath">The addressed service.</param>
+        /// <param name="outputStream">The stream to write the message to.</param>
         protected void SendMessage(LowerProtocolMessage msg, string servicePath, Stream outputStream)
         {
             string knownBaseTypeName;
             var serializer = BmsProtocolConfig.Instance.FindSerializerByObjectType(msg.Payload.GetType(), out knownBaseTypeName);
-            _messageSerializer.WriteMessage(outputStream, (writer) => WriteAttributes(msg, servicePath, writer, serializer, knownBaseTypeName));
+            _messageSerializer.WriteMessage(outputStream, (writer) => WriteMsg(msg, servicePath, writer, serializer, knownBaseTypeName));
         }
 
-        private void WriteAttributes(LowerProtocolMessage msg, string servicePath, IBms1Writer writer, Action<IBms1Writer> writeDto, string knownBaseTypeName)
+        private void WriteMsg(LowerProtocolMessage msg, string servicePath, IBms1Writer writer, Action<object, IBms1Writer> writeDto, string knownBaseTypeName)
         {
+            if (writer.Internal.NameValueAttributes == null)
+            {
+                writer.Internal.NameValueAttributes = new List<string>();
+            }
+
             if (servicePath != null) // needed on first message to service
             {
                 writer.Internal.NameValueAttributes.Add("PV=1.0");
@@ -93,7 +98,7 @@ namespace Remact.Net.Plugin.Bms.Tcp
                 writer.Internal.ObjectType = knownBaseTypeName;
             }
 
-            writeDto(writer);
+            writeDto(msg.Payload, writer);
         }
 
         private void IncomingMessageNotDeserializable(int id, string errorDesc, Stream outputStream)
@@ -139,19 +144,25 @@ namespace Remact.Net.Plugin.Bms.Tcp
             try
             {
                 var attributes = _messageSerializer.ReadMessageStart(channel.InputStream);
-                if (attributes.KeyValueAttributes != null)
+                if (attributes.NameValueAttributes != null)
                 {
-                    foreach (var item in attributes.KeyValueAttributes)
+                    foreach (var item in attributes.NameValueAttributes)
                     {
-                        switch (item.Key)
+                        var i = item.IndexOf('=');
+                        if (i > 0)
                         {
-                            case "PV":  protocolVersion = item.Value; break; // needed on first message to service
-                            case "SID": servicePath = item.Value; break;     // needed on first message to service
-                            case "MT":  messageType = item.Value; break;     // needed on any message
-                            case "RID": requestId = item.Value; break;       // needed on requests and responses
-                            case "DM":  msg.DestinationMethod = item.Value; break; // optional, when no attributes.ObjectType or BlockTypeId is sent
-                            default: break;
-                        };
+                            var name = item.Substring(0, i);
+                            var value = item.Substring(i+1);
+                            switch (name)
+                            {
+                                case "PV":  protocolVersion = value; break; // needed on first message to service
+                                case "SID": servicePath = value; break;     // needed on first message to service
+                                case "MT":  messageType = value; break;     // needed on any message
+                                case "RID": requestId = value; break;       // needed on requests and responses
+                                case "DM":  msg.DestinationMethod = value; break; // optional, when no attributes.ObjectType or BlockTypeId is sent
+                                default: break;
+                            };
+                        }
                     }
                 }
 
