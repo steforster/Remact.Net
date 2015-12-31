@@ -107,7 +107,7 @@ namespace Remact.Net
             {
                 string s = String.Format(m_LogFormat, severity, DateTime.Now, group, text);
                 if (OutputWriter == null) System.Diagnostics.Trace.WriteLine(s);
-                else OutputWriter.WriteLine(s); // for MonoDevelop 2010-04
+                else OutputWriter.WriteLine(s);
             }
 
             //------------------------------------------------------------
@@ -117,9 +117,9 @@ namespace Remact.Net
 
             /// <summary>
             /// use null, Console.Out or Console.Error to specify where the log should go.
-            /// null: output to the developments system diagnostic console.
+            /// null: output to the developments system diagnostic output.
             /// </summary>
-            public static System.IO.TextWriter OutputWriter = null;
+            public static System.IO.TextWriter OutputWriter = Console.Out;
 
             ///--------------------------------------------------------------------------
             /// <summary>

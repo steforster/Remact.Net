@@ -19,7 +19,6 @@ namespace DemoUnitTest
         [TestFixtureSetUp] // run once when creating this class.
         public static void ClassInitialize()
         {
-            RaLog.PluginConsole.OutputWriter = Console.Out; // Mono
             RaLog.UsePlugin( new RaLog.PluginConsole() );
 
             #if (BMS1)
