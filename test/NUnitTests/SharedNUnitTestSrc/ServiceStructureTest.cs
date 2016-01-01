@@ -11,7 +11,7 @@ using Nito.Async;
 using Remact.Net;
 using Remact.Net.Remote;
 
-namespace DemoUnitTest
+namespace RemactNUnitTest
 {
     [TestFixture]
     public class ServiceStructureTest
@@ -21,7 +21,7 @@ namespace DemoUnitTest
         {
             RaLog.UsePlugin( new RaLog.PluginConsole() );
 
-            #if (BMS1)
+            #if (BMS)
             Helper.LoadPluginDll(RemactConfigDefault.DefaultProtocolPluginName);
             var conf = Remact.Net.Plugin.Bms.Tcp.BmsProtocolConfig.Instance;
             conf.AddKnownMessageType(Request.ReadFromBms1Stream, Request.WriteToBms1Stream);
@@ -30,6 +30,10 @@ namespace DemoUnitTest
             conf.AddKnownMessageType(Response.ReadFromBms1Stream, Response.WriteToBms1Stream);
             conf.AddKnownMessageType(ResponseA1.ReadFromBms1Stream, ResponseA1.WriteToBms1Stream);
             conf.AddKnownMessageType(ResponseA2.ReadFromBms1Stream, ResponseA2.WriteToBms1Stream);
+            #endif
+
+            #if (JSON)
+            Helper.LoadPluginDll(RemactConfigDefault.JsonProtocolPluginName);
             #endif
 
             RemactCatalogClient.IsDisabled = true;

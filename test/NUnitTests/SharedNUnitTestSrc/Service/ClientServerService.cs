@@ -5,8 +5,9 @@ using NUnit.Framework;
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using Remact.Net;
 
-namespace Remact.Net.UnitTests.CommunicationModel
+namespace RemactNUnitTest
 {
     // This is the communication contract for client-server tests.
     public interface IClientServerReceiver

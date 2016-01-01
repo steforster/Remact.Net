@@ -10,7 +10,7 @@ using System.Windows.Forms;
 using Nito.Async;
 using Remact.Net;
 
-namespace DemoUnitTest
+namespace RemactNUnitTest
 {
     public static class Helper
     {

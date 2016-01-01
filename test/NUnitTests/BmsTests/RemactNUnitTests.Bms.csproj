@@ -1,13 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{89BD8525-2245-44C2-AF7C-D8B79F931C47}</ProjectGuid>
+    <ProjectGuid>{FCE6F7F9-90A2-4A1D-AB13-383D2939EBF5}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>DemoUnitTest</RootNamespace>
-    <AssemblyName>Remact.Net.DemoUnitTest</AssemblyName>
+    <RootNamespace>RemactNUnitTests</RootNamespace>
+    <AssemblyName>RemactNUnitTests.Bms</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -16,25 +16,27 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE;BMS1</DefineConstants>
+    <DefineConstants>DEBUG;TRACE;BMS</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;BMS1</DefineConstants>
+    <DefineConstants>TRACE;BMS</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="Nito.Async">
-      <HintPath>..\..\..\lib\Nito.Async\Nito.Async.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
-    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
     <Reference Include="WindowsBase" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="nunit.core">
       <HintPath>..\..\..\packages\NUnitTestAdapter.WithFramework.2.0.0\lib\nunit.core.dll</HintPath>
     </Reference>
@@ -50,43 +52,51 @@
     <Reference Include="NUnit.VisualStudio.TestAdapter">
       <HintPath>..\..\..\packages\NUnitTestAdapter.WithFramework.2.0.0\lib\NUnit.VisualStudio.TestAdapter.dll</HintPath>
     </Reference>
-    <Reference Include="System.Windows.Forms" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="..\..\..\src\Remact.Net\Properties\AssemblyInfoCommon.cs">
-      <Link>Properties\AssemblyInfoCommon.cs</Link>
-    </Compile>
-    <Compile Include="DelayActor.cs" />
-    <Compile Include="Log4NetTest.cs" />
-    <Compile Include="ServiceStructureTest.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Helper.cs" />
-    <Compile Include="Contracts\JsonMessages.cs" />
-    <Compile Include="Contracts\BmsMessages.cs" />
-    <Compile Include="ActorDemoTest.cs" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <ItemGroup>
-    <None Include="packages.config" />
+    <Reference Include="Nito.Async">
+      <HintPath>..\..\..\lib\Nito.Async\Nito.Async.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
+  <Import Project="..\SharedNUnitTestSrc\SharedNUnitTestSrc.projitems" Label="Shared" Condition="Exists('..\SharedNUnitTestSrc\SharedNUnitTestSrc.projitems')" />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <ProjectExtensions>
+    <MonoDevelop>
+      <Properties>
+        <Deployment.LinuxDeployData generatePcFile="False" />
+      </Properties>
+    </MonoDevelop>
+  </ProjectExtensions>
   <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Alchemy-Websockets\src\Alchemy\Alchemy.csproj">
+      <Project>{45486CDE-86A3-4769-952F-E0821BF79493}</Project>
+      <Name>Alchemy</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\src\Remact.Net.Plugin.Json.Msgpak.Alchemy\Remact.Net.Plugin.Json.Msgpak.Alchemy.csproj">
+      <Project>{C2B408A5-BF3D-4E43-80E6-642605388CA9}</Project>
+      <Name>Remact.Net.Plugin.Json.Msgpak.Alchemy</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\..\src\Remact.Net\Remact.Net.csproj">
       <Project>{9A55AA58-1FFD-48C8-820A-675432755952}</Project>
       <Name>Remact.Net</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\..\Remact.Net.Bms1Serializer\src\Remact.Net.Bms1Serializer\Remact.Net.Bms1Serializer.csproj">
-      <Project>{658FF815-D635-497E-BA72-F6A9D22692CE}</Project>
-      <Name>Remact.Net.Bms1Serializer</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\src\Remact.Net.Plugin.Bms.Tcp\Remact.Net.Plugin.Bms.Tcp.csproj">
       <Project>{71A13208-AA07-43B2-A952-FDE353EBC123}</Project>
       <Name>Remact.Net.Plugin.Bms.Tcp</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\..\..\Remact.Net.Bms1Serializer\src\Remact.Net.Bms1Serializer\Remact.Net.Bms1Serializer.csproj">
+      <Project>{658FF815-D635-497E-BA72-F6A9D22692CE}</Project>
+      <Name>Remact.Net.Bms1Serializer</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Contracts\" />
+    <Compile Include="..\..\..\src\Remact.Net\Properties\AssemblyInfoCommon.cs">
+      <Link>AssemblyInfoCommon.cs</Link>
+    </Compile>
+    <Compile Include="AssemblyInfo.cs" />
   </ItemGroup>
 </Project>

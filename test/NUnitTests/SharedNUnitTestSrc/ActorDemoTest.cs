@@ -7,7 +7,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using Remact.Net;
 
-namespace DemoUnitTest
+namespace RemactNUnitTest
 {
     /// <summary>
     /// UnitTest.ActorDemo is intended as a first introduction to Remact.Net.

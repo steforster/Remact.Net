@@ -4,8 +4,8 @@
 using NUnit.Framework;
 using System;
 using System.Threading.Tasks;
+using Remact.Net;
 using Remact.Net.Plugin.Json.Msgpack.Alchemy;
-using DemoUnitTest;
 
 // Communication model tests
 // Client classes:         Service classes:
@@ -15,7 +15,7 @@ using DemoUnitTest;
 // ServerClient            ServerClientService
 // PublishSubscribe        PublishSubscribeService
 
-namespace Remact.Net.UnitTests.CommunicationModel
+namespace RemactNUnitTest
 {
     [TestFixture]
     public class ClientServer

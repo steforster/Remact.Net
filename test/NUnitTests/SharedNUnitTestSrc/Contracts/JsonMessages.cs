@@ -1,9 +1,9 @@
 ﻿
 // Copyright (c) https://github.com/steforster/Remact.Net
 
-namespace DemoUnitTest
+namespace RemactNUnitTest
 {
-#if (!BMS1)
+#if (JSON)
 
     public class Request
     {

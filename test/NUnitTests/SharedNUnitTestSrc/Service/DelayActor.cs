@@ -10,7 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Remact.Net;
 
-namespace DemoUnitTest
+namespace RemactNUnitTest
 {
     public class DelayActor
     {
