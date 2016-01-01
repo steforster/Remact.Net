@@ -44,6 +44,7 @@ namespace DemoUnitTest
         [TearDown] // run after each TestMethod (successful or failed).
         public void TestCleanup()
         {
+            m_foreignActor.Close();
             RemactPort.DisconnectAll();
         }
 
@@ -101,7 +102,6 @@ namespace DemoUnitTest
                 Helper.AssertRunningOnClientThread();
                 Helper.AssertTraceCount(0, 0);
             });
-            m_foreignActor.Close();
         }
 
 
@@ -157,7 +157,6 @@ namespace DemoUnitTest
                 Helper.AssertRunningOnClientThread();
                 Helper.AssertTraceCount(0, 0);
             });
-            m_foreignActor.Close();
         }
 
 
@@ -216,7 +215,6 @@ namespace DemoUnitTest
                 Helper.AssertRunningOnClientThread();
                 Helper.AssertTraceCount(0, 0);
             });
-            m_foreignActor.Close();
         }
 
 
@@ -274,7 +272,6 @@ namespace DemoUnitTest
                 Helper.AssertRunningOnClientThread();
                 Helper.AssertTraceCount(0, 0);
             });
-            m_foreignActor.Close();
         }
     }
 }

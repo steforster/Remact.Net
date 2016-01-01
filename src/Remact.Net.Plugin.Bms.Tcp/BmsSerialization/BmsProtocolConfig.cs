@@ -67,6 +67,15 @@ namespace Remact.Net.Plugin.Bms.Tcp
                 portManager.TcpListener = new TcpStreamService(uri.Port, (channel)=>OnClientAccepted(portManager, channel));
             }
 
+            if (portManager.TcpListener.ListeningEndPoint == null)
+            {
+                throw new ObjectDisposedException("TcpStreamService");
+            }
+            if (portManager.TcpListener.LatestException != null)
+            {
+                throw portManager.TcpListener.LatestException;
+            }
+
             portManager.RegisterService(uri.AbsolutePath, service);
             return portManager; // will be called, when this RemactPortService is disconnected.
         }

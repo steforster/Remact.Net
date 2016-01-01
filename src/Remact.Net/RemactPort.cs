@@ -596,16 +596,13 @@ namespace Remact.Net
 
 
         /// <summary>
-        /// Gets a completed task having the Result true. 
+        /// Gets a completed task having the Result true or false. 
         /// </summary>
-        internal static Task<bool> TrueTask
+        internal static Task<bool> BoolTask (bool state)
         {
-            get
-            {
-                var tcs = new TaskCompletionSource<bool>();
-                tcs.SetResult(true);
-                return tcs.Task;
-            }
+            var tcs = new TaskCompletionSource<bool>();
+            tcs.SetResult(state);
+            return tcs.Task;
         }
 
 

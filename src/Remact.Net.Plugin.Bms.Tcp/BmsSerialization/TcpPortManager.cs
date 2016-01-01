@@ -106,6 +106,7 @@ namespace Remact.Net.Plugin.Bms.Tcp
                 if (_serviceMap.Count == 0 && _tcpListener != null)
                 {
                     _tcpListener.Dispose();
+                    _tcpListener = null;
                 }
             }
         }

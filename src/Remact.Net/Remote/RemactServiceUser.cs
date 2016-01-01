@@ -174,7 +174,7 @@ namespace Remact.Net.Remote
             try
             {
                 Disconnect();
-                //_protocolCallback.Dispose(); TODO
+                _protocolCallback.OnServiceDisconnect();
                 _protocolCallback = null;
             }
             catch (Exception ex)
@@ -207,7 +207,7 @@ namespace Remact.Net.Remote
         /// <returns>true</returns>
         Task<bool> IRemotePort.ConnectAsync()
         {
-            return RemactPort.TrueTask;
+            return RemactPort.BoolTask(true);
         }
 
         /// <summary>

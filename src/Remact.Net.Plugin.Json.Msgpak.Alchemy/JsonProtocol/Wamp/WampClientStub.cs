@@ -36,7 +36,7 @@ namespace Remact.Net.Plugin.Json.Msgpack.Alchemy
         }
 
 
-        #region IRemactProtocolDriverCallbacks implementation
+        #region IRemactProtocolDriverToClient implementation
 
         /// <inheritdoc/>
         public Uri ClientUri { get { return new Uri("ws://"+_wsChannel.ClientAddress.ToString()); } }

@@ -149,6 +149,6 @@ namespace Remact.Net.Remote
         void       IRemactProtocolDriverToService.OpenAsync(OpenAsyncState state, IRemactProtocolDriverToClient callback) { }
         Uri        IRemactProtocolDriverToService.ServiceUri { get { return null; } }
         PortState  IRemactProtocolDriverToService.PortState { get { return PortState.Ok; } }
-        void       IRemactProtocolDriverToService.Dispose() { }
+        void       IDisposable.Dispose() { }
     }
 }

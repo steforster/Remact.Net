@@ -30,7 +30,7 @@ namespace Remact.Net.Plugin.Bms.Tcp
         }
 
 
-        #region IRemactProtocolDriverCallbacks implementation
+        #region IRemactProtocolDriverToClient implementation
 
         /// <inheritdoc/>
         public Uri ClientUri { get { return new Uri("net.tcp://" + _tcpChannel.ClientSocket.RemoteEndPoint.ToString()); } }

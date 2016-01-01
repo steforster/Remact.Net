@@ -10,7 +10,7 @@ namespace Remact.Net.Remote
     /// Outgoing interface for protocol level clients (e.g. JsonRpcMsgPackClient) called by RemactClient.
     /// and also incoming interface for services (e.g. MultithreadedServiceNet40) called by lower level client stub.
     /// </summary>
-    public interface IRemactProtocolDriverToService
+    public interface IRemactProtocolDriverToService : IDisposable
     {
         /// <summary>
         /// Gets the endpoint uri of the service
@@ -36,11 +36,6 @@ namespace Remact.Net.Remote
         /// The Payload is converted later on to the request type of the called method.</param>
         /// </summary>
         void MessageToService(LowerProtocolMessage msg);
-
-        /// <summary>
-        /// Closes connection and frees resources.
-        /// </summary>
-        void Dispose();
     }
 
     /// <summary>
@@ -70,13 +65,13 @@ namespace Remact.Net.Remote
         void OnMessageToClient(LowerProtocolMessage msg);
 
         /// <summary>
-        /// Occurs when the service disconnects from client.
+        /// Occurs when the service disconnects from client. Closes and Disposes the socket.
         /// </summary>
         void OnServiceDisconnect();
     }
 
     /// <summary>
-    /// Asynchronous state is passed ny the protocol driver from method OpenAsync to OnOpenCompleted.
+    /// Asynchronous state is passed by the protocol driver from method OpenAsync to OnOpenCompleted.
     /// </summary>
     public class OpenAsyncState
     {

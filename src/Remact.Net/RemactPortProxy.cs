@@ -190,7 +190,7 @@ namespace Remact.Net
             if (m_LocalService == null || LinkedPort == null) throw new InvalidOperationException("RemactPortProxy is not linked");
             m_LocalService.TryAddClient(m_Client);
             m_isOpen = true;
-            return RemactPort.TrueTask;
+            return RemactPort.BoolTask(m_isOpen);
         }
 
         /// <summary>
