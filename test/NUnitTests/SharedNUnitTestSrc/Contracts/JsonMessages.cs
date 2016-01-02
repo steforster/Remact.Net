@@ -42,5 +42,25 @@ namespace RemactNUnitTest
     {
     }
 
+    
+    // This is a test message containing a polymorph member
+    public class TestMessage
+    {
+        public IInnerTestMessage Inner;
+    }
+
+    // This is the interface to the polymorph member
+    public interface IInnerTestMessage
+    {
+        int Id {get; set; }
+    }
+
+    // This is an implementation of the polymorph member
+    public class InnerTestMessage : IInnerTestMessage
+    {
+        public int Id {get; set; }
+        public string Name;
+    }
+
 #endif
 }

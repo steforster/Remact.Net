@@ -32,7 +32,20 @@ namespace RemactNUnitTest
             RaLog.UsePlugin( new RaLog.PluginConsole() );
 
             // For remote connections we need a plugin that references the needed third party assemblies and configures them.
+#if (BMS)
+            Helper.LoadPluginDll(RemactConfigDefault.DefaultProtocolPluginName);
+            var conf = Remact.Net.Plugin.Bms.Tcp.BmsProtocolConfig.Instance;
+            conf.AddKnownMessageType(Request.ReadFromBms1Stream, Request.WriteToBms1Stream);
+            conf.AddKnownMessageType(RequestA1.ReadFromBms1Stream, RequestA1.WriteToBms1Stream);
+            conf.AddKnownMessageType(RequestA2.ReadFromBms1Stream, RequestA2.WriteToBms1Stream);
+            conf.AddKnownMessageType(Response.ReadFromBms1Stream, Response.WriteToBms1Stream);
+            conf.AddKnownMessageType(ResponseA1.ReadFromBms1Stream, ResponseA1.WriteToBms1Stream);
+            conf.AddKnownMessageType(ResponseA2.ReadFromBms1Stream, ResponseA2.WriteToBms1Stream);
+#endif
+
+#if (JSON)
             Helper.LoadPluginDll(RemactConfigDefault.JsonProtocolPluginName);
+#endif
 
             // Do not use Remact.Catalog application for these unit tests.
             Remact.Net.Remote.RemactCatalogClient.IsDisabled = true;
@@ -49,6 +62,8 @@ namespace RemactNUnitTest
         {
             // This disconnects (closes) all clients and services that where created in the TestMethod.
             RemactPort.DisconnectAll();
+            // close the service in case the previous test failed.
+            m_foreignActor.Close();
         }
 
 
@@ -273,7 +288,7 @@ namespace RemactNUnitTest
 
 
         // This is the messagehandler for messages coming to our m_input
-        #pragma warning disable 1998 // Consider using the 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' to do CPU-bound work on a background thread.
+#pragma warning disable 1998 // Consider using the 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' to do CPU-bound work on a background thread.
         async Task OnPingPongInput(RemactMessage msg)
         {
             // Our input is called on the dedicated ActionThread
@@ -287,7 +302,7 @@ namespace RemactNUnitTest
             m_pingPongRequestCount++;
             msg.SendResponse( new Response() { Text = "PingPongResponse" } );
         }
-        #pragma warning restore 1998
+#pragma warning restore 1998
 
         class MyOutputContext
         {

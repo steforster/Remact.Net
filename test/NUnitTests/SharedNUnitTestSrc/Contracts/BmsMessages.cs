@@ -15,12 +15,13 @@ namespace RemactNUnitTest
             return GetType().Name + ": " + Text;
         }
 
+
         public static Request ReadFromBms1Stream(IBms1Reader reader)
         {
-            return reader.ReadBlock<Request>((dto) => new Request());
+            return reader.ReadBlock<Request>((dto) => dto);
         }
 
-        public static void WriteToBms1Stream(object msg, IBms1Writer writer)
+        public static void WriteToBms1Stream(object obj, IBms1Writer writer)
         {
             writer.WriteBlock(0, () => { });
         }
@@ -44,12 +45,13 @@ namespace RemactNUnitTest
             return GetType().Name + ": " + Text;
         }
 
+
         public static Response ReadFromBms1Stream(IBms1Reader reader)
         {
-            return reader.ReadBlock<Response>((dto) => new Response());
+            return reader.ReadBlock<Response>((dto) => dto);
         }
 
-        public static void WriteToBms1Stream(object msg, IBms1Writer writer)
+        public static void WriteToBms1Stream(object obj, IBms1Writer writer)
         {
             writer.WriteBlock(0, () => { });
         }
@@ -62,6 +64,76 @@ namespace RemactNUnitTest
     public class ResponseA2 : ResponseA1
     {
     }
+
+    // This is a test message containing a polymorph member
+    public class TestMessage
+    {
+        public IInnerTestMessage Inner;
+
+
+        public static TestMessage ReadFromBms1Stream(IBms1Reader reader)
+        {
+            return reader.ReadBlock<TestMessage>((dto) =>
+            {
+                if (reader.Internal.BlockTypeId == 1)
+                {
+                    dto.Inner = InnerTestMessage.ReadFromBms1Stream(reader);
+                }
+                return dto;
+            });
+        }
+
+        public static void WriteToBms1Stream(object obj, IBms1Writer writer)
+        {
+            writer.WriteBlock(0, () =>
+                {
+                    var dto = (TestMessage)obj;
+                    if (dto.Inner == null)
+                    {
+                        writer.WriteBlock(null);
+                    }
+                    else if (dto.Inner is InnerTestMessage)
+                    {
+                        InnerTestMessage.WriteToBms1Stream(dto.Inner, writer);
+                    }
+                });
+        }
+    }
+
+    // This is the interface to the polymorph member
+    public interface IInnerTestMessage
+    {
+        int Id { get; set; }
+    }
+
+    // This is an implementation of the polymorph member
+    public class InnerTestMessage : IInnerTestMessage
+    {
+        public int Id { get; set; }
+        public string Name;
+
+
+        public static InnerTestMessage ReadFromBms1Stream(IBms1Reader reader)
+        {
+            return reader.ReadBlock<InnerTestMessage>((dto) =>
+                {
+                    dto.Id = reader.ReadInt32();
+                    dto.Name = reader.ReadString();
+                    return dto;
+                });
+        }
+
+        public static void WriteToBms1Stream(object obj, IBms1Writer writer)
+        {
+            writer.WriteBlock(1, () => 
+                {
+                    var dto = (InnerTestMessage)obj;
+                    writer.WriteInt32(dto.Id);
+                    writer.WriteString(dto.Name);
+                });
+        }
+    }
+
 
 #endif
 }

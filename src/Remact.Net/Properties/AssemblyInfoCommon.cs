@@ -13,7 +13,7 @@ using System.Reflection;
     [assembly: AssemblyProduct       ("Remact.Net")]
 #endif
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyCopyright("© 2015 github.com/steforster/Remact.Net")]
+[assembly: AssemblyCopyright("© 2016 github.com/steforster/Remact.Net")]
 [assembly: AssemblyTrademark("Open source MIT license")]
 [assembly: AssemblyCulture("")]
 

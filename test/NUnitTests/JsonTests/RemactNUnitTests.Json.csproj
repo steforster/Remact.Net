@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{FCE6F7F9-90A2-4A1D-AB13-383D2939EBF5}</ProjectGuid>
+    <ProjectGuid>{0CBC3013-D032-46D5-9F58-3687143F18D9}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>RemactNUnitTests</RootNamespace>
@@ -76,6 +76,18 @@
       <Project>{45486CDE-86A3-4769-952F-E0821BF79493}</Project>
       <Name>Alchemy</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\..\..\msgpack-cli\src\MsgPack.Net40\MsgPack.Net40.csproj">
+      <Project>{d45d4cbe-afe7-4e2a-945d-47aed564c39d}</Project>
+      <Name>MsgPack.Net40</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\Newtonsoft.Json\Src\Newtonsoft.Json\Newtonsoft.Json.Net40.csproj">
+      <Project>{a9ae40ff-1a21-414a-9fe7-3be13644cc6d}</Project>
+      <Name>Newtonsoft.Json.Net40</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\src\Newtonsoft.Msgpack\Newtonsoft.Msgpack.csproj">
+      <Project>{39fe4157-2a85-4aee-8d4a-4b7a1a60b03c}</Project>
+      <Name>Newtonsoft.Msgpack</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\..\src\Remact.Net.Plugin.Json.Msgpak.Alchemy\Remact.Net.Plugin.Json.Msgpak.Alchemy.csproj">
       <Project>{C2B408A5-BF3D-4E43-80E6-642605388CA9}</Project>
       <Name>Remact.Net.Plugin.Json.Msgpak.Alchemy</Name>
@@ -83,14 +95,6 @@
     <ProjectReference Include="..\..\..\src\Remact.Net\Remact.Net.csproj">
       <Project>{9A55AA58-1FFD-48C8-820A-675432755952}</Project>
       <Name>Remact.Net</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\src\Remact.Net.Plugin.Bms.Tcp\Remact.Net.Plugin.Bms.Tcp.csproj">
-      <Project>{71A13208-AA07-43B2-A952-FDE353EBC123}</Project>
-      <Name>Remact.Net.Plugin.Bms.Tcp</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\..\Remact.Net.Bms1Serializer\src\Remact.Net.Bms1Serializer\Remact.Net.Bms1Serializer.csproj">
-      <Project>{658FF815-D635-497E-BA72-F6A9D22692CE}</Project>
-      <Name>Remact.Net.Bms1Serializer</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

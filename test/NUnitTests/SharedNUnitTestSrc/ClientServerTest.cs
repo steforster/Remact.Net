@@ -5,7 +5,6 @@ using NUnit.Framework;
 using System;
 using System.Threading.Tasks;
 using Remact.Net;
-using Remact.Net.Plugin.Json.Msgpack.Alchemy;
 
 // Communication model tests
 // Client classes:         Service classes:
@@ -21,6 +20,7 @@ namespace RemactNUnitTest
     public class ClientServer
     {
         private RemactPortProxy _proxy;
+        private ClientServerService _service;
 
         #region Test infrastructure
 
@@ -28,7 +28,36 @@ namespace RemactNUnitTest
         public void FixtureSetUp()
         {
             // For remote connections we need a plugin that references the needed third party assemblies and configures them.
+#if (BMS)
+            Helper.LoadPluginDll(RemactConfigDefault.DefaultProtocolPluginName);
+            var conf = Remact.Net.Plugin.Bms.Tcp.BmsProtocolConfig.Instance;
+            conf.AddKnownMessageType(TestMessage.ReadFromBms1Stream, TestMessage.WriteToBms1Stream);
+            conf.AddKnownMessageType(typeof(int),
+                (reader)=>
+                {
+                    return reader.ReadBlock<int>((i) => reader.ReadInt32());
+                },
+                
+                (obj, writer) =>
+                {
+                    writer.WriteBlock(() => writer.WriteInt32((int?)obj));
+                });
+
+            conf.AddKnownMessageType(typeof(string),
+                (reader) =>
+                {
+                    return reader.ReadBlock<object>((s) => reader.ReadString());
+                },
+
+                (obj, writer) =>
+                {
+                    writer.WriteBlock(() => writer.WriteString((string)obj));
+                });
+#endif
+
+#if (JSON)
             Helper.LoadPluginDll(RemactConfigDefault.JsonProtocolPluginName);
+#endif
         }
 
         [TestFixtureTearDown]  // run once after all tests of this class have been executed.
@@ -38,7 +67,7 @@ namespace RemactNUnitTest
             RemactPort.DisconnectAll();
 
             // This disposes all WebSocket threads, removes the test warning 'Attempted to access an unloaded AppDomain'.
-            Alchemy.WebSocketClient.Shutdown();
+            //Alchemy.WebSocketClient.Shutdown();
         }
 
         [SetUp] // run before each TestMethod.
@@ -49,6 +78,7 @@ namespace RemactNUnitTest
         [TearDown] // run after each TestMethod (successful or failed).
         public void TearDown()
         {
+            SetUpTestVariant(0);
         }
 
         string _testName;
@@ -63,57 +93,66 @@ namespace RemactNUnitTest
                 _proxy = null;
             }
 
+            if (_service != null)
+            {
+                _service.Port.Disconnect();
+                _service = null;
+            }
+
             if (variant == 1)
             {
                 _testName = TestContext.CurrentContext.Test.Name;
                 Console.WriteLine("start '" + _testName + "' variant 1: communicate locally in the same process");
-                JsonProtocolConfig.UseMsgPack = false;
-                var service = new ClientServerService(remote: false, multithreaded: true);
+                SetAlternateFormatter(false);
+                _service = new ClientServerService(remote: false, multithreaded: true);
                 _proxy = new RemactPortProxy("ClientServiceTestLocal", DefaultResponseHandler);
                 _proxy.IsMultithreaded = true;
-                _proxy.LinkToService(service.Port);
+                _proxy.LinkToService(_service.Port);
             }
             else if (variant == 2)
             {
                 Console.WriteLine("start '" + _testName + "' variant 2: communicate to a remote process");
-                JsonProtocolConfig.UseMsgPack = false;
-                var service = new ClientServerService(remote: true, multithreaded: true);
+                SetAlternateFormatter(false);
+                _service = new ClientServerService(remote: true, multithreaded: true);
                 _proxy = new RemactPortProxy("ClientServiceTestRemote", DefaultResponseHandler);
                 _proxy.IsMultithreaded = true;
-                _proxy.LinkOutputToRemoteService(service.RemoteUri);
+                _proxy.LinkOutputToRemoteService(_service.RemoteUri);
             }
             else if (variant == 3)
             {
                 Console.WriteLine("start '" + _testName + "' variant 3: communicate locally in the same process, use thread synchronization");
-                JsonProtocolConfig.UseMsgPack = false;
-                var service = new ClientServerService(remote: false, multithreaded: false);
+                SetAlternateFormatter(false);
+                _service = new ClientServerService(remote: false, multithreaded: false);
                 _proxy = new RemactPortProxy("ClientServiceTestLocalSync", DefaultResponseHandler);
-                _proxy.LinkToService(service.Port);
+                _proxy.LinkToService(_service.Port);
             }
             else if (variant == 4)
             {
                 Console.WriteLine("start '" + _testName + "' variant 4: communicate to a remote process, use thread synchronization");
-                JsonProtocolConfig.UseMsgPack = false;
-                var service = new ClientServerService(remote: true, multithreaded: false);
+                SetAlternateFormatter(false);
+                _service = new ClientServerService(remote: true, multithreaded: false);
                 _proxy = new RemactPortProxy("ClientServiceTestRemoteSync", DefaultResponseHandler);
-               _proxy.LinkOutputToRemoteService(service.RemoteUri);
+               _proxy.LinkOutputToRemoteService(_service.RemoteUri);
             }
             else if (variant == 5)
             {
+                if (!SetAlternateFormatter(true))
+                {
+                    return false; // test finished, no alternate formatter
+                }
                 Console.WriteLine("start '" + _testName + "' variant 5: communicate to a remote process, use MsgPack binary transport");
-                JsonProtocolConfig.UseMsgPack = true;
-                var service = new ClientServerService(remote: true, multithreaded: true);
+                _service = new ClientServerService(remote: true, multithreaded: true);
                 _proxy = new RemactPortProxy("ClientServiceTestRemoteMsgPack", DefaultResponseHandler);
                 _proxy.IsMultithreaded = true;
-                _proxy.LinkOutputToRemoteService(service.RemoteUri);
+                _proxy.LinkOutputToRemoteService(_service.RemoteUri);
             }
             else if (variant == 6)
             {
                 Console.WriteLine("start '" + _testName + "' variant 6: communicate to a remote process, use MsgPack binary transport and thread synchronization");
-                JsonProtocolConfig.UseMsgPack = true;
-                var service = new ClientServerService(remote: true, multithreaded: false);
+                SetAlternateFormatter(true);
+                _service = new ClientServerService(remote: true, multithreaded: false);
                 _proxy = new RemactPortProxy("ClientServiceTestRemoteMsgPackSync", DefaultResponseHandler);
-               _proxy.LinkOutputToRemoteService(service.RemoteUri);
+               _proxy.LinkOutputToRemoteService(_service.RemoteUri);
             }
             else
             {
@@ -123,11 +162,21 @@ namespace RemactNUnitTest
             return true;
         }
 
+        private bool SetAlternateFormatter(bool alternateFormatter)
+        {
+#if (BMS)
+            if (alternateFormatter) return false;
+#endif
+#if (JSON)
+            Remact.Net.Plugin.Json.Msgpack.Alchemy.JsonProtocolConfig.UseMsgPack = alternateFormatter;
+#endif
+            return true;
+        }
+
 
         protected Task DefaultResponseHandler(RemactMessage msg)
         {
-            throw new NotImplementedException();
-            //return null;
+            throw new NotImplementedException("unexpected response message type '" + msg.Payload.GetType().Name + "' received.");
         }
 
         #endregion

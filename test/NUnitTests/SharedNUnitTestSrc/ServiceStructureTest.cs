@@ -21,20 +21,20 @@ namespace RemactNUnitTest
         {
             RaLog.UsePlugin( new RaLog.PluginConsole() );
 
-            #if (BMS)
+#if (BMS)
             Helper.LoadPluginDll(RemactConfigDefault.DefaultProtocolPluginName);
             var conf = Remact.Net.Plugin.Bms.Tcp.BmsProtocolConfig.Instance;
             conf.AddKnownMessageType(Request.ReadFromBms1Stream, Request.WriteToBms1Stream);
-            conf.AddKnownMessageType(RequestA1.ReadFromBms1Stream, RequestA1.WriteToBms1Stream);
-            conf.AddKnownMessageType(RequestA2.ReadFromBms1Stream, RequestA2.WriteToBms1Stream);
+            //conf.AddKnownMessageType(RequestA1.ReadFromBms1Stream, RequestA1.WriteToBms1Stream);
+            //conf.AddKnownMessageType(RequestA2.ReadFromBms1Stream, RequestA2.WriteToBms1Stream);
             conf.AddKnownMessageType(Response.ReadFromBms1Stream, Response.WriteToBms1Stream);
-            conf.AddKnownMessageType(ResponseA1.ReadFromBms1Stream, ResponseA1.WriteToBms1Stream);
-            conf.AddKnownMessageType(ResponseA2.ReadFromBms1Stream, ResponseA2.WriteToBms1Stream);
-            #endif
+            //conf.AddKnownMessageType(ResponseA1.ReadFromBms1Stream, ResponseA1.WriteToBms1Stream);
+            //conf.AddKnownMessageType(ResponseA2.ReadFromBms1Stream, ResponseA2.WriteToBms1Stream);
+#endif
 
-            #if (JSON)
+#if (JSON)
             Helper.LoadPluginDll(RemactConfigDefault.JsonProtocolPluginName);
-            #endif
+#endif
 
             RemactCatalogClient.IsDisabled = true;
         }
@@ -48,8 +48,8 @@ namespace RemactNUnitTest
         [TearDown] // run after each TestMethod (successful or failed).
         public void TestCleanup()
         {
-            m_foreignActor.Close();
             RemactPort.DisconnectAll();
+            m_foreignActor.Close();
         }
 
         DelayActor m_foreignActor;

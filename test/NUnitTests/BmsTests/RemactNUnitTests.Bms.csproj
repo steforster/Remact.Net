@@ -72,25 +72,21 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\Alchemy-Websockets\src\Alchemy\Alchemy.csproj">
-      <Project>{45486CDE-86A3-4769-952F-E0821BF79493}</Project>
-      <Name>Alchemy</Name>
+    <ProjectReference Include="..\..\..\..\Remact.Net.Bms1Serializer\src\Remact.Net.Bms1Serializer\Remact.Net.Bms1Serializer.csproj">
+      <Project>{658ff815-d635-497e-ba72-f6a9d22692ce}</Project>
+      <Name>Remact.Net.Bms1Serializer</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\..\src\Remact.Net.Plugin.Json.Msgpak.Alchemy\Remact.Net.Plugin.Json.Msgpak.Alchemy.csproj">
-      <Project>{C2B408A5-BF3D-4E43-80E6-642605388CA9}</Project>
-      <Name>Remact.Net.Plugin.Json.Msgpak.Alchemy</Name>
+    <ProjectReference Include="..\..\..\..\Remact.Net.Bms1Serializer\src\Remact.Net.TcpStream\Remact.Net.TcpStream.csproj">
+      <Project>{2f6c2e7a-6372-4020-810d-a23f9d47e9ab}</Project>
+      <Name>Remact.Net.TcpStream</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\src\Remact.Net.Plugin.Bms.Tcp\Remact.Net.Plugin.Bms.Tcp.csproj">
+      <Project>{71a13208-aa07-43b2-a952-fde353ebc123}</Project>
+      <Name>Remact.Net.Plugin.Bms.Tcp</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\src\Remact.Net\Remact.Net.csproj">
       <Project>{9A55AA58-1FFD-48C8-820A-675432755952}</Project>
       <Name>Remact.Net</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\src\Remact.Net.Plugin.Bms.Tcp\Remact.Net.Plugin.Bms.Tcp.csproj">
-      <Project>{71A13208-AA07-43B2-A952-FDE353EBC123}</Project>
-      <Name>Remact.Net.Plugin.Bms.Tcp</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\..\Remact.Net.Bms1Serializer\src\Remact.Net.Bms1Serializer\Remact.Net.Bms1Serializer.csproj">
-      <Project>{658FF815-D635-497E-BA72-F6A9D22692CE}</Project>
-      <Name>Remact.Net.Bms1Serializer</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

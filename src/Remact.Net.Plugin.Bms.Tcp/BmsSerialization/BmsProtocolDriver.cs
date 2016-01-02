@@ -56,6 +56,11 @@ namespace Remact.Net.Plugin.Bms.Tcp
 
         private void WriteMsg(LowerProtocolMessage msg, string servicePath, IBms1Writer writer, Action<object, IBms1Writer> writeDto, string knownBaseTypeName)
         {
+            if (msg.Payload == null)
+            {
+                throw new ArgumentNullException("msg.Payload");
+            }
+
             if (writer.Internal.NameValueAttributes == null)
             {
                 writer.Internal.NameValueAttributes = new List<string>();
@@ -158,7 +163,7 @@ namespace Remact.Net.Plugin.Bms.Tcp
                                 case "PV":  protocolVersion = value; break; // needed on first message to service
                                 case "SID": servicePath = value; break;     // needed on first message to service
                                 case "MT":  messageType = value; break;     // needed on any message
-                                case "RID": requestId = value; break;       // needed on requests and responses
+                                case "RID": requestId = value; break;       // needed on requests and (error) responses
                                 case "DM":  msg.DestinationMethod = value; break; // optional, when no attributes.ObjectType or BlockTypeId is sent
                                 default: break;
                             };
@@ -183,6 +188,10 @@ namespace Remact.Net.Plugin.Bms.Tcp
                 else // E
                 {
                     msg.Type = RemactMessageType.Error;
+                    if (requestId != null)
+                    {
+                        int.TryParse(requestId, out msg.RequestId);
+                    }
                 }
 
                 if (_toClientInterface == null && _toServiceInterface == null)

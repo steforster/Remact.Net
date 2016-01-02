@@ -12,3 +12,12 @@ Before that, you have to
 	apt-get install monodevelop-nunit
 	see http://codenuggets.com/2012/03/26/nunit-for-monodevelop/
 	see http://www.monodevelop.com/download/linux/
+
+
+SharedNUnitTestSrc
+------------------
+This shared project is referenced by the 'RemactNUnitTest.Bms' and the 'RemactNUnitTest.Json' cs-projects.
+It allows to generate two assemblies using the same shared sourcecode with different conditional compiling symbols ('BMS' and 'JSON').
+See also:  
+	http://www.c-sharpcorner.com/UploadFile/7ca517/shared-project-an-impressive-features-of-visual-studio-201/
+	http://developer.xamarin.com/guides/cross-platform/application_fundamentals/shared_projects/
