@@ -59,7 +59,9 @@
     <Compile Include="..\src\Client\Properties\AssemblyInfo.cs">
       <Link>Properties\AssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="Test2Client.cs" />
+    <Compile Include="..\src\Client\Test2Client.cs">
+      <Link>Test2Client.cs</Link>
+    </Compile>
     <EmbeddedResource Include="..\src\Client\FrmClient.resx">
       <DependentUpon>FrmClient.cs</DependentUpon>
       <SubType>Designer</SubType>

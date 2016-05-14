@@ -17,10 +17,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ConsoleTestApps", "ConsoleTestApps", "{8A693CC3-DCAB-4ED4-8E29-E2CD781E6A8D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SpeedTestApp", "SpeedTestApp", "{47111966-694A-4D01-BCBA-A98276B5D440}"
-	ProjectSection(SolutionItems) = preProject
-		test\SpeedTestApp\Net\SpeedTest.Contracts.Net.csproj = test\SpeedTestApp\Net\SpeedTest.Contracts.Net.csproj
-		test\SpeedTestApp\Net\SpeedTest.Service.Net.csproj = test\SpeedTestApp\Net\SpeedTest.Service.Net.csproj
-	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Newtonsoft.Json.Net40", "..\Newtonsoft.Json\Src\Newtonsoft.Json\Newtonsoft.Json.Net40.csproj", "{A9AE40FF-1A21-414A-9FE7-3BE13644CC6D}"
 EndProject
@@ -66,6 +62,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test1.Service.Net", "test\ConsoleTestApps\Net\Test1.Service.Net.csproj", "{72A84AD5-213F-4DBD-8890-2B1B7CEEFC08}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpeedTest.Client.Net", "test\SpeedTestApp\Net\SpeedTest.Client.Net.csproj", "{A748B855-6AC6-4F89-BEBA-094E97AEB2C0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpeedTest.Contracts.Net", "test\SpeedTestApp\Net\SpeedTest.Contracts.Net.csproj", "{BE3C83E3-6A92-453D-BA90-00D8EF810286}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpeedTest.Service.Net", "test\SpeedTestApp\Net\SpeedTest.Service.Net.csproj", "{D8A24025-5596-4391-AF4C-676AA434CADE}"
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
@@ -154,6 +154,14 @@ Global
 		{A748B855-6AC6-4F89-BEBA-094E97AEB2C0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A748B855-6AC6-4F89-BEBA-094E97AEB2C0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A748B855-6AC6-4F89-BEBA-094E97AEB2C0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BE3C83E3-6A92-453D-BA90-00D8EF810286}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BE3C83E3-6A92-453D-BA90-00D8EF810286}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BE3C83E3-6A92-453D-BA90-00D8EF810286}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BE3C83E3-6A92-453D-BA90-00D8EF810286}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D8A24025-5596-4391-AF4C-676AA434CADE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D8A24025-5596-4391-AF4C-676AA434CADE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D8A24025-5596-4391-AF4C-676AA434CADE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D8A24025-5596-4391-AF4C-676AA434CADE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -183,5 +191,7 @@ Global
 		{13CB30C8-528D-4C71-A937-FCF1DBC5E762} = {8A693CC3-DCAB-4ED4-8E29-E2CD781E6A8D}
 		{72A84AD5-213F-4DBD-8890-2B1B7CEEFC08} = {8A693CC3-DCAB-4ED4-8E29-E2CD781E6A8D}
 		{A748B855-6AC6-4F89-BEBA-094E97AEB2C0} = {47111966-694A-4D01-BCBA-A98276B5D440}
+		{BE3C83E3-6A92-453D-BA90-00D8EF810286} = {47111966-694A-4D01-BCBA-A98276B5D440}
+		{D8A24025-5596-4391-AF4C-676AA434CADE} = {47111966-694A-4D01-BCBA-A98276B5D440}
 	EndGlobalSection
 EndGlobal
