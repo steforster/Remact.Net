@@ -23,11 +23,11 @@ In spite of all these features, Remact.Net is remarkably slim and easy to adapt 
 Currently I'm doing some mayor refactoring.  
 
 The next development steps are:
-* Integrate [AMQP 1.0](https://github.com/Azure/amqpnetlite) streaming
-* Refactor for async services. Use .Net 4.5 also for Mono.
+* Integrate [AMQP 1.0](https://github.com/Azure/amqpnetlite) transport
+* Refactor async services
 * Xamarin.Android test application
 * Additional integration tests for bidirectional communication
-* Do not use Type.AssemblyQualifiedTypeName for dispatching
+* Do not use Type.AssemblyQualifiedTypeName for dispatching in WAMP protocol
 * Cleanup TODO's
 
 
@@ -266,7 +266,7 @@ Remact uses the following layers when receiving a message from a remote actor:
 
 * Remact.Net.dll: The remote actors library
 * Remact.Net.CatalogApp.exe: A remact catalog application for desktop systems
-* Remact.NetDesktopAppHelper.dll: A helper library for desktop systems
+* Remact.Net.DesktopAppHelper.dll: A helper library for desktop systems
 * Remact.Net.Plugin.Json.Msgpack.Alchemy.dll: The plugin to exchange messages using Newtonsoft.Json.dll, Alchemy.dll and MsgPack.dll
 * Remact.Net.Plugin.Bms.Tcp.dll: The plugin to exchange messages using the Remact.Net.Bms1Serializer.dll and Remact.Net.TcpStream.dll
 * Newtonsoft.Json.Replacement.dll: A helper assembly in case you have Json-attributes in your code but no Newtonsoft.Json.dll
@@ -276,7 +276,7 @@ Remact uses the following layers when receiving a message from a remote actor:
 How to build and test Remact.Net
 --------------------------------
 
-Solutions are provided for Visual Studio 2015 and Monodevelop.   
+Solutions are provided for Visual Studio 2015 and MonoDevelop.   
 The solutions contain all plugins and all dependencies to third party library source code.  
 To build the plugins, you must clone dependent repositories. All repos must reside in one parent folder and have the original name.
 Use the following commandlines for cloning:  
@@ -294,20 +294,25 @@ To build **Remact.Net.Plugin.Bms.Tcp.dll** you need:
 
 	    $ git clone https://github.com/steforster/Remact.Net.Bms1Serializer.git
 
+To build **Remact.Net.Plugin.Amqp.Tcp.dll** you need:
+
+	    $ git clone https://github.com/Azure/amqpnetlite.git
+        Note: Currently (Mai 2016) you need to upgrade to VS2015 or modify some source files to make it compileable under MonoDevelop.
+
 In case you have not cloned some repos, you can unload not buildable projects from the solution.
 
-To manually test under Windows you may start "test\SpeedTestApp\Net\_startTest2.cmd",  
-under Ubuntu you start "test\SpeedTestApp\Net\_startTest2.sh".
-These scrips specify the plugin to use as an application argument.
+To manually test under Windows you may start "test/SpeedTestApp/Net/_startTest2.cmd",  
+in Linux you start "test/SpeedTestApp/Net/_startTest2.sh".
+These scrips specify the plugin to use. Modify the arguments for your purpose.
 
-NUnitTests.ActorDemoTest is intended as a introduction to Remact.Net.
-NUnitTests run in Visual Studio and Monodevelop. There is a set of tests for each plugin. 
+NUnitTests.ActorDemoTest is an introduction to Remact.Net.  
+NUnitTests run in Visual Studio and MonoDevelop. There is a set of tests for each plugin. 
 
 
 
 License
 -------
-Remact.Net is licensed under [MIT](http://www.opensource.org/licenses/mit-license.php).
+Remact.Net is licensed under [MIT](http://www.opensource.org/licenses/mit-license.php).  
 Copyright (c) 2014-2016, Stefan Forster.
 
 
