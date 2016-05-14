@@ -65,6 +65,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RemactNUnitTests.Json", "te
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "SharedNUnitTestSrc", "test\NUnitTests\SharedNUnitTestSrc\SharedNUnitTestSrc.shproj", "{DA742D0B-CD20-4F28-8E39-E84DD708CBA5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Amqp.Net", "..\amqpnetlite\src\Amqp.Net.csproj", "{92153715-1D99-43B1-B291-470CF91A156D}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		test\NUnitTests\SharedNUnitTestSrc\SharedNUnitTestSrc.projitems*{0cbc3013-d032-46d5-9f58-3687143f18d9}*SharedItemsImports = 4
@@ -156,6 +158,10 @@ Global
 		{0CBC3013-D032-46D5-9F58-3687143F18D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0CBC3013-D032-46D5-9F58-3687143F18D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0CBC3013-D032-46D5-9F58-3687143F18D9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{92153715-1D99-43B1-B291-470CF91A156D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{92153715-1D99-43B1-B291-470CF91A156D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{92153715-1D99-43B1-B291-470CF91A156D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{92153715-1D99-43B1-B291-470CF91A156D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -186,5 +192,6 @@ Global
 		{FCE6F7F9-90A2-4A1D-AB13-383D2939EBF5} = {F8A4213C-8F2E-48E4-BEA7-2BE57D1C7472}
 		{0CBC3013-D032-46D5-9F58-3687143F18D9} = {F8A4213C-8F2E-48E4-BEA7-2BE57D1C7472}
 		{DA742D0B-CD20-4F28-8E39-E84DD708CBA5} = {F8A4213C-8F2E-48E4-BEA7-2BE57D1C7472}
+		{92153715-1D99-43B1-B291-470CF91A156D} = {8461292F-1494-437E-B835-F85B36A23FBD}
 	EndGlobalSection
 EndGlobal

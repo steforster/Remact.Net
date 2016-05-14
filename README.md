@@ -23,13 +23,11 @@ In spite of all these features, Remact.Net is remarkably slim and easy to adapt 
 Currently I'm doing some mayor refactoring.  
 
 The next development steps are:
+* Integrate [AMQP 1.0](https://github.com/Azure/amqpnetlite) streaming
 * Refactor for async services. Use .Net 4.5 also for Mono.
-* Integrate [Bms1.TCP](https://github.com/steforster/Remact.Net.Bms1Serializer) streaming
-* Extract Remact.Msgpack to reduce dependencies and deployment size
 * Xamarin.Android test application
 * Additional integration tests for bidirectional communication
 * Do not use Type.AssemblyQualifiedTypeName for dispatching
-* Port more tests from AsyncWcfLib
 * Cleanup TODO's
 
 
@@ -43,7 +41,7 @@ The following goals have been reached:
 * Remote actors (message passing between hosts or processes)
 * WebSockets, Json and other open standards are used to link Remact actors
 * Supported protocols: WAMP or JSON-RPC. 
-* Supported serialization: Json or MsgPack (binary).
+* Supported serialization: Json (text), MsgPack (binary), BMS1 (binary).
 * Peer to peer communication using distributed actor catalogs avoid single point of failure
 * Fully support bidirectional models: client-server / server-client / publish-subscribe
 * Strongly typed interfaces
@@ -79,6 +77,9 @@ Dependencies and standards
 --------------------------
 Remact.Net is built on open standards and uses open source components.
 I would like to thank all who built these components for their contribution to the open source community.
+
+* [AMQP 1.0](http://www.amqp.org/), the ISO/IEC 19464 or [Oasis Standard](http://docs.oasis-open.org/amqp/core/v1.0/amqp-core-messaging-v1.0.html).
+  I use the [AmqNetLite](https://github.com/Azure/amqpnetlite) implementation
 
 * [WebSocket](http://tools.ietf.org/html/rfc6455), the IETF standard RFC6455
 
@@ -263,49 +264,50 @@ Remact uses the following layers when receiving a message from a remote actor:
 
 ###Assemblies
 
-* Remact.Net.dll: The remote actors library. It has dependencies to Alchemy and Newtonsoft.Json.
-* Remact.Catalog.exe: The remact catalog application for desktop systems.
-* Remact.DesktopApp.dll: A helper library for desktop systems.
+* Remact.Net.dll: The remote actors library
+* Remact.Net.CatalogApp.exe: A remact catalog application for desktop systems
+* Remact.NetDesktopAppHelper.dll: A helper library for desktop systems
+* Remact.Net.Plugin.Json.Msgpack.Alchemy.dll: The plugin to exchange messages using Newtonsoft.Json.dll, Alchemy.dll and MsgPack.dll
+* Remact.Net.Plugin.Bms.Tcp.dll: The plugin to exchange messages using the Remact.Net.Bms1Serializer.dll and Remact.Net.TcpStream.dll
+* Newtonsoft.Json.Replacement.dll: A helper assembly in case you have Json-attributes in your code but no Newtonsoft.Json.dll
 
 
 
 How to build and test Remact.Net
 --------------------------------
 
-Solutions are provided for several build targets.   
-The solutions contain the same Remact core project but differ in test-projects, glue-projects and dependencies to third party libraries.  
-
-* Remact.Net.Bms.TCP.Mono.sln (for Monodevelop 5.5) and Remact.Net.Bms.TCP.VS2015.sln (for Visual Studio 2015 Update1):
-  These are the most lightweight solutions. Thye use binary serialization over a Bms1 message stream directly connected to a TCP socket.
-  These solutions have dependencies to the Remact.Net.Bms1Serializer.git repository.
-
-* Remact.Net.Json.Msgpak.Alchemy.VS2015.sln:
-  This solution allows to serialize binary (Msgpak) or textual (Json) over Websockets (Alchemy).
-  The solutions has dependencies to Alchemy-Websockets.git, Newtonsoft.Json.git, Newtonsoft.Msgpack.git, msgpack-cli.git repositories.
-
-
-You must download sourcecode of the dependent repositories. All repos must reside in folders that have the original name (e.g. 'Remact.Net' and 'Remact.Net.Bms1Serializer').
-Use the following commandlines to clone the repositories into one folder:  
+Solutions are provided for Visual Studio 2015 and Monodevelop.   
+The solutions contain all plugins and all dependencies to third party library source code.  
+To build the plugins, you must clone dependent repositories. All repos must reside in one parent folder and have the original name.
+Use the following commandlines for cloning:  
 
       $ git clone https://github.com/steforster/Remact.Net.git  
-	  $ git clone https://github.com/steforster/Remact.Net.Bms1Serializer.git
+
+To build **Remact.Net.Plugin.Json.Msgpack.Alchemy.dll** you need:
 
       $ git clone https://github.com/steforster/Alchemy-Websockets.git  
       $ git clone https://github.com/JamesNK/Newtonsoft.Json.git  
       $ git clone https://github.com/Code-Sharp/Newtonsoft.Msgpack.git  
       $ git clone https://github.com/msgpack/msgpack-cli.git  
 
-	  Currently, for VS2015 Update1, you have to fix a line in 'Newtonsoft.Json/Src/Newtonsoft.Json/Newtonsoft.Json.Net40.project.json':
-	  change the "runtimes" entry "win-anycpu" to "win".
+To build **Remact.Net.Plugin.Bms.Tcp.dll** you need:
 
-To test under Windows you may start "test\SpeedTestApp\Mono\_startTest2.cmd",  
-under Ubuntu you may start "test\SpeedTestApp\Mono\_startTest2.sh".
+	    $ git clone https://github.com/steforster/Remact.Net.Bms1Serializer.git
+
+In case you have not cloned some repos, you can unload not buildable projects from the solution.
+
+To manually test under Windows you may start "test\SpeedTestApp\Net\_startTest2.cmd",  
+under Ubuntu you start "test\SpeedTestApp\Net\_startTest2.sh".
+These scrips specify the plugin to use as an application argument.
+
+NUnitTests.ActorDemoTest is intended as a introduction to Remact.Net.
+NUnitTests run in Visual Studio and Monodevelop. There is a set of tests for each plugin. 
 
 
 
 License
 -------
 Remact.Net is licensed under [MIT](http://www.opensource.org/licenses/mit-license.php).
-Copyright (c) 2014-2015, Stefan Forster.
+Copyright (c) 2014-2016, Stefan Forster.
 
 
