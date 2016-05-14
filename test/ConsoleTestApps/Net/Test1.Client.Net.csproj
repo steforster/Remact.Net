@@ -3,10 +3,10 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{72A84AD5-213F-4DBD-8890-2B1B7CEEFC08}</ProjectGuid>
+    <ProjectGuid>{E722D976-399A-405A-B818-073BDA9DBB0E}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>Test1.Service</RootNamespace>
-    <AssemblyName>Test1.Service</AssemblyName>
+    <RootNamespace>Test1.Client</RootNamespace>
+    <AssemblyName>Test1.Client</AssemblyName>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
@@ -28,11 +28,12 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <PropertyGroup>
-    <NoWin32Manifest>true</NoWin32Manifest>
-  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="Nito.Async">
+      <HintPath>..\..\..\lib\Nito.Async\Nito.Async.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\..\..\src\Remact.Net\Properties\AssemblyInfoCommon.cs">
@@ -41,14 +42,14 @@
     <Compile Include="..\src\AssemblyInfo.cs">
       <Link>AssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="..\src\Test1.Service.cs">
-      <Link>Test1.Service.cs</Link>
+    <Compile Include="..\src\Test1.Client.cs">
+      <Link>Test1.Client.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="Test1.Messages.Mono.csproj">
+    <ProjectReference Include="Test1.Contracts.Net.csproj">
       <Project>{13CB30C8-528D-4C71-A937-FCF1DBC5E762}</Project>
-      <Name>Test1.Messages.Mono</Name>
+      <Name>Test1.Contracts.Net</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\src\Remact.Net.DesktopAppHelper\Remact.Net.DesktopAppHelper.csproj">
       <Project>{66EF889F-F66F-4411-83AD-7C2D00D26C2D}</Project>

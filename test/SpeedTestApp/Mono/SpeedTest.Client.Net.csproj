@@ -3,10 +3,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{13CB30C8-528D-4C71-A937-FCF1DBC5E762}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <RootNamespace>Test1.Messages</RootNamespace>
-    <AssemblyName>Test1.Messages</AssemblyName>
+    <ProjectGuid>{A748B855-6AC6-4F89-BEBA-094E97AEB2C0}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Remact.SpeedTest.Client</RootNamespace>
+    <AssemblyName>SpeedTest.Client</AssemblyName>
     <FileAlignment>512</FileAlignment>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
@@ -26,10 +27,11 @@
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugType>none</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG</DefineConstants>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <UseVSHostingProcess>false</UseVSHostingProcess>
@@ -44,24 +46,29 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\src\Client\FrmClient.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="..\src\Client\FrmClient.Designer.cs">
+      <DependentUpon>FrmClient.cs</DependentUpon>
+    </Compile>
+    <Compile Include="..\src\Client\Properties\AssemblyInfo.cs">
+      <Link>Properties\AssemblyInfo.cs</Link>
+    </Compile>
+    <Compile Include="Test2Client.cs" />
+    <EmbeddedResource Include="..\src\Client\FrmClient.resx">
+      <DependentUpon>FrmClient.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
     <Compile Include="..\..\..\src\Remact.Net\Properties\AssemblyInfoCommon.cs">
-      <Link>AssemblyInfoCommon.cs</Link>
-    </Compile>
-    <Compile Include="..\src\AssemblyInfo.cs">
-      <Link>AssemblyInfo.cs</Link>
-    </Compile>
-    <Compile Include="..\src\Test1.Messages.cs">
-      <Link>Test1.Messages.cs</Link>
+      <Link>Properties\AssemblyInfoCommon.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
-      <Visible>False</Visible>
-      <ProductName>.NET Framework Client Profile</ProductName>
-      <Install>false</Install>
-    </BootstrapperPackage>
     <BootstrapperPackage Include="Microsoft.Net.Framework.2.0">
       <Visible>False</Visible>
       <ProductName>.NET Framework 2.0 %28x86%29</ProductName>
@@ -75,11 +82,6 @@
     <BootstrapperPackage Include="Microsoft.Net.Framework.3.5">
       <Visible>False</Visible>
       <ProductName>.NET Framework 3.5</ProductName>
-      <Install>false</Install>
-    </BootstrapperPackage>
-    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
-      <Visible>False</Visible>
-      <ProductName>.NET Framework 3.5 SP1</ProductName>
       <Install>true</Install>
     </BootstrapperPackage>
     <BootstrapperPackage Include="Microsoft.Windows.Installer.3.1">
@@ -87,6 +89,24 @@
       <ProductName>Windows Installer 3.1</ProductName>
       <Install>true</Install>
     </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="SpeedTest.Contracts.Net.csproj">
+      <Project>{BE3C83E3-6A92-453D-BA90-00D8EF810286}</Project>
+      <Name>SpeedTest.Contracts.Net</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\src\Remact.Net.DesktopAppHelper\Remact.Net.DesktopAppHelper.csproj">
+      <Project>{66EF889F-F66F-4411-83AD-7C2D00D26C2D}</Project>
+      <Name>Remact.Net.DesktopAppHelper</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\src\Remact.Net\Remact.Net.csproj">
+      <Project>{9A55AA58-1FFD-48C8-820A-675432755952}</Project>
+      <Name>Remact.Net</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\src\Remact.Net.Plugin.Json.Msgpak.Alchemy\Remact.Net.Plugin.Json.Msgpak.Alchemy.csproj">
+      <Project>{C2B408A5-BF3D-4E43-80E6-642605388CA9}</Project>
+      <Name>Remact.Net.Plugin.Json.Msgpak.Alchemy</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

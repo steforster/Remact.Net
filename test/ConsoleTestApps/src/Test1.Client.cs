@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Nito.Async;              // Copyright (c) 2009, Nito Programs, <http://nitoasync.codeplex.com>
 using Remact.Net;              // Copyright (c) 2014, <http://github.com/steforster/Remact.Net>
-using Test1.Messages;
+using Test1.Contracts;
 
 
 namespace Test1.Client

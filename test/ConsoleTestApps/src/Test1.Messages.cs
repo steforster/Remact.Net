@@ -1,7 +1,7 @@
 ﻿
 // Copyright (c) https://github.com/steforster/Remact.Net
 
-namespace Test1.Messages
+namespace Test1.Contracts
 {
     public class Test1CommandMessage
     {

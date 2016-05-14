@@ -3,12 +3,13 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{A748B855-6AC6-4F89-BEBA-094E97AEB2C0}</ProjectGuid>
+    <ProjectGuid>{D8A24025-5596-4391-AF4C-676AA434CADE}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Remact.SpeedTest.Client</RootNamespace>
-    <AssemblyName>Remact.SpeedTest.Client.Mono</AssemblyName>
+    <RootNamespace>Remact.SpeedTest.Service</RootNamespace>
+    <AssemblyName>SpeedTest.Service</AssemblyName>
     <FileAlignment>512</FileAlignment>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -21,9 +22,9 @@
     <MapFileExtensions>true</MapFileExtensions>
     <ApplicationRevision>0</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
-    <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
+    <RunPostBuildEvent>Always</RunPostBuildEvent>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -50,27 +51,53 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\src\Client\FrmClient.cs">
+    <Compile Include="..\src\Service\Test2Service.cs" />
+    <Compile Include="..\src\Service\FrmService.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="..\src\Client\FrmClient.Designer.cs">
-      <DependentUpon>FrmClient.cs</DependentUpon>
+    <Compile Include="..\src\Service\FrmService.Designer.cs">
+      <DependentUpon>FrmService.cs</DependentUpon>
     </Compile>
-    <Compile Include="..\src\Client\Properties\AssemblyInfo.cs">
+    <Compile Include="..\src\Service\Properties\AssemblyInfo.cs">
       <Link>Properties\AssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="..\src\Client\Test2Client.cs">
-      <Link>Test2Client.cs</Link>
-    </Compile>
-    <EmbeddedResource Include="..\src\Client\FrmClient.resx">
-      <DependentUpon>FrmClient.cs</DependentUpon>
+    <EmbeddedResource Include="..\src\Service\FrmService.resx">
+      <DependentUpon>FrmService.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
+    <EmbeddedResource Include="..\src\Service\Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+      <Link>Properties\Resources.resx</Link>
+    </EmbeddedResource>
+    <Compile Include="..\src\Service\Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
+      <Link>Properties\Resources.Designer.cs</Link>
+    </Compile>
+    <None Include="..\src\Service\Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+      <Link>Properties\Settings.settings</Link>
+    </None>
+    <Compile Include="..\src\Service\Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <Link>Properties\Settings.Designer.cs</Link>
+    </Compile>
     <Compile Include="..\..\..\src\Remact.Net\Properties\AssemblyInfoCommon.cs">
       <Link>Properties\AssemblyInfoCommon.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework Client Profile</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
     <BootstrapperPackage Include="Microsoft.Net.Framework.2.0">
       <Visible>False</Visible>
       <ProductName>.NET Framework 2.0 %28x86%29</ProductName>
@@ -86,6 +113,11 @@
       <ProductName>.NET Framework 3.5</ProductName>
       <Install>true</Install>
     </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
     <BootstrapperPackage Include="Microsoft.Windows.Installer.3.1">
       <Visible>False</Visible>
       <ProductName>Windows Installer 3.1</ProductName>
@@ -93,9 +125,9 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="Test2.Contracts.Mono.csproj">
+    <ProjectReference Include="SpeedTest.Contracts.Net.csproj">
       <Project>{BE3C83E3-6A92-453D-BA90-00D8EF810286}</Project>
-      <Name>Test2.Contracts.Mono</Name>
+      <Name>SpeedTest.Contracts.Net</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\src\Remact.Net.DesktopAppHelper\Remact.Net.DesktopAppHelper.csproj">
       <Project>{66EF889F-F66F-4411-83AD-7C2D00D26C2D}</Project>

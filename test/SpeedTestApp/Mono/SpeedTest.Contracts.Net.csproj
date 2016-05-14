@@ -7,7 +7,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Remact.SpeedTest.Contracts</RootNamespace>
-    <AssemblyName>Remact.SpeedTest.Contracts.Mono</AssemblyName>
+    <AssemblyName>SpeedTest.Contracts</AssemblyName>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>

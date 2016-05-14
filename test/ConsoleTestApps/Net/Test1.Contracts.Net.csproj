@@ -3,13 +3,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{D8A24025-5596-4391-AF4C-676AA434CADE}</ProjectGuid>
-    <OutputType>WinExe</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Remact.SpeedTest.Service</RootNamespace>
-    <AssemblyName>Remact.SpeedTest.Service.Mono</AssemblyName>
+    <ProjectGuid>{13CB30C8-528D-4C71-A937-FCF1DBC5E762}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>Test1Contracts</RootNamespace>
+    <AssemblyName>Test1.Contracts</AssemblyName>
     <FileAlignment>512</FileAlignment>
-    <IsWebBootstrapper>false</IsWebBootstrapper>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -22,17 +20,16 @@
     <MapFileExtensions>true</MapFileExtensions>
     <ApplicationRevision>0</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
-    <RunPostBuildEvent>Always</RunPostBuildEvent>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
+    <DebugType>none</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <UseVSHostingProcess>false</UseVSHostingProcess>
@@ -47,49 +44,16 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\src\Service\Test2Service.cs" />
-    <Compile Include="..\src\Service\FrmService.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="..\src\Service\FrmService.Designer.cs">
-      <DependentUpon>FrmService.cs</DependentUpon>
-    </Compile>
-    <Compile Include="..\src\Service\Properties\AssemblyInfo.cs">
-      <Link>Properties\AssemblyInfo.cs</Link>
-    </Compile>
-    <EmbeddedResource Include="..\src\Service\FrmService.resx">
-      <DependentUpon>FrmService.cs</DependentUpon>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Include="..\src\Service\Properties\Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-      <SubType>Designer</SubType>
-      <Link>Properties\Resources.resx</Link>
-    </EmbeddedResource>
-    <Compile Include="..\src\Service\Properties\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Resources.resx</DependentUpon>
-      <DesignTime>True</DesignTime>
-      <Link>Properties\Resources.Designer.cs</Link>
-    </Compile>
-    <None Include="..\src\Service\Properties\Settings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-      <Link>Properties\Settings.settings</Link>
-    </None>
-    <Compile Include="..\src\Service\Properties\Settings.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Settings.settings</DependentUpon>
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-      <Link>Properties\Settings.Designer.cs</Link>
-    </Compile>
     <Compile Include="..\..\..\src\Remact.Net\Properties\AssemblyInfoCommon.cs">
-      <Link>Properties\AssemblyInfoCommon.cs</Link>
+      <Link>AssemblyInfoCommon.cs</Link>
+    </Compile>
+    <Compile Include="..\src\AssemblyInfo.cs">
+      <Link>AssemblyInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\src\Test1.Messages.cs">
+      <Link>Test1.Messages.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>
@@ -111,36 +75,18 @@
     <BootstrapperPackage Include="Microsoft.Net.Framework.3.5">
       <Visible>False</Visible>
       <ProductName>.NET Framework 3.5</ProductName>
-      <Install>true</Install>
+      <Install>false</Install>
     </BootstrapperPackage>
     <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
       <Visible>False</Visible>
       <ProductName>.NET Framework 3.5 SP1</ProductName>
-      <Install>false</Install>
+      <Install>true</Install>
     </BootstrapperPackage>
     <BootstrapperPackage Include="Microsoft.Windows.Installer.3.1">
       <Visible>False</Visible>
       <ProductName>Windows Installer 3.1</ProductName>
       <Install>true</Install>
     </BootstrapperPackage>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="Test2.Contracts.Mono.csproj">
-      <Project>{BE3C83E3-6A92-453D-BA90-00D8EF810286}</Project>
-      <Name>Test2.Contracts.Mono</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\src\Remact.Net.DesktopAppHelper\Remact.Net.DesktopAppHelper.csproj">
-      <Project>{66EF889F-F66F-4411-83AD-7C2D00D26C2D}</Project>
-      <Name>Remact.Net.DesktopAppHelper</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\src\Remact.Net\Remact.Net.csproj">
-      <Project>{9A55AA58-1FFD-48C8-820A-675432755952}</Project>
-      <Name>Remact.Net</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\src\Remact.Net.Plugin.Json.Msgpak.Alchemy\Remact.Net.Plugin.Json.Msgpak.Alchemy.csproj">
-      <Project>{C2B408A5-BF3D-4E43-80E6-642605388CA9}</Project>
-      <Name>Remact.Net.Plugin.Json.Msgpak.Alchemy</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
