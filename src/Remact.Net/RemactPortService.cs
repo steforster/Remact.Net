@@ -54,7 +54,7 @@ namespace Remact.Net
         /// Link this input to the network. Remote clients will be able to connect to this service after Open() has been called.
         /// When this method is not called, the service is accessible application internally only.
         /// </summary>
-        /// <param name="serviceName">The unique name of the service or null, when this partners name is equal to the servicename. </param>
+        /// <param name="serviceName">A service name must be unique in the plant. Null: do not change the current name.</param>
         /// <param name="tcpPort">The TCP port for the service or 0, when automatic port allocation will be used.</param>
         /// <param name="publishToCatalog">True(=default): The servicename will be published to the Remact.Catalog on localhost.</param>
         /// <param name="serviceConfig">Plugin your own service configuration instead of RemactDefaults.ServiceConfiguration.</param>
@@ -157,8 +157,8 @@ namespace Remact.Net
         /// Opens the service for incomming (network) connections (same as ConnectAsync).
         /// The method is accessible only by the owner of this RemactPortService object. No interface exposes the method.
         /// Open picks up the synchronization context and must be called on the receiving thread only!
-        /// A ActorInfo message is received, when the connection is established.
-        /// The connect-process runs asynchronous and does involve an address registration at the Remact.Catalog (when CatalogClient is not disabled).
+        /// A <see cref="ActorInfo"/> message is received, when the connection is established.
+        /// The connect-process runs asynchronous and does involve an address registration at the Remact.Net.CatalogApp (when CatalogClient is not disabled).
         /// </summary>
         public void Open()
         {
@@ -206,7 +206,7 @@ namespace Remact.Net
         public void PostFromAnonymous(object payload)
         {
             var proxy = GetAnonymousProxy();
-            proxy.Notify(payload.GetType().FullName, payload);
+            proxy.Notify(null, payload);
         }
 
 

@@ -27,6 +27,12 @@ namespace Remact.Net
         /// The actor does not know how to handle this message.
         /// Set by library user.
         /// </summary>
+        ActorReceivedUnexpectedPayloadType,
+
+        /// <summary>
+        /// The actor does not know how to handle this message.
+        /// Set by library user.
+        /// </summary>
         ActorReceivedMessageForUnknownDestinationMethod,
 
         /// <summary>

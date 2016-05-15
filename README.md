@@ -304,6 +304,7 @@ In case you have not cloned some repos, you can unload not buildable projects fr
 To manually test under Windows you may start "test/SpeedTestApp/Net/_startTest2.cmd",  
 in Linux you start "test/SpeedTestApp/Net/_startTest2.sh".
 These scrips specify the plugin to use. Modify the arguments for your purpose.
+Manual tests write logfiles to the 'logs' folder.
 
 NUnitTests.ActorDemoTest is an introduction to Remact.Net.  
 NUnitTests run in Visual Studio and MonoDevelop. There is a set of tests for each plugin. 

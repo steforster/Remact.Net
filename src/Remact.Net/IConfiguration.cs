@@ -2,10 +2,8 @@
 // Copyright (c) https://github.com/steforster/Remact.Net
 
 using System;
-using System.Collections.Generic;
 using Remact.Net.Remote;
 using System.Reflection;
-using Newtonsoft.Json;
 
 namespace Remact.Net
 {
@@ -117,6 +115,11 @@ namespace Remact.Net
         /// <param name="isCatalog">true if used for Remact.Catalog service.</param>
         /// <returns>The network port manger (for disconnect).</returns>
         INetworkServicePortManager DoServiceConfiguration(RemactService service, ref Uri uri, bool isCatalog);
+
+        /// <summary>
+        /// The implementation initializes this property with the supported network schema (ws:// or net-tcp://).
+        /// </summary>
+        string PreferredUriScheme { get; }
     }
 
     #endregion

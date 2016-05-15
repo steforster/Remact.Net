@@ -312,6 +312,9 @@ namespace Remact.Net.CatalogApp
         return RemactConfigDefault.Instance.DoServiceConfiguration(service, ref uri, isCatalog:true);
     }
 
+    // implement IServiceConfiguration
+    public virtual string PreferredUriScheme { get {return RemactConfigDefault.Instance.PreferredUriScheme; } }
+
 
     // implement IClientConfiguration
     public IRemactProtocolDriverToService DoClientConfiguration(ref Uri uri, bool forCatalog)

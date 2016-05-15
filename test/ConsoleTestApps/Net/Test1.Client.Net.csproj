@@ -42,6 +42,12 @@
     <Compile Include="..\src\AssemblyInfo.cs">
       <Link>AssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="..\src\PluginSelector.cs">
+      <Link>PluginSelector.cs</Link>
+    </Compile>
+    <Compile Include="..\src\Test1.Client.Actor.cs">
+      <Link>Test1.Client.Actor.cs</Link>
+    </Compile>
     <Compile Include="..\src\Test1.Client.cs">
       <Link>Test1.Client.cs</Link>
     </Compile>

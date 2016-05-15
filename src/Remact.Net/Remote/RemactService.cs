@@ -170,7 +170,7 @@ namespace Remact.Net.Remote
                     ms_nSharedTcpPortCount++;
                 }
 
-                Uri uri = new Uri("ws://"
+                Uri uri = new Uri(_serviceConfig.PreferredUriScheme
                     + ServiceIdent.HostName     // initialized with Dns.GetHostName()
                     + ":" + _tcpPort
                     + "/" + RemactConfigDefault.WsNamespace + "/" + ServiceIdent.Name);// ServiceName, not the ServiceType
@@ -194,7 +194,7 @@ namespace Remact.Net.Remote
                 LastAction = ex.Message;
             }
             return false;
-        }// OpenService
+        }
 
 
         /// <summary>
@@ -234,7 +234,7 @@ namespace Remact.Net.Remote
             {
                 RaLog.Exception("Svc: Error while closing the service", ex, ServiceIdent.Logger);
             }
-        }// Disconnect
+        }
 
 
         /// <summary>
@@ -379,7 +379,7 @@ namespace Remact.Net.Remote
             response.ClientId = svcUser.PortClient.ClientId;
             req.Source = svcUser.PortClient;
             return response;
-        }// Connect
+        }
 
 
         /// <summary>
@@ -423,7 +423,7 @@ namespace Remact.Net.Remote
             // Note: This response will normally not be sent to the client. The disconnect message is a notification.
             var response = new ErrorMessage(ErrorCode.CouldNotDisconnect, LastAction);
             return response;
-        }// Disconnect
+        }
 
 
         /// <summary>
@@ -475,7 +475,7 @@ namespace Remact.Net.Remote
                 HasConnectionStateChanged = true;
             }
             return true;
-        }// FindPartnerAndCheck
+        }
 
 
         /// <summary>

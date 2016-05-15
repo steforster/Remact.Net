@@ -80,6 +80,9 @@ namespace Remact.Net.Plugin.Bms.Tcp
             return portManager; // will be called, when this RemactPortService is disconnected.
         }
 
+        /// <inheritdoc/>
+        public override string PreferredUriScheme { get {return "net.tcp://"; } }
+
         /// <summary>
         /// Do this for every new client connecting to a TCP port.
         /// </summary>

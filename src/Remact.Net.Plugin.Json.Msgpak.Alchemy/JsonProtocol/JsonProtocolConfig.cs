@@ -73,6 +73,9 @@ namespace Remact.Net.Plugin.Json.Msgpack.Alchemy
             return portManager; // will be called, when this RemactPortService is disconnected.
         }
 
+        /// <inheritdoc/>
+        public override string PreferredUriScheme { get {return "ws://"; } }
+
         /// <summary>
         /// Do this for every new client connecting to a WebSocketPort.
         /// </summary>

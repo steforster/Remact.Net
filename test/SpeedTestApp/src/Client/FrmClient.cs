@@ -1,3 +1,6 @@
+
+// Copyright (c) https://github.com/steforster/Remact.Net
+
 using System;
 using System.Windows.Forms;
 using Remact.Net;

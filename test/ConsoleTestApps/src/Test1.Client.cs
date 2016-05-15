@@ -1,69 +1,84 @@
+
+// Copyright (c) https://github.com/steforster/Remact.Net
+
 using System;
 using System.Threading;
-using System.Threading.Tasks;
 using Nito.Async;              // Copyright (c) 2009, Nito Programs, <http://nitoasync.codeplex.com>
-using Remact.Net;              // Copyright (c) 2014, <http://github.com/steforster/Remact.Net>
+using Remact.Net;
 using Test1.Contracts;
-
+using Remact.TestUtilities;
 
 namespace Test1.Client
 {
-    //----------------------------------------------------------------------------------------------
-    #region == Program startup thread ==
-
     class Test1Client
     {
-        public static RemactPortService TestInput;
-        public static RemactPortProxy TestOutput;
-
         static void Main(string[] args)
         {
-            // Commandlinearguments:
+            // Use commandline arguments to setup objects...
             // 0: Application instance id. Default = 0 --> process id is used.
             // 1: Hostname and TCP port for the service to connect to. Default: "localhost:40001" is used.
-
+            // 2: Transport protocol plugin: 'BMS'(default) or 'JSON'
             RemactDesktopApp.ApplicationStart(args, new RaLog.PluginFile());
             RemactDesktopApp.ApplicationExit += ApplicationExitHandler;
-            RemactConfigDefault.Instance = new Remact.Net.Plugin.Json.Msgpack.Alchemy.JsonProtocolConfig();
+            
+            string transportPlugin = "BMS";
+            if (args.Length >= 3)
+            {
+                transportPlugin = args[2];
+            }
+            PluginSelector.LoadRemactConfigDefault(transportPlugin);
 
             string host = "localhost:40001";
             if (args.Length > 1 && args[1].Length > 0) host = args[1];
-            string serviceUri = "ws://" + host + "/Remact/Test1.Service";
+            string serviceUri = RemactConfigDefault.Instance.PreferredUriScheme + host + "/Remact/Test1.Service";
 
-            // define the input and output ports of our test actor
-            TestInput = new RemactPortService("NitoIn", OnMessageReceived);
-            TestOutput = new RemactPortProxy("Nito", OnMessageReceived);
-            TestOutput.LinkOutputToRemoteService(new Uri(serviceUri));
-            TestOutput.TraceSend = true;
-            ActionThread actionThread = new ActionThread();
 
-            Console.Title = TestOutput.AppIdentification;
             Console.WriteLine("Commandline arguments:   ClientInstance=" + RemactConfigDefault.Instance.ApplicationInstance
-                           + "   ServiceHostname:Port='" + host + "'\r\n");
-            Console.WriteLine("Starting client '" + TestOutput.ClientIdent.Name + "' for service '" + TestOutput.ClientIdent.Uri + "'\r\n");
+                            + "   ServiceHostname:Port='" + host
+                           + "'   Transport=" + transportPlugin + "\r\n");
+
+            // Now we create myActor. It runs locally on its own thread in our application. 
+            // It has one input- and one output port called "NitoIn" and "Nito".
+            // Later on, we will send commands to myActor input from the main thread we are currently running on.
+            // myActor will then pass the received command to the output port. From there it is sent to a remote server actor.
+            // The remote server actor will return a response. The response comes in through the output port of myActor.
+            var myActor = new MyActor("NitoIn", "Nito");
+            myActor.TestOutput.LinkOutputToRemoteService(new Uri(serviceUri));
+            myActor.TestOutput.TraceSend = true;
+
+            Console.Title = myActor.TestOutput.AppIdentification;
+            Console.WriteLine("Starting client '" + myActor.TestOutput.ClientIdent.Name + "' for service '" + myActor.TestOutput.ClientIdent.Uri + "'\r\n");
             Console.WriteLine("Press 'q' to quit.");
             Console.WriteLine("The client is using Nito.Async.ActionThread to queue and synchronize responses on the same thread as the request was sent.\r\n");
 
+            // The thread for myActor needs a System.Threading.SynchronizationContext otherwise, the message processing will not be synchronized to a single thread.
+            // The main thread and threadpool threads do not have a SynchronizationContext. Nito.Async.ActionThread has one.
+            var actionThread = new ActionThread();
             actionThread.Start();
-            actionThread.Do(OnStartup);
+            actionThread.Do(async() => await myActor.OnStartup());
 
-            Console.Write("\n\r Thread=" + Thread.CurrentThread.ManagedThreadId + ", is reading commands from console...");
+            Console.Write("\n\rMain thread=" + Thread.CurrentThread.ManagedThreadId + ", is reading commands from console...");
             while (true)
             {
                 RaLog.Run();
-                string command = Console.ReadLine();
+                string command = Console.ReadLine(); // wait for the user to enter any command string
                 if (command == null)
                 {
-                    Thread.Sleep(8000); // Mono debugging returns null and does not wait
+                    Thread.Sleep(8000); // Mono debugging returns null and does not wait for the user
                     command = "xyz";
                 }
 
                 if (command.ToLower() == "q") break; // from while
-                TestInput.PostFromAnonymous(new Test1CommandMessage(command));
+
+                // The command is entered by the user, we send it to the input port of myActor.
+                // Because we have no own output port linked to myActor, we have to send as an anonymous client and
+                // can not expect a response here. 
+                // The actor writes further traces on the console and into the logfile...
+                myActor.TestInput.PostFromAnonymous(new Test1CommandMessage(command));
             }
 
             RemactDesktopApp.Exit(0);
-        }// Main
+        }
 
 
         // called for all normal and exceptional close types
@@ -78,70 +93,5 @@ namespace Test1.Client
                 if (RemactApplication.IsRunningWithMono) Console.WriteLine("\n\r---application ended---"); // helpful, when started from MonoDevelop
             }
         }
-
-        #endregion
-        //----------------------------------------------------------------------------------------------
-        #region == Nito.Async.ActionThread ==
-
-        // picks up this thread synchronization context and builds connection to service
-        static void OnStartup()
-        {
-            Console.Write("\n\r Thread=" + Thread.CurrentThread.ManagedThreadId + ", is connecting...");
-            TestInput.Open();
-            var task = TestOutput.ConnectAsync();
-            task.ContinueWith(t =>
-                {
-                    Console.WriteLine("\n\r Thread=" + Thread.CurrentThread.ManagedThreadId + ", connected.");
-                    Console.Write("\n\r\n\rSend command > ");
-                }, TaskContinuationOptions.ExecuteSynchronously);
-        }
-
-        // receive a message from main thread or from remote service
-        static Task OnMessageReceived(RemactMessage msg)
-        {
-            Console.Write("\n\r Thread=" + Thread.CurrentThread.ManagedThreadId + ", received: " + msg.ToString());
-
-            Test1CommandMessage testMessage;
-            ErrorMessage errorMessage;
-            if (msg.IsNotification && msg.TryConvertPayload(out testMessage))
-            {
-                PortState s = TestOutput.OutputState;
-                if (s == PortState.Disconnected || s == PortState.Faulted)
-                {
-                    OnStartup();
-                }
-                else if (s == PortState.Connecting)
-                {
-                    Console.Write(" - cannot send, still connecting...");
-                }
-                else
-                {
-                    int sendContextNumber = TestOutput.LastRequestIdSent + 1000;
-                    TestOutput.SendReceiveAsync("OnMessageReceived", testMessage,
-
-                            delegate (ReadyMessage response, RemactMessage rsp)
-                            {
-                                Console.Write("\n\r Thread=" + Thread.CurrentThread.ManagedThreadId);
-                                Console.WriteLine(", received ready message in sending context #" + sendContextNumber);
-                                Console.Write("\n\r\n\rSend command > ");
-                            });
-
-                    Console.Write(", sending context #" + sendContextNumber + "...");
-                    return null;
-                }
-            }
-            else if (msg.TryConvertPayload(out errorMessage))
-            {
-                RaLog.Error(msg.CltRcvId, errorMessage.ToString() + "\r\n" + errorMessage.StackTrace);
-            }
-            else
-            {
-                Console.Write(", from " + msg.Source.Name);
-            }
-
-            Console.Write("\n\r\n\rSend command > ");
-            return null;
-        }
     }
-    #endregion
 }

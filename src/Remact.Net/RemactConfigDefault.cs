@@ -11,11 +11,7 @@ namespace Remact.Net
 {
     /// <summary>
     /// Common definitions for all interacting actors.
-    /// Library users may plug in their own implementation of this class to RemactDefault.Instance.
-    /// This implementation only support process internal connections.
-    /// There exists other assemblies with network implementations to plug in:
-    /// - JsonProtocolConfig in Remact.Net.Json.Msgpack.Alchemy.dll
-    /// - BmsProtocolConfig  in Remact.Net.Bms.Tcp.dll
+    /// Library users may plug in an implementation to RemactDefault.Instance.
     /// </summary>
     public class RemactConfigDefault : IRemactConfig
     {
@@ -25,7 +21,9 @@ namespace Remact.Net
         private static IRemactConfig _instance;
 
         /// <summary>
-        /// Library users may plug in their own implementation of IRemactDefault to RemactDefault.Instance.
+        /// The default implementation of IRemactConfig only supports process internal connections.
+        /// The predefined implementations for remote connections can be plugged by calling LoadPluginAssembly.
+        /// Library users may also plug their own implementation of IRemactDefault to RemactDefault.Instance.
         /// </summary>
         public static IRemactConfig Instance
         {
@@ -64,7 +62,7 @@ namespace Remact.Net
         /// Loads and executes the EntryPoint default constructor of the specified assembly file.
         /// The assemblyName also specifies the namespace of the EntryPoint class.
         /// </summary>
-        /// <param name="assemblyName">Short or long form of the assembly name. E.g. "Remact.Net.Plugin.Bms.Tcp".</param>
+        /// <param name="assemblyName">Short or long form of the assembly name. Use the predefined plugins <see cref="DefaultProtocolPluginName"/> and <see cref="JsonProtocolPluginName"/>.</param>
         /// <returns>Null, when assembly not found. Otherwise the disposable EntryPoint class. Should be disposed, before the assembly unloads.</returns>
         public static IDisposable LoadPluginAssembly(string assemblyName)
         {
@@ -122,6 +120,9 @@ namespace Remact.Net
         {
             throw new NotSupportedException("RemactConfigDefault cannot configure service for remote connection. Use LoadPluginAssembly to load plugin for remote configuration.");
         }
+
+        /// <inheritdoc/>
+        public virtual string PreferredUriScheme { get {return "cli://"; } }
 
         /// <summary>
         /// Sets the default client configuration, when connecting without app.config.

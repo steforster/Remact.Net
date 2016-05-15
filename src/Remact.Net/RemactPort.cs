@@ -19,7 +19,7 @@ namespace Remact.Net
         #region Identification and Constructor
 
         /// <summary>
-        /// IsServiceName=true : A service name must be unique in the plant, independant of host or application.
+        /// IsServiceName=true : A service name must be unique in the plant. It is independant of host- or applicationname.
         /// IsServiceName=false: A client  name must be combined with application name, host name, instance- or process id for unique identification.
         /// </summary>
         public bool IsServiceName { get; internal set; }
@@ -392,7 +392,7 @@ namespace Remact.Net
         /// The asynchronous responseHandler expects a payload of type TRsp.
         /// Unexpected response types do not throw an exception. Such (error) messages are sent to the default message handler.
         /// </summary>
-        /// <param name="method">The name of the method to be called.</param>
+        /// <param name="method">The name of the method to be called. Null in case the default handler method is requested.</param>
         /// <param name="payload">The message payload to send. It must be of a type acceptable for the called method.</param>
         /// <param name="responseHandler">A method or lambda expression handling the asynchronous response.</param>
         /// <typeparam name="TRsp">The expected type of the response payload. When receiving other types, the message will be passed to the default message handler.</typeparam>
