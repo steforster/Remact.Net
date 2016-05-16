@@ -56,18 +56,20 @@ namespace Remact.Net
 
         /// <summary>
         /// Library users may implement how to get an application instance id.
+        /// By default, when ApplicationInstance is 0, the operating system process id is used for application identification.
+        /// By default, when ApplicationInstance id is below 100, it is not unique in plant. Then, the hostname must be added to identify the application. 
         /// </summary>
         int ApplicationInstance { get; }
 
         /// <summary>
         /// Applications with unique id in plant may be moved from one host to another without configuration change.
-        /// By default, ApplicationInstance id's below 100 are not unique in plant. 
+        /// By default, when ApplicationInstance id is below 100, it is not unique in plant. Then, the hostname must be added to identify the application. 
         /// Library users may change the logic of this property.
         /// </summary>
         bool IsAppIdUniqueInPlant(int appId);
 
         /// <summary>
-        /// When ApplicationInstance is 0, the operating system process id is used for application identification.
+        /// By default, when ApplicationInstance is 0, the operating system process id is used for application identification.
         /// </summary>
         bool IsProcessIdUsed(int appId);
 

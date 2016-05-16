@@ -17,7 +17,7 @@ namespace Test1.Service
     {
         static void Main(string[] args)
         {
-            // Commandlinearguments:
+            // Commandline arguments:
             // 0: Application instance id. Default = 0 --> process id is used.
             // 1: TCP port number for this service (on localhost). Default = 40001.
             // 2: Transport protocol plugin: 'BMS' or 'JSON'

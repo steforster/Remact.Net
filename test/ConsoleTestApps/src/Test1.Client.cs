@@ -27,6 +27,7 @@ namespace Test1.Client
                 transportPlugin = args[2];
             }
             PluginSelector.LoadRemactConfigDefault(transportPlugin);
+            Remact.Net.Remote.RemactCatalogClient.IsDisabled = true; // Test1.Client does not use Remact.Net.CatalogApp.exe.
 
             string host = "localhost:40001";
             if (args.Length > 1 && args[1].Length > 0) host = args[1];

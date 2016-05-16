@@ -59,30 +59,30 @@ namespace Remact.Net
         }
 
         /// <summary>
-        /// Loads and executes the EntryPoint default constructor of the specified assembly file.
-        /// The assemblyName also specifies the namespace of the EntryPoint class.
+        /// Loads an assembly and executes the default constructor of the EntryPoint class.
+        /// The filename also specifies the namespace of the EntryPoint class.
+        /// Dependent assemblies are loaded from the same folder as specified in assemblyFilePath.
         /// </summary>
-        /// <param name="assemblyName">Short or long form of the assembly name. Use the predefined plugins <see cref="DefaultProtocolPluginName"/> and <see cref="JsonProtocolPluginName"/>.</param>
-        /// <returns>Null, when assembly not found. Otherwise the disposable EntryPoint class. Should be disposed, before the assembly unloads.</returns>
-        public static IDisposable LoadPluginAssembly(string assemblyName)
+        /// <param name="assemblyFilePath">May be relative to the executing DLL. Use the predefined names <see cref="DefaultProtocolPluginName"/> or <see cref="JsonProtocolPluginName"/>.</param>
+        /// <returns>Null, when assembly is not found. Otherwise the disposable EntryPoint class. Should be disposed, before the assembly unloads.</returns>
+        public static IDisposable LoadPluginAssembly(string assemblyFilePath)
         {
-            var dllDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            var fileName = Path.Combine(dllDir, assemblyName);
-            if (!File.Exists(fileName))
+            var exeDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            var filePath = Path.Combine(exeDir, assemblyFilePath);
+            if (!File.Exists(filePath))
             {
                 return null;
             }
-            var an = new AssemblyName(Path.GetFileNameWithoutExtension(fileName));
-            an.CodeBase = fileName;
+            var an = new AssemblyName(Path.GetFileNameWithoutExtension(filePath));
+            an.CodeBase = filePath;
             try
             {
                 var assembly = Assembly.Load(an);
-                //var assembly = Assembly.LoadFrom(fileName); // for unit tests, load dependant assemblies from this folder
                 return (IDisposable)assembly.CreateInstance(an.Name + ".EntryPoint");
             }
             catch (Exception ex)
             {
-                RaLog.Info("RemactConfigDefault.LoadPluginAssembly", "cannot load '" + assemblyName + "': " + ex.Message);
+                RaLog.Info("RemactConfigDefault.LoadPluginAssembly", "cannot load '" + assemblyFilePath + "': " + ex.Message);
             }
             return null;
         }
@@ -197,18 +197,21 @@ namespace Remact.Net
 
         /// <summary>
         /// Library users may implement how to get an application instance id.
+        /// By default, when ApplicationInstance is 0, the operating system process id is used for application identification.
+        /// By default, when ApplicationInstance id is below 100, it is not unique in plant. Then, the hostname must be added to identify the application. 
+        /// Library users may implement how to get an application instance id.
         /// </summary>
         public virtual int ApplicationInstance { get { return RaLog.ApplicationInstance; } }
 
         /// <summary>
         /// Applications with unique id in plant may be moved from one host to another without configuration change.
-        /// By default, ApplicationInstance id's below 100 are not unique in plant. 
+        /// By default, when ApplicationInstance id is below 100, it is not unique in plant. Then, the hostname must be added to identify the application. 
         /// Library users may change the logic of this property.
         /// </summary>
         public virtual bool IsAppIdUniqueInPlant(int appId) { return appId >= 100; }
 
         /// <summary>
-        /// When ApplicationInstance is 0, the operating system process id is used for application identification.
+        /// By default, when ApplicationInstance is 0, the operating system process id is used for application identification.
         /// </summary>
         public virtual bool IsProcessIdUsed(int appId) { return appId == 0; }
 

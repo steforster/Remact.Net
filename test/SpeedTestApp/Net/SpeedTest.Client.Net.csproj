@@ -50,6 +50,9 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\..\ConsoleTestApps\src\PluginSelector.cs">
+      <Link>PluginSelector.cs</Link>
+    </Compile>
     <Compile Include="..\src\Client\FrmClient.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -104,10 +107,6 @@
     <ProjectReference Include="..\..\..\src\Remact.Net\Remact.Net.csproj">
       <Project>{9A55AA58-1FFD-48C8-820A-675432755952}</Project>
       <Name>Remact.Net</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\src\Remact.Net.Plugin.Json.Msgpak.Alchemy\Remact.Net.Plugin.Json.Msgpak.Alchemy.csproj">
-      <Project>{C2B408A5-BF3D-4E43-80E6-642605388CA9}</Project>
-      <Name>Remact.Net.Plugin.Json.Msgpak.Alchemy</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

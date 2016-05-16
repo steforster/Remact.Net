@@ -5,7 +5,7 @@ using System;
 using System.IO;            // Files
 using System.Diagnostics;   // Trace Listener, Trace...
 using System.Reflection;    // Assembly, Attributes
-using System.Text;     // Sleep
+using System.Text;          // Sleep
 
 
 namespace Remact.Net
@@ -121,16 +121,16 @@ namespace Remact.Net
                     {
                         if (calledByUser)
                         {
-                            System.Diagnostics.Trace.WriteLine(String.Format("| {0:D} {0:T} {1} stopped, Exit code = {2}",
-                                                           DateTime.Now, RemactConfigDefault.Instance.AppIdentification, Environment.ExitCode));
+                            Trace.WriteLine(String.Format("| {0:D} {0:T} {1} stopped, Exit code = {2}",
+                                            DateTime.Now, RemactConfigDefault.Instance.AppIdentification, Environment.ExitCode));
                         }
                         else
                         {
-                            System.Diagnostics.Trace.WriteLine(String.Format("| {0:D} {0:T} {1} interrupted, Exit code = {2}",
-                                                           DateTime.Now, RemactConfigDefault.Instance.AppIdentification, Environment.ExitCode));
+                            Trace.WriteLine(String.Format("| {0:D} {0:T} {1} interrupted, Exit code = {2}",
+                                            DateTime.Now, RemactConfigDefault.Instance.AppIdentification, Environment.ExitCode));
                         }
-                        System.Diagnostics.Trace.WriteLine("+-------------------------------------------------------------------------------------------------");
-                        System.Diagnostics.Trace.Flush();
+                        Trace.WriteLine("+-------------------------------------------------------------------------------------------------");
+                        Trace.Flush();
                     }
                 }
                 catch (Exception ex)
@@ -209,9 +209,9 @@ namespace Remact.Net
                 if (m_LogFile != null)
                 {
                     boStartup = false;
-                    System.Diagnostics.Trace.WriteLine(String.Format("| {0:D} {0:T} Next log file://{1}", DateTime.Now, i_FileName));
-                    System.Diagnostics.Trace.Flush();
-                    System.Diagnostics.Trace.Listeners.Remove(m_LogFile);
+                    Trace.WriteLine(String.Format("| {0:D} {0:T} Next log file://{1}", DateTime.Now, i_FileName));
+                    Trace.Flush();
+                    Trace.Listeners.Remove(m_LogFile);
                     m_LogFileName = "";
                     m_LogFile.Close();
                     m_LogFile.Dispose();
@@ -245,15 +245,15 @@ namespace Remact.Net
 
                     //Create a new text writer using the output stream, and add it to the trace listeners.
                     m_LogFile = new TextWriterTraceListener(m_DirectStreamWriter);
-                    System.Diagnostics.Trace.Listeners.Add(m_LogFile);
-                    System.Diagnostics.Trace.WriteLine("\n+-------------------------------------------------------------------------------------------------");
+                    Trace.Listeners.Add(m_LogFile);
+                    Trace.WriteLine("\n+-------------------------------------------------------------------------------------------------");
                     if (boStartup)
                     {
-                        System.Diagnostics.Trace.WriteLine(String.Format("| LOG  {0:D} {0:T}: Starting application", DateTime.Now));
+                        Trace.WriteLine(String.Format("| LOG  {0:D} {0:T}: Starting application", DateTime.Now));
                     }
                     else
                     {
-                        System.Diagnostics.Trace.WriteLine(String.Format("| LOG  {0:D} {0:T}: Continue logging ", DateTime.Now));
+                        Trace.WriteLine(String.Format("| LOG  {0:D} {0:T}: Continue logging ", DateTime.Now));
                     }
                 }
                 catch (Exception ex)
@@ -272,15 +272,14 @@ namespace Remact.Net
                     }
                 }
 
-                String s = AppInfo();
+                string s = AppInfo();
                 s += "\r\n|   Log file  \t: " + m_LogFileName;
                 s += "\r\n+-------------------------------------------------------------------------------------------------";
 
-                System.Diagnostics.Trace.WriteLine(s);
+                Trace.WriteLine(s);
                 m_boLogReady = true;
                 m_nLogLines = 0;
-
-            }// SetLogOutput (i_FileName)
+            }
 
 
             ///--------------------------------------------------------------------------
@@ -293,7 +292,7 @@ namespace Remact.Net
                 {
                     if (m_boLogReady)
                     {
-                        System.Diagnostics.Trace.Flush();
+                        Trace.Flush();
                         m_boLogReady = false;
                         if (m_nLogLines > 200)
                         {
@@ -311,7 +310,7 @@ namespace Remact.Net
                     // Can't do anything against some other process locking the file !
                     sLastLoggingProblem = ex.Message;
                 }
-            }// Refresh
+            }
 
 
             //--------------------------------------------------------------------------
@@ -319,7 +318,7 @@ namespace Remact.Net
             /// Get log file header, may be used for Help - About box.
             /// </summary>
             /// <returns>log file header</returns>
-            public static String AppInfo()
+            public static string AppInfo()
             {
                 string s = "| ";
                 try
@@ -372,7 +371,7 @@ namespace Remact.Net
                     LoggingException("##,Error while generating application info:" + s + ex.Message);
                 }
                 return s;
-            }// static AppInfo
+            }
 
 
             private static string AssemblyVersion(Assembly A)
@@ -398,6 +397,7 @@ namespace Remact.Net
             private static void LoggingException(string Message)
             {
                 if (m_DirectStreamWriter != null)
+                {
                     try
                     {
                         m_DirectStreamWriter.WriteLine(Message);
@@ -405,6 +405,7 @@ namespace Remact.Net
                     catch (Exception)
                     {
                     }
+                }
             }
         }
     }

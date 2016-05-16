@@ -4,7 +4,7 @@
 using System;
 using System.Windows.Forms;
 using Remact.Net;
-
+using Remact.TestUtilities;
 
 namespace Remact.SpeedTest.Service
 {
@@ -20,14 +20,33 @@ namespace Remact.SpeedTest.Service
         [STAThread]
         static void Main(string[] args)
         {
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
+            // Commandline arguments:
+            // 0: Application instance id. Default = 0 --> process id is used.
+            // 1: TCP port number for this service (on localhost). Default = 0, publish to catalog.
+            // 2: Transport protocol plugin: 'BMS' or 'JSON'
             RemactDesktopApp.ApplicationStart(args, new RaLog.PluginFile());
-            RaLog.Info("Svc1", "Start");
-            RemactConfigDefault.Instance = new Remact.Net.Plugin.Json.Msgpack.Alchemy.JsonProtocolConfig();
+
+            int tcpPort; // the second commandline argument
+            if (args.Length < 2 || !int.TryParse(args[1], out tcpPort))
+            {
+                tcpPort = 40001;
+            }
+
+            string transportPlugin = "BMS"; // default third commandline argument
+            if (args.Length >= 3)
+            {
+                transportPlugin = args[2];
+            }
+
+            RaLog.Info("Svc1", "Commandline arguments:   ServiceInstance=" + RemactConfigDefault.Instance.ApplicationInstance + " (0=use process id)"
+                            + "   ServiceTcpPort=" + tcpPort + " (0=auto, published to catalog)"
+                            + "   Transport=" + transportPlugin);
             try
             {
-                Application.Run(new FrmService());
+                PluginSelector.LoadRemactConfigDefault(transportPlugin);
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
+                Application.Run(new FrmService(tcpPort));
                 Environment.ExitCode = 0;
             }
             catch (Exception ex) // any Exception
@@ -52,12 +71,12 @@ namespace Remact.SpeedTest.Service
         /// <summary>
         /// Initializes a new instance of the Form1 class.
         /// </summary>
-        public FrmService()
+        public FrmService(int tcpPort)
         {
             InitializeComponent();
 
             m_Service = new Test2Service();
-            m_Service.Input.LinkInputToNetwork("Test2.Service");
+            m_Service.Input.LinkInputToNetwork("Test2.Service", tcpPort);
             this.Text = m_Service.Input.AppIdentification;
             _milliseconds = Environment.TickCount;
         }

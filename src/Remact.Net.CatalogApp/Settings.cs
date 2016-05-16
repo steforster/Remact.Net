@@ -1,4 +1,4 @@
-﻿namespace Remact.Catalog.Console.Properties {
+﻿namespace Remact.Net.CatalogApp.Properties {
     
     
     // This class allows you to handle specific events on the settings class:

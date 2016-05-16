@@ -6,7 +6,7 @@ using System.Windows.Forms;
 using Remact.Net;
 using Remact.Net.Remote;
 using System.Threading.Tasks;
-
+using Remact.TestUtilities;
 
 namespace Remact.SpeedTest.Client
 {
@@ -29,7 +29,6 @@ namespace Remact.SpeedTest.Client
                 Application.SetCompatibleTextRenderingDefault(false);
                 RemactDesktopApp.ApplicationStart(args, new RaLog.PluginFile());
                 RaLog.Info("Clt1", "Start");
-                RemactConfigDefault.Instance = new Remact.Net.Plugin.Json.Msgpack.Alchemy.JsonProtocolConfig();
 
                 Application.Run(new FrmClient());
                 Environment.ExitCode = 0;
@@ -47,8 +46,8 @@ namespace Remact.SpeedTest.Client
         //----------------------------------------------------------------------------------------------
         #region Fields and constructor
 
-        private Test2Client _client;
-        private Task<bool> _connectionTask;
+        private Test2Client m_clientActor;
+        private Task<bool> m_connectionTask;
 
 
         /// <summary>
@@ -57,31 +56,48 @@ namespace Remact.SpeedTest.Client
         public FrmClient()
         {
             InitializeComponent();
-            _client = new Test2Client();
-            _client.UpdateView += OnUpdateView;
-            labelClient.Text = _client.Output.ToString("Client", 3);
-            this.Text = _client.Output.AppIdentification;
+            m_clientActor = new Test2Client();
+            m_clientActor.UpdateView += OnUpdateView;
+            labelClient.Text = m_clientActor.Output.ToString("Client", 3);
+            comboBoxTransport.SelectedIndex = 0;
+            this.Text = m_clientActor.Output.AppIdentification;
         }
 
         #endregion
         //----------------------------------------------------------------------------------------------
         #region Event Handlers
 
-        // event from client
-        void OnUpdateView()
+        private void comboBoxTransport_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (!_client.SpeedTest)
+            PluginSelector.LoadRemactConfigDefault(comboBoxTransport.Text);
+        }
+
+        private void FrmClient_FirstShown(object sender, EventArgs e)
+        {
+            checkBoxService.Focus();
+        }
+
+        private void FrmClient_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            m_clientActor.Output.Disconnect();
+        }
+
+
+        // event from client actor to UI
+        private void OnUpdateView()
+        {
+            if (!m_clientActor.SpeedTest)
             {
-                _client.Log.Append(textBoxService.Text);
-                int len = _client.Log.Length;
+                m_clientActor.Log.Append(textBoxService.Text);
+                int len = m_clientActor.Log.Length;
                 if (len > 10000) len = 10000;
-                textBoxService.Text = _client.Log.ToString(0, len);
-                _client.Log.Length = 0;
+                textBoxService.Text = m_clientActor.Log.ToString(0, len);
+                m_clientActor.Log.Length = 0;
 
                 if (labelService.Text.Length == 0)
                 {
-                    labelClient.Text = _client.Output.ClientIdent.ToString("Client", 3);
-                    labelService.Text = _client.Output.ToString("Service", 3);
+                    labelClient.Text = m_clientActor.Output.ClientIdent.ToString("Client", 3);
+                    labelService.Text = m_clientActor.Output.ToString("Service", 3);
                 }
             }
         }
@@ -98,28 +114,28 @@ namespace Remact.SpeedTest.Client
 
                 if (!checkBoxService.Checked)
                 {
-                    if (_client.Output.OutputState != PortState.Disconnected)
+                    if (m_clientActor.Output.OutputState != PortState.Disconnected)
                     {
-                        if (_client.Output.OutputState != PortState.Faulted) labelState.Text = "disconnected";
-                        _client.Output.Disconnect();
+                        if (m_clientActor.Output.OutputState != PortState.Faulted) labelState.Text = "disconnected";
+                        m_clientActor.Output.Disconnect();
                     }
                     return;
                 }
 
-                if (_client.Output.OutputState == PortState.Faulted)
+                if (m_clientActor.Output.OutputState == PortState.Faulted)
                 {
                     checkBoxService.Checked = false;
                     labelState.Text = "-FAULT-";
-                    if (_connectionTask.Exception != null)
+                    if (m_connectionTask.Exception != null)
                     {
-                        RaLog.PluginConsole.AppendFullMessage(_client.Log, _connectionTask.Exception);
-                        _client.Log.AppendLine();
-                        _client.SpeedTest = checkBoxSpeedTest.Checked;
+                        RaLog.PluginConsole.AppendFullMessage(m_clientActor.Log, m_connectionTask.Exception);
+                        m_clientActor.Log.AppendLine();
+                        m_clientActor.SpeedTest = checkBoxSpeedTest.Checked;
                         OnUpdateView();
                     }
                 }
-                else if (_client.Output.OutputState == PortState.Disconnected
-                      || _client.Output.OutputState == PortState.Unlinked)
+                else if (m_clientActor.Output.OutputState == PortState.Disconnected
+                      || m_clientActor.Output.OutputState == PortState.Unlinked)
                 {
                     RaLog.Info("Clt1", "open S1");
                     labelState.Text = "connecting ...";
@@ -130,49 +146,41 @@ namespace Remact.SpeedTest.Client
                         RemactCatalogClient.Instance.Reconnect();
                     }
 
-                    _client.Output.LinkOutputToRemoteService("Test2.Service");
-                    _connectionTask = _client.TryConnect();
-                    _client.ResponseCount = 0;
+                    m_clientActor.Output.LinkOutputToRemoteService("Test2.Service");
+                    m_connectionTask = m_clientActor.TryConnect();
+                    m_clientActor.ResponseCount = 0;
                 }
-                else if (_client.Output.OutputState == PortState.Ok)
+                else if (m_clientActor.Output.OutputState == PortState.Ok)
                 {
-                    if (_client.SpeedTest)
+                    if (m_clientActor.SpeedTest)
                     {
                         if (m_Seconds % 3 == 0)
                         {
-                            //lbClient.Text   = Client1.Output.ToString  ("Client", 20);
-                            //lbService1.Text = Client1.Output.OutputSidePartner.ToString("Service", 20);
-                            if (_client.ResponseCount > 150)
+                            if (m_clientActor.ResponseCount > 150)
                             {
-                                textBoxService.Text = (_client.ResponseCount / 3).ToString() + " Requests / sec";
+                                textBoxService.Text = (m_clientActor.ResponseCount / 3).ToString() + " Requests / sec";
                             }
                             else
                             {
-                                textBoxService.Text = Math.Round((float)_client.ResponseCount / 3.0, 1).ToString() + " Requests / sec";
+                                textBoxService.Text = Math.Round((float)m_clientActor.ResponseCount / 3.0, 1).ToString() + " Requests / sec";
                             }
 
-                            _client.ResponseCount = 0;
+                            m_clientActor.ResponseCount = 0;
                         }
                     }
 
-                    labelState.Text = "CltReq=" + _client.LastRequestIdSent;
+                    labelState.Text = "CltReq=" + m_clientActor.LastRequestIdSent;
 
                     // In speed test mode: Every second an additional request is injected into the request/response stream
-                    _client.SpeedTest = checkBoxSpeedTest.Checked;
-                    _client.Output.TraceSend = !_client.SpeedTest;
-                    _client.SendPeriodicMessage();
+                    m_clientActor.SpeedTest = checkBoxSpeedTest.Checked;
+                    m_clientActor.Output.TraceSend = !m_clientActor.SpeedTest;
+                    m_clientActor.SendPeriodicMessage();
                 }
             }
             catch (Exception ex)
             {
                 RaLog.Exception("during timerevent", ex);
             }
-        }// Timer1_Tick
-
-
-        private void FrmClient_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            _client.Output.Disconnect();
         }
 
         #endregion

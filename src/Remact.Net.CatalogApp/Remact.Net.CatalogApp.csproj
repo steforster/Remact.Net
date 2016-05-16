@@ -63,7 +63,7 @@
     </Compile>
     <Compile Include="FrmCatalog.Designer.cs" />
     <Compile Include="Program.cs" />
-    <Compile Include="Properties\Settings.cs" />
+    <Compile Include="Settings.cs" />
     <EmbeddedResource Include="FrmCatalog.resx" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -120,10 +120,6 @@
     <ProjectReference Include="..\Remact.Net.DesktopAppHelper\Remact.Net.DesktopAppHelper.csproj">
       <Project>{66EF889F-F66F-4411-83AD-7C2D00D26C2D}</Project>
       <Name>Remact.Net.DesktopAppHelper</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Remact.Net.Plugin.Json.Msgpak.Alchemy\Remact.Net.Plugin.Json.Msgpak.Alchemy.csproj">
-      <Project>{C2B408A5-BF3D-4E43-80E6-642605388CA9}</Project>
-      <Name>Remact.Net.Plugin.Json.Msgpak.Alchemy</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

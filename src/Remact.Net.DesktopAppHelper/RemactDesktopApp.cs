@@ -47,7 +47,7 @@ namespace Remact.Net
         }
 
 
-        private static string GetLogFolder()
+        public static string GetLogFolder()
         {
             string logFolder = null;
             string sBase = Path.GetFullPath(Path.GetDirectoryName(RemactApplication.ExecutablePath));
@@ -259,6 +259,7 @@ namespace Remact.Net
 
             // Unix only
             if (!m_boKernel32Available)
+            {
                 try
                 {
                     Console.CancelKeyPress += new ConsoleCancelEventHandler(Console_CancelKeyPress);
@@ -268,6 +269,7 @@ namespace Remact.Net
                 {
                     RaLog.Exception("cannot install signal handler", ex, RemactApplication.Logger);
                 }
+            }
 
             // Windows+Unix: Add the event handler for Console or Service thread exceptions:
             AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
