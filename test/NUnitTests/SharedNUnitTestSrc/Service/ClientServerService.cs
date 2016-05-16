@@ -43,7 +43,7 @@ namespace RemactNUnitTest
                 port.LinkInputToNetwork(ServiceName, tcpPort: 40001, publishToCatalog: false);
             }
            
-            port.Open();
+            Helper.ServiceThread.DoSynchronously( port.Open ); // pick up correct synchronization context
             Port = port;
          }
 

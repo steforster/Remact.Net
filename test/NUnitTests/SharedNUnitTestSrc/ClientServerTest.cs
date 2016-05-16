@@ -132,7 +132,7 @@ namespace RemactNUnitTest
                 SetAlternateFormatter(false);
                 _service = new ClientServerService(remote: true, multithreaded: false);
                 _proxy = new RemactPortProxy("ClientServiceTestRemoteSync", DefaultResponseHandler);
-               _proxy.LinkOutputToRemoteService(_service.RemoteUri);
+                _proxy.LinkOutputToRemoteService(_service.RemoteUri);
             }
             else if (variant == 5)
             {
@@ -152,7 +152,7 @@ namespace RemactNUnitTest
                 SetAlternateFormatter(true);
                 _service = new ClientServerService(remote: true, multithreaded: false);
                 _proxy = new RemactPortProxy("ClientServiceTestRemoteMsgPackSync", DefaultResponseHandler);
-               _proxy.LinkOutputToRemoteService(_service.RemoteUri);
+                _proxy.LinkOutputToRemoteService(_service.RemoteUri);
             }
             else
             {
@@ -226,15 +226,17 @@ namespace RemactNUnitTest
 
             // variants 3 and 4 miss the synchronization context in this test thread. 
             // Therefore, they throw an exception.
-            Assert.Throws<InvalidOperationException>(() =>
-            {
-                SetUpTestVariant(3);
-            });
+            SetUpTestVariant(3);
+            Assert.Throws<InvalidOperationException>(async () =>
+                {
+                    SendStringReceiveStringAsync().Wait();
+                });
 
-            Assert.Throws<InvalidOperationException>(() =>
-            {
-                SetUpTestVariant(4);
-            });
+            SetUpTestVariant(4);
+            Assert.Throws<InvalidOperationException>(async () =>
+                {
+                    SendStringReceiveStringAsync().Wait();
+                });
             Console.WriteLine("successfully passed.");
         }
 

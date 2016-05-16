@@ -33,118 +33,50 @@ namespace Remact.Net.Remote
         /// </summary>
         void IRemactProtocolDriverToService.MessageToService(LowerProtocolMessage msg)
         {
-            object response = null;
             bool connectEvent = false;
             bool disconnectEvent = false;
+            // We are instantiated for each connected client, we know the _svcUser (because of the underlying WebSocket implementation).
             var message = new RemactMessage(_service.ServiceIdent, msg.DestinationMethod, msg.Payload, msg.Type,
                                             _svcUser.PortClient, _svcUser.ClientId, msg.RequestId);
             message.SerializationPayload = msg.SerializationPayload;
-            try
-            {
-                // We are instantiated for each connected client, we know the _svcUser (because of the underlying WebSocket implementation).
-                // Several threads may access the common RemactService. TODO: is the lock really needed ?
-                lock (_service)
-                {
-                    response = _service.CheckRemactInternalResponse(message, ref _svcUser, ref connectEvent, ref disconnectEvent);
-                }
 
-                // multithreaded access, several requests may run in parallel. They will be scheduled for execution on the right synchronization context.
-                if (response != null)
+            object response = _service.ServiceIdent.GetResponseExceptionSafe(message, ()=>
                 {
-                    if (connectEvent || disconnectEvent) // no error
+                    // One RemactService just has one TCP port, therefore only one message at a time is expected. Therefore not needed: lock (_service)
+                    object rsp = _service.CheckRemactInternalResponse(message, ref _svcUser, ref connectEvent, ref disconnectEvent);
+                    if (rsp != null)
                     {
-                        var reqCopy = new RemactMessage(message);
-                        reqCopy.Response = reqCopy; // do not reply a ReadyMessage
-                        var task = DoRequestAsync(reqCopy); // call event OnInputConnected or OnInputDisconnected on the correct thread.
-                        if (disconnectEvent)
+                        if (connectEvent || disconnectEvent) // no error
                         {
-                            return; // no reply to disconnect notification
+                            var reqCopy = new RemactMessage(message);
+                            reqCopy.Response = reqCopy; // do not reply a ReadyMessage
+                            // call event OnInputConnected or OnInputDisconnected on the correct thread.
+                            //var task = DoRequestAsync(reqCopy); 
+                            ((IRemotePort)message.Destination).PostInput(reqCopy);
+                            if (disconnectEvent)
+                            {
+                                return null; // no reply to a disconnect notification
+                            }
+                            //var dummy = task.Result; // blocking wait
                         }
-                        var dummy = task.Result; // blocking wait
+                        return rsp;// return the Remact internal response.
                     }
-                    // return the Remact internal response.
-                }
-                else
-                {
-                    DoRequestAsync(message);
-                    // Response and optional notifications have been returned to the client already
-                    return;
-                }
-            }
-            catch (RemactException ex)
-            {
-                RaLog.Exception(message.SvcRcvId, ex, _service.ServiceIdent.Logger);
-                response = new ErrorMessage(ex);
-            }
-            catch (NotImplementedException ex)
-            {
-                RaLog.Exception(message.SvcRcvId, ex, _service.ServiceIdent.Logger);
-                response = new ErrorMessage(ErrorCode.NotImplementedOnService, ex);
-            }
-            catch (NotSupportedException ex)
-            {
-                RaLog.Exception(message.SvcRcvId, ex, _service.ServiceIdent.Logger);
-                response = new ErrorMessage(ErrorCode.NotImplementedOnService, ex);
-            }
-            catch (ArgumentException ex)
-            {
-                RaLog.Exception(message.SvcRcvId, ex, _service.ServiceIdent.Logger);
-                response = new ErrorMessage(ErrorCode.ArgumentExceptionOnService, ex);
-            }
-            catch (Exception ex)
-            {
-                RaLog.Exception(message.SvcRcvId, ex, _service.ServiceIdent.Logger);
-                response = new ErrorMessage(ErrorCode.UnhandledExceptionOnService, ex);
-            }
+                    else
+                    {
+                        ((IRemotePort)message.Destination).PostInput(message);
+                        //DoRequestAsync(message);
+                        // Response and optional notifications have been returned or will be returned by the actor thread
+                        return null;
+                    }
+                });
 
-            message.SendResponse(response);
+            // when the response is null here, it has been sent already or will asynchronously be sent from the actor thread
+            if (response != null)
+            {
+                message.SendResponse(response);
+            }
         }
 
-
-
-        private Task<RemactMessage> DoRequestAsync( RemactMessage msg )
-        {
-            var tcs = new TaskCompletionSource<RemactMessage>();
-
-            if( msg.Destination.IsMultithreaded
-                || msg.Destination.SyncContext == null
-                || msg.Destination.ManagedThreadId == Thread.CurrentThread.ManagedThreadId )
-            { // execute request on the calling thread or multi-threaded
-            #if !BEFORE_NET45
-                msg.Destination.DispatchMessageAsync( msg )
-                    .ContinueWith((t)=>
-                        tcs.SetResult(msg)); // when finished the first task: finish tcs and let the original request thread return the response.
-            #else
-                msg.Destination.DispatchMessage( msg );
-                tcs.SetResult( msg );
-            #endif
-            }
-            else
-            {
-                Task.Factory.StartNew(() => 
-                    msg.Destination.SyncContext.Post( obj =>
-                    {   // execute task on the specified thread after passing the delegate through the message queue...
-                        try
-                        {
-                #if !BEFORE_NET45
-                            msg.Destination.DispatchMessageAsync( msg )        // execute request async on the thread bound to the Input
-                                .ContinueWith((t)=>
-                                    tcs.SetResult( msg )); // when finished the first task: finish tcs and let the original request thread return the response.
-                #else
-                            msg.Destination.DispatchMessage( msg );// execute request synchronously on the thread bound to the Destination
-                            tcs.SetResult( msg );
-                #endif
-                        }
-                        catch( Exception ex )
-                        {
-                            RaLog.Exception("RemactMessage to '" + msg.Destination.Name + "' cannot be handled by application", ex);
-                            tcs.SetException( ex );
-                        }
-                    }, null )); // obj
-            }
-
-            return tcs.Task;
-        }
 
         void       IRemactProtocolDriverToService.OpenAsync(OpenAsyncState state, IRemactProtocolDriverToClient callback) { }
         Uri        IRemactProtocolDriverToService.ServiceUri { get { return null; } }

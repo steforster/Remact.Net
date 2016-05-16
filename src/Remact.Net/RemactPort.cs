@@ -286,7 +286,7 @@ namespace Remact.Net
             }
             else if (IsMultithreaded)
             {
-                MessageHandlerBase(msg); // response to unsynchronized context (Test1.ClientNoSync)
+                DispatchMessage(msg);
             }
             else if (this.SyncContext == null)
             {
@@ -643,6 +643,41 @@ namespace Remact.Net
             }
         }
 
+
+        internal object GetResponseExceptionSafe(RemactMessage msg, Func<object> getResponse)
+        {
+            try
+            {
+                return getResponse();
+            }
+            catch (RemactException ex)
+            {
+                RaLog.Exception(msg.SvcRcvId, ex, Logger);
+                return new ErrorMessage(ex);
+            }
+            catch (NotImplementedException ex)
+            {
+                RaLog.Exception(msg.SvcRcvId, ex, Logger);
+                return new ErrorMessage(ErrorCode.NotImplementedOnService, ex);
+            }
+            catch (NotSupportedException ex)
+            {
+                RaLog.Exception(msg.SvcRcvId, ex, Logger);
+                return new ErrorMessage(ErrorCode.NotImplementedOnService, ex);
+            }
+            catch (ArgumentException ex)
+            {
+                RaLog.Exception(msg.SvcRcvId, ex, Logger);
+                return new ErrorMessage(ErrorCode.ArgumentExceptionOnService, ex);
+            }
+            catch (Exception ex)
+            {
+                RaLog.Exception(msg.SvcRcvId, ex, Logger);
+                return new ErrorMessage(ErrorCode.UnhandledExceptionOnService, ex);
+            }
+        }
+
+
         internal void PickupSynchronizationContext()
         {
             if (IsMultithreaded)
@@ -671,34 +706,48 @@ namespace Remact.Net
         }
 
 
-#if(!BEFORE_NET45)
-        // Message is passed to the lambda functions of the sending context, to the method dispatcher or to the default response handler
-        internal async Task DispatchMessageAsync(RemactMessage msg)
-        {
-            throw new NotImplementedException();
-        }
-#endif
-
         // Message comes out of message queue in user thread
         private void MessageHandlerBase(object userState)
         {
-            try
-            {
-                DispatchMessage(userState as RemactMessage);
-            }
-            catch (Exception ex)
-            {
-                DispatchingError(userState as RemactMessage, new ErrorMessage(ErrorCode.CouldNotDispatch, ex));
-            }
+            DispatchMessage(userState as RemactMessage);
         }
 
         // Message is passed to the lambda functions of the sending context, to the method dispatcher or to the default response handler
         internal void DispatchMessage(RemactMessage msg)
         {
+            var response = GetResponseExceptionSafe(msg, ()=>
+                {
+                    msg = DispatchMessageFirstStepSync(msg);
+                    if (msg != null)
+                    {
+                        #if(!BEFORE_NET45)
+                            DispatchMessageSecondStepAsync(msg);
+                        #else
+                            DispatchMessageSecondStep(msg);
+                        #endif
+                    }
+                    return null;
+                });
+
+            if(response != null && response is ErrorMessage)
+            {
+                var err = response as ErrorMessage;
+                if (err == null)
+                {   // responses should be sent already
+                    err = new ErrorMessage(ErrorCode.CouldNotDispatch, "unexpected response type in DispatchMessage");
+                }
+                DispatchingError(msg, err);
+            }
+        }
+
+
+        private RemactMessage DispatchMessageFirstStepSync(RemactMessage msg)
+        {
             if (!m_isOpen)
             {
-                RaLog.Warning("Remact", "RemactPort '" + Name + "' is not connected. Cannot dispatch message!", Logger);
-                return;
+                //RaLog.Warning("Remact", "RemactPort '" + Name + "' is not connected. Cannot dispatch message!", Logger);
+                DispatchingError(msg, new ErrorMessage(ErrorCode.NotConnected, "Input port not open on service side, cannot post message"));
+                return null; // request finished
             }
 
             if (!IsMultithreaded)
@@ -707,34 +756,78 @@ namespace Remact.Net
                 if (m != null) m.BoundSyncContext = SyncContext;
             }
 
-            //msg.Destination = this;
-            Task task = null;
-
             if (msg.DestinationLambda == null && msg.DestinationMethod != null && IsServiceName && msg.DestinationMethod.StartsWith(ActorInfo.MethodNamePrefix))
             {
                 if (TraceConnect)
                 {
-                  //RaLog.Info(msg.SvcRcvId, String.Format("'{0}' to service './{1}'", msg.DestinationMethod, Name), Logger);
                     RaLog.Info(msg.SvcRcvId, msg.ToString(), Logger);
                 }
 
                 OnConnectDisconnect(msg); // may be overloaded
-                return;
-            }// -------
+                return null; // request finished
+            }
 
             if (TraceReceive)
             {
-                LogIncoming(msg);
+                LogIncoming(msg); // may be overloaded
             }
-
-            bool needsResponse = msg.IsRequest;
 
             if (msg.DestinationLambda != null)
             {
-                msg = msg.DestinationLambda(msg); // a response to a lambda function, one of the On<T> extension methods may handle the message type
+                return msg.DestinationLambda(msg); // a response to a lambda function, one of the On<T> extension methods may handle the message type
+            }
+            return msg;
+        }
+
+
+#if(!BEFORE_NET45)
+
+        // Message is passed to the lambda functions of the sending context, to the method dispatcher or to the default response handler
+        internal async Task DispatchMessageSecondStepAsync(RemactMessage msg)
+        {
+            Task task = null;
+            bool needsResponse = msg.IsRequest;
+
+            if (m_Dispatcher != null)
+            {
+                task = m_Dispatcher.CallMethod(ref msg, null); // TODO context
+                if (task != null)
+                {
+                    await task;
+                }
             }
 
-            if (msg != null && m_Dispatcher != null)
+            if (msg != null) // not handled yet
+            {
+                if (DefaultInputHandler != null)
+                {
+                    task = DefaultInputHandler(msg);
+                    if (task != null) 
+                    {
+                        await task;
+                    }
+                }
+                else
+                {
+                    //No logging for anonymous RemactPortProxy
+                    //RaLog.Error( "Remact", "Unhandled response: " + id.Payload, Logger );
+                }
+            }
+
+            if (msg != null && needsResponse && msg.Response == null)
+            {
+                msg.SendResponse(new ReadyMessage());
+            }
+        }
+
+#else
+
+        // Message is passed to the lambda functions of the sending context, to the method dispatcher or to the default response handler
+        internal void DispatchMessage(RemactMessage msg)
+        {
+            Task task = null;
+            bool needsResponse = msg.IsRequest;
+            if (m_Dispatcher != null)
             {
                 task = m_Dispatcher.CallMethod(ref msg, null); // TODO context
                 if (task != null) 
@@ -779,6 +872,8 @@ namespace Remact.Net
             }
             return task;
         }
+#endif
+
 
         /// <summary>
         /// Must be overloaded to log an incoming message.

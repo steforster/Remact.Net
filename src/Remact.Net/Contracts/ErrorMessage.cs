@@ -222,6 +222,8 @@ namespace Remact.Net
                     }
                     ex = ex.InnerException;
                 }
+
+                StackTrace = ex.StackTrace;
             }
         }// CTOR 2
 

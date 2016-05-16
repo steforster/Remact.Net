@@ -38,8 +38,8 @@ namespace Remact.Net.CatalogApp.Properties {
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute(@"<?xml version=""1.0"" encoding=""utf-16""?>
 <ArrayOfString xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xmlns:xsd=""http://www.w3.org/2001/XMLSchema"">
+  <string>Remact.Net.Plugin.Bms.Tcp.dll</string> 
   <string>Remact.Net.Plugin.Json.Msgpack.Alchemy.dll</string>
-  <string>Remact.Net.Plugin.Bms.Tcp.dll</string>
 </ArrayOfString>")]
         public global::System.Collections.Specialized.StringCollection TransportPlugins {
             get {

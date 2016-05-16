@@ -32,9 +32,9 @@ namespace Remact.Net
         /// Call the method addressed by <see cref="RemactMessage.DestinationMethod"/> name. Convert the <see cref="RemactMessage.Payload"/> to the type defined by the called methods first parameter. 
         /// Internally used by Remact.Net.
         /// </summary>
-        /// <param name="msg">The incoming RemactMessage.</param>
+        /// <param name="msg">The incoming RemactMessage. It is set to null, when processed.</param>
         /// <param name="context">The context object defined by a <see cref="RemactPortProxy{TOC}"/> or <see cref="RemactPortService{TSC}"/></param>
-        /// <returns>Null, when the message has been processed. The unchanged message otherwise.</returns>
+        /// <returns>Null, when task is completed synchronously.</returns>
         public Task CallMethod(ref RemactMessage msg, object context)
         {
             RemactMethod method;
@@ -50,8 +50,8 @@ namespace Remact.Net
             {
                 msg.SendResponse(reply);
             }
-            msg = null; // message processed
-            return null; // completed synchronously
+            msg  = null; // message processed
+            return null; // completed synchronously TODO: async
         }
 
         /// <summary>
