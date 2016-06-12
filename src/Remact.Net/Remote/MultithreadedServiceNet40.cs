@@ -42,8 +42,12 @@ namespace Remact.Net.Remote
 
             object response = _service.ServiceIdent.GetResponseExceptionSafe(message, ()=>
                 {
-                    // One RemactService just has one TCP port, therefore only one message at a time is expected. Therefore not needed: lock (_service)
-                    object rsp = _service.CheckRemactInternalResponse(message, ref _svcUser, ref connectEvent, ref disconnectEvent);
+                    object rsp;
+                    lock(_service)
+                    {
+                        rsp = _service.CheckRemactInternalResponse(message, ref _svcUser, ref connectEvent, ref disconnectEvent);
+                    }
+                    
                     if (rsp != null)
                     {
                         if (connectEvent || disconnectEvent) // no error

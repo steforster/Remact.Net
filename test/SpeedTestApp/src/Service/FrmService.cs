@@ -32,7 +32,7 @@ namespace Remact.SpeedTest.Service
                 tcpPort = 40001;
             }
 
-            string transportPlugin = "BMS"; // default third commandline argument
+            string transportPlugin = "JSON"; // default third commandline argument
             if (args.Length >= 3)
             {
                 transportPlugin = args[2];

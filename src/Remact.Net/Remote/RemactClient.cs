@@ -640,7 +640,7 @@ namespace Remact.Net.Remote
                     if (msg.DestinationMethod == null) msg.DestinationMethod = string.Empty;
                 }
 
-                PortProxy.DispatchMessage(msg);
+                PortProxy.MessageHandlerBase(msg);
             }
             catch (Exception ex)
             {

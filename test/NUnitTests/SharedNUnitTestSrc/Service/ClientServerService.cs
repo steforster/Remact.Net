@@ -15,7 +15,8 @@ namespace RemactNUnitTest
         string ReceiveString_ReplyString(string request);
         int ReceiveString_ReplyInt(string request);
         ReadyMessage ReceiveTest_ReplyEmpty(TestMessage request);
-        TestMessage ReceiveEmpty_ReplyTest(ReadyMessage request);
+        TestMessage ReceiveEmpty_ReplyTestMessage(ReadyMessage request);
+        Task<TestMessage> ReceiveTest_ReplyTestMessageAsync(TestMessage request, RemactMessage message);
     }
 
     // This is the service part of the client-server test.
@@ -81,11 +82,21 @@ namespace RemactNUnitTest
             return new ReadyMessage();
         }
 
-        private TestMessage ReceiveEmpty_ReplyTest(ReadyMessage request, RemactMessage message)
+        private TestMessage ReceiveEmpty_ReplyTestMessage(ReadyMessage request, RemactMessage message)
         {
             // service side
-            Trace.WriteLine("  '" + request + "' received in 'ReceiveEmpty_ReplyTest', service: " + Port.Uri);
+            Assert.IsNotNull(request);
+            Trace.WriteLine("  '" + request + "' received in 'ReceiveEmpty_ReplyTestMessage', service: " + Port.Uri);
             return new TestMessage {Inner = new InnerTestMessage {Id=2, Name="Hi"}};
+        }
+
+        private async Task<TestMessage> ReceiveTest_ReplyTestMessageAsync(TestMessage request, RemactMessage message)
+        {
+            // service side
+            Assert.IsNotNull(request);
+            Trace.WriteLine("  '" + request + "' received in 'ReceiveTest_ReplyTestMessageAsync', service: " + Port.Uri);
+            await Task.Delay(10);
+            return new TestMessage {Inner = new InnerTestMessage {Id=3, Name="Hi again"}};
         }
     }
 }

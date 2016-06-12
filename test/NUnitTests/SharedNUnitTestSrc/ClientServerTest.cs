@@ -5,6 +5,7 @@ using NUnit.Framework;
 using System;
 using System.Threading.Tasks;
 using Remact.Net;
+using System.Threading;
 
 // Communication model tests
 // Client classes:         Service classes:
@@ -27,8 +28,9 @@ namespace RemactNUnitTest
         [TestFixtureSetUp] // run once when creating this class.
         public void FixtureSetUp()
         {
-            // For remote connections we need a plugin that references the needed third party assemblies and configures them.
+            RaLog.UsePlugin( new RaLog.PluginConsole() );
 #if (BMS)
+            // Depending on the csproj that references the shared project, we use either the BMS or the JSON plugin for remote connections.
             Helper.LoadPluginDll(RemactConfigDefault.DefaultProtocolPluginName);
             var conf = Remact.Net.Plugin.Bms.Tcp.BmsProtocolConfig.Instance;
             conf.AddKnownMessageType(TestMessage.ReadFromBms1Stream, TestMessage.WriteToBms1Stream);
@@ -58,6 +60,7 @@ namespace RemactNUnitTest
 #if (JSON)
             Helper.LoadPluginDll(RemactConfigDefault.JsonProtocolPluginName);
 #endif
+            Remact.Net.Remote.RemactCatalogClient.IsDisabled = true;
         }
 
         [TestFixtureTearDown]  // run once after all tests of this class have been executed.
@@ -204,10 +207,7 @@ namespace RemactNUnitTest
             var ok = await _proxy.ConnectAsync();
             Assert.IsTrue(ok, "could not connect");
 
-            var response = await _proxy.SendReceiveAsync<string>("ReceiveString_ReplyString", "a request");
-
-            // Note: In VisualStudio2015 you can use the 'nameof' operator to safely get the name of the remote method.
-            //var response = await _proxy.SendReceiveAsync<string>(nameof(IClientServerReceiver.ReceiveString_ReplyString), "a request");
+            var response = await _proxy.SendReceiveAsync<string>(nameof(IClientServerReceiver.ReceiveString_ReplyString), "a request");
 
             Assert.AreEqual("the response", response.Payload, "wrong response content");
         }
@@ -218,6 +218,7 @@ namespace RemactNUnitTest
         {
             // variants 1 and 2 do not use a synchronization context. 
             // Client and server support multithreading.
+            SynchronizationContext.SetSynchronizationContext(null); // NUnit has a synchronization context - but we do not want one here.
             SetUpTestVariant(1);
             await SendStringReceiveStringAsync();
 
@@ -229,13 +230,15 @@ namespace RemactNUnitTest
             SetUpTestVariant(3);
             Assert.Throws<InvalidOperationException>(async () =>
                 {
-                    SendStringReceiveStringAsync().Wait();
+                    SynchronizationContext.SetSynchronizationContext(null); // NUnit has a synchronization context - but we do not want one here.
+                    await SendStringReceiveStringAsync();
                 });
 
             SetUpTestVariant(4);
             Assert.Throws<InvalidOperationException>(async () =>
                 {
-                    SendStringReceiveStringAsync().Wait();
+                    SynchronizationContext.SetSynchronizationContext(null); // NUnit has a synchronization context - but we do not want one here.
+                    await SendStringReceiveStringAsync();
                 });
             Console.WriteLine("successfully passed.");
         }
@@ -353,7 +356,7 @@ namespace RemactNUnitTest
 
 
         [Test]
-        public void SendEmptyReceiveTest()
+        public void SendEmptyReceiveTestMessage()
         {
             Helper.RunInWinFormsSyncContext(async () =>
             {
@@ -364,13 +367,41 @@ namespace RemactNUnitTest
                     var ok = await _proxy.ConnectAsync();
                     Assert.IsTrue(ok, "could not connect");
 
-                    var response = await _proxy.SendReceiveAsync<TestMessage>("ReceiveEmpty_ReplyTest", new ReadyMessage());
+                    var response = await _proxy.SendReceiveAsync<TestMessage>("ReceiveEmpty_ReplyTestMessage", new ReadyMessage());
                     Assert.IsNotNull(response.Payload, "response payload is null");
                     Assert.IsNotNull(response.Payload.Inner, "inner message is null");
                     Assert.AreEqual(2, response.Payload.Inner.Id, "wrong Id of inner message");
                     Assert.IsInstanceOf<InnerTestMessage>(response.Payload.Inner, "wrong inner message type");
                     var inner = response.Payload.Inner as InnerTestMessage;
                     Assert.AreEqual("Hi", inner.Name, "wrong Name of inner message");
+                }
+            });
+            Console.WriteLine("successfully passed.");
+        }
+
+
+        [Test]
+        public void SendToAsyncServiceReceiveTestMessage()
+        {
+            Helper.RunInWinFormsSyncContext(async () =>
+            {
+                int variant = 0;
+                while (SetUpTestVariant(++variant))
+                {
+                    // client side
+                    var ok = await _proxy.ConnectAsync();
+                    Assert.IsTrue(ok, "could not connect");
+
+                    var response = await _proxy.SendReceiveAsync<TestMessage>(
+                        nameof(IClientServerReceiver.ReceiveTest_ReplyTestMessageAsync), 
+                        new TestMessage());
+
+                    Assert.IsNotNull(response.Payload, "response payload is null");
+                    Assert.IsNotNull(response.Payload.Inner, "inner message is null");
+                    Assert.AreEqual(3, response.Payload.Inner.Id, "wrong Id of inner message");
+                    Assert.IsInstanceOf<InnerTestMessage>(response.Payload.Inner, "wrong inner message type");
+                    var inner = response.Payload.Inner as InnerTestMessage;
+                    Assert.AreEqual("Hi again", inner.Name, "wrong Name of inner message");
                 }
             });
             Console.WriteLine("successfully passed.");

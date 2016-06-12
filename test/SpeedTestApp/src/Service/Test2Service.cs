@@ -15,7 +15,6 @@ namespace Remact.SpeedTest.Service
     class Test2Service
     {
         public IRemactPortService Input { get { return m_Input; } } // just the RemactPortService interface is public
-        public int Seconds;
         public volatile int Requests;
 
         private int m_UpdateIndex = 0;
@@ -45,7 +44,6 @@ namespace Remact.SpeedTest.Service
             }
             else
             {
-                Seconds++;
                 return m_Input.DoPeriodicTasks();
             }
         }

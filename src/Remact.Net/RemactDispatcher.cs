@@ -32,26 +32,39 @@ namespace Remact.Net
         /// Call the method addressed by <see cref="RemactMessage.DestinationMethod"/> name. Convert the <see cref="RemactMessage.Payload"/> to the type defined by the called methods first parameter. 
         /// Internally used by Remact.Net.
         /// </summary>
-        /// <param name="msg">The incoming RemactMessage. It is set to null, when processed.</param>
+        /// <param name="msg">The incoming RemactMessage. It is returned as null, when processed.</param>
         /// <param name="context">The context object defined by a <see cref="RemactPortProxy{TOC}"/> or <see cref="RemactPortService{TSC}"/></param>
-        /// <returns>Null, when task is completed synchronously.</returns>
-        public Task CallMethod(ref RemactMessage msg, object context)
+        /// <returns>The message when not processed. Null, when message is processed.</returns>
+        public async Task<RemactMessage> CallMethod(RemactMessage msg, object context)
         {
             RemactMethod method;
             if (string.IsNullOrEmpty(msg.DestinationMethod)
              || !_methods.TryGetValue(msg.DestinationMethod, out method))
             {
-                return null; // message not processed
+                return msg; // message not processed
             }
 
             var parameters = method.Parameters(msg, context);
-            var reply = method.Target.Invoke(method.Implementation, parameters);
+            object reply = method.Target.Invoke(method.Implementation, parameters);
+            if (method.IsAsync)
+            {
+                var task = (Task)reply;
+                await task;
+                if (method.AsyncResultProperty != null)
+                {
+                    reply = method.AsyncResultProperty.GetValue(task); // see also https://github.com/dotnet/roslyn/issues/2981
+                }
+                else
+                {
+                    reply = null; // Task has no reply
+                }
+            }
+
             if (reply != null)
             {
                 msg.SendResponse(reply);
             }
-            msg  = null; // message processed
-            return null; // completed synchronously TODO: async
+            return null; // message processed
         }
 
         /// <summary>
@@ -103,7 +116,7 @@ namespace Remact.Net
                     var innerTgt = InnerType(mTarget.ReturnType);
                     if (innerIf != innerTgt)
                     {
-                        throw new InvalidOperationException("return type of method '" + mTarget.Name + "' does not match the interface. Note, Task<RemactMessage<T>> is accepted.");
+                        throw new InvalidOperationException("return type of method '" + mTarget.Name + "' does not match the interface. Note, Task<T> is accepted.");
                     }
 
                     var method = new RemactMethod
@@ -111,7 +124,14 @@ namespace Remact.Net
                         Target = mTarget,
                         Implementation = implementation,
                         PayloadType = param[0].ParameterType,
+                        IsAsync = typeof(Task).IsAssignableFrom(mTarget.ReturnType),
                     };
+
+                    if (method.IsAsync)
+                    {
+                        // method returning Task or Task<T>
+                        method.AsyncResultProperty = mTarget.ReturnType.GetProperty("Result");
+                    }
 
                     if (param.Length == 3)
                     {
@@ -157,7 +177,7 @@ namespace Remact.Net
 
     #endregion
     //----------------------------------------------------------------------------------------------
-    #region == class ActorMethod ==
+    #region == class RemactMethod ==
 
     /// <summary>
     /// Represents a method that is callable by a (remote) Actor.
@@ -168,6 +188,8 @@ namespace Remact.Net
         public object Implementation;
         public Type PayloadType;
         public Type ContextType;
+        public bool IsAsync;
+        public PropertyInfo AsyncResultProperty;
 
         public object[] Parameters(RemactMessage msg, object context)
         {

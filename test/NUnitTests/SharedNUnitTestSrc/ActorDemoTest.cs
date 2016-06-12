@@ -189,7 +189,7 @@ namespace RemactNUnitTest
         /// Before sending the response, the partner actor will send another message to us and also wait for a response.
         /// Thanks to the asynchronous behaviour, we do not create a deadlock.
         /// 
-        /// As before, the test is executed without and with remote connection.
+        /// This test is executed with local connection.
         /// </summary>
         [Test]
         public void ActorDemo_PingPong()
@@ -222,9 +222,35 @@ namespace RemactNUnitTest
                 // The first test run is without remote connection:
                 await ActorDemo_PingPongAsync();
                 m_foreignActor.Close();
-                Trace.WriteLine("--------------------------------------------------------");
+            });
+        }
 
-                // Now we link the remote actors and run the same test again:
+        /// <summary>
+        /// This is the remote variant of the above test.
+        /// </summary>
+        [Test]
+        public void ActorDemo_PingPong_Remote()
+        {
+            // We create the foreign actor and our ports. 
+            m_foreignActor = new DelayActor();
+            m_output = new RemactPortProxy( "PingOutput" );
+            m_input = new RemactPortService( "PingPongInput", OnPingPongInput );
+
+            // we like to see the full message flow in trace output
+            m_output.TraceSend = true;
+            m_output.TraceReceive = true;
+            m_foreignActor.InputAsync.TraceSend = true;
+            m_foreignActor.InputAsync.TraceReceive = true;
+            m_foreignActor.PongOutput.TraceSend = true;
+            m_foreignActor.PongOutput.TraceReceive = true;
+            m_input.TraceSend = true;
+            m_input.TraceReceive = true;
+
+            // we prepare the foreign actor and our synchronization context
+            m_foreignActor.Open();
+            Helper.RunInWinFormsSyncContext( async () =>
+            {
+                // Now we link the remote actors and run the test:
                 m_foreignActor.InputAsync.LinkInputToNetwork( "DelayActorInputAsync", tcpPort: 40001, publishToCatalog: false );
                 m_output.LinkOutputToRemoteService( new Uri( "ws://localhost:40001/Remact/DelayActorInputAsync" ) );
 

@@ -207,7 +207,7 @@ namespace Remact.Net.Remote
         /// <returns>true</returns>
         Task<bool> IRemotePort.ConnectAsync()
         {
-            return RemactPort.BoolTask(true);
+            return Task.FromResult(true);
         }
 
         /// <summary>

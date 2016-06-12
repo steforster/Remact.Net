@@ -286,7 +286,7 @@ namespace Remact.Net
             }
             else if (IsMultithreaded)
             {
-                DispatchMessage(msg);
+                MessageHandlerBase(msg);
             }
             else if (this.SyncContext == null)
             {
@@ -596,17 +596,6 @@ namespace Remact.Net
 
 
         /// <summary>
-        /// Gets a completed task having the Result true or false. 
-        /// </summary>
-        internal static Task<bool> BoolTask (bool state)
-        {
-            var tcs = new TaskCompletionSource<bool>();
-            tcs.SetResult(state);
-            return tcs.Task;
-        }
-
-
-        /// <summary>
         /// False when not connected or disconnected. Prevents message passing during shutdown.
         /// </summary>
         internal protected bool m_isOpen;
@@ -644,39 +633,6 @@ namespace Remact.Net
         }
 
 
-        internal object GetResponseExceptionSafe(RemactMessage msg, Func<object> getResponse)
-        {
-            try
-            {
-                return getResponse();
-            }
-            catch (RemactException ex)
-            {
-                RaLog.Exception(msg.SvcRcvId, ex, Logger);
-                return new ErrorMessage(ex);
-            }
-            catch (NotImplementedException ex)
-            {
-                RaLog.Exception(msg.SvcRcvId, ex, Logger);
-                return new ErrorMessage(ErrorCode.NotImplementedOnService, ex);
-            }
-            catch (NotSupportedException ex)
-            {
-                RaLog.Exception(msg.SvcRcvId, ex, Logger);
-                return new ErrorMessage(ErrorCode.NotImplementedOnService, ex);
-            }
-            catch (ArgumentException ex)
-            {
-                RaLog.Exception(msg.SvcRcvId, ex, Logger);
-                return new ErrorMessage(ErrorCode.ArgumentExceptionOnService, ex);
-            }
-            catch (Exception ex)
-            {
-                RaLog.Exception(msg.SvcRcvId, ex, Logger);
-                return new ErrorMessage(ErrorCode.UnhandledExceptionOnService, ex);
-            }
-        }
-
 
         internal void PickupSynchronizationContext()
         {
@@ -707,39 +663,14 @@ namespace Remact.Net
 
 
         // Message comes out of message queue in user thread
-        private void MessageHandlerBase(object userState)
+        internal void MessageHandlerBase(object userState)
         {
+#if(!BEFORE_NET45)
+            DispatchMessageAsync(userState as RemactMessage);
+#else
             DispatchMessage(userState as RemactMessage);
+#endif
         }
-
-        // Message is passed to the lambda functions of the sending context, to the method dispatcher or to the default response handler
-        internal void DispatchMessage(RemactMessage msg)
-        {
-            var response = GetResponseExceptionSafe(msg, ()=>
-                {
-                    msg = DispatchMessageFirstStepSync(msg);
-                    if (msg != null)
-                    {
-                        #if(!BEFORE_NET45)
-                            DispatchMessageSecondStepAsync(msg);
-                        #else
-                            DispatchMessageSecondStep(msg);
-                        #endif
-                    }
-                    return null;
-                });
-
-            if(response != null && response is ErrorMessage)
-            {
-                var err = response as ErrorMessage;
-                if (err == null)
-                {   // responses should be sent already
-                    err = new ErrorMessage(ErrorCode.CouldNotDispatch, "unexpected response type in DispatchMessage");
-                }
-                DispatchingError(msg, err);
-            }
-        }
-
 
         private RemactMessage DispatchMessageFirstStepSync(RemactMessage msg)
         {
@@ -776,11 +707,90 @@ namespace Remact.Net
             {
                 return msg.DestinationLambda(msg); // a response to a lambda function, one of the On<T> extension methods may handle the message type
             }
+
             return msg;
         }
 
 
+        internal object GetResponseExceptionSafe(RemactMessage msg, Func<object> getResponse)
+        {
+            try
+            {
+                return getResponse();
+            }
+            catch (RemactException ex)
+            {
+                RaLog.Exception(msg.SvcRcvId, ex, Logger);
+                return new ErrorMessage(ex);
+            }
+            catch (NotImplementedException ex)
+            {
+                RaLog.Exception(msg.SvcRcvId, ex, Logger);
+                return new ErrorMessage(ErrorCode.NotImplementedOnService, ex);
+            }
+            catch (NotSupportedException ex)
+            {
+                RaLog.Exception(msg.SvcRcvId, ex, Logger);
+                return new ErrorMessage(ErrorCode.NotImplementedOnService, ex);
+            }
+            catch (ArgumentException ex)
+            {
+                RaLog.Exception(msg.SvcRcvId, ex, Logger);
+                return new ErrorMessage(ErrorCode.ArgumentExceptionOnService, ex);
+            }
+            catch (Exception ex)
+            {
+                RaLog.Exception(msg.SvcRcvId, ex, Logger);
+                return new ErrorMessage(ErrorCode.UnhandledExceptionOnService, ex);
+            }
+        }
+
 #if(!BEFORE_NET45)
+
+        // Message is passed to the lambda functions of the sending context, to the method dispatcher or to the default response handler
+        internal async Task DispatchMessageAsync(RemactMessage msg)
+        {
+            ErrorMessage error = null;
+            try
+            {
+                msg = DispatchMessageFirstStepSync(msg);
+                if (msg != null)
+                {
+                    await DispatchMessageSecondStepAsync(msg);
+                }
+            }
+            catch (RemactException ex)
+            {
+                RaLog.Exception(msg.SvcRcvId, ex, Logger);
+                error = new ErrorMessage(ex);
+            }
+            catch (NotImplementedException ex)
+            {
+                RaLog.Exception(msg.SvcRcvId, ex, Logger);
+                error = new ErrorMessage(ErrorCode.NotImplementedOnService, ex);
+            }
+            catch (NotSupportedException ex)
+            {
+                RaLog.Exception(msg.SvcRcvId, ex, Logger);
+                error = new ErrorMessage(ErrorCode.NotImplementedOnService, ex);
+            }
+            catch (ArgumentException ex)
+            {
+                RaLog.Exception(msg.SvcRcvId, ex, Logger);
+                error = new ErrorMessage(ErrorCode.ArgumentExceptionOnService, ex);
+            }
+            catch (Exception ex)
+            {
+                RaLog.Exception(msg.SvcRcvId, ex, Logger);
+                error = new ErrorMessage(ErrorCode.UnhandledExceptionOnService, ex);
+            }
+
+            if(error != null)
+            {
+                DispatchingError(msg, error);
+            }
+        }
+
 
         // Message is passed to the lambda functions of the sending context, to the method dispatcher or to the default response handler
         internal async Task DispatchMessageSecondStepAsync(RemactMessage msg)
@@ -790,11 +800,7 @@ namespace Remact.Net
 
             if (m_Dispatcher != null)
             {
-                task = m_Dispatcher.CallMethod(ref msg, null); // TODO context
-                if (task != null)
-                {
-                    await task;
-                }
+                msg = await m_Dispatcher.CallMethod(msg, null); // TODO context
             }
 
             if (msg != null) // not handled yet
@@ -821,6 +827,26 @@ namespace Remact.Net
         }
 
 #else
+
+        internal void DispatchMessage(RemactMessage msg)
+        {
+            ErrorMessage error;
+            GetResponseExceptionSafe(msg, out error, ()=>
+                {
+                    msg = DispatchMessageFirstStepSync(msg);
+                    if (msg != null)
+                    {
+                        DispatchMessageSecondStep(msg);
+                    }
+                    return null;
+                });
+
+            if(error != null)
+            {
+                DispatchingError(msg, error);
+            }
+        }
+
 
         // Message is passed to the lambda functions of the sending context, to the method dispatcher or to the default response handler
         internal void DispatchMessage(RemactMessage msg)

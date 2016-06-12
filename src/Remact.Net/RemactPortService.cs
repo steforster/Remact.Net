@@ -176,7 +176,7 @@ namespace Remact.Net
                 ok = m_MyInputService.OpenService();
             }
             m_isOpen = ok;
-            return RemactPort.BoolTask(m_isOpen);
+            return Task.FromResult(m_isOpen);
         }
 
         /// <summary>

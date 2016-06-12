@@ -3,11 +3,7 @@
 
 using NUnit.Framework;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Threading;
 using System.Threading.Tasks;
-using Nito.Async;
 using Remact.Net;
 using Remact.Net.Remote;
 
@@ -141,7 +137,7 @@ namespace RemactNUnitTest
                 {
                     Assert.IsTrue(output[i].IsOutputConnected, "output " + i + " not connected");
                     // we will convert and accept response payloads of type <DelayActor.Response> only. Other types will throw an exception.
-                    sendOp[i] = output[i].SendReceiveAsync<Response>(null, new Request() { Text = ((char)('A' + i)).ToString() });
+                    sendOp[i] = output[i].SendReceiveAsync<Response>(null, new Request() { Text = "hello " + i.ToString() });
                 }
 
                 // normal delay for 10 requests is 1 x 100ms as they are handled async on server side
@@ -152,11 +148,11 @@ namespace RemactNUnitTest
 
                 Assert.AreEqual(clientCount, m_foreignActor.StartedCount, "not all operations started");
                 Assert.AreEqual(clientCount, m_foreignActor.FinishedCount, "not all operations finished");
-                Assert.IsTrue(m_foreignActor.MaxParallelCount > 1, "no operations run in parallel");
                 for (int i = 0; i < clientCount; i++)
                 {
                     Assert.IsInstanceOf<Response>(sendOp[i].Result.Payload, "wrong response type received");
                 }
+                Assert.IsTrue(m_foreignActor.MaxParallelCount > 1, "no operations run in parallel");
                 RemactPort.DisconnectAll(); // This sends a disconnect message from all clients to the service and closes all client afterwards.
                 Helper.AssertRunningOnClientThread();
                 Helper.AssertTraceCount(0, 0);
@@ -200,22 +196,22 @@ namespace RemactNUnitTest
                 {
                     Assert.IsTrue(output[i].IsOutputConnected, "output " + i + " not connected");
                     // we will convert and accept response payloads of type <DelayActor.Response> only. Other types will throw an exception.
-                    sendOp[i] = output[i].SendReceiveAsync<Response>(null, new Request() { Text = ((char)('A' + i)).ToString() });
+                    sendOp[i] = output[i].SendReceiveAsync<Response>(null, new Request() { Text = "hello " + i.ToString() });
                 }
 
-                // normal delay for 10 requests is 1 x 100ms as they are handled async on server side
-                if (await Task.WhenAll(sendOp).WhenTimeout(200))
+                // normal delay for 20 requests is 1 x 100ms as they are handled async on server side
+                if (await Task.WhenAll(sendOp).WhenTimeout(1000))
                 {
                     Assert.Fail("Timeout, internal actor does not interleave successive requests");
                 }
 
                 Assert.AreEqual(clientCount, m_foreignActor.StartedCount, "not all operations started");
                 Assert.AreEqual(clientCount, m_foreignActor.FinishedCount, "not all operations finished");
-                Assert.IsTrue(m_foreignActor.MaxParallelCount > 1, "no operations run in parallel");
                 for (int i = 0; i < clientCount; i++)
                 {
                     Assert.IsInstanceOf<Response>(sendOp[i].Result.Payload, "wrong response type received");
                 }
+                Assert.IsTrue(m_foreignActor.MaxParallelCount > 1, "no operations run in parallel");
                 Helper.AssertRunningOnClientThread();
                 Helper.AssertTraceCount(0, 0);
             });

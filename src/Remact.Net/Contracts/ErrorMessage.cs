@@ -207,6 +207,7 @@ namespace Remact.Net
             else
             {
                 Message = string.Concat(ex.GetType().Name, ": ", ex.Message);
+                StackTrace = ex.StackTrace;
                 string mainText = ex.Message;
                 ex = ex.InnerException;
                 while (ex != null)
@@ -220,10 +221,10 @@ namespace Remact.Net
                     {
                         InnerMessage = string.Concat(InnerMessage, " Inner ", ex.GetType().Name, ": ", ex.Message);
                     }
+                    var s = ex.StackTrace;
+                    if (s != null) StackTrace = s;
                     ex = ex.InnerException;
                 }
-
-                StackTrace = ex.StackTrace;
             }
         }// CTOR 2
 

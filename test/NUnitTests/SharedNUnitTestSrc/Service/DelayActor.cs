@@ -3,9 +3,6 @@
 
 using NUnit.Framework;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Runtime.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Remact.Net;
@@ -57,6 +54,7 @@ namespace RemactNUnitTest
 
 
         // This method is the defaultRequestHandler for all incoming messages of port 'InternalSyncInput'
+        // The method is not 'async'. Only one request is handled at a time because no 'await' is used.
         private Task OnDelayResponseBy10( RemactMessage msg, MyInputContext inputContext )
         {
             if (++m_currentParallelCount > MaxParallelCount) MaxParallelCount = m_currentParallelCount;
@@ -103,6 +101,7 @@ namespace RemactNUnitTest
 
 
         // This method is the defaultRequestHandler for all incoming messages of port 'InternalAsyncInput'
+        // The method is 'async'. Several requests are handled in parallel. Each 'await' allows other request to be handled.
         private async Task OnDelayResponseBy100Async(RemactMessage msg)
         {
             if (++m_currentParallelCount > MaxParallelCount) MaxParallelCount = m_currentParallelCount;
@@ -129,10 +128,14 @@ namespace RemactNUnitTest
                     // we pass the response payload without conversion to the client that called us
                     msg.SendResponse(rsp.Payload);
                 }
-                else
+                else if (request.Text.StartsWith("hello"))
                 {
                     await Task.Delay( 100 );
                     msg.SendResponse( new Response() { Text = "response after 100ms" } );
+                }
+                else
+                {
+                    throw new InvalidOperationException("request.Text="+request.Text);
                 }
                 Helper.AssertRunningOnServiceThread();
             }
@@ -140,6 +143,7 @@ namespace RemactNUnitTest
             {
                 // failed result must be passed to the test thread
                 Helper.ServiceException = ex;
+                msg.SendResponse(new ErrorMessage(ErrorCode.ArgumentExceptionOnService, ex));
             }
             FinishedCount++;
             m_currentParallelCount--;
