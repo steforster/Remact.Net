@@ -19,9 +19,9 @@ namespace Remact.Net.Plugin.Bms.Tcp
 
         public static ErrorMessage ReadFromBms1Stream(IBms1Reader reader)
         {
-            return reader.ReadBlock<ErrorMessage>((obj) => 
+            return reader.ReadBlock(() => 
                 {
-                    var msg = (ErrorMessage)obj;
+                    var msg = new ErrorMessage();
                     var error = reader.ReadInt32();
                     if (error <= 0 || error >= (int)ErrorCode.Last)
                     { 

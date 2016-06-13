@@ -37,7 +37,7 @@ namespace RemactNUnitTest
             conf.AddKnownMessageType(typeof(int),
                 (reader)=>
                 {
-                    return reader.ReadBlock<int>((i) => reader.ReadInt32());
+                    return reader.ReadBlock<int>(() => reader.ReadInt32());
                 },
                 
                 (obj, writer) =>
@@ -48,7 +48,7 @@ namespace RemactNUnitTest
             conf.AddKnownMessageType(typeof(string),
                 (reader) =>
                 {
-                    return reader.ReadBlock<object>((s) => reader.ReadString());
+                    return reader.ReadBlock<object>(() => reader.ReadString());
                 },
 
                 (obj, writer) =>

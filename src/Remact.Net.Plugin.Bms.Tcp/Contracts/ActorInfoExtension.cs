@@ -21,26 +21,26 @@ namespace Remact.Net.Plugin.Bms.Tcp
 
         public static ActorInfo ReadFromBms1Stream(IBms1Reader reader)
         {
-            return reader.ReadBlock<ActorInfo>((obj) => 
+            return reader.ReadBlock(() =>
                 {
-                    var msg = (ActorInfo)obj;
-                    msg.IsServiceName = reader.ReadBool();
-                    msg.IsOpen = reader.ReadBool();
-                    msg.Name = reader.ReadString();
-                    msg.AppName = reader.ReadString();
-                    msg.AppInstance = reader.ReadInt32();
-                    msg.ProcessId = reader.ReadInt32();
-                    msg.AppVersion = new Version(reader.ReadString());
-                    msg.CifComponentName = reader.ReadString();
-                    msg.CifVersion =  new Version(reader.ReadString());
-                    msg.HostName = reader.ReadString();
-                    msg.Uri = new Uri(reader.ReadString());
-                    msg.ClientId = reader.ReadInt32();
-                    msg.AddressList = (List<string>)reader.ReadStrings();
-                    msg.TimeoutSeconds = reader.ReadInt32();
-                    msg.CatalogHopCount = reader.ReadInt32();
-                    msg.ApplicationRunTime = TimeSpan.FromTicks(reader.ReadInt64());
-                    return msg;
+                    var dto = new ActorInfo();
+                    dto.IsServiceName = reader.ReadBool();
+                    dto.IsOpen = reader.ReadBool();
+                    dto.Name = reader.ReadString();
+                    dto.AppName = reader.ReadString();
+                    dto.AppInstance = reader.ReadInt32();
+                    dto.ProcessId = reader.ReadInt32();
+                    dto.AppVersion = new Version(reader.ReadString());
+                    dto.CifComponentName = reader.ReadString();
+                    dto.CifVersion =  new Version(reader.ReadString());
+                    dto.HostName = reader.ReadString();
+                    dto.Uri = new Uri(reader.ReadString());
+                    dto.ClientId = reader.ReadInt32();
+                    dto.AddressList = (List<string>)reader.ReadStrings();
+                    dto.TimeoutSeconds = reader.ReadInt32();
+                    dto.CatalogHopCount = reader.ReadInt32();
+                    dto.ApplicationRunTime = TimeSpan.FromTicks(reader.ReadInt64());
+                    return dto;
                 });
         }
 

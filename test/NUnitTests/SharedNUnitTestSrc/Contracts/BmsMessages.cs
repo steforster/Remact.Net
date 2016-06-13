@@ -18,11 +18,7 @@ namespace RemactNUnitTest
 
         public static Request ReadFromBms1Stream(IBms1Reader reader)
         {
-            return reader.ReadBlock<Request>((dto) =>
-                {
-                    dto.Text = reader.ReadString();
-                    return dto;
-                });
+            return reader.ReadBlock(() => new Request() {Text = reader.ReadString()});
         }
 
         public static void WriteToBms1Stream(object obj, IBms1Writer writer)
@@ -56,11 +52,7 @@ namespace RemactNUnitTest
 
         public static Response ReadFromBms1Stream(IBms1Reader reader)
         {
-            return reader.ReadBlock<Response>((dto) =>
-                {
-                    dto.Text = reader.ReadString();
-                    return dto;
-                });
+            return reader.ReadBlock(() => new Response() { Text = reader.ReadString() });
         }
 
         public static void WriteToBms1Stream(object obj, IBms1Writer writer)
@@ -89,8 +81,9 @@ namespace RemactNUnitTest
 
         public static TestMessage ReadFromBms1Stream(IBms1Reader reader)
         {
-            return reader.ReadBlock<TestMessage>((dto) =>
+            return reader.ReadBlock(() =>
             {
+                var dto = new TestMessage();
                 if (reader.Internal.BlockTypeId == 1)
                 {
                     dto.Inner = InnerTestMessage.ReadFromBms1Stream(reader);
@@ -131,11 +124,10 @@ namespace RemactNUnitTest
 
         public static InnerTestMessage ReadFromBms1Stream(IBms1Reader reader)
         {
-            return reader.ReadBlock<InnerTestMessage>((dto) =>
+            return reader.ReadBlock(() => new InnerTestMessage()
                 {
-                    dto.Id = reader.ReadInt32();
-                    dto.Name = reader.ReadString();
-                    return dto;
+                    Id = reader.ReadInt32(),
+                    Name = reader.ReadString(),
                 });
         }
 

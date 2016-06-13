@@ -4,6 +4,7 @@
 using System;
 using Remact.Net;
 using System.Reflection;
+using Test1.Contracts;
 
 namespace Remact.TestUtilities
 {
@@ -27,8 +28,8 @@ namespace Remact.TestUtilities
             else if (name.StartsWith("BMS"))
             {
                 LoadPluginDll(RemactConfigDefault.DefaultProtocolPluginName);
-                //var conf = Remact.Net.Plugin.Bms.Tcp.BmsProtocolConfig.Instance;
-                //conf.AddKnownMessageType(Request.ReadFromBms1Stream, Request.WriteToBms1Stream);
+                var conf = Remact.Net.Plugin.Bms.Tcp.BmsProtocolConfig.Instance;
+                conf.AddKnownMessageType(Test1CommandMessage.ReadFromBms1Stream, Test1CommandMessage.WriteToBms1Stream);
                 // TODO: copy Newtonsoft.Json (Replacement)?
             }
             else

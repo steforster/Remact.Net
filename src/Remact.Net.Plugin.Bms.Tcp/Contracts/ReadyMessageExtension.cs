@@ -18,7 +18,7 @@ namespace Remact.Net.Plugin.Bms.Tcp
 
         public static ReadyMessage ReadFromBms1Stream(IBms1Reader reader)
         {
-            return reader.ReadBlock<ReadyMessage>((dto) => new ReadyMessage());
+            return reader.ReadBlock<ReadyMessage>(() => new ReadyMessage());
         }
 
         public static void WriteToBms1Stream(object msg, IBms1Writer writer)
