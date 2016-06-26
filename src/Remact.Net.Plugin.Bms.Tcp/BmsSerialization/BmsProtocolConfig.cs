@@ -26,6 +26,9 @@ namespace Remact.Net.Plugin.Bms.Tcp
             AddKnownMessageType(typeof(ActorInfo), ActorInfoExtension.ReadFromBms1Stream, ActorInfoExtension.WriteToBms1Stream);
             AddKnownMessageType(typeof(ReadyMessage), ReadyMessageExtension.ReadFromBms1Stream, ReadyMessageExtension.WriteToBms1Stream);
             AddKnownMessageType(typeof(ErrorMessage), ErrorMessageExtension.ReadFromBms1Stream, ErrorMessageExtension.WriteToBms1Stream);
+            AddKnownMessageType(typeof(string), SimpleTypeExtensions.ReadStringFromBms1Stream, SimpleTypeExtensions.WriteStringToBms1Stream);
+            AddKnownMessageType(typeof(bool), SimpleTypeExtensions.ReadBoolFromBms1Stream, SimpleTypeExtensions.WriteBoolToBms1Stream);
+            AddKnownMessageType(typeof(int), SimpleTypeExtensions.ReadIntFromBms1Stream, SimpleTypeExtensions.WriteIntToBms1Stream);
         }
 
         /// <summary>

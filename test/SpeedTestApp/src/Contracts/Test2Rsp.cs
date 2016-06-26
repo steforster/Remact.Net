@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using Remact.Net.Bms1Serializer;
 
 namespace Remact.SpeedTest.Contracts
 {
@@ -35,11 +36,36 @@ namespace Remact.SpeedTest.Contracts
         {
             Items.Add(new Test2MessageItem(++Index, name, p1, p2, p3, p4));
         }
+
+
+        //----------------------------------------------------------------------------------------------
+        #region BMS1 serializer
+
+        public static Test2Rsp ReadFromBms1Stream(IBms1Reader reader)
+        {
+            return reader.ReadBlock(() =>
+                {
+                    var dto = new Test2Rsp();
+                    dto.Items = reader.ReadBlocks(Test2MessageItem.ReadFromBms1Stream);
+                    return dto;
+                });
+        }
+
+        public static void WriteToBms1Stream(object obj, IBms1Writer writer)
+        {
+            writer.WriteBlock(() => 
+                {
+                    var dto = (Test2Rsp)obj;
+                    writer.WriteBlocks(0, dto.Items, Test2MessageItem.WriteToBms1Stream);
+                });
+        }
+
+        #endregion
    }
 
 
     /// <summary>
-    /// One item contained in Test2Rsp. To demonstrate a more complex message type.
+    /// One of the items contained in Test2Rsp. To demonstrate a more complex message type.
     /// </summary>
     public class Test2MessageItem
     {
@@ -69,5 +95,56 @@ namespace Remact.SpeedTest.Contracts
                 Parameter = new List<object>();
             }
         }
+
+
+        //----------------------------------------------------------------------------------------------
+        #region BMS1 serializer
+
+        public static Test2MessageItem ReadFromBms1Stream(IBms1Reader reader)
+        {
+            return reader.ReadBlock(() =>
+                {
+                    var dto = new Test2MessageItem(0, null, null);
+                    dto.Index = reader.ReadInt32();
+                    dto.ItemName = reader.ReadString();
+                    dto.Parameter = reader.ReadBlocks<object>(
+                        (bmsReader) =>
+                        {
+                            if (bmsReader.Internal.TagEnum == Net.Bms1Serializer.Internal.Bms1Tag.Int32)
+                            {
+                                return bmsReader.ReadInt32();
+                            }
+                            else
+                            {
+                                return bmsReader.ReadString();
+                            }
+                        });
+                    return dto;
+                });
+        }
+
+        public static void WriteToBms1Stream(object obj, IBms1Writer writer)
+        {
+            writer.WriteBlock(() => 
+                {
+                    var dto = (Test2MessageItem)obj;
+                    writer.WriteInt32(dto.Index);
+                    writer.WriteString(dto.ItemName);
+                    writer.WriteBlocks<object>(0, dto.Parameter,
+                        (param, bmsWriter) =>
+                        {
+                            if (param is int)
+                            {
+                                bmsWriter.WriteInt32((int)param);
+                            }
+                            else
+                            {
+                                bmsWriter.WriteString(param.ToString());
+                            }
+                        });
+                });
+        }
+
+        #endregion
     }
 }

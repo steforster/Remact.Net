@@ -50,9 +50,6 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\..\ConsoleTestApps\src\PluginSelector.cs">
-      <Link>PluginSelector.cs</Link>
-    </Compile>
     <Compile Include="..\src\Client\FrmClient.cs">
       <SubType>Form</SubType>
     </Compile>

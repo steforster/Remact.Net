@@ -2,6 +2,7 @@
 // Copyright (c) https://github.com/steforster/Remact.Net
 
 using Newtonsoft.Json;
+using Remact.Net.Bms1Serializer;
 
 namespace Remact.SpeedTest.Contracts
 {
@@ -54,6 +55,29 @@ namespace Remact.SpeedTest.Contracts
         public Test2Req(ERequestCode code)
         {
             z_requestcode = (uint)code;
+        }
+
+        #endregion
+        //----------------------------------------------------------------------------------------------
+        #region BMS1 serializer
+
+        public static Test2Req ReadFromBms1Stream(IBms1Reader reader)
+        {
+            return reader.ReadBlock(() =>
+                {
+                    var dto = new Test2Req(ERequestCode.Unknown);
+                    dto.z_requestcode = reader.ReadUInt32();
+                    return dto;
+                });
+        }
+
+        public static void WriteToBms1Stream(object obj, IBms1Writer writer)
+        {
+            writer.WriteBlock(() => 
+                {
+                    var dto = (Test2Req)obj;
+                    writer.WriteUInt32(dto.z_requestcode);
+                });
         }
 
         #endregion

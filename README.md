@@ -20,13 +20,13 @@ In spite of all these features, Remact.Net is remarkably slim and easy to adapt 
 
 **Project status**  
 
-Currently I'm doing some mayor refactoring.  
-
 The next development steps are:
+* Threadsafe Threadpool Actors using SemaphoreSlim.WaitAsync
+* SendAsync: OneWay without reply
 * Integrate [AMQP 1.0](https://github.com/Azure/amqpnetlite) transport
-* Refactor async services
 * Xamarin.Android test application
 * Additional integration tests for bidirectional communication
+* Remove reference to Remact.Net.Bms1Serializer fom test contracts
 * Do not use Type.AssemblyQualifiedTypeName for dispatching in WAMP protocol
 * Cleanup TODO's
 
@@ -40,7 +40,7 @@ The following goals have been reached:
 * Local actors (message passing between threads)
 * Remote actors (message passing between hosts or processes)
 * WebSockets, Json and other open standards are used to link Remact actors
-* Supported protocols: WAMP or JSON-RPC. 
+* Supported protocols: WAMP, JSON-RPC and BMS1. 
 * Supported serialization: Json (text), MsgPack (binary), BMS1 (binary).
 * Peer to peer communication using distributed actor catalogs avoid single point of failure
 * Fully support bidirectional models: client-server / server-client / publish-subscribe
@@ -50,9 +50,6 @@ The following goals have been reached:
 
 
 ### Related work
-
-The [Robot Operating System ROS](http://www.ros.org) is a popular framework that uses the actor model.
-There, a new messaging subsystem [DDS](http://design.ros2.org/articles/ros_on_dds.html) is considered. 
 
 Some programming languages have built-in support for remote actors:
 

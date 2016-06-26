@@ -51,9 +51,6 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\..\ConsoleTestApps\src\PluginSelector.cs">
-      <Link>PluginSelector.cs</Link>
-    </Compile>
     <Compile Include="..\src\Service\Test2Service.cs" />
     <Compile Include="..\src\Service\FrmService.cs">
       <SubType>Form</SubType>

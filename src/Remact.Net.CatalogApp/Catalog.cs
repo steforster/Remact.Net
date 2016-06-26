@@ -119,7 +119,7 @@ namespace Remact.Net.CatalogApp
                 if (!m_RemactService.MustOpenInput)
                 {
                     sb.AppendLine("CatalogService listening on '" + m_RemactService.Uri + "'");
-                    sb.AppendLine("Note: current version uses the latest configured transport plugin only: " + Program.TransportPluginDll);
+                    sb.AppendLine("Note: current version uses only one transport plugin of 'Remact.Net.CatalogApp.exe.config': " + Program.TransportPluginDll);
                 }
                 else
                 {

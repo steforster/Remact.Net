@@ -33,6 +33,9 @@
     <Compile Include="..\src\Contracts\ITest2Service.cs">
       <Link>ITest2Service.cs</Link>
     </Compile>
+    <Compile Include="..\src\Contracts\PluginSelector.cs">
+      <Link>PluginSelector.cs</Link>
+    </Compile>
     <Compile Include="..\src\Contracts\Test2Req.cs" />
     <Compile Include="..\src\Contracts\Test2Rsp.cs" />
     <Compile Include="..\src\Contracts\Properties\AssemblyInfo.cs">
@@ -46,6 +49,14 @@
     <ProjectReference Include="..\..\..\..\Newtonsoft.Json\Src\Newtonsoft.Json\Newtonsoft.Json.Net40.csproj">
       <Project>{A9AE40FF-1A21-414A-9FE7-3BE13644CC6D}</Project>
       <Name>Newtonsoft.Json.Net40</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\Remact.Net.Bms1Serializer\src\Remact.Net.Bms1Serializer\Remact.Net.Bms1Serializer.csproj">
+      <Project>{658ff815-d635-497e-ba72-f6a9d22692ce}</Project>
+      <Name>Remact.Net.Bms1Serializer</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\src\Remact.Net.Plugin.Bms.Tcp\Remact.Net.Plugin.Bms.Tcp.csproj">
+      <Project>{71a13208-aa07-43b2-a952-fde353ebc123}</Project>
+      <Name>Remact.Net.Plugin.Bms.Tcp</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\src\Remact.Net\Remact.Net.csproj">
       <Project>{9A55AA58-1FFD-48C8-820A-675432755952}</Project>

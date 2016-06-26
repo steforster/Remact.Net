@@ -76,7 +76,7 @@ namespace Remact.SpeedTest.Client
             this.textBoxService.Multiline = true;
             this.textBoxService.Name = "textBoxService";
             this.textBoxService.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.textBoxService.Size = new System.Drawing.Size(481, 203);
+            this.textBoxService.Size = new System.Drawing.Size(481, 204);
             this.textBoxService.TabIndex = 0;
             this.textBoxService.TabStop = false;
             // 
@@ -177,8 +177,8 @@ namespace Remact.SpeedTest.Client
             this.comboBoxTransport.FormattingEnabled = true;
             this.comboBoxTransport.IntegralHeight = false;
             this.comboBoxTransport.Items.AddRange(new object[] {
-            "JSON, WebSocket",
-            "BMS1, TCP"});
+            "BMS1, TCP",
+            "JSON, WebSocket"});
             this.comboBoxTransport.Location = new System.Drawing.Point(264, 53);
             this.comboBoxTransport.Name = "comboBoxTransport";
             this.comboBoxTransport.Size = new System.Drawing.Size(120, 21);

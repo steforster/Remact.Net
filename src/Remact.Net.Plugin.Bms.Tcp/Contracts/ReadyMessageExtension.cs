@@ -2,6 +2,7 @@
 // Copyright (c) https://github.com/steforster/Remact.Net
 
 using Remact.Net.Bms1Serializer;
+
 namespace Remact.Net.Plugin.Bms.Tcp
 {
     /// <summary>

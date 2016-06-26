@@ -4,7 +4,7 @@
 using System;
 using System.Windows.Forms;
 using Remact.Net;
-using Remact.TestUtilities;
+using Remact.SpeedTest.Contracts;
 
 namespace Remact.SpeedTest.Service
 {

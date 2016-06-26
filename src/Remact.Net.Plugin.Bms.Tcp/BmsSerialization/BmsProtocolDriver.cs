@@ -51,6 +51,7 @@ namespace Remact.Net.Plugin.Bms.Tcp
         {
             string knownBaseTypeName;
             var serializer = BmsProtocolConfig.Instance.FindSerializerByObjectType(msg.Payload.GetType(), out knownBaseTypeName);
+            // TODO use async instead of blocking call
             _messageSerializer.WriteMessage(outputStream, (writer) => WriteMsg(msg, servicePath, writer, serializer, knownBaseTypeName));
         }
 

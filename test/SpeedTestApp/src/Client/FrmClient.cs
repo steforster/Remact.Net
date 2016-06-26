@@ -6,7 +6,7 @@ using System.Windows.Forms;
 using Remact.Net;
 using Remact.Net.Remote;
 using System.Threading.Tasks;
-using Remact.TestUtilities;
+using Remact.SpeedTest.Contracts;
 
 namespace Remact.SpeedTest.Client
 {

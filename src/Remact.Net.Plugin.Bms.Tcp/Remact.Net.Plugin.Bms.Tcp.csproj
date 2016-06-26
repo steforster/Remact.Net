@@ -46,6 +46,7 @@
     <Compile Include="BmsSerialization\BmsProtocolClientStub.cs" />
     <Compile Include="BmsSerialization\BmsProtocolDriver.cs" />
     <Compile Include="BmsSerialization\TcpPortManager.cs" />
+    <Compile Include="Contracts\SimpleTypeExtensions.cs" />
     <Compile Include="EntryPoint.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Contracts\ActorInfoExtension.cs" />
